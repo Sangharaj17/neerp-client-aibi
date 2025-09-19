@@ -1,0 +1,71 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build backend with Maven
+        working-directory: backend
+        run: mvn clean package -DskipTests
+
+      - name: Copy backend jar to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: "194.164.150.83"
+          username: "uday"
+          key: ${{ secrets.VPS_KEY }}
+          port: 22
+          source: "backend/target/*.jar"
+          target: "/home/uday/neerp-san2/neerp-client-test-prod/backend/"
+
+      - name: Deploy and restart backend
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: "194.164.150.83"
+          username: "uday"
+          key: ${{ secrets.VPS_KEY }}
+          port: 22
+          script: |
+            cd /home/uday/neerp-san2/neerp-client-test-prod/backend/
+            
+            # Stop existing PM2 process
+            pm2 delete neerp-client || true
+            
+            # Remove target directory with proper permission
+            sudo rm -rf target/ || true
+            
+            # Build project fresh
+            mvn clean package -DskipTests
+            
+            # Create environment file for the backend
+            cat > .env << EOF
+            MASTER_DATABASE_URL=jdbc:postgresql://neerp_admin_db_user:8CxSmB9mL1JFEegdVRpqfCfQhunbd4SV@dpg-d2ebp0ndiees73fmicpg-a.oregon-postgres.render.com/neerp_admin_db
+            MASTER_DATABASE_USERNAME=neerp_admin_db_user
+            MASTER_DATABASE_PASSWORD=8CxSmB9mL1JFEegdVRpqfCfQhunbd4SV
+            JDBC_DATABASE_URL=jdbc:postgresql://neerp_client_user:DhCpLm3usKKNaRAZSrDEKqmisKSR5qN8@dpg-d2eo1p49c44c7396gvug-a.oregon-postgres.render.com/neerp_client
+            DB_USERNAME=neerp_client_user
+            DB_PASSWORD=DhCpLm3usKKNaRAZSrDEKqmisKSR5qN8
+            SERVER_PORT=8080
+            SPRING_PROFILES_ACTIVE=production
+            EOF
+            
+            # Start with PM2 using the built JAR file
+            pm2 start "java -jar target/neerp-0.0.1-SNAPSHOT.jar" --name neerp-client
+            
+            # Save PM2 configuration
+            pm2 save
