@@ -80,9 +80,9 @@ public class DataSourceConfig {
 //        ds.setUsername("dummy");
 //        ds.setPassword("dummy");
 
-        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/client4_db");
+        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/db1");
         ds.setUsername("postgres");
-        ds.setPassword("root");
+        ds.setPassword("uday");
 
         ds.setDriverClassName("org.postgresql.Driver");
         return ds;
