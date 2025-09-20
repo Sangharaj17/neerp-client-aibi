@@ -1,5 +1,4 @@
 name: Backend CI/CD Pipeline
-
 on:
   push:
     branches:
@@ -8,21 +7,20 @@ on:
 jobs:
   build-and-deploy-backend:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
+        
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-
+          
       - name: Build backend with Maven
         working-directory: backend
         run: mvn clean package -DskipTests
-
+        
       - name: Copy backend jar to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -31,8 +29,9 @@ jobs:
           key: ${{ secrets.VPS_KEY }}
           port: 22
           source: "backend/target/*.jar"
-          target: "/home/uday/neerp-san2/neerp-client-aibi/backend/"
-
+          target: "/home/uday/neerp-san2/neerp-client-aibi/"
+          strip_components: 1
+          
       - name: Deploy and restart backend
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -41,19 +40,26 @@ jobs:
           key: ${{ secrets.VPS_KEY }}
           port: 22
           script: |
-            cd /home/uday/neerp-san2/neerp-client-aibi/backend/
+            set -e  # Exit on any error
             
-            # Stop existing PM2 process
-            pm2 delete neerp-client || true
+            cd /home/uday/neerp-san2/neerp-client-aibi/
             
-            # Remove target directory with proper permission
-            sudo rm -rf target/ || true
+            echo "Current directory contents:"
+            ls -la
             
-            # Build project fresh
-            mvn clean package -DskipTests
+            echo "Stopping existing PM2 process..."
+            pm2 delete neerp-client || echo "No existing process to delete"
             
-            # Start with PM2 using the built JAR file
+            echo "Waiting for process to stop..."
+            sleep 5
+            
+            echo "Starting application with new JAR..."
             pm2 start "java -jar target/neerp-0.0.1-SNAPSHOT.jar" --name neerp-client
             
-            # Save PM2 configuration
+            echo "Saving PM2 configuration..."
             pm2 save
+            
+            echo "PM2 status:"
+            pm2 status
+            
+            echo "Deployment completed at $(date)"
