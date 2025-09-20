@@ -80,7 +80,7 @@ public class DataSourceConfig {
 //        ds.setUsername("dummy");
 //        ds.setPassword("dummy");
 
-        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/db1");
+        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/db2");
         ds.setUsername("postgres");
         ds.setPassword("uday");
 
