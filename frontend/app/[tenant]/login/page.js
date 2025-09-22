@@ -2,6 +2,8 @@ import TenantError from '@/components/TenantError';
 import LoginForm from '@/components/LoginForm';
 import axiosAdmin from "@/utils/axiosAdmin";
 
+export const dynamic = 'force-dynamic';
+
 export default async function LoginPage({ params }) {
   const { tenant } = await params;
   //console.log(tenant);
