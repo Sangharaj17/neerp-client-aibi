@@ -16,7 +16,8 @@ export function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/:tenant', '/:tenant/'],
+  // Match all routes except API, Next.js assets, and favicon
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
 
 
