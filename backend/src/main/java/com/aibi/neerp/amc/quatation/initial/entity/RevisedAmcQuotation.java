@@ -33,7 +33,7 @@ public class RevisedAmcQuotation {
 	    private Integer revisedQuatationId;
 
     @Column(name = "quatation_date")
-    private String quatationDate;
+    private LocalDate quatationDate;
     
     @Column(name = "revised_edition")
     private String revisedEdition;
@@ -77,10 +77,10 @@ public class RevisedAmcQuotation {
     private String typeOfElevator;
 
     @Column(name = "from_date")
-    private String fromDate;
+    private LocalDate fromDate;
 
     @Column(name = "to_date")
-    private String toDate;
+    private LocalDate toDate;
 
     @Column(name = "amount_ordinary", precision = 15, scale = 2)
     private BigDecimal amountOrdinary;
@@ -135,7 +135,7 @@ public class RevisedAmcQuotation {
     private Integer jobStatus = 0;
 
     @Column(name = "forecast_month")
-    private String forecastMonth;
+    private LocalDate forecastMonth;
     
     @Column(name = "is_revised", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isRevise = false;

@@ -2,10 +2,7 @@ package com.aibi.neerp.componentpricing.service;
 
 import com.aibi.neerp.componentpricing.dto.ArdRequestDTO;
 import com.aibi.neerp.componentpricing.dto.ArdResponseDTO;
-import com.aibi.neerp.componentpricing.entity.Ard;
-import com.aibi.neerp.componentpricing.entity.CapacityType;
-import com.aibi.neerp.componentpricing.entity.PersonCapacity;
-import com.aibi.neerp.componentpricing.entity.Weight;
+import com.aibi.neerp.componentpricing.entity.*;
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
 import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.componentpricing.repository.*;
@@ -27,6 +24,8 @@ public class ArdService {
     private final CapacityTypeRepository capacityTypeRepository;
     private final PersonCapacityRepository personCapacityRepository;
     private final WeightRepository weightRepository;
+    private final OperatorElevatorRepository operatorElevatorRepository;
+
 
     @Transactional
     public ApiResponse<ArdResponseDTO> createArd(ArdRequestDTO dto) {
@@ -102,6 +101,11 @@ public class ArdService {
         } else {
             ard.setWeight(null);
         }
+
+        OperatorElevator operator = operatorElevatorRepository.findById(dto.getOperatorElevatorId())
+                .orElseThrow(() -> new ResourceNotFoundException("OperatorElevator not found"));
+        ard.setOperatorElevator(operator);
+
     }
 
     private ArdResponseDTO mapEntityToResponse(Ard ard) {
@@ -125,9 +129,47 @@ public class ArdService {
             dto.setWeightId(ard.getWeight().getId());
             dto.setWeightName(ard.getWeight().getWeightValue()+" "+ard.getWeight().getUnit().getUnitName());
         }
+        if (ard.getOperatorElevator() != null) {
+            dto.setOperatorElevatorId(ard.getOperatorElevator().getId());
+            dto.setOperatorElevatorName(ard.getOperatorElevator().getName());
+        }
+
 
         return dto;
     }
+
+
+    public ApiResponse<List<ArdResponseDTO>> findByOperatorTypeAndCapacityValue(
+            Integer operatorId,
+            Integer capacityTypeId,
+            Integer capacityValueId
+    ) {
+        log.info("Finding ARDs by operatorId={}, capacityTypeId={}, capacityValueId={}", operatorId, capacityTypeId, capacityValueId);
+
+        List<Ard> results;
+
+        if (capacityTypeId == 1) { // Person
+            results = ardRepository.findByOperatorElevator_IdAndCapacityType_IdAndPersonCapacity_Id(operatorId, capacityTypeId, capacityValueId);
+        } else if (capacityTypeId == 2) { // Weight
+            results = ardRepository.findByOperatorElevator_IdAndCapacityType_IdAndWeight_Id(operatorId, capacityTypeId, capacityValueId);
+        } else {
+            log.warn("Invalid capacityTypeId={}", capacityTypeId);
+            return new ApiResponse<>(false, "Invalid capacity type", List.of());
+        }
+
+        if (results.isEmpty()) {
+            return new ApiResponse<>(false, "No ARD devices found for given operator and capacity", List.of());
+        }
+
+        List<ArdResponseDTO> dtoList = results.stream()
+                .map(this::mapEntityToResponse)
+                .collect(Collectors.toList());
+
+        return new ApiResponse<>(true, "Fetched ARDs successfully", dtoList);
+    }
+
+
+
 
     private String sanitize(String input) {
         return StringEscapeUtils.escapeHtml4(input.trim());

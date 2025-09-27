@@ -1,16 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
-export default function AddJobActivityForm() {
+export default function AddJobActivityForm({jobId}) {
+  const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
   const [breakdowns, setBreakdowns] = useState([]);
   const [lifts, setLifts] = useState([]);
   const [employees, setEmployees] = useState([]);
 
+   
+  useEffect(()=>{
+    if(jobId){
+        const selectedJob = jobs.find((j) => j.jobId.toString() === jobId);
+        setMailId(selectedJob ? selectedJob.mailId : "");
+    }
+  })
+
   const [formData, setFormData] = useState({
-    jobId: "",
+    jobId: jobId || "",  
     jobActivityTypeId: "",
     activityDate: "",
     activityTime: "",
@@ -52,7 +63,10 @@ export default function AddJobActivityForm() {
     if (formData.jobId && isBreakdownSelected()) {
       axiosInstance
         .get(`/api/breakdown-todo/job/${formData.jobId}`)
-        .then((res) => setBreakdowns(res.data || []))
+        .then((res) => {
+          setBreakdowns(res.data || []);
+         // alert(res.data.length+" breakdown todos found for this job.");
+        })
         .catch(() => setBreakdowns([]));
     } else {
       setBreakdowns([]);
@@ -63,10 +77,11 @@ export default function AddJobActivityForm() {
 
   // Fetch lifts if breakdown todo selected
   useEffect(() => {
+    setCurrentServiceStatus("");
     if (formData.breakdownTodoId) {
       axiosInstance
         .get(`/api/breakdown-todo/getLiftsByBreakDownId/${formData.breakdownTodoId}`)
-        .then((res) => setLifts(res.data || []))
+        .then((res) => {setLifts(res.data || []);})
         .catch(() => setLifts([]));
     } else {
       setLifts([]);
@@ -78,6 +93,54 @@ export default function AddJobActivityForm() {
     const sel = activityTypes.find((a) => `${a.id}` === `${formData.jobActivityTypeId}`);
     return !!sel && sel.activityName && sel.activityName.toLowerCase() === "breakdown";
   };
+
+  const isServiceSelected = () => {
+    const sel = activityTypes.find((a) => `${a.id}` === `${formData.jobActivityTypeId}`);
+    return !!sel && sel.activityName && sel.activityName.toLowerCase() === "service";
+  };
+
+  const [currentServiceStatus , setCurrentServiceStatus] = useState("");
+
+    useEffect(() => {
+    if (isServiceSelected() && formData.jobId) {
+      // Call your API when service is selected and jobId exists
+      axiosInstance
+        .get(`/api/jobs/initial/amc-job-activities/current-service-status/${formData.jobId}`)
+        .then((response) => {
+           
+          setCurrentServiceStatus(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching current service status:", error);
+          setCurrentServiceStatus(""); // fallback if error occurs
+        });
+    }
+  }, [formData.jobActivityTypeId, formData.jobId]); // re-run when jobActivityTypeId or jobId changes
+
+  useEffect(()=>{
+    if(isBreakdownSelected()){
+        setCurrentServiceStatus("");
+    }
+  },[formData.jobActivityTypeId])
+
+  const [addServiceActivityGetData , setAddServiceActivityGetData] = useState(null);
+
+ // Fetch AddServiceActivityGetData if status is pending
+  useEffect(() => {
+
+    if (currentServiceStatus === "Pending" && formData.jobId) {
+         // alert(currentServiceStatus+" "+formData.jobId);
+      axiosInstance
+        .get(`/api/jobs/initial/amc-job-activities/getAddServiceActivityData/${formData.jobId}`)
+        .then((response) => {
+          setAddServiceActivityGetData(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching AddServiceActivityGetData:", error);
+          setAddServiceActivityGetData(null);
+        });
+    }
+  }, [currentServiceStatus, formData.jobId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -124,7 +187,7 @@ export default function AddJobActivityForm() {
       activityDate: formData.activityDate,
       activityTime: formData.activityTime,
       activityDescription: formData.activityDescription,
-      jobService: formData.jobService,
+      jobService: addServiceActivityGetData ? addServiceActivityGetData.serviceName : "",
       jobTypeWork: formData.jobTypeWork,
       executiveId : formData.executiveId ? Number(formData.executiveId) : null,
       jobActivityById: formData.jobActivityById ? Number(formData.jobActivityById) : null,
@@ -141,7 +204,7 @@ export default function AddJobActivityForm() {
 
     try {
       await axiosInstance.post("/api/jobs/initial/amc-job-activities/add", payload);
-      alert("Job activity added successfully!");
+     // alert("Job activity added successfully!");
       setFormData({
         jobId: "",
         jobActivityTypeId: "",
@@ -163,6 +226,9 @@ export default function AddJobActivityForm() {
       });
       setBreakdowns([]);
       setLifts([]);
+      toast.success("Job activity added successfully!");
+  router.push(`/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list/view_amc_job_detail?jobId=${jobId}`);
+
     } catch (err) {
       console.error(err);
       alert("Failed to submit job activity.");
@@ -260,6 +326,85 @@ export default function AddJobActivityForm() {
         </>
       )}
 
+      {currentServiceStatus === "Pending" && addServiceActivityGetData && (
+  <div className="space-y-6 mt-4">
+    {/* Display service name */}
+    <div>
+      <label className="font-semibold text-gray-700">Service Name</label>
+      <input
+        type="text"
+        value={addServiceActivityGetData.serviceName}
+        readOnly
+        className="w-full mt-2 p-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-700"
+      />
+    </div>
+
+    {/* Display lifts as selectable grid */}
+    {addServiceActivityGetData.serviceLifsDatas &&
+      addServiceActivityGetData.serviceLifsDatas.length > 0 && (
+        <div>
+          <label className="font-semibold text-gray-700 mb-3 block">
+            Select Lifts
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-72 overflow-y-auto">
+            {addServiceActivityGetData.serviceLifsDatas.map((lift, idx) => (
+              <div
+                key={lift.enquiryId}
+                className={`p-4 border rounded-xl cursor-pointer flex flex-col items-center justify-center text-center transition
+                  ${
+                    formData.liftIds.includes(lift.enquiryId)
+                      ? "bg-blue-100 border-blue-500"
+                      : "bg-white hover:bg-gray-100"
+                  }`}
+                onClick={() => handleLiftToggle(lift.enquiryId)}
+              >
+                <span className="font-semibold text-gray-800">
+                  {lift.liftName || `Lift ${idx + 1}`}
+                </span>
+                <span className="text-sm text-gray-500 mt-1">
+                  {lift.capacityValue || "N/A"} -{" "}
+                  {lift.typeOfElevators || "N/A"}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {lift.noOfFloors ? `${lift.noOfFloors} Floors` : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+  </div>
+)}
+
+{currentServiceStatus === "Completed" && (
+  <div className="mt-6 flex justify-center">
+    <div className="bg-green-50 border border-green-300 text-green-800 rounded-2xl shadow-md p-6 max-w-md text-center">
+      <svg
+        className="mx-auto mb-3 w-12 h-12 text-green-500"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <h2 className="text-xl font-bold">Service Completed</h2>
+      <p className="mt-2 text-gray-600">
+        The service for this job has already been completed for the current month.
+        <br />
+        <span className="font-semibold text-gray-700">
+          The next service will unlock in the next month.
+        </span>
+      </p>
+    </div>
+  </div>
+)}
+
+
       {/* Date & Time */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col">
@@ -330,14 +475,22 @@ export default function AddJobActivityForm() {
       </div>
 
       {/* Mail Sent */}
-      <div className="flex flex-col md:w-1/2">
-        <label className="font-semibold text-gray-700 mb-2">Mail Sent</label>
-        <input type="text" name="mailSent" readOnly value={mailId}
-               className="border border-gray-300 rounded-xl p-3 bg-gray-100 cursor-not-allowed" />
-      </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="flex flex-col ">
+          <label className="font-semibold text-gray-700 mb-2">Mail Sent</label>
+          <input type="text" name="mailSent" readOnly value={mailId}
+                className="border border-gray-300 rounded-xl p-3 bg-gray-100 cursor-not-allowed" />
+        </div>
+
+        <div className="flex flex-col ">
+          <label className="font-semibold text-gray-700 mb-2">Activity Remark</label>
+          <input onChange={handleChange} type="text" name="remark"  value={formData.remark}
+                className="border border-gray-300 rounded-xl p-3 bg-gray-100" />
+        </div>
+        </div>
 
       {/* Submit */}
-      <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold shadow-lg transition">
+      <button disabled={currentServiceStatus === "Completed"} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl font-bold shadow-lg transition">
         Submit
       </button>
     </form>

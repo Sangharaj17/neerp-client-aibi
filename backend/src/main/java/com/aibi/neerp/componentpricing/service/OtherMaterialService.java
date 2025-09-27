@@ -75,6 +75,30 @@ public class OtherMaterialService {
         return new ApiResponse<>(true, "Other Material deleted successfully", null);
     }
 
+    @Transactional(readOnly = true)
+    public List<OtherMaterialResponseDTO> searchByLiftTypeAndCapacity(
+            Integer operatorId,
+            Integer capacityTypeId,
+            Integer capacityValueId,
+            Integer typeOfLiftId) {
+
+        log.info("Searching OtherMaterial by operatorId={}, capacityTypeId={}, capacityValueId={}, typeOfLiftId={}",
+                operatorId, capacityTypeId, capacityValueId, typeOfLiftId);
+
+        List<OtherMaterial> results = repository.findByOperatorTypeIdAndCapacityTypeIdAndCapacityValueAndMachineRoomId(
+                operatorId, capacityTypeId, capacityValueId, typeOfLiftId
+        );
+
+        if (results.isEmpty()) {
+            log.warn("No OtherMaterial found for given criteria");
+        }
+
+        return results.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
     private void applyDto(OtherMaterialRequestDTO dto, OtherMaterial entity) {
         // Material Type
         if (dto.getMaterialType() != null) {
@@ -146,11 +170,22 @@ public class OtherMaterialService {
         return OtherMaterialResponseDTO.builder()
                 .id(o.getId())
                 .materialType(o.getMaterialType())
+
+                .operatorTypeId(o.getOperatorType() != null ? o.getOperatorType().getId() : null)
                 .operatorTypeName(o.getOperatorType() != null ? o.getOperatorType().getName() : null)
+
+                .machineRoomId(o.getMachineRoom() != null ? o.getMachineRoom().getId() : null)
                 .machineRoomName(o.getMachineRoom() != null ? o.getMachineRoom().getLiftTypeName() : null)
+
+                .capacityTypeId(o.getCapacityType() != null ? o.getCapacityType().getId() : null)
                 .capacityTypeName(o.getCapacityType() != null ? o.getCapacityType().getType() : null)
+
+                .personCapacityId(o.getPersonCapacity() != null ? o.getPersonCapacity().getId() : null)
                 .personCapacityName(o.getPersonCapacity() != null ? o.getPersonCapacity().getDisplayName() : null)
+
+                .weightId(o.getWeight() != null ? o.getWeight().getId() : null)
                 .weightName(o.getWeight() != null ? o.getWeight().getWeightValue() + " " + o.getWeight().getUnit().getUnitName() : null)
+
                 .floorsLabel(o.getFloors() != null ? o.getFloors().getFloorName() : null)
                 .quantity(o.getQuantity())
                 .price(o.getPrice())

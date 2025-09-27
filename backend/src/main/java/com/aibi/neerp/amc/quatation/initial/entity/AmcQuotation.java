@@ -33,7 +33,7 @@ public class AmcQuotation {
     private Integer amcQuatationId;
 
     @Column(name = "quatation_date")
-    private String quatationDate;
+    private LocalDate quatationDate;
 
     @ManyToOne
     @JoinColumn(name = "lead_id", referencedColumnName = "lead_id")
@@ -70,10 +70,10 @@ public class AmcQuotation {
     private String typeOfElevator;
 
     @Column(name = "from_date")
-    private String fromDate;
+    private LocalDate fromDate;
 
     @Column(name = "to_date")
-    private String toDate;
+    private LocalDate toDate;
 
     @Column(name = "amount_ordinary", precision = 15, scale = 2)
     private BigDecimal amountOrdinary;
@@ -128,7 +128,7 @@ public class AmcQuotation {
     private Integer jobStatus = 0;
 
     @Column(name = "forecast_month")
-    private String forecastMonth;
+    private LocalDate forecastMonth;
     
     @Column(name = "is_revised", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isRevise = false;

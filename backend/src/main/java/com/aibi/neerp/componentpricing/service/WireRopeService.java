@@ -88,8 +88,11 @@ public class WireRopeService {
     private WireRopeResponseDTO mapToResponse(WireRope wr) {
         return WireRopeResponseDTO.builder()
                 .id(wr.getId())
+                .wireRopeTypeId(Integer.valueOf(Encode.forHtml(String.valueOf(wr.getWireRopeType().getId()))))
                 .wireRopeTypeName(Encode.forHtml(wr.getWireRopeType().getWireRopeType()))
+                .operatorElevatorId(wr.getOperatorElevator().getId())
                 .operatorElevatorName(Encode.forHtml(wr.getOperatorElevator().getName()))
+                .floorId(wr.getFloor().getId())
                 .floorName(Encode.forHtml(wr.getFloor().getFloorName()))
                 .wireRopeQty(wr.getWireRopeQty())
                 .price(wr.getPrice())

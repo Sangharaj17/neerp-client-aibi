@@ -19,6 +19,8 @@ public interface AmcJobActivityRepository extends JpaRepository<AmcJobActivity, 
 
 	List<AmcJobActivity> findByJob_JobId(Integer jobId);
 
+    List<AmcJobActivity> findByJobJobId(Integer jobId);
+
   
 }
 

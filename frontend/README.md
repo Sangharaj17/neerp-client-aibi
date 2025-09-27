@@ -1,3 +1,29 @@
+## Tenant migration to clean URLs
+
+Middleware resolves the tenant from the domain (or `?tenant=` in dev), sets a `tenant` cookie, and rewrites internally to `/<tenant>/...`. This allows moving pages out of `app/[tenant]` to clean paths like `/login`, `/dashboard/...` without breaking.
+
+### Migration script
+
+Copy tenant dashboard to clean route and rewrite internal links:
+
+Dry run (plan only):
+
+```bash
+node scripts/migrate-tenant-routes.js
+```
+
+Apply changes:
+
+```bash
+npm run migrate:dashboard
+```
+
+Options:
+
+- `--overwrite` to overwrite existing files when copying
+
+After migration, test `/dashboard/...` routes with different tenants. Once verified, remove `app/[tenant]` and simplify middleware if desired.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 
-export const dynamic = 'force-dynamic';
-
-export default function TenantRoot({ params }) {
+export default function Home({ params }) {
   const { tenant } = params;
-  redirect(`/${tenant}/login`);
+  // Redirect to clean path; middleware rewrites internally to /<tenant>/login
+  redirect(`/login`);
 }
+// testing

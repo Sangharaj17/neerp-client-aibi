@@ -31,28 +31,115 @@ export default function AMCQuotationList() {
     fetchQuotations();
   }, [currentPage, searchTerm, pageSize, sortColumn, sortDirection, refreshKey]);
 
-  const fetchQuotations = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await axiosInstance.get('/api/amc/quotation/initial/search', {
-        params: {
-          search: searchTerm,
-          page: currentPage,
-          size: pageSize,
-          sort: `${sortColumn},${sortDirection}`,
-        },
-      });
-      setQuotations(response.data.content);
-      setTotalPages(response.data.totalPages);
-      setTotalElements(response.data.totalElements);
-    } catch (err) {
-      console.error('Error fetching quotations:', err);
-      setError('Failed to load quotations. Please try again later.');
-    } finally {
-      setLoading(false);
+//   const fetchQuotations = async () => {
+//   try {
+//     setLoading(true);
+//     setError(null);
+
+//     const params = {
+//       search: searchTerm,
+//       page: currentPage,
+//       size: pageSize,
+//       sort: `${sortColumn},${sortDirection}`,
+//     };
+
+//     let dateSearch = "2025-09-24";
+
+//     //dateSearch = null;
+
+//     if (dateSearch) {
+//       params.dateSearch = dateSearch; // send only if user selected a date
+//     }
+
+//     const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+
+//     setQuotations(response.data.content);
+//     setTotalPages(response.data.totalPages);
+//     setTotalElements(response.data.totalElements);
+//   } catch (err) {
+//     console.error('Error fetching quotations:', err);
+//     setError('Failed to load quotations. Please try again later.');
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+const fetchQuotations = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Regex to check if searchTerm is a date in YYYY-MM-DD format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    let dateSearch = "";
+    let textSearch = searchTerm; // separate variable for non-date search
+
+    // If user enters a date, use it as dateSearch
+    if (dateRegex.test(searchTerm)) {
+      dateSearch = searchTerm;
+      textSearch = ""; // clear text search if it's a date
     }
-  };
+
+    const params = {
+      search: textSearch,
+      page: currentPage,
+      size: pageSize,
+      sort: `${sortColumn},${sortDirection}`,
+    };
+
+    if (dateSearch) {
+      params.dateSearch = dateSearch; // include only if date is present
+    }
+
+    const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+
+    setQuotations(response.data.content);
+    setTotalPages(response.data.totalPages);
+    setTotalElements(response.data.totalElements);
+  } catch (err) {
+    console.error('Error fetching quotations:', err);
+    setError('Failed to load quotations. Please try again later.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+// const fetchQuotations = async () => {
+//   try {
+//     setLoading(true);
+//     setError(null);
+
+//     const params = {
+//       search: searchTerm,
+//       page: currentPage,
+//       size: pageSize,
+//       sort: `${sortColumn},${sortDirection}`,
+//     };
+
+//     // Regex to check if the search term is a date in YYYY-MM-DD format
+//     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+//     if (searchTerm && dateRegex.test(searchTerm)) {
+//       params.dateSearch = "2025-09-24"; // treat as date if format matches
+//       params.search = ''; // optionally clear search if it's just a date
+//     }
+
+//     const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+
+//     setQuotations(response.data.content);
+//     setTotalPages(response.data.totalPages);
+//     setTotalElements(response.data.totalElements);
+//   } catch (err) {
+//     console.error('Error fetching quotations:', err);
+//     setError('Failed to load quotations. Please try again later.');
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+
+
+
+  
 
   const handleSearch = (e) => {
     e.preventDefault();

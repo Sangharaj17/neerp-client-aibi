@@ -1,8 +1,11 @@
 package com.aibi.neerp.leadmanagement.service;
 
+import com.aibi.neerp.componentpricing.dto.AdditionalFloorDTO;
+import com.aibi.neerp.componentpricing.entity.AdditionalFloors;
 import com.aibi.neerp.exception.ResourceInUseException;
 import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.leadmanagement.dto.*;
+import com.aibi.neerp.leadmanagement.dto.response.EnquiryResponseDTO;
 import com.aibi.neerp.leadmanagement.entity.*;
 import com.aibi.neerp.leadmanagement.repository.*;
 
@@ -15,6 +18,7 @@ import com.aibi.neerp.materialmanagement.dto.PersonCapacityDto;
 import com.aibi.neerp.materialmanagement.dto.TypeOfLiftDto;
 import com.aibi.neerp.materialmanagement.dto.WeightDto;
 import com.aibi.neerp.componentpricing.repository.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.convert.DtoInstantiatingConverter;
@@ -24,28 +28,49 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class EnquiryService {
 
-    @Autowired private EnquiryRepository enquiryRepository;
-    @Autowired private NewLeadsRepository newLeadsRepository;
-    @Autowired private TypeOfLiftRepository typeOfLiftRepository;
-    @Autowired private OperatorElevatorRepository operatorElevatorRepository;
-    @Autowired private CabinTypeRepository cabinTypeRepository;
-    @Autowired private LiftQuantityRepository liftQuantityRepository;
-    @Autowired private CapacityTypeRepository capacityTypeRepository;
-    @Autowired private PersonCapacityRepository personCapacityRepository;
-    @Autowired private WeightRepository weightRepository;
-    @Autowired private FloorRepository floorRepository;
-    @Autowired private FloorDesignationRepository floorDesignationRepository;
-    @Autowired private MachineRoomRepository machineRoomRepository;
-    @Autowired private ProjectStageRepository projectStageRepository;
-    @Autowired private BuildTypeRepository buildTypeRepository;
-    @Autowired private CombinedEnquiryRepository combinedEnquiryRepository;
-    @Autowired private EnquiryTypeRepository enquiryTypeRepository;
-    @Autowired private BuildingTypeRepository buildingTypeRepository;
+    @Autowired
+    private EnquiryRepository enquiryRepository;
+    @Autowired
+    private NewLeadsRepository newLeadsRepository;
+    @Autowired
+    private TypeOfLiftRepository typeOfLiftRepository;
+    @Autowired
+    private OperatorElevatorRepository operatorElevatorRepository;
+    @Autowired
+    private CabinTypeRepository cabinTypeRepository;
+    @Autowired
+    private LiftQuantityRepository liftQuantityRepository;
+    @Autowired
+    private CapacityTypeRepository capacityTypeRepository;
+    @Autowired
+    private PersonCapacityRepository personCapacityRepository;
+    @Autowired
+    private WeightRepository weightRepository;
+    @Autowired
+    private FloorRepository floorRepository;
+    @Autowired
+    private FloorDesignationRepository floorDesignationRepository;
+    @Autowired
+    private MachineRoomRepository machineRoomRepository;
+    @Autowired
+    private ProjectStageRepository projectStageRepository;
+    @Autowired
+    private BuildTypeRepository buildTypeRepository;
+    @Autowired
+    private CombinedEnquiryRepository combinedEnquiryRepository;
+    @Autowired
+    private EnquiryTypeRepository enquiryTypeRepository;
+    @Autowired
+    private BuildingTypeRepository buildingTypeRepository;
+    @Autowired
+    private AdditionalFloorsRepository additionalFloorsRepository;
 
     public List<EnquiryResponseDto> getAllSingleEnquirys(Integer enquiryTypeId) {
         return enquiryRepository.findByCombinedEnquiryIsNullAndEnquiryType_EnquiryTypeId(enquiryTypeId)
@@ -85,7 +110,6 @@ public class EnquiryService {
     }
 
 
-
     public CombinedEnquiryResponseDto toCombinedEnquiryDto(CombinedEnquiry entity) {
 //        List<EnquiryResponseDto> enquiryDtos = entity.getEnquiries().stream()
 //                .map(this::toDto) // Replace with your own mapping method
@@ -100,27 +124,26 @@ public class EnquiryService {
         dto.setId(entity.getId());
         dto.setLeadId(entity.getLead().getLeadId());
         dto.setProjectName(entity.getProjectName());
+        dto.setSiteName(entity.getSiteName());;
         dto.setEnquiryDate(entity.getCreatedDate());
         // dto.setLeadCompanyName(entity.getLead().getCompanyName());
-        
+
         NewLeads lead = entity.getLead();
-        
+
         String salutations = lead.getSalutations();
         String customerName = lead.getCustomerName();
         String customerSite = lead.getSiteName();
-        
-        String selectLead = salutations+"."+customerName+" For "+customerSite;
-        
+
+        String selectLead = salutations + "." + customerName + " For " + customerSite;
+
         dto.setCustomerName(customerName);
         dto.setCustomerSite(customerSite);
         dto.setSelectLead(selectLead);
-        
+
         dto.setEnquiries(enquiryDtos);
 
         return dto;
     }
-
-
 
 
     public EnquiryResponseDto getById(Integer id) {
@@ -133,7 +156,8 @@ public class EnquiryService {
         Enquiry e = new Enquiry();
         e.setEnqDate(dto.getEnqDate());
         e.setLead(newLeadsRepository.findById(dto.getLeadId()).orElseThrow());
-        e.setEnquiryType(enquiryTypeRepository.findById(dto.getEnquiryTypeId()).orElseThrow());;
+        e.setEnquiryType(enquiryTypeRepository.findById(dto.getEnquiryTypeId()).orElseThrow());
+        ;
         e.setTypeOfLift(typeOfLiftRepository.findById(dto.getTypeOfLiftId()).orElse(null));
         e.setLiftType(operatorElevatorRepository.findById(dto.getLiftTypeId()).orElse(null));
         e.setCabinType(cabinTypeRepository.findById(dto.getCabinTypeId()).orElse(null));
@@ -180,20 +204,33 @@ public class EnquiryService {
         if (dto.getCombinedEnquiryId() != null) {
             e.setCombinedEnquiry(combinedEnquiryRepository.findById(dto.getCombinedEnquiryId()).orElse(null));
         }
+
+        // Handle additional floors
+        if (dto.getFloorSelections() != null && !dto.getFloorSelections().isEmpty()) {
+            Set<AdditionalFloors> floors = dto.getFloorSelections().stream()
+                    .map(code -> additionalFloorsRepository.findByCode(code)
+                            .orElseThrow(() -> new RuntimeException("Invalid floor code: " + code)))
+                    .collect(Collectors.toSet());
+
+            e.setAdditionalFloors(floors);
+        }
+
         return toDto(enquiryRepository.save(e));
     }
 
     public Enquiry toEntity(EnquiryRequestDto dto) {
 
-        System.out.println("165"+dto.getLeadId());
+        System.out.println("165" + dto.getLeadId());
         Enquiry e = new Enquiry();
         e.setEnqDate(dto.getEnqDate());
+        
+        e.setLiftName(dto.getLiftName());;
 
         e.setLead(newLeadsRepository.findById(dto.getLeadId()).orElseThrow());
 
         System.out.println("171");
 
-        if(dto.getFrom()!=null) {
+        if (dto.getFrom() != null) {
             e.setFrom(dto.getFrom());
         }
         //   if(dto.isChecked()!=null) {
@@ -201,12 +238,11 @@ public class EnquiryService {
         //  }
         e.setChecked(dto.getChecked());
 
-        if(dto.getBuildingTypeId()!=null) {
+        if (dto.getBuildingTypeId() != null) {
             BuildingType buildingType = buildingTypeRepository.findById(dto.getBuildingTypeId()).get();
 
             e.setBuildingType(buildingType);
         }
-
 
 
         // System.out.println(dto.getEnquiryTypeId()+" enq id is ");
@@ -223,18 +259,25 @@ public class EnquiryService {
 
         e.setCapacityTerm(capacityTypeRepository.findById(dto.getCapacityTermId()).orElse(null));
 
-        if(dto.getPersonCapacityId()!=null)
+        if (dto.getPersonCapacityId() != null)
             e.setPersonCapacity(personCapacityRepository.findById(dto.getPersonCapacityId()).orElse(null));
 
-        if(dto.getWeightId()!=null)
+        if (dto.getWeightId() != null)
             e.setWeight(weightRepository.findById(dto.getWeightId()).orElse(null));
 
+        if (dto.getFloorSelections() != null && !dto.getFloorSelections().isEmpty()) {
+            Set<AdditionalFloors> floors = dto.getFloorSelections().stream()
+                    .map(code -> additionalFloorsRepository.findByCode(code)
+                            .orElseThrow(() -> new RuntimeException("Invalid floor code: " + code)))
+                    .collect(Collectors.toSet());
+            e.setAdditionalFloors(floors);
+        }
 
 
         e.setNoOfStops(dto.getNoOfStops());
         e.setNoOfOpenings(dto.getNoOfOpenings());
 
-        System.out.println(dto.getNoOfFloorsId()+" floor id");
+        System.out.println(dto.getNoOfFloorsId() + " floor id");
         e.setNoOfFloors(floorRepository.findById(Long.valueOf(dto.getNoOfFloorsId())).orElse(null));
         e.setParkFloor(dto.getParkFloor());
         e.setFloorsDesignation(dto.getFloorsDesignation());
@@ -242,7 +285,7 @@ public class EnquiryService {
         e.setShaftsWidth(dto.getShaftsWidth());
         e.setShaftsDepth(dto.getShaftsDepth());
         e.setProjectRate(dto.getProjectRate());
-        if(dto.getProjectStageId()!=null)
+        if (dto.getProjectStageId() != null)
             e.setProjectStage(projectStageRepository.findById(dto.getProjectStageId()).orElse(null));
 
         e.setBuildType(buildTypeRepository.findById(dto.getBuildTypeId()).orElse(null));
@@ -275,7 +318,7 @@ public class EnquiryService {
         return e;
     }
 
-    public EnquiryResponseDto createSubOrNewCombinedEnquiry(Integer combinedEnquiryId, Integer leadId, EnquiryRequestDto dto , String projectName) {
+    public EnquiryResponseDto createSubOrNewCombinedEnquiry(Integer combinedEnquiryId, Integer leadId, EnquiryRequestDto dto, String projectName) {
         CombinedEnquiry combinedEnquiry = combinedEnquiryRepository.findById(combinedEnquiryId)
                 .orElseGet(() -> {
                     CombinedEnquiry newCombined = new CombinedEnquiry();
@@ -321,9 +364,6 @@ public class EnquiryService {
 //         newCombined.setEnquiries(enquiries);
 //         newCombined = combinedEnquiryRepository.save(newCombined);
 //    }
-
-
-
 
 
     public EnquiryResponseDto updateEnquiry(Integer id, EnquiryRequestDto dto) {
@@ -444,15 +484,13 @@ public class EnquiryService {
     }
 
 
-
     public EnquiryResponseDto toDto(Enquiry e) {
         NewLeads lead = e.getLead();
         NewLeadsResponseDto leadDto = new NewLeadsResponseDto();
         leadDto.setLeadId(lead.getLeadId());
         leadDto.setLeadCompanyName(lead.getLeadCompanyName());
         leadDto.setSiteName(lead.getSiteName());
-
-
+        leadDto.setLeadType(lead.getLeadType());
 
         EnquiryResponseDto dto = new EnquiryResponseDto();
         dto.setEnquiryId(e.getEnquiryId());
@@ -464,7 +502,7 @@ public class EnquiryService {
         dto.setChecked(e.getChecked());
         dto.setFrom(e.getFrom());
 
-        if(e.getEnquiryType() != null) {
+        if (e.getEnquiryType() != null) {
             EnquiryTypeResponseDto enquiryTypeResponseDto = new EnquiryTypeResponseDto();
             enquiryTypeResponseDto.setEnquiryTypeId(e.getEnquiryType().getEnquiryTypeId());
             enquiryTypeResponseDto.setEnquiryTypeName(e.getEnquiryType().getEnquiryTypeName());
@@ -497,7 +535,7 @@ public class EnquiryService {
             CapacityTypeDto d = new CapacityTypeDto();
             d.setId(e.getCapacityTerm().getId());
             d.setCapacityType(e.getCapacityTerm().getType());
-           // d.setTableName(e.getCapacityTerm().getTableName());
+            // d.setTableName(e.getCapacityTerm().getTableName());
             dto.setCapacityTerm(d);
         }
         if (e.getPersonCapacity() != null) {
@@ -585,6 +623,18 @@ public class EnquiryService {
             dto.setBuildType(d);
         }
 
+        List<AdditionalFloorDTO> floors = e.getAdditionalFloors() == null
+                ? new ArrayList<>()
+                : e.getAdditionalFloors()
+                .stream()
+                .map(f -> new AdditionalFloorDTO(f.getId(), f.getCode(), f.getLabel()))
+                .toList();
+
+        dto.setFloorSelections(floors);
+
+        System.out.println("Additional Floors for enquiry --------> "+  floors);
+
+
         return dto;
     }
 
@@ -597,7 +647,46 @@ public class EnquiryService {
     }
 
 
+//    public EnquiryResponseDTO getEnquiryByLeadAndEnquiry(Integer leadId, Integer enquiryId) {
+//        log.info("Fetching enquiry for leadId={} and enquiryId={}", leadId, enquiryId);
+//
+//        Enquiry enquiry = enquiryRepository.findByLead_LeadIdAndCombinedEnquiryId(leadId, enquiryId)
+//                .orElseThrow(() -> new RuntimeException("Enquiry not found for leadId=" + leadId + ", enquiryId=" + enquiryId));
+//
+//        return mapToDTO(enquiry);
+//    }
+
+    public List<EnquiryResponseDto> getEnquiriesByLeadAndEnquiry(Integer leadId, Integer enquiryId) {
+        log.info("Fetching enquiry for leadId={} and enquiryId={}", leadId, enquiryId);
+
+        List<Enquiry> enquiries = enquiryRepository.findByLead_LeadIdAndCombinedEnquiryId(leadId, enquiryId);
+
+        if (enquiries.isEmpty()) {
+            throw new RuntimeException("Enquiry not found for leadId=" + leadId + ", enquiryId=" + enquiryId);
+        }
+
+        return enquiries.stream()
+                .map(this::toDto)
+                .toList();
+    }
 
 
-
+//    private EnquiryResponseDTO mapToDTO(Enquiry enquiry) {
+//        return EnquiryResponseDTO.builder()
+//                .enquiryId(enquiry.getEnquiryId())
+//                .enquiryDate(enquiry.getEnqDate() != null ? enquiry.getEnqDate().toString() : null)
+//                .leadId(enquiry.getLead() != null ? enquiry.getLead().getLeadId() : null)
+//                .leadCompanyName(enquiry.getLead() != null ? enquiry.getLead().getLeadCompanyName() : null)
+//                .liftType(enquiry.getLiftType() != null ? enquiry.getLiftType().getName() : null)
+//                .cabinType(enquiry.getCabinType() != null ? enquiry.getCabinType().getCabinType() : null)
+//                .capacityTerm(enquiry.getCapacityTerm() != null ? enquiry.getCapacityTerm().getType() : null)
+//                .noOfStops(enquiry.getNoOfStops())
+//                .noOfOpenings(enquiry.getNoOfOpenings())
+//                .parkFloor(enquiry.getParkFloor())
+//                .shaftsWidth(enquiry.getShaftsWidth())
+//                .shaftsDepth(enquiry.getShaftsDepth())
+//                .carInternalWidth(enquiry.getCarInternalWidth())
+//                .carInternalDepth(enquiry.getCarInternalDepth())
+//                .build();
+//    }
 }

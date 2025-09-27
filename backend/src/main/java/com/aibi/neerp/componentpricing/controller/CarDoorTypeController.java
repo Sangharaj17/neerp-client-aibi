@@ -55,4 +55,13 @@ public class CarDoorTypeController {
         List<?> list = service.getAll(sortBy);
         return new ApiResponse<>(true, "Fetched all", list);
     }
+
+    // 🔹 Fetch Car Door Types by Lift Type
+    @GetMapping("/searchByLiftType")
+    public ApiResponse<List<?>> getByLiftType(@RequestParam Integer operatorElevatorId) {
+        log.info("API called: Get Car Door Types for LiftType {}", operatorElevatorId);
+        List<?> list = service.getByLiftType(operatorElevatorId);
+        return new ApiResponse<>(true, "Fetched car door types", list);
+    }
+
 }

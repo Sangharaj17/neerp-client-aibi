@@ -51,4 +51,12 @@ public class HarnessController {
         log.info("API called: Delete Harness ID {}", id);
         return ResponseEntity.ok(harnessService.deleteHarness(id));
     }
+
+    @GetMapping("/searchByFloorDesignation")
+    public ResponseEntity<ApiResponse<List<HarnessResponseDTO>>> searchByFloorDesignation(
+            @RequestParam String floorDesignations) {
+        log.info("API called: Search Harness by floorDesignations={}", floorDesignations);
+        return ResponseEntity.ok(harnessService.findByFloorDesignation(floorDesignations));
+    }
+
 }

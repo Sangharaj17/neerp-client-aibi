@@ -39,30 +39,61 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 //		               LOWER(j.paymentTerm) LIKE LOWER(CONCAT('%', :search, '%')))
 //		    """)
 //		    Page<AmcJob> searchAll(@Param("search") String search, Pageable pageable);
-	@Query("""
-	        SELECT DISTINCT j
-	        FROM AmcJob j
-	        LEFT JOIN FETCH j.customer c
-	        LEFT JOIN FETCH j.site s
-	        LEFT JOIN FETCH j.route r
-	        LEFT JOIN FETCH r.employees e
-	        LEFT JOIN FETCH j.amcQuotation q
-	        LEFT JOIN FETCH q.lead l
-	        LEFT JOIN FETCH l.area a
-	       WHERE (:search = '' OR 
-       LOWER(j.contractType) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       CAST(j.startDate AS string) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       CAST(j.endDate AS string) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       CAST(j.jobAmount AS string) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       LOWER(c.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       LOWER(s.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       LOWER(s.siteAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       LOWER(j.paymentTerm) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       LOWER(l.leadCompanyName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-       LOWER(a.areaName) LIKE LOWER(CONCAT('%', :search, '%')))
+//	@Query("""
+//		    SELECT DISTINCT j
+//		    FROM AmcJob j
+//		    LEFT JOIN FETCH j.customer c
+//		    LEFT JOIN FETCH j.site s
+//		    LEFT JOIN FETCH j.route r
+//		    LEFT JOIN FETCH r.employees e
+//		    LEFT JOIN FETCH j.amcQuotation q
+//		    LEFT JOIN FETCH q.lead l
+//		    LEFT JOIN FETCH l.area a
+//		    WHERE (:search = '' OR 
+//		       LOWER(j.contractType) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		       FUNCTION('DATE_FORMAT', j.startDate, '%Y-%m-%d') LIKE CONCAT('%', :search, '%') OR
+//		       FUNCTION('DATE_FORMAT', j.endDate, '%Y-%m-%d') LIKE CONCAT('%', :search, '%') OR
+//		       CAST(j.jobAmount AS string) LIKE CONCAT('%', :search, '%') OR
+//		       LOWER(c.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		       LOWER(s.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		       LOWER(s.siteAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		       LOWER(j.paymentTerm) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		       LOWER(l.leadCompanyName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		       LOWER(a.areaName) LIKE LOWER(CONCAT('%', :search, '%'))
+//		    )
+//		""")
+//		Page<AmcJob> searchAll(@Param("search") String search, Pageable pageable);
 
-	        """)
-	    Page<AmcJob> searchAll(@Param("search") String search, Pageable pageable);
+	@Query("""
+		    SELECT DISTINCT j
+		    FROM AmcJob j
+		    LEFT JOIN j.customer c
+		    LEFT JOIN j.site s
+		    LEFT JOIN j.route r
+		    LEFT JOIN r.employees e
+		    LEFT JOIN j.amcQuotation q
+		    LEFT JOIN q.lead l
+		    LEFT JOIN l.area a
+		    WHERE (:search IS NULL OR :search = '' OR (
+		        LOWER(j.contractType) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		        CAST(j.jobAmount AS string) LIKE CONCAT('%', :search, '%') OR
+		        LOWER(c.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		        LOWER(s.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		        LOWER(s.siteAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		        LOWER(j.paymentTerm) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		        LOWER(l.leadCompanyName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		        LOWER(a.areaName) LIKE LOWER(CONCAT('%', :search, '%'))
+		    ))
+		    AND (:dateSearch IS NULL OR :dateSearch = '' OR j.startDate = CAST(:dateSearch AS date) OR j.endDate = CAST(:dateSearch AS date))
+		""")
+		Page<AmcJob> searchAll(
+		    @Param("search") String search,
+		    @Param("dateSearch") String dateSearch,
+		    Pageable pageable
+		);
+
+
+
 	
 	@Query("""
 		    SELECT j

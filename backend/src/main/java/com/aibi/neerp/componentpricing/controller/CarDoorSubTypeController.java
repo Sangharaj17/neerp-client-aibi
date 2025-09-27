@@ -47,4 +47,12 @@ public class CarDoorSubTypeController {
         log.info("API: Get All CarDoorSubTypes");
         return new ApiResponse<>(true, "Fetched all", service.getAll(sortBy));
     }
+
+    @GetMapping("/searchByCarDoorType")
+    public ApiResponse<?> getByCarDoorType(@RequestParam Integer carDoorTypeId) {
+        log.info("API: Fetch CarDoorSubTypes by CarDoorType ID {}", carDoorTypeId);
+        return new ApiResponse<>(true, "Fetched successfully",
+                service.getByCarDoorType(carDoorTypeId));
+    }
+
 }

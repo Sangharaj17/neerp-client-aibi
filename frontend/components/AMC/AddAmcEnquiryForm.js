@@ -6,10 +6,10 @@ import toast from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 
 export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
+  const API_ADDITIONAL_FLOORS = "/api/additional-floors";
 
   const [typeId, setEnquiryTypeId] = useState(enquiryTypeId);
   const [typeName, setEnquiryTypeName] = useState(enquiryTypeName);
-
   const [enquiryTypes, setEnquiryTypes] = useState([]);
 
   useEffect(() => {
@@ -37,8 +37,8 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
   //const enquiryType =  searchParams.get('enquiryType') || 'AMC'; 
 
-  const floorOptions = ['T', 'G', 'P', 'B1', 'B2'];
-  const floorLabels = { T: 'Terrace', G: 'Ground', P: 'Parking', B1: 'Basement 1', B2: 'Basement 2' };
+  // const floorOptions = ['T', 'G', 'P', 'B1', 'B2'];
+  // const floorLabels = { T: 'Terrace', G: 'Ground', P: 'Parking', B1: 'Basement 1', B2: 'Basement 2' };
   // const personOptions = ['01 Person/240Kg', '02 Persons/360Kg', '04 Persons/480Kg', '06 Persons/720Kg', '08 Persons/960Kg', '10 Persons/1200Kg', '13 Persons/1560Kg', '15 Persons/1800Kg'];
   //const kgOptions = ['100Kg', '150Kg', '200Kg', '250Kg', '300Kg', '400Kg'];
 
@@ -46,6 +46,104 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
   const site = searchParams.get('site') || 'Site';
 
   const [repeatSettings, setRepeatSettings] = useState({});
+  const [floorOptions, setFloorOptions] = useState([]);
+  const [stopsOptions, setStopsOptions] = useState([]);
+  const [openingOptions, setOpeningOptions] = useState([]);
+  const [floorLabels, setFloorLabels] = useState({});
+
+  const [floorOption, setFloorOption] = useState([]);
+  useEffect(() => {
+    const fetchFloors = async () => {
+      try {
+        // Fetch both APIs in parallel
+        const [mainRes, additionalRes] = await Promise.all([
+          axiosInstance.get('/api/floors'),
+          axiosInstance.get(API_ADDITIONAL_FLOORS)
+        ]);
+
+        // Main floors
+        const mainFloors = Array.isArray(mainRes.data.data) ? mainRes.data.data : [];
+        const formattedMainFloors = mainFloors.map(f => ({
+          id: f.id,
+          name: f.floorName || f.id
+        }));
+        setFloorOption(formattedMainFloors);
+
+        // Additional floors
+        const additionalFloors = Array.isArray(additionalRes.data) ? additionalRes.data : [];
+        const additionalFloorCodes = additionalFloors.map(f => f.code);
+        const labels = {};
+        additionalFloors.forEach(f => {
+          labels[f.code] = f.label;
+        });
+        setFloorOptions(additionalFloorCodes);
+        setFloorLabels(labels);
+
+        // Total floors count = main + additional
+        const totalFloorsCount = formattedMainFloors.length + additionalFloorCodes.length;
+
+        // Stops = totalFloors
+        setStopsOptions(Array.from({ length: totalFloorsCount }, (_, i) => i + 1));
+
+        // Openings = 2 * totalFloors
+        setOpeningOptions(Array.from({ length: totalFloorsCount * 2 }, (_, i) => i + 1));
+
+      } catch (err) {
+        console.error("Failed to fetch floors", err);
+      }
+    };
+
+    fetchFloors();
+  }, []);
+  // useEffect(() => {
+  //   axiosInstance.get('/api/floors')
+  //     .then((response) => {
+  //       const formatted = response.data.data.map((floor) => ({
+  //         id: floor.id,
+  //         //name: floor.floorName
+  //         name: floor.id
+  //       }));
+  //       console.log('Formatted floor options:', formatted);
+  //       setFloorOption(formatted);
+
+  //       // 👉 total floors count
+  //       const totalFloors = formatted.length + floorOptions.length; // + additional floors
+  //       console.log(floorOptions);
+
+  //       // Stops = totalFloors
+  //       setStopsOptions(Array.from({ length: totalFloors }, (_, i) => i + 1));
+
+  //       // Openings = 2 * totalFloors
+  //       setOpeningOptions(Array.from({ length: totalFloors * 2 }, (_, i) => i + 1));
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching floor options:', error);
+  //     });
+  // }, []);
+
+  // useEffect(() => {
+  //   const fetchFloors = async () => {
+  //     try {
+  //       const res = await axiosInstance.get(API_ADDITIONAL_FLOORS);
+  //       const floors = Array.isArray(res.data) ? res.data : [];
+
+  //       // Extract codes
+  //       setFloorOptions(floors.map(f => f.code));
+
+  //       // Build label map
+  //       const labels = {};
+  //       floors.forEach(f => {
+  //         labels[f.code] = f.label;
+  //       });
+  //       setFloorLabels(labels);
+  //     } catch (err) {
+  //       console.error("Failed to fetch additional floors", err);
+  //     }
+  //   };
+
+  //   fetchFloors();
+  // }, []);
+
   const [personOptions, setPersonOptions] = useState([]);
 
   useEffect(() => {
@@ -55,7 +153,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
           id: p.id,
           convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
         }));
-       
+
         setPersonOptions(formatted); // Directly set formatted array
       })
       .catch((error) => {
@@ -114,22 +212,6 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       });
   }, []);
 
-  const [floorOption, setFloorOption] = useState([]);
-
-  useEffect(() => {
-    axiosInstance.get('/api/floors')
-      .then((response) => {
-        const formatted = response.data.data.map((floor) => ({
-          id: floor.id,
-          name: floor.floorName
-        }));
-        console.log('Formatted floor options:', formatted);
-        setFloorOption(formatted);
-      })
-      .catch((error) => {
-        console.error('Error fetching floor options:', error);
-      });
-  }, []);
 
   const [elevatorTypeOptions, setElevatorTypeOptions] = useState([]);
 
@@ -243,6 +325,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
   function getEmptyLift() {
     return {
+      liftName: '',
       leadId: id,
       liftUsageType: '',
       liftMechanism: '',
@@ -272,32 +355,34 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     enquiryDate: new Date().toISOString().split('T')[0],
     leadDetail: `${customer} For ${site}`,
     noOfLifts: '1',
+    siteName: site,
     lifts: [getEmptyLift()],
   });
 
   // Add this new useEffect hook to your component
-useEffect(() => {
+  useEffect(() => {
     // Check if options have been loaded and the first lift's capacityType is still empty
     if (capacityTypeOptions.length > 0 && form.lifts[0].capacityType === '') {
-        // Update the form state with the first option's value and ID
-        setForm((prevForm) => {
-            const updatedLifts = [...prevForm.lifts];
-            // Set the default for the first lift
-            updatedLifts[0].capacityType = capacityTypeOptions[0].value;
-            updatedLifts[0].capacityTermId = capacityTypeOptions[0].id;
-            
-            return {
-                ...prevForm,
-                lifts: updatedLifts,
-            };
-        });
+      // Update the form state with the first option's value and ID
+      setForm((prevForm) => {
+        const updatedLifts = [...prevForm.lifts];
+        // Set the default for the first lift
+        updatedLifts[0].capacityType = capacityTypeOptions[0].value;
+        updatedLifts[0].capacityTermId = capacityTypeOptions[0].id;
+
+        return {
+          ...prevForm,
+          lifts: updatedLifts,
+        };
+      });
     }
-}, [capacityTypeOptions]); // This effect runs whenever capacityTypeOptions changes
+  }, [capacityTypeOptions]); // This effect runs whenever capacityTypeOptions changes
 
   const transformLift = (lift, index) => {
     const repeatSetting = repeatSettings[index] || {}; // fallback if missing
     return {
       leadId: lift.leadId,
+      liftName: lift.liftName || `Lift ${index + 1}`,
       enquiryId: lift.enquiryId,
       buildTypeId: lift.liftUsageType,
       typeOfLiftId: lift.liftMechanism,
@@ -324,6 +409,8 @@ useEffect(() => {
     };
   };
 
+
+
   const handleSubmitj = async (event) => {
     event.preventDefault(); // 🛑 Prevent full page reload
 
@@ -331,11 +418,18 @@ useEffect(() => {
     const projectName = "sacwwc";
     const enquiryDate = form.enquiryDate;
 
-    const apiUrl = `/api/combined-enquiry/${leadId}/create-combined-enquiries`;
+    // const apiUrl = `/api/combined-enquiry/${leadId}/create-combined-enquiries`;
 
-    // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${enquiryTypeId}`;
+    // // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${enquiryTypeId}`;
 
-    const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
+    // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
+
+      const siteName = form.siteName; // ✅ Get siteName from form
+
+  const apiUrl = `/api/combined-enquiry/${leadId}/create-combined-enquiries`;
+
+  // Build query string including siteName
+  const query = `?projectName=${encodeURIComponent(projectName)}&siteName=${encodeURIComponent(siteName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
 
 
     // 🔁 transform all lifts before sending
@@ -391,6 +485,63 @@ useEffect(() => {
     setForm((prevForm) => {
       const updatedLifts = [...prevForm.lifts];
       updatedLifts[index][field] = value;
+      const currentLift = updatedLifts[index];
+
+      // // Check if the changed field is 'noOfFloors'
+      // if (field === 'noOfFloors') {
+      //   // Find the floor option object that matches the selected value (ID)
+      //   const selectedFloor = floorOption.find(opt => String(opt.id) === value);
+
+      //   updatedLifts[index].floorsDesignation = selectedFloor?.name || '';
+      // }
+
+      if (field === 'noOfFloors') {
+        const selectedFloor = floorOption.find(opt => String(opt.id) === value);
+
+        if (selectedFloor) {
+          currentLift.noOfStops = selectedFloor.id;
+          //currentLift.noOfOpenings = selectedFloor.id * 2;
+          currentLift.noOfOpenings = selectedFloor.id;
+
+          if (selectedFloor.id === 1) {
+            // For Floor 1, use its own name
+            currentLift.floorsDesignation = selectedFloor.name;
+          } else {
+            // Find the floor option with an ID one less than the selected one
+            const floorOneLess = floorOption.find(opt => opt.id === selectedFloor.id - 1);
+
+            // Use the name of that found option, or default to an empty string
+            currentLift.floorsDesignation = floorOneLess?.name || '';
+          }
+        } else {
+          currentLift.noOfStops = 0;
+          currentLift.noOfOpenings = 0;
+          currentLift.floorsDesignation = '';
+        }
+      }
+
+      // Handle floor selection changes
+      if (field === "floorSelections") {
+        const newSelections = value;
+
+        // Update lift selections
+        currentLift.floorSelections = newSelections;
+
+        const stopNo = (Number(currentLift.noOfFloors) || 0) + newSelections.length;
+        currentLift.noOfStops = stopNo
+        //currentLift.noOfOpenings = Number(currentLift.noOfStops) * 2;
+        currentLift.noOfOpenings = stopNo;
+
+        // console.log("No. of Floors selected:", currentLift.noOfFloors);
+        // console.log("Checkboxes selected:", newSelections.length);
+        // console.log("Total Stops:", currentLift.noOfStops);
+        // console.log("Total Openings:", currentLift.noOfOpenings);
+
+        // Trigger re-render by updating the whole lifts array in state
+        const updatedLifts = [...prevForm.lifts];
+        updatedLifts[index] = { ...currentLift };
+      }
+
 
       const syncDependents = (sourceIndex) => {
         Object.entries(repeatSettings).forEach(([repeatIndexStr, settings]) => {
@@ -522,48 +673,70 @@ useEffect(() => {
 
   return (
     <div className="w-full max-w-7xl bg-white rounded shadow-md">
-      <div className="bg-blue-600 text-white text-center py-2 text-base font-semibold rounded-t-md">Add Lift Requirement</div>
+      <div className="bg-blue-600 text-white text-center py-2 text-base font-semibold rounded-t-md">
+        Add Lift Requirement</div>
 
+ 
       {/* Label + Dropdown horizontally aligned */}
       {/* Parent container as a row without border */}
 
       <div className="inline-flex items-center gap-4 bg-white w-full pt-4 px-4">
 
-        {/* Label + Dropdown */}
-        <div className="flex items-center gap-2">
-          <label
-            htmlFor="enquiryTypeId"
-            className="text-gray-600 text-xs font-medium whitespace-nowrap"
-          >
-            Select Enquiry Type
-          </label>
-          <select
-            id="enquiryTypeId"
-            name="enquiryTypeId"
-            className="border text-sm rounded px-2 py-1"
-            value={typeId || ''}
-            onChange={handleEnquiryTypeChange}
-          >
-            <option value="" disabled>
-              Select
-            </option>
-            {enquiryTypes.map((type) => (
-              <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
-                {type.enquiryTypeName}
-              </option>
-            ))}
-          </select>
-        </div>
+  {/* Label + Dropdown */}
+  <div className="flex items-center gap-2">
+    <label
+      htmlFor="enquiryTypeId"
+      className="text-gray-600 text-xs font-medium whitespace-nowrap"
+    >
+      Select Enquiry Type
+    </label>
+    <select
+      id="enquiryTypeId"
+      name="enquiryTypeId"
+      className="border text-sm rounded px-2 py-1"
+      value={typeId || ''}
+      onChange={handleEnquiryTypeChange}
+    >
+      <option value="" disabled>
+        Select
+      </option>
+      {enquiryTypes.map((type) => (
+        <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
+          {type.enquiryTypeName}
+        </option>
+      ))}
+    </select>
+  </div>
 
-        {/* Floors info shifted right */}
-        <div className="flex text-xs text-gray-700 gap-3 ml-auto">
-          {floorOptions.map((floor) => (
-            <span key={floor}>
-              {floor} = {floorLabels[floor]}
-            </span>
-          ))}
-        </div>
-      </div>
+  {/* Site Name Input */}
+  <div className="flex items-center gap-2">
+    <label
+      htmlFor="siteName"
+      className="text-gray-600 text-xs font-medium whitespace-nowrap"
+    >
+      Site Name
+    </label>
+    <input
+      type="text"
+      id="siteName"
+      name="siteName"
+      value={form.siteName}
+      onChange={handleChange}
+      placeholder="Enter site name"
+      className="border text-sm rounded px-2 py-1"
+    />
+  </div>
+
+  {/* Floors info shifted right */}
+  <div className="flex text-xs text-gray-700 gap-3 ml-auto">
+    {floorOptions.map((floor) => (
+      <span key={floor}>
+        {floor} = {floorLabels[floor]}
+      </span>
+    ))}
+  </div>
+</div>
+
 
 
 
@@ -589,7 +762,24 @@ useEffect(() => {
         </div>
         {form.lifts.map((lift, index) => (
           <div key={index} className="border p-3 rounded my-3 bg-gray-50">
-            <SectionTitle title={`Lift ${index + 1} Details`} />
+
+            {/* <SectionTitle title={`Lift ${index + 1} Details`} /> */}
+
+         <div className="text-lg mb-3 flex items-center gap-2">
+  <input
+    type="text"
+    className="border-b border-gray-300 focus:outline-none text-lg"
+    value={lift.liftName || `Lift ${index + 1}`}
+    onChange={(e) => {
+      const newLifts = [...form.lifts];
+      newLifts[index].liftName = e.target.value;
+      setForm({ ...form, lifts: newLifts });
+    }}
+  />
+  <span>Details</span> {/* Fixed keyword */}
+</div>
+
+
             {index > 0 && (
               <div className="flex items-center gap-2 mb-2">
                 <input type="checkbox" checked={repeatSettings[index]?.checked || false} onChange={(e) => handleRepeatChange(index, 'checked', e.target.checked)} title="Check to enable repeat functionality." />
@@ -742,7 +932,7 @@ useEffect(() => {
 
               <Select
                 label="No. of Floors *"
-                value={String(lift.noOfFloors)} // lift.noOfFloors should store selected floor `id`
+                value={String(lift.noOfFloors || "")} // lift.noOfFloors should store selected floor `id`
                 onChange={(e) => {
                   handleLiftChange(index, 'noOfFloors', e.target.value);
                   //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
@@ -750,41 +940,74 @@ useEffect(() => {
                 }
               >
                 <option value="">Please Select</option>
-                {floorOption.map((opt) => (
-                  <option key={opt.id} value={String(opt.id)}>
-                    {opt.name}
+                {floorOption.map((opt, idx) => (
+                  <option key={opt.id} value={idx + 1}>
+                    {/* {opt.name} */}
+                    {/* {idx + 1} - {opt.name} */}
+                    {idx + 1}
                   </option>
                 ))}
               </Select>
 
               <div>
                 <label className="block text-gray-700 text-sm mb-1">Floor Designation</label>
-                <input type="text" value={lift.noOfFloors ? `G + ${lift.noOfFloors - 1}` : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                {/* <input type="text" value={lift.noOfFloors ? `G + ${lift.noOfFloors - 1}` : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" /> */}
+                <input type="text" value={lift.floorsDesignation} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
                 <div className="flex flex-wrap gap-4 mt-2">
                   {floorOptions.map((floor) => (
                     <label key={floor} className="text-gray-700 text-sm flex items-center gap-1">
-                      <input type="checkbox" value={floor} checked={lift.floorSelections.includes(floor)} onChange={(e) => {
-                        const checked = e.target.checked;
-                        const updated = checked ? [...lift.floorSelections, floor] : lift.floorSelections.filter((f) => f !== floor);
-                        handleLiftChange(index, 'floorSelections', updated);
-                      }} className="text-blue-500" />
+                      <input type="checkbox"
+                        value={floor}
+                        checked={lift.floorSelections.includes(floor)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          const updated = checked ? [...lift.floorSelections, floor] : lift.floorSelections.filter((f) => f !== floor);
+                          handleLiftChange(index, 'floorSelections', updated);
+                        }}
+                        className="text-blue-500" />
                       {floor}
                     </label>
                   ))}
                 </div>
               </div>
-              <div>
-                <label className="block text-gray-700 text-sm mb-1">No. of Stops *</label>
-                <input type="text" value={lift.noOfFloors ? lift.noOfFloors : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
 
+              {/* <div>
+                <label className="block text-gray-700 text-sm mb-1">No. of Stops *</label>
+                <input type="text" value={lift.noOfStops ? lift.noOfStops : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
               </div>
 
               <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Openings *</label>
-                <input type="text" value={lift.noOfFloors ? lift.noOfFloors : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                <input type="text" value={lift.noOfOpenings ? lift.noOfOpenings : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+              </div> */}
 
-              </div>
+              {/* No. of Stops */}
+              <Select
+                label="No. of Stops *"
+                value={String(lift.noOfStops || "")}
+                onChange={(e) => handleLiftChange(index, "noOfStops", Number(e.target.value))}
+              >
+                <option value="">Please Select</option>
+                {stopsOptions.map((opt) => (
+                  <option key={opt} value={String(opt)}>
+                    {opt}
+                  </option>
+                ))}
+              </Select>
 
+              {/* No. of Openings */}
+              <Select
+                label="No. of Openings *"
+                value={String(lift.noOfOpenings || "")}
+                onChange={(e) => handleLiftChange(index, "noOfOpenings", Number(e.target.value))}
+              >
+                <option value="">Please Select</option>
+                {openingOptions.map((opt) => (
+                  <option key={opt} value={String(opt)}>
+                    {opt}
+                  </option>
+                ))}
+              </Select>
 
               {typeName === 'New Installation' && (
                 <>

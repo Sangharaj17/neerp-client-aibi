@@ -18,6 +18,7 @@ public class NewLeadsResponseDto {
     private EmployeeDto activityBy;
     private LeadSourceDto leadSource;
     private String leadType;
+    private Integer leadTypeId;
     private String leadCompanyName;
     private String salutations;
     private String salutations2;

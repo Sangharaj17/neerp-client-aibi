@@ -216,7 +216,7 @@ const [jobDetailsData, setJobDetailsData] = useState(null);
       jobType: "AMC",
       startDate: jobDetailsData ? jobDetailsData.startDate : "",
       endDate: "",
-      noOfServices: 0,
+      noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
       jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
       amountWithGst: 0,
       amountWithoutGst: 0,
@@ -598,7 +598,8 @@ const [jobDetailsData, setJobDetailsData] = useState(null);
       >
         {/* Gradient Header */}
         <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-t-2xl flex items-center px-5 text-white font-bold text-lg">
-          Lift {index + 1}
+          {/* Lift {index + 1} */}
+          {lift.liftName || `Lift ${index + 1}`}
         </div>
 
         <div className="mt-14 grid grid-cols-2 gap-4">

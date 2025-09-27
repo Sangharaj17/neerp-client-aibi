@@ -64,4 +64,21 @@ public class CabinSubTypeController {
         List<CabinSubTypeResponseDTO> list = service.getByCabinTypeId(cabinTypeId);
         return ResponseEntity.ok(new ApiResponse<>(true, "Cabin SubTypes for Cabin Type fetched successfully", list));
     }
+
+    @GetMapping("/searchByCabinTypeAndCapacity")
+    public ResponseEntity<ApiResponse<List<CabinSubTypeResponseDTO>>> searchByCabinTypeAndCapacity(
+            @RequestParam Integer cabinType,
+            @RequestParam Integer capacityTypeId,
+            @RequestParam Integer capacityValueId) {
+
+        log.info("API request: searchByCabinTypeAndCapacity cabinType={}, capacityTypeId={}, capacityValueId={}",
+                cabinType, capacityTypeId, capacityValueId);
+
+        List<CabinSubTypeResponseDTO> list = service.searchByCabinTypeAndCapacity(cabinType, capacityTypeId, capacityValueId);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Cabin SubTypes fetched successfully for given criteria", list)
+        );
+    }
+
 }

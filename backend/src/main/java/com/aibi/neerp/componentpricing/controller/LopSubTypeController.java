@@ -43,4 +43,17 @@ public class LopSubTypeController {
         lopService.deleteLopSubType(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "LopSubType deleted successfully", null));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<LopSubTypeResponseDTO>>> search(
+            @RequestParam(required = false) Integer operatorTypeId,
+            @RequestParam(required = false) Integer floorId
+    ) {
+        log.info("API: Search LopSubTypes with operatorTypeId={}, floorId={}", operatorTypeId, floorId);
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Search results fetched successfully",
+                        lopService.searchLopSubTypes(operatorTypeId, floorId))
+        );
+    }
+
 }

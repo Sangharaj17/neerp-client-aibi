@@ -213,6 +213,7 @@ export default function ViewEnquiryClientPage() {
            customerSite: combined.customerSite,
            selectLead: combined.selectLead,
            leadId: combined.leadId,
+           siteName: combined.siteName,
 
           entries: combined.enquiries.map((entry) => ({
             id: entry.enquiryId,
@@ -387,6 +388,12 @@ export default function ViewEnquiryClientPage() {
                       ? `Created At: ${new Date(group.createdDate).toLocaleDateString()}`
                       : ""}
                   </span>
+                   <span className="ml-4 text-sm text-gray-500">
+                    {/* Format date (optional) */}
+                    {group.siteName
+                      ? `Site Name: ${group.siteName}`
+                      : ""}
+                  </span>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -469,7 +476,10 @@ export default function ViewEnquiryClientPage() {
                     setQuotationLoadingId(groupIndex);
                     console.log(quotationLoadingId)
 
+                  //  alert("You are in " + selectedCategory + " category");
+
                      if(selectedCategory == "AMC"){
+
                       console.log("AMC Quotation group-->"+JSON.stringify(group));
                           localStorage.setItem('combinedEnquiry', JSON.stringify(group));
                          router.push(
@@ -477,6 +487,8 @@ export default function ViewEnquiryClientPage() {
                             searchParams.get('customer')
                           )}&site=${encodeURIComponent(searchParams.get('site'))}`
                         );
+                     }else if(selectedCategory == "New Installation"){
+                        handleNavigateToQuotation(group.combinedId)
                      }else{
 
                         router.push(

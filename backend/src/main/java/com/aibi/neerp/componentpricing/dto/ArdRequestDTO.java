@@ -22,4 +22,8 @@ public class ArdRequestDTO {
 
     private Integer personCapacityId;
     private Integer weightId;
+
+    @NotNull(message = "Operator Type ID is required")
+    private Integer operatorElevatorId;
+
 }

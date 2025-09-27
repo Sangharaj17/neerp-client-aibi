@@ -122,6 +122,26 @@ public class AirService {
                 .stream().map(this::toAirSystemDTO).collect(Collectors.toList());
     }
 
+    public AirSystemResponseDTO getAirSystemPrice(AirSystemRequestDTO dto) {
+        log.info("Looking up price for AirSystem with AirTypeId={}, CapacityTypeId={}",
+                dto.getAirTypeId(), dto.getCapacityTypeId());
+
+        AirSystem airSystem = airSystemRepo.findByAirType_IdAndCapacityType_IdAndPersonCapacity_IdOrWeight_Id(
+                dto.getAirTypeId(),
+                dto.getCapacityTypeId(),
+                dto.getPersonId(),
+                dto.getWeightId()
+        ).orElseThrow(() -> new ResourceNotFoundException("No matching AirSystem price found"));
+
+        System.out.println("Looking up price for AirSystem with AirTypeId={}, CapacityTypeId={}"+
+                dto.getAirTypeId()+"---"+ dto.getCapacityTypeId()+"--person--"+dto.getPersonId()+"--weight---"+
+                dto.getWeightId());
+        System.out.println(toAirSystemDTO(airSystem));
+
+        return toAirSystemDTO(airSystem);
+    }
+
+
     // ----------------- Helper Methods -----------------
     private void sanitize(AirTypeRequestDTO dto) {
         if (dto.getName() != null) dto.setName(dto.getName().trim());

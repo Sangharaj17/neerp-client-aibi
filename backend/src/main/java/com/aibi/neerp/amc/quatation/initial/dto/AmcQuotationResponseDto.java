@@ -16,8 +16,8 @@ public class AmcQuotationResponseDto {
     private String employeeName;
     private String place;
     private String makeOfElevator;
-    private String quatationDate;
-    private String forecastMonth;
+    private LocalDate quatationDate;
+    private LocalDate forecastMonth;
     private String amcPeriod;
     private Integer isFinal;
     private String edition;

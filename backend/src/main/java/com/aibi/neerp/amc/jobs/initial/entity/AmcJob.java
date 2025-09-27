@@ -1,6 +1,9 @@
 package com.aibi.neerp.amc.jobs.initial.entity;
 
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
 import com.aibi.neerp.customer.entity.Customer;
@@ -84,13 +87,13 @@ public class AmcJob {
 
     // Dates as Strings
     @Column(name = "start_date", nullable = false)
-    private String startDate;
+    private LocalDate startDate;
 
     @Column(name = "end_date", nullable = false)
-    private String endDate;
+    private LocalDate endDate;
 
-    @Column(name = "deal_date", nullable = false)
-    private String dealDate;
+    @Column(name = "deal_date")
+    private LocalDate dealDate;
 
     @Column(name = "no_of_services", nullable = false)
     private Integer noOfServices;
@@ -135,9 +138,20 @@ public class AmcJob {
     private Integer noOfLiftsCurrentServiceCompletedCount;
     
     @Column(name = "lastActivityDate")
-    private String lastActivityDate;
+    private LocalDate lastActivityDate;
     
     @Column(name = "currentServiceStatus")
     private String currentServiceStatus;
+    
+    
+    @Column(name = "received_amount")
+    private BigDecimal receivedAmount;
+
+    @Column(name = "balance_amount")
+    private BigDecimal balanceAmount;
+
+    @Column(name = "pending_service_count")
+    private Integer pendingServiceCount;
+    
 }
 

@@ -32,6 +32,7 @@ import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -141,6 +142,11 @@ public class AmcJobsService {
         if (amcQuotation.getSite() != null) {
             addJobDetailsData.setCustomerSite(amcQuotation.getSite().getSiteName());
         }
+        
+        addJobDetailsData.setNoOfServices(amcQuotation.getNumberOfService().getValue());
+        
+        //addJobDetailsData.setMailId(amcQuotation!=null ? amcQuotation.getLead().getEmailId():"");
+
 
         // ✅ Contract Type & Job Amount
         String contractType = amcQuotation.getTypeContract();
@@ -189,6 +195,10 @@ public class AmcJobsService {
         if (revisedAmcQuotation.getSite() != null) {
             addJobDetailsData.setCustomerSite(revisedAmcQuotation.getSite().getSiteName());
         }
+        
+        addJobDetailsData.setNoOfServices(revisedAmcQuotation.getNumberOfService().getValue());
+
+       // addJobDetailsData.setMailId(revisedAmcQuotation!=null ? revisedAmcQuotation.getLead().getEmailId():"");
 
         // ✅ Contract Type & Job Amount
         String contractType = revisedAmcQuotation.getTypeContract();
@@ -235,6 +245,9 @@ public class AmcJobsService {
                 
                 liftData.setEnquiryId(enquiry.getEnquiryId());
                // liftData.setLiftName(enquiry.getlif);
+                
+                liftData.setLiftName(enquiry.getLiftName());
+
 
                 String capacity = null;
                 if (enquiry.getPersonCapacity() != null) {
@@ -299,11 +312,16 @@ public class AmcJobsService {
             Integer noOfLifts = amcQuotation.getNoOfElevator();
             job.setNoOfElevator(noOfLifts);
             
+            job.setNoOfLifsServiceNeedToCompleteCount(noOfLifts);
+            job.setNoOfLiftsCurrentServiceCompletedCount(0);
+            job.setCurrentServiceNumber(1);
+            job.setCurrentServiceStatus("Pending");            
+            
             job.setContractType(amcQuotation.getTypeContract());
             
             job.setStartDate(amcQuotation.getFromDate());
             job.setEndDate(amcQuotation.getToDate());
-            ;
+            
             customer = amcQuotation.getCustomer();
             site = amcQuotation.getSite();
         }
@@ -367,14 +385,16 @@ public class AmcJobsService {
         job.setRenewlStatus(dto.getRenewlStatus());
         job.setContractType(dto.getContractType());
         job.setMakeOfElevator(dto.getMakeOfElevator());
-        job.setNoOfElevator(dto.getNoOfElevator());
+      //  job.setNoOfElevator(dto.getNoOfElevator());
         job.setJobNo(dto.getJobNo());
         job.setCustomerGstNo(dto.getCustomerGstNo());
         job.setJobType(dto.getJobType());
-        job.setStartDate(dto.getStartDate());
-        job.setEndDate(dto.getEndDate());
+       // job.setStartDate(dto.getStartDate());
+       // job.setEndDate(dto.getEndDate());
         job.setNoOfServices(dto.getNoOfServices());
+        job.setPendingServiceCount(dto.getNoOfServices());
         job.setJobAmount(dto.getJobAmount());
+        job.setBalanceAmount(new BigDecimal(dto.getJobAmount()));
         job.setAmountWithGst(dto.getAmountWithGst());
         job.setAmountWithoutGst(dto.getAmountWithoutGst());
         job.setPaymentTerm(dto.getPaymentTerm());
@@ -391,16 +411,38 @@ public class AmcJobsService {
         log.info("AMC Job saved successfully for leadId: {}", dto.getLeadId());
     }
     
-    public Page<AmcJobResponseDto> getAllJobs(String search, int page, int size, String sortBy, String direction) {
+//    public Page<AmcJobResponseDto> getAllJobs(String search, int page, int size, String sortBy, String direction) {
+//        Sort sort = direction.equalsIgnoreCase("desc")
+//                ? Sort.by(sortBy).descending()
+//                : Sort.by(sortBy).ascending();
+//
+//        Pageable pageable = PageRequest.of(page, size, sort);
+//
+//        // Pass empty string if search is blank
+//        return amcJobRepository.searchAll(search == null ? "" : search, pageable)
+//                .map(this::convertToDto);
+//    }
+    
+    public Page<AmcJobResponseDto> getAllJobs(String search, LocalDate dateSearch, int page, int size, String sortBy, String direction) {
+        log.info("Fetching AMC Jobs with search='{}', date='{}', page={}, size={}, sortBy={}, direction={}", 
+                 search, dateSearch, page, size, sortBy, direction);
+
         Sort sort = direction.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Pass empty string if search is blank
-        return amcJobRepository.searchAll(search == null ? "" : search, pageable)
-                .map(this::convertToDto);
+        // Convert LocalDate to String for repository query
+        String dateSearchStr = dateSearch != null ? dateSearch.toString() : null;
+
+        Page<AmcJob> results = amcJobRepository.searchAll(
+                search == null ? "" : search,
+                dateSearchStr,
+                pageable
+        );
+
+        return results.map(this::convertToDto);
     }
 
 

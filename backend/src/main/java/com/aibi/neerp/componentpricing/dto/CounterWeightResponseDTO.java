@@ -8,9 +8,10 @@ import lombok.Data;
 public class CounterWeightResponseDTO {
 
     private Integer id;
-    private String counterFrameName;
-    private String typeOfLiftName;
-    private String counterFrameTypeName;
+    private String counterWeightName;
+    private Integer counterWeightTypeId;
+    private String counterWeightTypeName;
+    private Integer floorId;
     private String floorName;
     private Integer price;
 }

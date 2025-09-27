@@ -108,6 +108,22 @@ public class CopService {
         return new ApiResponse<>(true, "COP deleted successfully", null);
     }
 
+    @Transactional(readOnly = true)
+    public List<CopResponseDTO> search(Integer operatorTypeId, Integer floorId) {
+        log.info("Searching COPs... operatorTypeId={}, floorId={}", operatorTypeId, floorId);
+
+        return copRepository.findAll().stream()
+                .filter(cop -> operatorTypeId == null ||
+                        (cop.getOperatorType() != null &&
+                                cop.getOperatorType().getId().equals(operatorTypeId)))
+                .filter(cop -> floorId == null ||
+                        (cop.getFloor() != null &&
+                                cop.getFloor().getId().equals(floorId)))
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
     private String sanitize(String input) {
         return input == null ? null : input.trim().replaceAll("\\s{2,}", " ");
     }
@@ -118,7 +134,9 @@ public class CopService {
                 cop.getCopName(),
                 cop.getPrice(),
                 cop.getCopType(),
+                cop.getFloor() != null ? cop.getFloor().getId() : null,
                 cop.getFloor() != null ? cop.getFloor().getFloorName() : null,
+                cop.getOperatorType() != null ? cop.getOperatorType().getId() : null,
                 cop.getOperatorType() != null ? cop.getOperatorType().getName() : null
         );
     }

@@ -131,4 +131,14 @@ public class CarDoorTypeService {
         }
         dto.setCarDoorType(dto.getCarDoorType().replaceAll("[^\\w\\s-]", "").trim());
     }
+
+    public List<CarDoorTypeResponseDTO> getByLiftType(Integer operatorElevatorId) {
+        log.info("Fetching Car Door Types for OperatorElevator ID {}", operatorElevatorId);
+
+        return carDoorTypeRepo.findByOperatorElevator_Id(operatorElevatorId)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
 }

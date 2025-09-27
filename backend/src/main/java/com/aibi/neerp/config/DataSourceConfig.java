@@ -2,6 +2,7 @@ package com.aibi.neerp.config;
 
 import com.aibi.neerp.client.dto.Client;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
@@ -16,6 +17,15 @@ public class DataSourceConfig {
 
     private final Map<Object, Object> dataSources = new ConcurrentHashMap<>();
     private DynamicRoutingDataSource routingDataSource;
+
+    @Value("${spring.datasource.url}")
+    private String defaultJdbcUrl;
+
+    @Value("${spring.datasource.username}")
+    private String defaultUsername;
+
+    @Value("${spring.datasource.password}")
+    private String defaultPassword;
 
     @Bean
     public AbstractRoutingDataSource dataSourceBean() {
@@ -76,13 +86,10 @@ public class DataSourceConfig {
 
     private DataSource buildDummyDataSource() {
         HikariDataSource ds = new HikariDataSource();
-//        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/dummy");
-//        ds.setUsername("dummy");
-//        ds.setPassword("dummy");
-
-        ds.setJdbcUrl("jdbc:postgresql://localhost:5432/db2");
-        ds.setUsername("postgres");
-        ds.setPassword("uday");
+        // Read the default datasource from application.properties
+        ds.setJdbcUrl(defaultJdbcUrl);
+        ds.setUsername(defaultUsername);
+        ds.setPassword(defaultPassword);
 
         ds.setDriverClassName("org.postgresql.Driver");
         return ds;

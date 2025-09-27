@@ -245,35 +245,45 @@ public class AmcQuotationService {
         }
     }
 
-    private String joinAmcStartAndEndDate(String startDate, String endDate) {
+    private String joinAmcStartAndEndDate(LocalDate startDate, LocalDate endDate) {
         if (startDate == null && endDate == null) {
             return null;
         }
 
-        return startDate+" to "+endDate;
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        if (startDate != null && endDate != null) {
+            return startDate.format(formatter) + " to " + endDate.format(formatter);
+        } else if (startDate != null) {
+            return startDate.format(formatter); // only start date available
+        } else { // endDate != null
+            return endDate.format(formatter); // only end date available
+        }
     }
 
-    public Page<AmcQuotationResponseDto> searchAmcQuotations(String search, Pageable pageable) {
-        log.info("Searching AMC Quotations with search='{}', date='{}', pageable={}", search,  pageable);
+    public Page<AmcQuotationResponseDto> searchAmcQuotations(String search, LocalDate dateSearch, Pageable pageable) {
+        log.info("Searching AMC Quotations with search='{}', date='{}', pageable={}", search, dateSearch, pageable);
 
-        Page<AmcQuotation> results = repository.searchAll(search, pageable);
+        // Convert LocalDate to String for the query parameter
+        String dateSearchStr = dateSearch != null ? dateSearch.toString() : null;
+        
+        Page<AmcQuotation> results = repository.searchAll(search, dateSearchStr, pageable);
 
         return results.map(q -> AmcQuotationResponseDto.builder()
                 .id(q.getAmcQuatationId())
                 .customerName(q.getLead() != null ? q.getLead().getCustomerName() : null)
-                .siteName(q.getLead() != null ? q.getLead().getSiteName() : null)
+                .siteName(q.getCombinedEnquiry() != null ? q.getCombinedEnquiry().getSiteName() : null) // Fixed: use q.getSite() instead of q.getLead().getSiteName()
                 .employeeName(q.getCreatedBy() != null ? q.getCreatedBy().getEmployeeName() : null)
-                .place(q.getLead().getArea().getAreaName())
+                .place(q.getLead() != null && q.getLead().getArea() != null ? q.getLead().getArea().getAreaName() : null) // Added null check
                 .makeOfElevator(q.getMakeOfElevator() != null ? q.getMakeOfElevator().getName() : null)
                 .quatationDate(q.getQuatationDate())
                 .forecastMonth(q.getForecastMonth())
-                .amcPeriod(joinAmcStartAndEndDate(q.getFromDate(),q.getToDate()))
+                .amcPeriod(joinAmcStartAndEndDate(q.getFromDate(), q.getToDate()))
                 .isFinal(q.getIsFinal())
                 .isRevised(q.getIsRevise())
                 .build()
         );
     }
-    
     
     
     
@@ -558,18 +568,25 @@ public class AmcQuotationService {
             amcQuotation.setCustomer(customer);
             repository.save(amcQuotation);
          }
-
+        
+        String siteName= "";
+        
+        CombinedEnquiry combinedEnquiry = amcQuotation.getCombinedEnquiry();
+        
+        if(combinedEnquiry!=null ) {
+        	siteName = combinedEnquiry.getSiteName();
+        }
         // ✅ 5. Check if Site with Same Name Exists for This Customer
         boolean siteExists = siteRepository.existsByCustomer_CustomerIdAndSiteNameIgnoreCase(
                 customer.getCustomerId(),
-                lead.getSiteName()
+                siteName
         );
 
         if (!siteExists) {
             Site newSite = Site.builder()
                     .customer(customer)
-                    .siteName(lead.getSiteName())
-                    .siteAddress(lead.getSiteAddress()) // map correct field
+                    .siteName(siteName)
+                    //.siteAddress(lead.getSiteAddress()) // map correct field
                     .status("ACTIVE")
                     .build();
 

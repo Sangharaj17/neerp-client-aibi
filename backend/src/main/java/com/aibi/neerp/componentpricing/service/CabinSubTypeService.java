@@ -136,6 +136,38 @@ public class CabinSubTypeService {
                 .collect(Collectors.toList());
     }
 
+    public List<CabinSubTypeResponseDTO> searchByCabinTypeAndCapacity(Integer cabinTypeId, Integer capacityTypeId, Integer capacityValueId) {
+        log.info("Searching Cabin SubTypes by cabinTypeId={}, capacityTypeId={}, capacityValueId={}",
+                cabinTypeId, capacityTypeId, capacityValueId);
+
+        CabinType cabinType = cabinTypeRepository.findById(cabinTypeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cabin Type not found"));
+        CapacityType capacityType = capacityTypeRepository.findById(capacityTypeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Capacity Type not found"));
+
+        List<CabinSubType> results;
+
+        if ("Person".equalsIgnoreCase(capacityType.getType())) {
+            results = subTypeRepository.findByCabinTypeAndCapacityTypeAndPersonCapacity_Id(
+                    cabinType, capacityType, capacityValueId);
+        } else if ("Weight".equalsIgnoreCase(capacityType.getType())) {
+            results = subTypeRepository.findByCabinTypeAndCapacityTypeAndWeight_Id(
+                    cabinType, capacityType, capacityValueId);
+        } else {
+            throw new ResourceNotFoundException("Unsupported capacity type: " + capacityType.getType());
+        }
+
+        if (results.isEmpty()) {
+            log.warn("No Cabin SubTypes found for cabinTypeId={}, capacityTypeId={}, capacityValueId={}",
+                    cabinTypeId, capacityTypeId, capacityValueId);
+        }
+
+        return results.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
     private CabinSubTypeResponseDTO mapToResponseDTO(CabinSubType subType) {
         CabinSubTypeResponseDTO dto = new CabinSubTypeResponseDTO();
         dto.setId(subType.getId());
@@ -161,7 +193,7 @@ public class CabinSubTypeService {
         if (subType.getWeight() != null) {
             Weight w = subType.getWeight();
             dto.setWeightDTO(new WeightResponseDTO(
-                    w.getId(), w.getUnit().getId(), w.getWeightValue(), cap.getId()
+                    w.getId(), w.getUnit().getId(), w.getWeightValue(), cap.getId(), w.getUnit().getUnitName(), w.getWeightValue() +" "+w.getUnit().getUnitName()
             ));
         }
 

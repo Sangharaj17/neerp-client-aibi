@@ -10,9 +10,11 @@ import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,15 +56,28 @@ public class AmcJobsController {
         return ResponseEntity.ok("AMC Job saved successfully");
     }
     
+//    @GetMapping("/getAllJobs")
+//    public Page<AmcJobResponseDto> getAllJobs(
+//            @RequestParam(defaultValue = "") String search,
+//            @RequestParam(defaultValue = "0") int page,
+//            @RequestParam(defaultValue = "10") int size,
+//            @RequestParam(defaultValue = "jobId") String sortBy,
+//            @RequestParam(defaultValue = "asc") String direction
+//    ) {
+//        return amcJobsService.getAllJobs(search, page, size, sortBy, direction);
+//    }
+    
     @GetMapping("/getAllJobs")
     public Page<AmcJobResponseDto> getAllJobs(
-            @RequestParam(defaultValue = "") String search,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateSearch,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "jobId") String sortBy,
             @RequestParam(defaultValue = "asc") String direction
     ) {
-        return amcJobsService.getAllJobs(search, page, size, sortBy, direction);
+        log.info("Request received to fetch AMC Jobs with search='{}', date='{}'", search, dateSearch);
+        return amcJobsService.getAllJobs(search, dateSearch, page, size, sortBy, direction);
     }
     
     @GetMapping("/getAllActiveJobs")

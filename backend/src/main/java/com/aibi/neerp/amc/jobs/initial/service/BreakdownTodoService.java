@@ -86,7 +86,7 @@ public class BreakdownTodoService {
                 .time(dto.getTime())
                 .venue(dto.getVenue())
               //  .jobActivityType(jobActivityType)
-                .status(dto.getStatus())
+                .status(1)
                 .complaintName(dto.getComplaintName())
                 .complaintMob(dto.getComplaintMob())
                 .build();

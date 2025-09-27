@@ -7,7 +7,7 @@ import PreviewModal from "@/app/[tenant]/dashboard/lead-management/enquiries/[id
 import PreviewAllModal from "@/app/[tenant]/dashboard/lead-management/enquiries/[id]/quotation/add/PreviewAllModal";
 import { toast } from "react-hot-toast";
 //import { jwtDecode } from "jwt-decode";
-import { getFilteredLeads } from "@/services/leadsApi";
+import { getFilteredLeads, getLeadById, getEnquiryByLeadAndEnquiry } from "@/services/leadsApi";
 
 export default function QuotationAddPage() {
   const { id, tenant } = useParams();
@@ -29,6 +29,7 @@ export default function QuotationAddPage() {
   const [customer, setCustomer] = useState("");
   const [site, setSite] = useState("");
   const [combinedEnquiryId, setCombinedEnquiryId] = useState(0);
+  const [lifts, setLifts] = useState([]);
 
   const lead_Id = id;
 
@@ -54,36 +55,91 @@ export default function QuotationAddPage() {
     }
   }, [router]);
 
-  console.log("Quotation Payload:", payload);
+  // console.log("Quotation Payload:", payload);
 
+
+  // useEffect(() => {
+  //   const fetchLeads = async () => {
+  //     try {
+  //       const data = await getFilteredLeads();
+
+  //       //console.log("Fetched Leads:", data);
+
+  //       if (data && data.length > 0) {
+  //         setLeads(data); 
+
+  //         const targetLead = data.find((l) => l.leadId === Number(lead_Id));
+
+  //         if (targetLead) {
+  //           setLead(targetLead.leadId); 
+  //         }
+  //       }
+  //       //console.log("************888888",data);
+  //     } catch (err) {
+  //       console.error("Failed to load leads:", err);
+  //     }
+  //   };
+
+  //   fetchLeads();
+  // }, []);
 
   useEffect(() => {
-    const fetchLeads = async () => {
+    const fetchLead = async () => {
       try {
-        const data = await getFilteredLeads();
-
-        if (data && data.length > 0) {
-          setLeads(data); 
-
-          const targetLead = data.find(lead => lead.leadId === lead_Id); 
-          if (targetLead) {
-            setLead(targetLead); 
-          }
-        }
-        //console.log("************888888",data);
+        if (!lead_Id) return;
+        const leadData = await getLeadById(lead_Id);
+        console.log(leadData.leadId, "Lead Data:", leadData);
+        setLeads(leadData ? [leadData] : []);
+        setLead(leadData.leadId);
       } catch (err) {
-        console.error("Failed to load leads:", err);
+        console.error("Failed to load lead:", err);
       }
     };
 
-    fetchLeads();
+    fetchLead();
   }, []);
 
-  const [lifts, setLifts] = useState([
-    { id: 1, saved: false, fullyFilled: false },
-    { id: 2, saved: false, fullyFilled: false },
-    { id: 3, saved: false, fullyFilled: false },
-  ]);
+
+  useEffect(() => {
+    const fetchEnquiry = async () => {
+      try {
+        if (!lead_Id || !combinedEnquiryId) return;
+
+        const enquiries = await getEnquiryByLeadAndEnquiry(lead_Id, combinedEnquiryId);
+
+        console.log("Enquiry Data:", enquiries);
+
+        if (!enquiries || enquiries.length === 0) {
+          toast.error("Enquiry data not found for the given Lead and Enquiry ID.");
+          return;
+        }
+
+        // 🔹 Store the full enquiry object in lifts with extra UI flags
+        const mappedLifts = enquiries.map((enquiry) => ({
+          ...enquiry,              // keep the full backend response
+          // saved: enquiry.checked || false,
+          // fullyFilled: enquiry.checked || false,
+          saved: false,
+          fullyFilled: false,
+          data: null,              // to hold form data entered in modal
+          fieldLabels: null,      // to hold any custom field labels used          
+        }));
+
+        setLifts(mappedLifts);
+      } catch (err) {
+        console.error("Failed to load enquiry:", err);
+      }
+    };
+
+    fetchEnquiry();
+  }, [lead_Id, combinedEnquiryId]);
+
+
+  // const [lifts, setLifts] = useState([
+  //   { id: 1, saved: false, fullyFilled: false },
+  //   { id: 2, saved: false, fullyFilled: false },
+  //   { id: 3, saved: false, fullyFilled: false },
+  // ]);
 
   const [repeatSettings, setRepeatSettings] = useState(
     lifts.map((_, i) => ({
@@ -106,9 +162,9 @@ export default function QuotationAddPage() {
 
   const openPreview = (lift) => {
     if (lift.data) {
-      // setPreviewData({ id: lift.id, data: lift.data });
+      // setPreviewData({ id: lift.enquiryId, data: lift.data });
       setPreviewData({
-        id: lift.id,
+        id: lift.enquiryId,
         data: formData,
         fieldLabels: { ...fieldLabels }, // pass a clone
       });
@@ -131,7 +187,7 @@ export default function QuotationAddPage() {
 
     setLifts((prev) =>
       prev.map((l) =>
-        l.id === liftId
+        l.enquiryId === liftId
           ? { ...l, saved: true, fullyFilled: isValid, data, fieldLabels }
           : l
       )
@@ -150,12 +206,12 @@ export default function QuotationAddPage() {
       customer: searchParams.get("customer"),
       site: searchParams.get("site"),
       lifts: lifts.map((lift) => ({
-        liftId: lift.id,
+        liftId: lift.enquiryId,
         ...lift.data,
       })),
     };
 
-    console.log("Quotation Payload:", quotationPayload);
+    // console.log("Quotation Payload:", quotationPayload);
 
     // You can now POST this to your backend
     // fetch(`/api/quotation/save`, {
@@ -183,12 +239,12 @@ export default function QuotationAddPage() {
 
   const handleRepeat = (liftIndex) => {
     const fromLiftNumber = Number(repeatSettings[liftIndex].from);
-    if (!fromLiftNumber || fromLiftNumber >= lifts[liftIndex].id) {
+    if (!fromLiftNumber || fromLiftNumber >= lifts[liftIndex].enquiryId) {
       toast.error("Please select a valid lift number less than current lift.");
       return;
     }
     // Find the lift to copy from
-    const fromLift = lifts.find((l) => l.id === fromLiftNumber);
+    const fromLift = lifts.find((l) => l.enquiryId === fromLiftNumber);
     if (!fromLift || !fromLift.data) {
       toast.error(`Lift ${fromLiftNumber} has no data to copy.`);
       return;
@@ -196,7 +252,7 @@ export default function QuotationAddPage() {
     // Copy data from fromLift to current lift
     setLifts((prev) =>
       prev.map((lift) =>
-        lift.id === lifts[liftIndex].id
+        lift.enquiryId === lifts[liftIndex].enquiryId
           ? {
             ...lift,
             data: { ...fromLift.data },
@@ -210,13 +266,15 @@ export default function QuotationAddPage() {
       )
     );
     toast.success(
-      `Specification repeated from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].id}.`
+      `Specification repeated from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}.`
     );
   };
 
   return (
     <div className="p-6">
-      <h2 className="text-3xl font-bold mb-6 text-left">Add Quotation</h2>
+      <h2 className="text-3xl font-bold mb-6 text-left">Add Quotation {payload?.enquiryTypeName && (
+        <span>[{payload.enquiryTypeName}]</span>
+      )}</h2>
 
       <div className="max-w-md mx-auto bg-white shadow-md rounded-lg p-6 border border-gray-200">
         <h3 className="text-xl font-semibold text-center text-blue-600 mb-4">
@@ -291,15 +349,15 @@ export default function QuotationAddPage() {
         </div>
       </div>
 
-      <div className="my-6 space-y-3">
+      {/* <div className="my-6 space-y-3">
         {lifts.map((lift, index) => (
           <div
-            key={lift.id}
+            key={lift.enquiryId}
             className="border rounded p-2 flex justify-between items-center bg-white shadow-md w-3/4 mx-auto hover:shadow-lg transition-all"
           >
             <div className="flex items-center space-x-2">
               <span className="font-semibold text-lg text-gray-700">
-                Lift {lift.id}
+                Lift {index + 1} (Enquiry ID: {lift.enquiryId})
               </span>
               <span
                 className={`text-sm px-2 py-1 rounded-full ${lift.fullyFilled
@@ -310,13 +368,13 @@ export default function QuotationAddPage() {
                 {lift.fullyFilled ? "✅ Fully Saved" : "⚠️ Not Fully Filled"}
               </span>
             </div>
-            {lift.id !== 1 && (
+            {index !== 0 && (
               <div className="mb-2 flex items-center space-x-2">
                 <span className="font-semibold text-sm">
                   Repeat specification of Lift
                 </span>
                 <select
-                  disabled={lifts[index].id === 1} // Disable for first lift (id=1)
+                  disabled={lifts[index].enquiryId === 1} // Disable for first lift (id=1)
                   value={repeatSettings[index]?.from || ""}
                   onChange={(e) =>
                     handleRepeatChange(index, "from", e.target.value)
@@ -326,10 +384,10 @@ export default function QuotationAddPage() {
                 >
                   <option value="">Select</option>
                   {lifts
-                    .filter((l) => l.id < lifts[index].id)
+                    .filter((l) => l.enquiryId < lifts[index].enquiryId)
                     .map((previousLift) => (
-                      <option key={previousLift.id} value={previousLift.id}>
-                        {previousLift.id}
+                      <option key={previousLift.enquiryId} value={previousLift.enquiryId}>
+                        {previousLift.enquiryId}
                       </option>
                     ))}
                 </select>
@@ -366,7 +424,7 @@ export default function QuotationAddPage() {
                   console.log("Lift Preview Data:", lift);
                   console.log("Field Labels:", lift.fieldLabels);
                   setPreviewData({
-                    id: lift.id,
+                    id: lift.enquiryId,
                     data: lift.data,
                     fieldLabels: lift.fieldLabels || {}, // ✅ important
                   });
@@ -377,7 +435,106 @@ export default function QuotationAddPage() {
             </div>
           </div>
         ))}
+      </div> */}
+
+      <div className="my-6 space-y-3">
+        {lifts.map((lift, index) => (
+          <div
+            key={lift.enquiryId}
+            className="border rounded p-3 bg-white shadow-md w-full lg:w-3/4 mx-auto hover:shadow-lg transition-all"
+          >
+            {/* Outer flex wrapper → stack on mobile & md, row only on lg+ */}
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+
+              {/* Title + Status */}
+              <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2">
+                <span className="font-semibold text-lg text-gray-700">
+                  Lift {index + 1} (Enquiry ID: {lift.enquiryId})
+                </span>
+                <span
+                  className={`text-sm mt-1 lg:mt-0 px-2 py-1 rounded-full ${lift.fullyFilled
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                    }`}
+                >
+                  {lift.fullyFilled ? "✅ Fully Saved" : "⚠️ Not Fully Filled"}
+                </span>
+              </div>
+
+              {/* Repeat section (full-width until lg) */}
+              {index !== 0 && (
+                <div className="flex flex-col lg:flex-row lg:items-center gap-2 w-full lg:w-auto">
+                  <span className="font-semibold text-sm">
+                    Repeat specification of Lift
+                  </span>
+
+                  <select
+                    value={repeatSettings[index]?.from || ""}
+                    onChange={(e) =>
+                      handleRepeatChange(index, "from", e.target.value)
+                    }
+                    className="border rounded px-2 py-1 text-sm w-full lg:w-32 bg-white cursor-pointer"
+                  >
+                    <option value="">Select</option>
+                    {lifts
+                      .filter((l) => l.enquiryId < lifts[index].enquiryId)
+                      .map((previousLift) => (
+                        <option
+                          key={previousLift.enquiryId}
+                          value={previousLift.enquiryId}
+                        >
+                          Lift {previousLift.enquiryId}
+                        </option>
+                      ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRepeat(index)}
+                    disabled={!repeatSettings[index]?.checked}
+                    className={`px-3 py-1 rounded text-sm w-full lg:w-auto ${repeatSettings[index]?.checked
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                      }`}
+                  >
+                    Repeat
+                  </button>
+                </div>
+              )}
+
+              {/* Action Buttons (stack until lg, row on lg+) */}
+              <div className="flex flex-row gap-2 w-full lg:w-auto">
+                <button
+                  onClick={() => openModal(lift)}
+                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 w-full lg:w-auto"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => {
+                    if (!lift.data) {
+                      toast.error("Please fill quotation details first!");
+                      return;
+                    }
+                    setPreviewData({
+                      id: lift.enquiryId,
+                      data: lift.data,
+                      fieldLabels: lift.fieldLabels || {},
+                    });
+                  }}
+                  className="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded w-full lg:w-auto"
+                >
+                  👁️
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+
+
+
+
 
       <div className="flex justify-between items-center space-x-4 mt-6 max-w-7xl mx-auto px-4">
         <div className="text-lg font-semibold text-gray-700">

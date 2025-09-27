@@ -14,4 +14,10 @@ public class ControlPanelTypeResponseDTO {
     private String personCapacityName;
     private String weightName;
     private Integer price;
+
+    private Integer machineTypeId;
+    private Integer operatorTypeId;
+    private Integer capacityTypeId;
+    private Integer personCapacityId;
+    private Integer weightId;
 }

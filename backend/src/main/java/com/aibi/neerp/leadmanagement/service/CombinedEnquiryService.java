@@ -150,7 +150,7 @@ public class CombinedEnquiryService {
 
     @Transactional
     public void createCombinedEnquiries(Integer leadId, List<EnquiryRequestDto> dtos,
-            String projectName, Integer enquiryTypeId , LocalDate enquiryDate) {
+            String projectName, Integer enquiryTypeId , LocalDate enquiryDate ,String siteName) {
 
 			CombinedEnquiry newCombined = new CombinedEnquiry();
 			
@@ -159,6 +159,8 @@ public class CombinedEnquiryService {
 			.orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
 			newCombined.setLead(lead);
 			newCombined.setProjectName(projectName);
+			
+			newCombined.setSiteName(siteName);
 			
 			EnquiryType enquiryType = enquiryTypeRepository.findById(enquiryTypeId)
 			.orElseThrow(() -> new ResourceNotFoundException("EnquiryType not found with id: " + enquiryTypeId));

@@ -22,6 +22,8 @@ public class CombinedEnquiryResponseDto {
  
     private String projectName; // ✅ Added plain string field
     
+    private String siteName;
+    
     private LocalDate enquiryDate;
     
     

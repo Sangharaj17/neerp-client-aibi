@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, ChevronDown, LogOut, Settings, UserCircle } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
+import { getTenant } from '@/utils/tenant';
 import { toast } from 'react-hot-toast';
 import axiosInstance from "@/utils/axiosInstance";
 import axiosAdmin from '@/utils/axiosAdmin';
@@ -13,7 +14,8 @@ const Topbar = () => {
 
 
   const router = useRouter();
-  const { tenant } = useParams();
+  const { tenant: tenantFromParams } = useParams();
+  const tenant = tenantFromParams || getTenant();
   const [username, setUsername] = useState('');
   const [userEmail, setUserEmail] = useState('');
   //const [clientname, setClientname] = useState('');
@@ -177,7 +179,8 @@ const Topbar = () => {
           : "Logged out successfully";
 
       toast.success(customMessage || message);
-      router.push(`/${tenant}/login`);
+      // Redirect to clean path; middleware resolves tenant
+      router.push(`/login`);
     } catch (error) {
       console.error("Logout failed:", error);
 

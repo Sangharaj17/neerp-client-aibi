@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.quatation.initial.dto;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -14,13 +15,13 @@ public class AmcQuotationViewResponseDto {
     // --- Main Quotation Details ---
 	private Integer revisedAmcQuatationId;
     private Integer amcQuatationId;
-    private String quatationDate;
+    private LocalDate quatationDate;
     private String typeContract;
     private String makeOfElevator;
     private String paymentTerm;
     private Integer noOfServices;
-    private String fromDate;
-    private String toDate;
+    private LocalDate fromDate;
+    private LocalDate toDate;
 
     // --- Non-Comprehensive/Semi/Comp amounts ---
     private BigDecimal amountOrdinary;

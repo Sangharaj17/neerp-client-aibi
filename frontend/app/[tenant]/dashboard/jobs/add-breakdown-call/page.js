@@ -1,13 +1,16 @@
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 
 import BreakdownTodoForm from "@/components/Jobs/BreakdownTodoForm";
+
+export const dynamic = 'force-dynamic';
 export default function AddNewJobsPage() {
 
   return (
     <div className="w-full h-screen">
-      {/* Pass id as prop */}
-      <BreakdownTodoForm  />
+      <Suspense fallback={<div className="p-4">Loading...</div>}>
+        <BreakdownTodoForm />
+      </Suspense>
     </div>
   );
 }

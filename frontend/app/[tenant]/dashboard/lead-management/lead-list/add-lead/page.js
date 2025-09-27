@@ -90,6 +90,15 @@ export default function AddLeadPage() {
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+    if(e.target.name === 'companyName'){
+       setFormData((prev) => ({ ...prev, ['siteName']: e.target.value }));
+    }
+
+    if(e.target.name === 'companyAddress'){
+        setFormData((prev) => ({ ...prev, ['siteAddress']: e.target.value }));
+    }
+
   };
 
   const handleSubmit = async (e) => {

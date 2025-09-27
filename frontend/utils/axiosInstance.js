@@ -10,7 +10,23 @@ const axiosInstance = axios.create({
 // 🔹 Attach tenant before every request
 axiosInstance.interceptors.request.use(
   (config) => {
-    const tenant = localStorage.getItem("tenant");
+    let tenant = undefined;
+    try {
+      tenant = localStorage.getItem("tenant");
+    } catch (_) {
+      // ignore if not available (SSR)
+    }
+
+    if (typeof location !== 'undefined' && location.hostname === 'localhost') {
+      // On localhost, always prefer full host with port (e.g., localhost:3000)
+      tenant = location.port ? `localhost:${location.port}` : 'localhost';
+    } else if (!tenant && typeof document !== 'undefined') {
+      // Fallback to cookie set by middleware
+      const match = document.cookie.match(/(?:^|; )tenant=([^;]+)/);
+      if (match) {
+        tenant = decodeURIComponent(match[1]);
+      }
+    }
     if (tenant) {
       config.headers["X-Tenant"] = tenant;
     }

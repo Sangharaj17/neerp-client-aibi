@@ -48,4 +48,24 @@ public class OtherMaterialController {
         log.warn("API Request: Delete OtherMaterial id={}", id);
         return service.delete(id);
     }
+
+    @GetMapping("/searchByLiftyType_Operator_Capacity")
+    public ApiResponse<List<OtherMaterialResponseDTO>> searchByCriteria(
+            @RequestParam Integer operatorId,
+            @RequestParam Integer capacityTypeId,
+            @RequestParam Integer capacityValueId,
+            @RequestParam Integer typeOfLift) {
+
+        log.info("API Request: Search OtherMaterial by operatorId={}, capacityTypeId={}, capacityValueId={}, typeOfLift={}",
+                operatorId, capacityTypeId, capacityValueId, typeOfLift);
+
+        List<OtherMaterialResponseDTO> results =
+                service.searchByLiftTypeAndCapacity(operatorId, capacityTypeId, capacityValueId, typeOfLift);
+
+        if (results.isEmpty()) {
+            return new ApiResponse<>(false, "No material found for given criteria", null);
+        }
+        return new ApiResponse<>(true, "Fetched other material for "+operatorId+" - "+capacityTypeId+" - "+capacityValueId+" - "+typeOfLift +"  successfully", results);
+    }
+
 }

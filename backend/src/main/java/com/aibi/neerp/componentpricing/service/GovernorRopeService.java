@@ -95,6 +95,40 @@ public class GovernorRopeService {
         governorRopeRepository.delete(rope);
     }
 
+    public List<GovernorRopeResponseDTO> findByFloor(int floorId) {
+        log.info("Fetching GovernorRopes for floor with ID: {}", floorId);
+
+        Floor floor = floorRepository.findById(Long.valueOf(floorId))
+                .orElseThrow(() -> {
+                    log.error("Floor not found with ID {}", floorId);
+                    return new ResourceNotFoundException("Floor not found");
+                });
+
+        List<GovernorRope> ropes = governorRopeRepository.findByFloor(floor);
+        return ropes.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<GovernorRopeResponseDTO> searchByFloorDesignation(String floorDesignation) {
+        log.info("Searching GovernorRopes for floorDesignation={}", floorDesignation);
+
+        List<GovernorRope> ropes = governorRopeRepository.findByFloor_FloorNameIgnoreCase(floorDesignation.trim());
+        System.out.println(floorDesignation.trim()+"----ropes------"+ropes);
+
+        if (ropes.isEmpty()) {
+            log.warn("No GovernorRopes found for floorDesignation={}", floorDesignation);
+            return List.of();
+        }
+
+        return ropes.stream()
+                .map(this::mapToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+
+
     private GovernorRopeResponseDTO mapToResponseDTO(GovernorRope rope) {
         return GovernorRopeResponseDTO.builder()
                 .id(rope.getId())

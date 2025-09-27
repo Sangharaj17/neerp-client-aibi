@@ -7,6 +7,7 @@ import com.aibi.neerp.componentpricing.dto.AirTypeRequestDTO;
 import com.aibi.neerp.componentpricing.dto.AirTypeResponseDTO;
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
 import com.aibi.neerp.componentpricing.service.AirService;
+import com.aibi.neerp.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,4 +77,23 @@ public class AirController {
         return ResponseEntity.ok(new ApiResponse<>(true, "AirSystems fetched successfully",
                 airService.getAllAirSystems()));
     }
+
+    @PostMapping("/air-system/price")
+    public ResponseEntity<ApiResponse<AirSystemResponseDTO>> getAirSystemPrice(
+            @Valid @RequestBody AirSystemRequestDTO dto) {
+
+        log.info("Fetching AirSystem price for AirTypeId={}, CapacityTypeId={}, CapacityValueId={}",
+                dto.getAirTypeId(), dto.getCapacityTypeId(),
+                dto.getPersonId() != null ? dto.getPersonId() : dto.getWeightId());
+
+        try {
+            AirSystemResponseDTO response = airService.getAirSystemPrice(dto);
+            return ResponseEntity.ok(new ApiResponse<>(true, "AirSystem price fetched successfully", response));
+        } catch (ResourceNotFoundException ex) {
+            // return 200 OK with success=false instead of throwing 404
+            return ResponseEntity.ok(new ApiResponse<>(false, "No matching AirSystem price found", null));
+        }
+    }
+
+
 }

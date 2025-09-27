@@ -15,6 +15,7 @@ import java.time.format.DateTimeParseException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Sort;            // <- needed
@@ -69,12 +70,12 @@ public class AmcQuotationController {
 
     // ================= GET ALL =================
     @GetMapping("/search")
-    public ResponseEntity<Page<AmcQuotationResponseDto>> searchAmcQuotations(
-            @RequestParam(required = false) String search,
-            Pageable pageable) {  // dynamic sorting comes from here
-
-        Page<AmcQuotationResponseDto> result = service.searchAmcQuotations(search, pageable);
-        return ResponseEntity.ok(result);
+    public Page<AmcQuotationResponseDto> searchAmcQuotations(
+        @RequestParam(required = false) String search,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateSearch,
+        Pageable pageable) {
+        
+        return service.searchAmcQuotations(search, dateSearch, pageable);
     }
     
     @GetMapping("/getQuotationByIdForEdit/{id}")

@@ -9,4 +9,10 @@ public interface ArdRepository extends JpaRepository <Ard, Integer>{
     List<Ard> findAllByOrderByArdDeviceAsc();
 
     List<Ard> findAllByOrderByIdAsc();
+
+    List<Ard> findByOperatorElevator_IdAndCapacityType_Id(Integer operatorId, Integer capacityTypeId);
+
+    List<Ard> findByOperatorElevator_IdAndCapacityType_IdAndPersonCapacity_Id(Integer operatorId, Integer capacityTypeId, Integer personCapacityId);
+
+    List<Ard> findByOperatorElevator_IdAndCapacityType_IdAndWeight_Id(Integer operatorId, Integer capacityTypeId, Integer weightId);
 }

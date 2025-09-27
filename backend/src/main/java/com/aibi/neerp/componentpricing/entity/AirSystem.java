@@ -6,7 +6,15 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "tbl_air_system")
+@Table(
+        name = "tbl_air_system",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_air_system_combination",
+                        columnNames = {"air_type_id", "capacity_type", "person_capacity_id", "weight_id"}
+                )
+        }
+)
 @Getter
 @Setter
 public class AirSystem {

@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.quatation.initial.dto;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -13,7 +14,7 @@ public class EditQuotationResponseDto {
 
     private Integer amcQuatationId;
     private Integer revisedQuatationId;
-    private String quatationDate;
+    private LocalDate quatationDate;
     private Integer leadId;
     private Integer combinedEnquiryId;
     private Integer enquiryId;
@@ -23,8 +24,8 @@ public class EditQuotationResponseDto {
 
     private Integer noOfElevator;
     private String typeOfElevator;
-    private String fromDate;
-    private String toDate;
+    private LocalDate fromDate;
+    private LocalDate toDate;
 
     private BigDecimal isFinalOrdinary;
     private BigDecimal isFinalSemiComp;
@@ -45,7 +46,7 @@ public class EditQuotationResponseDto {
     private BigDecimal gstPercentage;
     private Integer isFinal;
     private Integer jobStatus;
-    private String forecastMonth;
+    private LocalDate forecastMonth;
 
     private String customerName;
     private String selectLead;

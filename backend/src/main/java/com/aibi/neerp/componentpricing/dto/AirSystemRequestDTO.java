@@ -17,7 +17,7 @@ public class AirSystemRequestDTO {
     private Integer personId; // Optional if weight is used
     private Integer weightId;         // Optional if person capacity is used
 
-    @NotNull(message = "Price is required")
+    //@NotNull(message = "Price is required")
     private Integer price;
 
     @NotNull(message = "Air Type is required")

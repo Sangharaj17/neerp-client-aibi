@@ -49,4 +49,17 @@ public class ArdController {
         log.info("API Call: Delete ARD ID {}", id);
         return ResponseEntity.ok(ardService.deleteArd(id));
     }
+
+    @GetMapping("/searchByOperatorAndCapacity")
+    public ResponseEntity<ApiResponse<List<ArdResponseDTO>>> searchByOperatorAndCapacity(
+            @RequestParam Integer operatorId,
+            @RequestParam Integer capacityTypeId,
+            @RequestParam Integer capacityValueId
+    ) {
+        log.info("API Call: Search ARDs by operatorId={}, capacityTypeId={}, capacityValueId={}", operatorId, capacityTypeId, capacityValueId);
+        return ResponseEntity.ok(ardService.findByOperatorTypeAndCapacityValue(operatorId, capacityTypeId, capacityValueId));
+    }
+
+
+
 }

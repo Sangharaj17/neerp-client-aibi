@@ -25,7 +25,7 @@ public class Site {
     @Column(name = "site_name", nullable = false, length = 255)
     private String siteName;
 
-    @Column(name = "site_address", nullable = false, length = 255)
+    @Column(name = "site_address", nullable = true, length = 255)
     private String siteAddress;
 
     @Column(name = "status", length = 250)

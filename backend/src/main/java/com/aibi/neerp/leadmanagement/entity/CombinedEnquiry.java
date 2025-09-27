@@ -31,6 +31,10 @@ public class CombinedEnquiry {
     @Column(name = "project_name", length = 255)
     private String projectName; // ✅ Added plain string field
     
+    @Column(name = "site_name", length = 255)
+    private String siteName; // ✅ Added plain string field
+   
+    
     @Column(name = "created_date", nullable = true)
     private LocalDate createdDate;
     

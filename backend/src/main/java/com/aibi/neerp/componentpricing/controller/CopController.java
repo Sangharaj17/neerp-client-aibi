@@ -46,4 +46,15 @@ public class CopController {
         log.info("Request received: Delete COP id={}", id);
         return ResponseEntity.ok(copService.delete(id));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<CopResponseDTO>>> searchCops(
+            @RequestParam(required = false) Integer operatorTypeId,
+            @RequestParam(required = false) Integer floorId) {
+
+        log.info("Request received: Search COPs with operatorTypeId={}, floorId={}", operatorTypeId, floorId);
+        List<CopResponseDTO> result = copService.search(operatorTypeId, floorId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "COP search successful", result));
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.aibi.neerp.amc.quatation.initial.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -179,7 +180,7 @@ public class AmcQuotationRevisedService {
                 .toList();
     }
     
-    private String joinAmcStartAndEndDate(String startDate, String endDate) {
+    private String joinAmcStartAndEndDate(LocalDate startDate, LocalDate endDate) {
         if (startDate == null && endDate == null) {
             return null;
         }

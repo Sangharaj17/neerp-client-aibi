@@ -5,7 +5,22 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
-@Table(name = "tbl_other_material")
+@Table(
+        name = "tbl_other_material",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_other_material_combination",
+                        columnNames = {
+                                "operator_type",
+                                "material_type",
+                                "capacity_type",
+                                "person_capacity_id",
+                                "weight_id",
+                                "machine_room_id"
+                        }
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

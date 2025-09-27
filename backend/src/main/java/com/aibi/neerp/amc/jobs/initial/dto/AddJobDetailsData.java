@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -18,8 +19,12 @@ public class AddJobDetailsData {
     private String customer;
     private String customerSite;
     private long jobNo;
-    private String startDate;
+    private LocalDate startDate;
     private String paymentTerm;
+    
+    private Integer noOfServices;
+    
+   
 
     
     private List<LiftData> liftDatas;

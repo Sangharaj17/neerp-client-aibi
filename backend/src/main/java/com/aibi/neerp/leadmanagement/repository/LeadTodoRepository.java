@@ -40,6 +40,29 @@ public interface LeadTodoRepository extends JpaRepository<LeadTodo, Integer> {
 
 
 	List<LeadTodo> findByLead_LeadId(Integer leadId);
+	
+	
+	 @Query("""
+		        SELECT t FROM LeadTodo t
+		        WHERE (:search IS NULL OR :search = '' OR 
+		              LOWER(t.purpose) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		              LOWER(t.venue) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		              LOWER(t.lead.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
+		          AND t.todoDate >= CURRENT_DATE
+		        """)
+		    Page<LeadTodo> searchTodos(String search, Pageable pageable);
+	 
+	 @Query("""
+			    SELECT t FROM LeadTodo t
+			    WHERE (:search IS NULL OR :search = '' OR 
+			          LOWER(t.purpose) LIKE LOWER(CONCAT('%', :search, '%')) OR
+			          LOWER(t.venue) LIKE LOWER(CONCAT('%', :search, '%')) OR
+			          LOWER(t.lead.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
+			      AND t.todoDate < CURRENT_DATE
+			      AND t.activity IS EMPTY
+			    """)
+			Page<LeadTodo> searchMissedTodosWithoutActivity(String search, Pageable pageable);
+
 
 
 }

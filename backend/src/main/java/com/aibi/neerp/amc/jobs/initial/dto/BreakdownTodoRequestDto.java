@@ -3,6 +3,7 @@ package com.aibi.neerp.amc.jobs.initial.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -14,7 +15,7 @@ public class BreakdownTodoRequestDto {
 //    private Integer customerSiteId;
     private Integer userId;
     private String purpose;
-    private String todoDate;
+    private LocalDate todoDate;
     private String time;
     private String venue;
     private Long jobActivityTypeId;

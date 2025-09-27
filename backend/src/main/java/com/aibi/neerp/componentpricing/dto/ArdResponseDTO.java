@@ -19,4 +19,8 @@ public class ArdResponseDTO {
     private Integer weightId;
     private String weightName;
 
+    private Integer operatorElevatorId;
+    private String operatorElevatorName;
+
+
 }

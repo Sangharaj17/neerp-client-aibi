@@ -54,4 +54,29 @@ public class GovernorRopeController {
         governorRopeService.deleteGovernorRope(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Governor rope deleted successfully", null));
     }
+
+    @GetMapping("/byFloor/{floorId}")
+    public ResponseEntity<ApiResponse<List<GovernorRopeResponseDTO>>> getGovernorRopesByFloor(@PathVariable int floorId) {
+        List<GovernorRopeResponseDTO> ropes = governorRopeService.findByFloor(floorId);
+        if (ropes.isEmpty()) {
+            return ResponseEntity.ok(new ApiResponse<>(true, "No governor ropes found for the specified floor", ropes));
+        }
+        return ResponseEntity.ok(new ApiResponse<>(true, "Governor ropes fetched successfully", ropes));
+    }
+
+    @GetMapping("/searchByFloorDesignation")
+    public ResponseEntity<ApiResponse<List<GovernorRopeResponseDTO>>> searchByFloorDesignation(
+            @RequestParam String floorDesignations) {
+        List<GovernorRopeResponseDTO> list = governorRopeService.searchByFloorDesignation(floorDesignations);
+
+        if (list.isEmpty()) {
+            return ResponseEntity.ok(new ApiResponse<>(true,
+                    "No governor rope found for " + floorDesignations, list));
+        }
+
+        return ResponseEntity.ok(new ApiResponse<>(true,
+                "Governor ropes fetched successfully for floor " + floorDesignations, list));
+    }
+
+
 }

@@ -71,6 +71,14 @@ public class EnquiryController {
         enquiryService.delete(id);
         return ResponseEntity.ok("Enquiry deleted successfully.");
     }
-    
-    
+
+    @GetMapping("/{leadId}/{enquiryId}")
+    public ResponseEntity<List<EnquiryResponseDto>> getEnquiriesByLeadAndEnquiry(
+            @PathVariable Integer leadId,
+            @PathVariable Integer enquiryId) {
+
+        List<EnquiryResponseDto> responses = enquiryService.getEnquiriesByLeadAndEnquiry(leadId, enquiryId);
+        return ResponseEntity.ok(responses);
+    }
+
 }

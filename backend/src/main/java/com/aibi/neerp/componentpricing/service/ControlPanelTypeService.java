@@ -118,6 +118,38 @@ public class ControlPanelTypeService {
         return new ApiResponse<>(true, "Control panel type deleted successfully", null);
     }
 
+
+    public ApiResponse<List<ControlPanelTypeResponseDTO>> search(Integer operatorTypeId,
+                                                                 Integer capacityTypeId,
+                                                                 Integer machineTypeId,
+                                                                 Integer capacityValue) {
+        log.info("Searching ControlPanelTypes...");
+
+        List<ControlPanelType> filtered = controlPanelTypeRepository.findAll().stream()
+                .filter(cp -> operatorTypeId == null || (cp.getOperatorType() != null && cp.getOperatorType().getId().equals(operatorTypeId)))
+                .filter(cp -> capacityTypeId == null || (cp.getCapacityType() != null && cp.getCapacityType().getId().equals(capacityTypeId)))
+                .filter(cp -> machineTypeId == null || (cp.getMachineType() != null && cp.getMachineType().getId() == (machineTypeId)))
+                .filter(cp -> {
+                    if (capacityValue == null) return true;
+                    if (capacityTypeId != null) {
+                        if (capacityTypeId == 1) { // Person
+                            return cp.getPersonCapacity() != null && cp.getPersonCapacity().getId().equals(capacityValue);
+                        } else if (capacityTypeId == 2) { // Weight
+                            return cp.getWeight() != null && cp.getWeight().getId().equals(capacityValue);
+                        }
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
+
+        List<ControlPanelTypeResponseDTO> result = filtered.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+
+        return new ApiResponse<>(true, "Search results fetched successfully", result);
+    }
+
+
     private ControlPanelTypeResponseDTO mapToDTO(ControlPanelType entity) {
         return new ControlPanelTypeResponseDTO(
                 entity.getId(),
@@ -126,8 +158,15 @@ public class ControlPanelTypeService {
                 entity.getOperatorType() != null ? entity.getOperatorType().getName() : null,
                 entity.getCapacityType() != null ? entity.getCapacityType().getType() : null,
                 entity.getPersonCapacity() != null ? entity.getPersonCapacity().getDisplayName() : null,
-                entity.getWeight() != null ? entity.getWeight().getWeightValue() +" "+entity.getWeight().getUnit().getUnitName() : null,
-                entity.getPrice()
+                entity.getWeight() != null ? entity.getWeight().getWeightValue() + " " + entity.getWeight().getUnit().getUnitName() : null,
+                entity.getPrice(),
+                entity.getMachineType() != null ? entity.getMachineType().getId() : null,
+                entity.getOperatorType() != null ? entity.getOperatorType().getId() : null,
+                entity.getCapacityType() != null ? entity.getCapacityType().getId() : null,
+                entity.getPersonCapacity() != null ? entity.getPersonCapacity().getId() : null,
+                entity.getWeight() != null ? entity.getWeight().getId() : null
+
+
         );
     }
 }

@@ -28,7 +28,7 @@ public class CarDoorSubTypeService {
     private final OperatorElevatorRepository operatorRepo;
     private final CarDoorTypeRepository doorTypeRepo;
 
-    
+
     @Transactional
     public CarDoorSubTypeResponseDTO create(CarDoorSubTypeRequestDTO dto) {
         log.info("Creating CarDoorSubType: {}", dto.getCarDoorSubType());
@@ -50,7 +50,7 @@ public class CarDoorSubTypeService {
         return toDTO(subTypeRepo.save(subType));
     }
 
-    
+
     @Transactional
     public CarDoorSubTypeResponseDTO update(int id, CarDoorSubTypeRequestDTO dto) {
         log.info("Updating CarDoorSubType ID: {}", id);
@@ -74,7 +74,7 @@ public class CarDoorSubTypeService {
         return toDTO(subTypeRepo.save(existing));
     }
 
-    
+
     public void delete(int id) {
         log.warn("Deleting CarDoorSubType ID: {}", id);
         CarDoorSubType entity = subTypeRepo.findById(id)
@@ -82,14 +82,14 @@ public class CarDoorSubTypeService {
         subTypeRepo.delete(entity);
     }
 
-    
+
     public CarDoorSubTypeResponseDTO getById(int id) {
         return subTypeRepo.findById(id)
                 .map(this::toDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Car Door SubType not found"));
     }
 
-    
+
     public List<CarDoorSubTypeResponseDTO> getAll(String sortBy) {
         log.info("Fetching all CarDoorSubTypes sorted by: {}", sortBy);
         return subTypeRepo.findAll(Sort.by(Sort.Direction.ASC, sortBy))
@@ -97,6 +97,17 @@ public class CarDoorSubTypeService {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+
+    // 🔹 Fetch Car Door SubTypes by CarDoorType ID
+    public List<CarDoorSubTypeResponseDTO> getByCarDoorType(Integer carDoorTypeId) {
+        log.info("Fetching CarDoorSubTypes for CarDoorType ID {}", carDoorTypeId);
+
+        return subTypeRepo.findByCarDoorType_CarDoorId(carDoorTypeId) // ensure repo method exists
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
 
     private CarDoorSubTypeResponseDTO toDTO(CarDoorSubType entity) {
         return new CarDoorSubTypeResponseDTO(

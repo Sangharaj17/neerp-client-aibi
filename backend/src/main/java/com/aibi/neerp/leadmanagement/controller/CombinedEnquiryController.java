@@ -37,13 +37,14 @@ public class CombinedEnquiryController {
     public ResponseEntity<String> createCombinedEnquiries(
             @PathVariable Integer leadId,
             @RequestParam String projectName,
+            @RequestParam String siteName,
             @RequestParam Integer enquiryTypeId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate enquiryDate,
             @RequestBody List<EnquiryRequestDto> enquiryDtos) {
     	
     	System.out.println("call apiu "+enquiryDate);
 
-        combinedEnquiryService.createCombinedEnquiries(leadId, enquiryDtos, projectName, enquiryTypeId , enquiryDate);
+        combinedEnquiryService.createCombinedEnquiries(leadId, enquiryDtos, projectName, enquiryTypeId , enquiryDate , siteName);
         return ResponseEntity.ok("Combined Enquiry created successfully");
     }
     

@@ -21,7 +21,8 @@ export const handleLogout = async (tenant, router, customMessage = null) => {
     localStorage.removeItem(`${tenant}_clientId`);
 
     if (res.ok) {
-      router.push(`/${tenant}/login`);
+      // Redirect to clean path; middleware resolves tenant
+      router.push(`/login`);
     } else {
       toast.error(result.error || "Logout failed!");
     }

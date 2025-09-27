@@ -43,4 +43,13 @@ public class LandingDoorSubTypeController {
         service.delete(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Deleted successfully", null));
     }
+
+    @GetMapping("/searchByLiftType")
+    public ResponseEntity<ApiResponse<List<LandingDoorSubTypeResponseDTO>>> getByLiftType(
+            @RequestParam Integer operatorTypeId) {
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Fetched successfully", service.getByLiftType(operatorTypeId))
+        );
+    }
+
 }

@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -186,4 +187,41 @@ public class LopService {
 
         return dto;
     }
+
+    public List<LopSubTypeResponseDTO> searchLopSubTypes(Integer operatorTypeId, Integer floorId) {
+        log.info("Searching LopSubTypes... operatorTypeId={}, floorId={}", operatorTypeId, floorId);
+        System.out.println("Searching LopSubTypes... operatorTypeId=" + operatorTypeId + ", floorId=" + floorId);
+
+        return lopSubTypeRepo.findAll().stream()
+                .filter(sub -> operatorTypeId == null ||
+                        (sub.getLopType().getOperatorType() != null &&
+                                sub.getLopType().getOperatorType().getId().equals(operatorTypeId)))
+                .filter(sub -> floorId == null ||
+                        (sub.getFloor() != null && Objects.equals(sub.getFloor().getId(), floorId)))
+                // 👇 log & print entity
+                .peek(sub -> {
+                    log.info("Matched LopSubType: id={}, name={}, floorId={}, operatorTypeId={}",
+                            sub.getId(),
+                            sub.getLopName(),
+                            sub.getFloor() != null ? sub.getFloor().getId() : null,
+                            sub.getLopType().getOperatorType() != null ? sub.getLopType().getOperatorType().getId() : null
+                    );
+
+                    System.out.println("Matched LopSubType => id=" + sub.getId() +
+                            ", name=" + sub.getLopName() +
+                            ", floorId=" + (sub.getFloor() != null ? sub.getFloor().getId() : null) +
+                            ", operatorTypeId=" + (sub.getLopType().getOperatorType() != null
+                            ? sub.getLopType().getOperatorType().getId()
+                            : null));
+                })
+                .map(this::toLopSubTypeDTO)
+                // 👇 log & print DTO
+                .peek(dto -> {
+                    log.info("Mapped LopSubTypeDTO: {}", dto);
+                    System.out.println("Mapped LopSubTypeDTO => " + dto);
+                })
+                .collect(Collectors.toList());
+    }
+
+
 }

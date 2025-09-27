@@ -1,7 +1,7 @@
 export const ROUTES = {
-  LEAD_DETAILS: (tenant, leadId) =>
-    `/${tenant}/dashboard/lead-management/lead-list/leadDetails/${leadId}`,
+  LEAD_DETAILS: (leadId) =>
+    `/dashboard/lead-management/lead-list/leadDetails/${leadId}`,
 
-  LEAD_LIST: (tenant) =>
-    `/${tenant}/dashboard/lead-management/lead-list`,
+  LEAD_LIST: () =>
+    `/dashboard/lead-management/lead-list`,
 };

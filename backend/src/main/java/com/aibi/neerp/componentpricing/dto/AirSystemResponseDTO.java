@@ -22,4 +22,21 @@ public class AirSystemResponseDTO {
 
     private Integer airTypeId;
     private String airTypeName;
+
+    @Override
+    public String toString() {
+        return "AirSystemResponseDTO{" +
+                "id=" + id +
+                ", price=" + price +
+                ", quantity='" + quantity + '\'' +
+                ", capacityTypeId=" + capacityTypeId +
+                ", capacityTypeName='" + capacityTypeName + '\'' +
+                ", personCapacityId=" + personCapacityId +
+                ", personCapacityName='" + personCapacityName + '\'' +
+                ", weightId=" + weightId +
+                ", weightName='" + weightName + '\'' +
+                ", airTypeId=" + airTypeId +
+                ", airTypeName='" + airTypeName + '\'' +
+                '}';
+    }
 }

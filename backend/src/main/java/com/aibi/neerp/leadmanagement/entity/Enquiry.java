@@ -3,6 +3,7 @@ package com.aibi.neerp.leadmanagement.entity;
 import com.aibi.neerp.componentpricing.entity.*;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 //import com.aibi.neerp.materialmanagement.entity.CabinType;
@@ -36,7 +37,7 @@ public class Enquiry {
     @ManyToOne
     @JoinColumn(name = "lead_id", referencedColumnName = "lead_id")
     private NewLeads lead;
-    
+
     @ManyToOne
     @JoinColumn(name = "enquiry_type", referencedColumnName = "enquiry_type_id")
     private EnquiryType enquiryType;
@@ -85,9 +86,17 @@ public class Enquiry {
 //    @ManyToOne
 //    @JoinColumn(name = "floors_designation_id", referencedColumnName = "floor_designation_id")
 //    private FloorDesignation floorsDesignation;
-    
+
     @Column(name = "floors_designations", length = 255)
     private String floorsDesignation;
+
+    @ManyToMany
+    @JoinTable(
+            name = "tbl_enquiry_additional_floor",
+            joinColumns = @JoinColumn(name = "enquiry_id"),
+            inverseJoinColumns = @JoinColumn(name = "additional_floor_id")
+    )
+    private java.util.Set<AdditionalFloors> additionalFloors = new java.util.HashSet<>();
 
     @ManyToOne
     //@JoinColumn(name = "req_machine_room", referencedColumnName = "machine_room_id")
@@ -110,9 +119,9 @@ public class Enquiry {
     @ManyToOne
     @JoinColumn(name = "build_type", referencedColumnName = "id")
     private BuildType buildType;
-    
-    @ManyToOne 
-    @JoinColumn(name ="building_type", referencedColumnName = "building_type_id")
+
+    @ManyToOne
+    @JoinColumn(name = "building_type", referencedColumnName = "building_type_id")
     private BuildingType buildingType;
 
     @Column(name = "req_machine_width", length = 255)
@@ -189,12 +198,15 @@ public class Enquiry {
 
     @Column(name = "pit")
     private Integer pit;
-    
+
     @Column(name = "follows")
     private Integer from;
-    
+
     @Column(name = "checked")
     private Boolean checked;
+    
+    @Column
+    private String liftName;
 
     @ManyToOne
     @JoinColumn(name = "combined_enquiry_id", referencedColumnName = "id")

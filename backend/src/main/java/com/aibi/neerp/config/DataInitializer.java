@@ -10,9 +10,11 @@ import com.aibi.neerp.amc.common.repository.ElevatorMakeRepository;
 import com.aibi.neerp.amc.common.repository.JobActivityTypeRepository;
 import com.aibi.neerp.amc.common.repository.NumberOfServiceRepository;
 import com.aibi.neerp.amc.common.repository.PaymentTermRepository;
+import com.aibi.neerp.componentpricing.entity.AdditionalFloors;
 import com.aibi.neerp.componentpricing.entity.CapacityType;
 import com.aibi.neerp.componentpricing.entity.Floor;
 import com.aibi.neerp.componentpricing.entity.Unit;
+import com.aibi.neerp.componentpricing.repository.AdditionalFloorsRepository;
 import com.aibi.neerp.componentpricing.repository.CapacityTypeRepository;
 import com.aibi.neerp.componentpricing.repository.FloorRepository;
 import com.aibi.neerp.componentpricing.repository.UnitRepository;
@@ -42,12 +44,7 @@ public class DataInitializer {
                                       EnquiryTypeRepository enquiryTypeRepo,
                                       PaymentTermRepository paymentTermRepo,
                                       ElevatorMakeRepository elevatorMakeRepo,
-                                      NumberOfServiceRepository numberOfServiceRepo,
-                                      RoleRepository roleRepo,
-                                      EmployeeRepository employeeRepo,
-                                      LiftQuantityRepository liftQtyRepo,
-                                      FloorRepository floorRepo,
-                                      JobActivityTypeRepository jobActivityTypeRepo) {
+                                      NumberOfServiceRepository numberOfServiceRepo) {
         return args -> {
             insertDefaultCapacityTypes(capRepo);
             insertDefaultUnit(unitRepo);
@@ -56,12 +53,6 @@ public class DataInitializer {
             insertDefaultPaymentTerms(paymentTermRepo);
             insertDefaultElevatorMakes(elevatorMakeRepo);
             insertDefaultNumberOfServices(numberOfServiceRepo);
-            
-            insertDefaultRoles(roleRepo);
-            insertDefaultEmployee(employeeRepo, roleRepo);
-            insertDefaultLiftQuantities(liftQtyRepo);
-            insertDefaultFloors(floorRepo);
-            insertDefaultJobActivityTypes(jobActivityTypeRepo);
         };
     }
 
@@ -105,7 +96,7 @@ public class DataInitializer {
             }
         }
     }
-    
+
     private void insertDefaultEnquiryTypes(EnquiryTypeRepository enquiryTypeRepo) {
         String[] enquiryTypes = {"AMC", "New Installation", "Moderization", "On Call"};
         for (String name : enquiryTypes) {
@@ -118,7 +109,7 @@ public class DataInitializer {
             }
         }
     }
-    
+
     private void insertDefaultPaymentTerms(PaymentTermRepository paymentTermRepo) {
         String[] paymentTerms = {"Quarterly", "Half Yearly", "Yearly"};
 
@@ -132,12 +123,12 @@ public class DataInitializer {
             }
         }
     }
-    
+
     private void insertDefaultElevatorMakes(ElevatorMakeRepository elevatorMakeRepo) {
         String[] makes = {
-            "KONE", "Schindler", "Kinetic Hyundai", "Escon", "Otis",
-            "Omega", "ThyssenKrupp", "Opel", "Eros", "Smash",
-            "Johnson", "Prime", "others"
+                "KONE", "Schindler", "Kinetic Hyundai", "Escon", "Otis",
+                "Omega", "ThyssenKrupp", "Opel", "Eros", "Smash",
+                "Johnson", "Prime", "others"
         };
 
         for (String name : makes) {
@@ -149,7 +140,7 @@ public class DataInitializer {
             }
         }
     }
-    
+
     private void insertDefaultNumberOfServices(NumberOfServiceRepository numberOfServiceRepo) {
         for (int val = 1; val <= 12; val++) {
             if (!numberOfServiceRepo.existsByValue(val)) {
@@ -158,88 +149,6 @@ public class DataInitializer {
                 numberOfServiceRepo.save(ns);
                 System.out.println("✅ NumberOfService inserted: " + val);
             }
-        }
-    }
-    
-    private void insertDefaultRoles(RoleRepository roleRepo) {
-        String[] roles = {"Admin", "Manager", "Employee", "HR", "Technician"};
-        for (String r : roles) {
-            if (!roleRepo.existsByRole(r)) {
-                Role role = new Role();
-                role.setRole(r);
-                roleRepo.save(role);
-                System.out.println("✅ Role inserted: " + r);
-            }
-        }
-    }
-
-    private void insertDefaultEmployee(EmployeeRepository employeeRepo, RoleRepository roleRepo) {
-        if (!employeeRepo.existsByUsername("neha.patil")) {
-            Role managerRole = (Role) roleRepo.findByRole("Manager");
-            
-            Employee emp = new Employee();
-            emp.setEmployeeName("Neha Patil");
-            emp.setContactNumber("9876549876");
-            emp.setEmailId("neha.patil@example.com");
-            emp.setAddress("B-102, Orchid Towers, Pune");
-            emp.setDob(LocalDate.of(1997, 9, 12));
-            emp.setJoiningDate(LocalDate.of(2024, 2, 1));
-            emp.setRole(managerRole);
-            emp.setUsername("neha.patil");
-            emp.setPassword("testPass123"); // Ideally encode with BCryptPasswordEncoder
-            emp.setEmpPhoto("neha.jpg");
-            emp.setActive(true);
-            emp.setEmployeeCode("EMP1001");
-            emp.setEmployeeSign("neha_sign.png");
-            emp.setCreatedAt(LocalDateTime.now());
-            employeeRepo.save(emp);
-
-            System.out.println("✅ Default employee 'Neha Patil' inserted.");
-        }
-    }
-
-    private void insertDefaultLiftQuantities(LiftQuantityRepository liftQtyRepo) {
-        Integer[] quantities = {1, 2, 3, 4, 5, 6, 10, 15, 20, 25};
-        for (Integer qty : quantities) {
-            if (!liftQtyRepo.existsByQuantity(qty)) {
-                LiftQuantity lq = new LiftQuantity();
-                lq.setQuantity(qty);
-                liftQtyRepo.save(lq);
-                System.out.println("✅ LiftQuantity inserted: " + qty);
-            }
-        }
-    }
-
-    private void insertDefaultFloors(FloorRepository floorRepo) {
-        for (int i = 1; i <= 10; i++) {
-            String floorName = String.valueOf(i);
-            if (!floorRepo.existsByFloorName(floorName)) {
-                Floor floor = new Floor();
-                floor.setFloorName(floorName);
-                floor.setCreatedAt(LocalDateTime.now());
-                floorRepo.save(floor);
-                System.out.println("✅ Floor inserted: " + floorName);
-            }
-        }
-    }
-    
-    private void insertDefaultJobActivityTypes(JobActivityTypeRepository jobActivityTypeRepo) {
-        insertIfNotExists(jobActivityTypeRepo, "Service", "Regular service work");
-        insertIfNotExists(jobActivityTypeRepo, "Breakdown", "Breakdown resolution work");
-        insertIfNotExists(jobActivityTypeRepo, "Repair", "Repair work for lift issues");
-        insertIfNotExists(jobActivityTypeRepo, "Installation", "New installation job");
-        insertIfNotExists(jobActivityTypeRepo, "Inspection", "Inspection or audit work");
-    }
-
-    private void insertIfNotExists(JobActivityTypeRepository repo, String name, String description) {
-        if (repo.findByActivityName(name).isEmpty()) {
-            JobActivityType jobActivityType = JobActivityType.builder()
-                    .activityName(name)
-                    .description(description)
-                    .isActive(true)
-                    .build();
-            repo.save(jobActivityType);
-        } else {
         }
     }
 

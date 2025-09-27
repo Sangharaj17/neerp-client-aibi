@@ -10,6 +10,10 @@ import com.aibi.neerp.amc.common.entity.JobActivityType;
 import com.aibi.neerp.amc.common.repository.JobActivityTypeRepository;
 import com.aibi.neerp.amc.jobs.initial.dto.AddServiceActivityGetData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobActivityRequestDto;
+import com.aibi.neerp.amc.jobs.initial.dto.EmployeeDto;
+import com.aibi.neerp.amc.jobs.initial.dto.JobActivityResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.JobDetailPageResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.JobDetailResponseDto;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJobActivity;
@@ -27,10 +31,14 @@ import com.aibi.neerp.leadmanagement.entity.Enquiry;
 import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +75,8 @@ public class AmcJobActivityService {
 	                .orElseThrow(() -> new RuntimeException("BreakdownTodo not found with id " + dto.getBreakdownTodoId()));
 	   
 	    }
+	    
+	    
 
 	    for (Integer liftId : dto.getLiftIds()) {
 	        Enquiry lift = liftRepository.findById(liftId)
@@ -98,9 +108,37 @@ public class AmcJobActivityService {
 	        amcJobActivityRepository.save(activity);
 	    }
 	    
+	    if(jobActivityType.getActivityName().equalsIgnoreCase("service")){
+	    	updateAmcJobAfterAddingActivity(dto.getJobId() , job ,  dto.getLiftIds() , dto.getActivityDate());
+	    }
+	    
 	    if (dto.getBreakdownTodoId() != null) {
 	    	updateBreakdownTodoStatus(dto.getBreakdownTodoId());
 	    }
+	}
+	
+	public void updateAmcJobAfterAddingActivity(Integer jobId , AmcJob amcJob , List<Integer> liftIds , LocalDate date) {
+		
+		Integer count = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
+		int newLiftsDoneServicesCount = liftIds.size();
+		count+=newLiftsDoneServicesCount;
+		
+		amcJob.setNoOfLiftsCurrentServiceCompletedCount(count);
+		
+		amcJob.setLastActivityDate(date);
+		
+		int needToCompleteServiceLifts = amcJob.getNoOfLifsServiceNeedToCompleteCount();
+		
+		if(needToCompleteServiceLifts == count) {
+			int pendingServicesCount = amcJob.getPendingServiceCount();
+            pendingServicesCount--;
+            
+            amcJob.setPendingServiceCount(pendingServicesCount);
+            
+		}
+
+		
+		amcJobRepository.save(amcJob);
 	}
 	
 	public void updateBreakdownTodoStatus(Integer brekdownTodoId) {
@@ -204,136 +242,227 @@ public class AmcJobActivityService {
 	
 	
 	
-    public String getStatusOfCurrentService(Integer jobid) {
-		
-		AmcJob amcJob= amcJobRepository.findById(jobid).get();
-		
-		Integer NoOfLiftsCurrentServiceCompletedCount=  amcJob.getNoOfLiftsCurrentServiceCompletedCount();
-		Integer NoOfLifsServiceNeedToCompleteCount =  amcJob.getNoOfLifsServiceNeedToCompleteCount();
-		
-		String CurrentServiceStatus = amcJob.getCurrentServiceStatus();
-		
-		Integer currentServiceNumber = amcJob.getCurrentServiceNumber();
-		
-		if(NoOfLiftsCurrentServiceCompletedCount>0 && NoOfLifsServiceNeedToCompleteCount>0 ) {
-			
-			if(NoOfLiftsCurrentServiceCompletedCount == NoOfLifsServiceNeedToCompleteCount) {
-				
-				String lastActivityDate = amcJob.getLastActivityDate();
-				LocalDate currentDate = LocalDate.now();
-				
-				String lastActivityDateMonth = "";
-				String currnetDateMonth = "";
-				
-				if(lastActivityDateMonth.equalsIgnoreCase(currnetDateMonth)){
-					CurrentServiceStatus = "Completed";
-					amcJob.setCurrentServiceStatus(CurrentServiceStatus);
-					
-					amcJobRepository.save(amcJob);
-				}else {
-					CurrentServiceStatus = "Pending";
-					NoOfLiftsCurrentServiceCompletedCount = 0;
-					currentServiceNumber++;
-					
-					amcJob.setCurrentServiceNumber(currentServiceNumber);
-					amcJob.setNoOfLiftsCurrentServiceCompletedCount(NoOfLiftsCurrentServiceCompletedCount);
-					amcJob.setCurrentServiceStatus(CurrentServiceStatus);
-					
-					amcJobRepository.save(amcJob);
-				}
-				
-			}else {
-				CurrentServiceStatus = "Pending";
-				amcJob.setCurrentServiceStatus(CurrentServiceStatus);
-				
-				amcJobRepository.save(amcJob);
-			}
-		}
-		
-		return CurrentServiceStatus;
-		
+	public String getStatusOfCurrentService(Integer jobId) {
+	    AmcJob amcJob = amcJobRepository.findById(jobId)
+	            .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
+
+	    Integer completedCount = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
+	    Integer requiredCount = amcJob.getNoOfLifsServiceNeedToCompleteCount();
+	    String currentServiceStatus = amcJob.getCurrentServiceStatus();
+	    Integer currentServiceNumber = amcJob.getCurrentServiceNumber();
+	    
+	    Integer pendingServices = 0;
+	    Integer totalServices = amcJob.getNoOfServices();
+	    
+	   // pendingServices = totalServices - currentServiceNumber;
+
+	    if (completedCount != null && requiredCount != null && completedCount > 0 && requiredCount > 0) {
+	        if (completedCount.equals(requiredCount)) {
+	            LocalDate lastActivityDate = amcJob.getLastActivityDate();
+
+	            if (lastActivityDate != null) {
+	                int lastMonth = lastActivityDate.getMonthValue();
+	                int currentMonth = LocalDate.now().getMonthValue();
+	                
+	               // System.out.println(lastMonth+" lastmonth "+currentMonth);
+
+	                if (lastMonth == currentMonth) {
+	                    currentServiceStatus = "Completed";
+	                  //  pendingServices = totalServices - currentServiceNumber;
+	                } else {
+	                    currentServiceStatus = "Pending";
+	                    completedCount = 0;
+	                    lastActivityDate = null;
+	                    currentServiceNumber++;
+	                    
+	                   
+	                    //amcJob.setPendingServiceCount(pendingServices);	 
+	                }
+	            } else {
+	                currentServiceStatus = "Pending";
+	                completedCount = 0;
+	                currentServiceNumber++;
+	                
+	               // pendingServices = totalServices - currentServiceNumber;
+	               // amcJob.setPendingServiceCount(pendingServices);	 
+	            }
+
+	            amcJob.setNoOfLiftsCurrentServiceCompletedCount(completedCount);
+	            amcJob.setCurrentServiceNumber(currentServiceNumber);
+	            amcJob.setCurrentServiceStatus(currentServiceStatus);
+	            amcJob.setLastActivityDate(lastActivityDate);
+	            amcJobRepository.save(amcJob);
+
+	        } else {
+	            currentServiceStatus = "Pending";
+	            amcJob.setCurrentServiceStatus(currentServiceStatus);
+	            amcJobRepository.save(amcJob);
+	        }
+	    } else {
+	        currentServiceStatus = "Pending";
+	        amcJob.setCurrentServiceStatus(currentServiceStatus);
+
+	        if (currentServiceNumber == 0) {
+	            currentServiceNumber++;
+	            //pendingServices = totalServices - currentServiceNumber;
+	            amcJob.setCurrentServiceNumber(currentServiceNumber);
+	           // amcJob.setPendingServiceCount(pendingServices);	     
+	        }
+
+	        amcJobRepository.save(amcJob);
+	    }
+
+	    return currentServiceStatus;
 	}
+
+
     
     
-	public AddServiceActivityGetData getAddServiceActivityGetData(Integer jobId) {
+    public AddServiceActivityGetData getAddServiceActivityGetData(Integer jobId) {
+
+        AmcJob amcJob = amcJobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("AmcJob not found with id: " + jobId));
+
+        String serviceName = "Service " + amcJob.getCurrentServiceNumber();
+
+        // Get CombinedEnquiry (from AmcQuotation or RevisedAmcQuotation)
+        CombinedEnquiry combinedEnquiry = Optional.ofNullable(amcJob.getAmcQuotation())
+                .map(AmcQuotation::getCombinedEnquiry)
+                .orElseGet(() -> Optional.ofNullable(amcJob.getRevisedAmcQuotation())
+                        .map(RevisedAmcQuotation::getCombinedEnquiry)
+                        .orElseThrow(() -> new RuntimeException("CombinedEnquiry not found for jobId: " + jobId)));
+
+        List<Enquiry> allServiceLifts = combinedEnquiry.getEnquiries();
+        if (allServiceLifts == null) allServiceLifts = new ArrayList<>();
+
+        // Get completed lifts
+        Set<Integer> completedLiftIds = amcJobActivityRepository.findByJob_JobId(jobId).stream()
+                .filter(a -> "Service".equalsIgnoreCase(a.getJobActivityType().getActivityName()) &&
+                             serviceName.equalsIgnoreCase(a.getJobService()))
+                .map(a -> a.getLift().getEnquiryId())
+                .collect(Collectors.toSet());
+
+        // Filter remaining lifts
+        List<Enquiry> pendingLifts = allServiceLifts.stream()
+                .filter(e -> !completedLiftIds.contains(e.getEnquiryId()))
+                .toList();
+
+        CombinedEnquiry pendingCombined = new CombinedEnquiry();
+        pendingCombined.setEnquiries(pendingLifts);
+
+        List<LiftData> serviceLiftDatas = amcJobsService.buildLiftData(pendingCombined);
+
+        return AddServiceActivityGetData.builder()
+                .serviceName(serviceName)
+                .serviceLifsDatas(serviceLiftDatas)
+                .build();
+    }
+
+	
+	
+    public JobDetailPageResponseDto getJobDetailPage(Integer jobId) {
+        AmcJob job = amcJobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
+
+        JobDetailResponseDto jobDetailDto = new JobDetailResponseDto();
+
+        // Safely map job details
+        jobDetailDto.setJobNo(job.getJobNo());
+        jobDetailDto.setCustomerName(job.getCustomer() != null ? job.getCustomer().getCustomerName() : null);
+        jobDetailDto.setSiteName(job.getSite() != null ? job.getSite().getSiteName() : null);
+        jobDetailDto.setOrderDate(job.getStartDate());
+
+        jobDetailDto.setNumberOfLift(job.getNoOfElevator());
+        jobDetailDto.setJobLiftDetail(job.getJobLiftDetail());
+
+        jobDetailDto.setSalesExecutive(job.getSalesExecutive() != null ? job.getSalesExecutive().getEmployeeName() : null);
+        jobDetailDto.setServiceEngineer(job.getServiceEngineer() != null ? job.getServiceEngineer().getEmployeeName() : null);
+
+        jobDetailDto.setJobStatus(job.getJobStatus());
+        jobDetailDto.setTotalService(job.getNoOfServices() != null ? job.getNoOfServices() + " Service" : null);
+        jobDetailDto.setJobType(job.getJobType());
+
+        jobDetailDto.setSiteAddress(job.getSite() != null ? job.getSite().getSiteAddress() : null);
+        jobDetailDto.setStartDate(job.getStartDate() != null ? job.getStartDate() : null);
+        jobDetailDto.setEndDate(job.getEndDate() != null ? job.getEndDate() : null);
+
+        jobDetailDto.setJobAmount(job.getJobAmount() != null ? job.getJobAmount().toString() : null);
+        jobDetailDto.setReceivedAmount(job.getReceivedAmount() != null ? job.getReceivedAmount().toString() : null);
+        jobDetailDto.setBalanceAmount(job.getBalanceAmount() != null ? job.getBalanceAmount().toString() : null);
+
+        jobDetailDto.setPendingService(job.getPendingServiceCount() != null ? job.getPendingServiceCount().toString() : null);
+
+        // Map job activities
+        List<AmcJobActivity> activities = amcJobActivityRepository.findByJobJobId(jobId);
+
+        List<JobActivityResponseDto> activityDtos = activities.stream()
+                .map(act -> {
+                    String activityName = act.getJobActivityType() != null 
+                            ? act.getJobActivityType().getActivityName() 
+                            : null;
+
+                    String serviceOrWorkType = null;
+                    if (activityName != null && activityName.equalsIgnoreCase("service")) {
+                        serviceOrWorkType = act.getJobService() != null ? act.getJobService() : null;
+                    } else {
+                        serviceOrWorkType = act.getJobTypeWork() != null ? act.getJobTypeWork() : null;
+                    }
+                    
+                    System.out.println(act.getLift().getLiftName()+" liftnameis");
+
+                    return new JobActivityResponseDto(
+                    	    act.getJobActivityId(),
+                    	    act.getActivityDate() != null ? act.getActivityDate().toString() : null,
+                    	    act.getJobActivityBy() != null ? act.getJobActivityBy().getEmployeeName() : null,
+                    	    activityName,
+                    	    serviceOrWorkType,
+                    	    act.getActivityDescription(),
+                    	    act.getRemark(),
+                    	    "",
+                    	    act.getLift() != null ? act.getLift().getLiftName() : null
+                    	);
+
+
+                })
+                .collect(Collectors.toList());
+        
+        List<LiftData> liftDatas = null;
+        
+        CombinedEnquiry combinedEnquiry = null;
+        
+        if(job.getAmcQuotation()!=null) {
+        	combinedEnquiry = job.getAmcQuotation().getCombinedEnquiry();
+        }else {
+        	combinedEnquiry = job.getRevisedAmcQuotation().getCombinedEnquiry();
+        }
+        
+        if(combinedEnquiry!=null) {
+        	
+        	liftDatas = amcJobsService.buildLiftData(combinedEnquiry);
+        }
+        
+        List<EmployeeDto> employeeDtos = new ArrayList<EmployeeDto>();
+        
+        List<Employee> employees = job.getRoute().getEmployees();
+        
+        if(employees!=null) {
+        	for(Employee employee : employees) {
+        		EmployeeDto employeeDto = new EmployeeDto();
+        		employeeDto.setAddress(employee.getAddress());
+        		employeeDto.setEmployeeId(employee.getEmployeeId());
+        		employeeDto.setName(employee.getEmployeeName());
+        		employeeDto.setRole(employee.getRole().getRole());  
+        		
+        		employeeDtos.add(employeeDto);   
+        	}
+        }
+
+
+        return new JobDetailPageResponseDto(jobDetailDto, activityDtos , liftDatas , employeeDtos);
+    }
+
+	
 		
-//		AddServiceActivityGetData serviceActivityGetData = new AddServiceActivityGetData();
-//		
-//		AmcJob amcJob = amcJobRepository.findById(jobId).get();
-//		
-//		String serviceName = "";
-//		List<LiftData> serviceLiftDatas = null;
-//		
-//		
-//		serviceName = "Service "+amcJob.getCurrentServiceNumber();
-//		
-//		AmcQuotation amcQuotation = amcJob.getAmcQuotation();
-//		RevisedAmcQuotation revisedAmcQuotation = amcJob.getRevisedAmcQuotation();
-//		
-//		CombinedEnquiry combinedEnquiry = null;
-//		
-//		if(amcQuotation!=null) {
-//			combinedEnquiry = amcQuotation.getCombinedEnquiry();
-//	    }
-//		
-//		if(revisedAmcQuotation!=null) {
-//			combinedEnquiry = revisedAmcQuotation.getCombinedEnquiry();
-//		}
-//		
-//		List<Enquiry> allServiceLifts = combinedEnquiry.getEnquiries();
-//		
-//		List<Enquiry> completedServiceLifts = new ArrayList<Enquiry>();
-//		
-//		List<AmcJobActivity> jobActivities = amcJobActivityRepository.findByJob_JobId(jobId);
-//		
-//		jobActivities = jobActivities.stream().filter((activity)->{
-//			JobActivityType jobActivityType = activity.getJobActivityType();
-//			if(jobActivityType.getActivityName().equalsIgnoreCase("Service") && 
-//					activity.getJobService().equalsIgnoreCase(serviceName))
-//				return true;
-//			
-//		}).collect().toList();	
-//		
-//		HashSet<Integer> completedLiftServicesInHash = new HashSet<>();
-//		
-//		for(AmcJobActivity amcJobActivity : jobActivities) {
-//			completedServiceLifts.add(amcJobActivity.getLift());
-//			completedLiftServicesInHash.add(amcJobActivity.getLift().getEnquiryId());
-//		}
-//		
-//		CombinedEnquiry combinedEnquiry2 = new CombinedEnquiry();
-//		
-//		List<Enquiry> enquiries = new ArrayList<Enquiry>();
-//		
-//		for(Enquiry enquiry : allServiceLifts) {
-//			
-//			if(!completedLiftServicesInHash.contains(enquiry.getEnquiryId()){
-//				enquiries.add(enquiry);)
-//			}
-//		}
-//		
-//		
-//		serviceActivityGetData.setServiceName(serviceName);
-//		serviceActivityGetData.setServiceLifsDatas(serviceLiftDatas);
-//		
-//		
-//		return serviceActivityGetData;
-		
-		return null;
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 }
 

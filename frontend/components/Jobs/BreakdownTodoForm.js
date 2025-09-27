@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
 import axiosInstance from "@/utils/axiosInstance";
 
 export default function BreakdownTodoForm() {
-  const searchParams = useSearchParams();
-  const prefilledJobId = searchParams.get("jobId");
+  let prefilledJobId = "";
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    prefilledJobId = params.get("jobId") || "";
+  }
 
   const [formData, setFormData] = useState({
     userId: "", // new field

@@ -6,7 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
-@Table(name = "tbl_counter_weight")
+@Table(name = "tbl_counter_weight", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"counter_weight_type", "floors"})
+})
+//@Table(name = "tbl_counter_weight")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,18 +21,13 @@ public class CounterWeight {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "counter_frame_name")
-    private String counterFrameName;
+    @Column(name = "counter_weight_name")
+    private String counterWeightName;
 
-    @NotNull(message = "Type of Lift is required")
+    @NotNull(message = "Counter Weight Type is required")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "type_of_lift", referencedColumnName = "lift_type_id", nullable = false)
-    private TypeOfLift typeOfLift;
-
-    @NotNull(message = "Counter Frame Type is required")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "counter_frame_type", referencedColumnName = "id", nullable = false)
-    private CounterFrameType counterFrameType;
+    @JoinColumn(name = "counter_weight_type", referencedColumnName = "id", nullable = false)
+    private CounterWeightType counterWeightType;
 
     @NotNull(message = "Floors is required")
     @ManyToOne(fetch = FetchType.LAZY)

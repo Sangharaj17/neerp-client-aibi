@@ -7,13 +7,10 @@ import lombok.Data;
 @Data
 public class CounterWeightRequestDTO {
 
-    private String counterFrameName;
+    private String counterWeightName;
 
-    @NotNull(message = "Type of Lift is required")
-    private Integer typeOfLiftId;
-
-    @NotNull(message = "Counter Frame Type is required")
-    private Integer counterFrameTypeId;
+    @NotNull(message = "Counter Weight Type is required")
+    private Integer counterWeightTypeId;
 
     @NotNull(message = "Floors is required")
     private Integer floorsId;

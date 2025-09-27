@@ -36,4 +36,10 @@ public class Ard {
     @ManyToOne
     @JoinColumn(name = "weight_id", referencedColumnName = "id")
     private Weight weight;
+
+    @NotNull(message = "Operator Type must be selected")
+    @ManyToOne
+    @JoinColumn(name = "operator_type", referencedColumnName = "id")
+    private OperatorElevator operatorElevator;
+
 }

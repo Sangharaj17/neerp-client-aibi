@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
+import { getTenant } from '@/utils/tenant';
 import {
   BarChart3,
   Users,
@@ -20,7 +21,8 @@ const NavigationAccordion = () => {
   const [openSections, setOpenSections] = useState({});
   const [loadingHref, setLoadingHref] = useState('');
   const pathname = usePathname();
-  const { tenant } = useParams();
+  const { tenant: tenantFromParams } = useParams();
+  const tenant = tenantFromParams || getTenant();
   const [clientname, setClientname] = useState('');
 
   useEffect(() => {
@@ -70,7 +72,7 @@ const NavigationAccordion = () => {
   
     const componentsPricing = [
     { title: 'Capacity N Unit', slug: 'capacity-unit' },
-    { title: 'Supporting Data', slug: 'supporting-data' },
+    { title: 'Basic Setup', slug: 'basic-setup' },
     { title: 'Elevator Operation', slug: 'operator-elevators' },
     { title: 'Landing Door Type', slug: 'landing-door-type' },
     { title: 'Car Door Type', slug: 'car-door-type' },
@@ -83,6 +85,7 @@ const NavigationAccordion = () => {
     { title: 'Type Of Lift', slug: 'type-of-lift' },
     // { title: 'Cabin Subtypes Prizes', slug: 'cabin-subtypes-prizes' },
     // { title: 'Landing door Prizes', slug: 'landing-door-prizes' },
+    { title: 'Light Fittings', slug: 'light-fittings' },
     { title: 'Wiring Pluggable Harness', slug: 'wiring-pluggable-harness' },
     { title: 'ARD Type', slug: 'add-ard-type' },
     { title: 'Car Bracket & Counter Brace', slug: 'car-counter-bracket' },
@@ -96,11 +99,13 @@ const NavigationAccordion = () => {
     { title: 'Wire rope', slug: 'wire-rope' },
     { title: 'Guide Rail', slug: 'guide-rail' },
     { title: 'Counter Weight', slug: 'counter-weight' },
+    { title: 'Fastener', slug: 'fastener' },    
   ];
 
   const componentsPricingSubmenu = componentsPricing.map(type => ({
     title: type.title,
-    href: `/${tenant}/dashboard/components-pricing/${type.slug}`,
+    // Clean URL; middleware will rewrite to /<tenant>/...
+    href: `/dashboard/components-pricing/${type.slug}`,
   }));
 
 
@@ -134,7 +139,7 @@ const NavigationAccordion = () => {
 
   const materialSubmenu = materialTypes.map(type => ({
     title: type.title,
-    href: `/${tenant}/dashboard/material-management/${type.slug}`,
+    href: `/dashboard/material-management/${type.slug}`,
   }));
 
 
@@ -203,11 +208,11 @@ const NavigationAccordion = () => {
       icon: Target,
       hasSubmenu: true,
       submenu: [
-        { title: 'Lead List', href: `/${tenant}/dashboard/lead-management/lead-list` },
-        { title: 'To Do List', href: `/${tenant}/dashboard/lead-management/to-do-list` },
-        { title: 'Activity List', href: `/${tenant}/dashboard/lead-management/activity-list` },
-        { title: 'List All Mail To Lead', href: `/${tenant}/dashboard/lead-management/mail-to-lead` },
-        { title: 'Lead Setting (setup)', href: `/${tenant}/dashboard/lead-management/lead-setting` }
+        { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
+        { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
+        { title: 'Activity List', href: `/dashboard/lead-management/activity-list` },
+        { title: 'List All Mail To Lead', href: `/dashboard/lead-management/mail-to-lead` },
+        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` }
 
       ]
     },
@@ -229,11 +234,11 @@ const NavigationAccordion = () => {
       icon: FileText,
       hasSubmenu: true,
       submenu: [
-        { title: 'New Installation Quotation List', href: `/${tenant}/dashboard/quotations/new-installation` },
-        { title: 'AMC Quotation List', href: `/${tenant}/dashboard/quotations/amc_quatation_list` },
-        { title: 'Material Repair Quotation List', href: `/${tenant}/dashboard/quotations/templates` },
-        { title: 'Oncall Quotation List', href: `/${tenant}/dashboard/quotations/approved` },
-        { title: 'AMC Renewals Quotation List', href: `/${tenant}/dashboard/quotations/approved` }
+        { title: 'New Installation Quotation List', href: `/dashboard/quotations/new-installation` },
+        { title: 'AMC Quotation List', href: `/dashboard/quotations/amc_quatation_list` },
+        { title: 'Material Repair Quotation List', href: `/dashboard/quotations/templates` },
+        { title: 'Oncall Quotation List', href: `/dashboard/quotations/approved` },
+        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/approved` }
       ]
     },
     {
@@ -242,10 +247,10 @@ const NavigationAccordion = () => {
       icon: Settings,
       hasSubmenu: true,
       submenu: [
-        { title: 'Add New Job Detail', href: `/${tenant}/dashboard/jobs/add-new-job-detail` },
-        { title: 'Amc Jobs List', href: `/${tenant}/dashboard/jobs/amc_job_list` },
-        { title: 'Brekdown Todo Form ', href: `/${tenant}/dashboard/jobs/add-breakdown-call`},
-        { title: 'Add Job Activity', href: `/${tenant}/dashboard/jobs/add-job-activity` }
+        { title: 'Add New Job Detail', href: `/dashboard/jobs/add-new-job-detail` },
+        { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list` },
+        { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call`},
+        // { title: 'Add Job Activity', href: `/dashboard/jobs/add-job-activity/` }
       ]
     },
     {

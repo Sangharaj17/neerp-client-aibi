@@ -44,7 +44,7 @@ public class HarnessService {
         log.info("Harness created successfully with ID: {}", harness.getId());
 
         return new ApiResponse<>(true, "Harness created successfully",
-                new HarnessResponseDTO(harness.getId(), harness.getName(), harness.getPrice(), floor.getFloorName()));
+                new HarnessResponseDTO(harness.getId(), harness.getName(), harness.getPrice(), floor.getFloorName(), floor.getId()));
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +52,7 @@ public class HarnessService {
         log.info("Fetching all harnesses sorted by name");
         List<HarnessResponseDTO> harnessList = harnessRepository.findAll().stream()
                 .sorted(Comparator.comparing(Harness::getId))
-                .map(h -> new HarnessResponseDTO(h.getId(), h.getName(), h.getPrice(), h.getFloor().getFloorName()))
+                .map(h -> new HarnessResponseDTO(h.getId(), h.getName(), h.getPrice(), h.getFloor().getFloorName(), h.getFloor().getId()))
                 .collect(Collectors.toList());
         return new ApiResponse<>(true, "Harness list fetched successfully", harnessList);
     }
@@ -64,7 +64,7 @@ public class HarnessService {
                 .orElseThrow(() -> new ResourceNotFoundException("Harness not found with ID: " + id));
 
         return new ApiResponse<>(true, "Harness fetched successfully",
-                new HarnessResponseDTO(harness.getId(), harness.getName(), harness.getPrice(), harness.getFloor().getFloorName()));
+                new HarnessResponseDTO(harness.getId(), harness.getName(), harness.getPrice(), harness.getFloor().getFloorName(), harness.getFloor().getId()));
     }
 
     @Transactional
@@ -86,7 +86,7 @@ public class HarnessService {
         log.info("Harness updated successfully with ID: {}", harness.getId());
 
         return new ApiResponse<>(true, "Harness updated successfully",
-                new HarnessResponseDTO(harness.getId(), harness.getName(), harness.getPrice(), floor.getFloorName()));
+                new HarnessResponseDTO(harness.getId(), harness.getName(), harness.getPrice(), floor.getFloorName(), floor.getId()));
     }
 
     @Transactional
@@ -97,4 +97,27 @@ public class HarnessService {
         harnessRepository.delete(harness);
         return new ApiResponse<>(true, "Harness deleted successfully", null);
     }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<List<HarnessResponseDTO>> findByFloorDesignation(String floorDesignation) {
+        log.info("Searching Harness by floorDesignation: {}", floorDesignation);
+
+        List<HarnessResponseDTO> harnessList = harnessRepository.findByFloor_FloorNameIgnoreCase(floorDesignation).stream()
+                .map(h -> new HarnessResponseDTO(
+                        h.getId(),
+                        h.getName(),
+                        h.getPrice(),
+                        h.getFloor().getFloorName(),
+                        h.getFloor().getId()
+                ))
+                .collect(Collectors.toList());
+
+        if (harnessList.isEmpty()) {
+            log.warn("No Harness found for floorDesignation={}", floorDesignation);
+            return new ApiResponse<>(false, "No harness found for " + floorDesignation, harnessList);
+        }
+
+        return new ApiResponse<>(true, "Harness fetched successfully", harnessList);
+    }
+
 }

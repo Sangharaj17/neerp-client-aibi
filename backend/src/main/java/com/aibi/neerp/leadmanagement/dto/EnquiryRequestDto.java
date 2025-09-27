@@ -3,12 +3,15 @@ package com.aibi.neerp.leadmanagement.dto;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class EnquiryRequestDto {
+	
+	private String liftName;
     private LocalDateTime enqDate;
     private Integer enquiryId;
     private Integer leadId;
@@ -24,6 +27,10 @@ public class EnquiryRequestDto {
     private String noOfOpenings;
     private Integer noOfFloorsId;
     private String parkFloor;
+
+    private List<String> floorSelections;  // 👈 Added this for T, B1, B2 etc.
+
+
     private String floorsDesignation;
     private Integer reqMachineRoomId;
     private String shaftsWidth; 
@@ -47,4 +54,5 @@ public class EnquiryRequestDto {
     private Integer buildingTypeId;
     
     private Integer combinedEnquiryId;
+
 }

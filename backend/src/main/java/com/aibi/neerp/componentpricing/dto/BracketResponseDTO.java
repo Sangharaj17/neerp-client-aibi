@@ -9,7 +9,9 @@ import lombok.Data;
 @Builder
 public class BracketResponseDTO {
     private int id;
+    private Integer bracketTypeId;
     private String bracketTypeName;
     private Integer price;
+    private Integer floorId;
     private String floorName;
 }

@@ -48,4 +48,18 @@ public class ControlPanelTypeController {
         log.info("API Request: Delete ControlPanelType ID {}", id);
         return ResponseEntity.ok(service.delete(id));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<ControlPanelTypeResponseDTO>>> search(
+            @RequestParam(required = false) Integer operatorTypeId,
+            @RequestParam(required = false) Integer capacityTypeId,
+            @RequestParam(required = false) Integer machineTypeId,
+            @RequestParam(required = false) Integer capacityValue  // can be personCapacityId or weightId
+    ) {
+        log.info("API Request: Search ControlPanelTypes with operatorTypeId={}, capacityTypeId={}, machineTypeId={}, capacityValue={}",
+                operatorTypeId, capacityTypeId, machineTypeId, capacityValue);
+        return ResponseEntity.ok(service.search(operatorTypeId, capacityTypeId, machineTypeId, capacityValue));
+    }
+
+
 }

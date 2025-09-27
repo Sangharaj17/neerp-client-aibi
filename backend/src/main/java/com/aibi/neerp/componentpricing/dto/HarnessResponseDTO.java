@@ -12,4 +12,5 @@ public class HarnessResponseDTO {
     private String name;
     private Integer price;
     private String floorName; // Derived from Floor entity
+    private Integer floorId;
 }

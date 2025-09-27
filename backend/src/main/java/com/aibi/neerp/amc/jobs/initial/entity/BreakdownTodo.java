@@ -3,6 +3,7 @@ package com.aibi.neerp.amc.jobs.initial.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
@@ -35,7 +36,7 @@ public class BreakdownTodo {
     private String purpose;
 
     @Column(name = "todo_date", nullable = false)
-    private String todoDate; // Changed to String
+    private LocalDate todoDate; // Changed to String
 
     @Column(name = "time", nullable = false)
     private String time;

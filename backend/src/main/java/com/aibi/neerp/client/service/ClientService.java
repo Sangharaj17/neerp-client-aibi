@@ -19,7 +19,7 @@ public class ClientService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public Client getClientByDomain(String domain) {
-        String url = "https://neerp-admin-aibi-backend.scrollconnect.com//api/clients/domain/" + domain;
+        String url = "http://localhost:8081/api/clients/domain/" + domain;
         try {
             return restTemplate.getForObject(url, Client.class);
         } catch (Exception e) {
@@ -28,7 +28,7 @@ public class ClientService {
     }
 
     public ClientWithModulesResponse getClientWithModulesByDomain(String domain) {
-        String url = "https://neerp-admin-aibi-backend.scrollconnect.com//api/clients/domain/" + domain + "/with-subscription-check";
+        String url = "http://localhost:8081/api/clients/domain/" + domain + "/with-subscription-check";
 //        try {
 //            return restTemplate.getForObject(url, ClientWithModulesResponse.class);
 //        } catch (Exception e) {

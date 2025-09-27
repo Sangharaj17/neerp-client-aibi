@@ -1,9 +1,11 @@
 package com.aibi.neerp.leadmanagement.dto;
 
+import com.aibi.neerp.componentpricing.dto.AdditionalFloorDTO;
 import com.aibi.neerp.leadmanagement.entity.BuildingType;
 import com.aibi.neerp.materialmanagement.dto.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -46,4 +48,6 @@ public class EnquiryResponseDto {
     private Boolean checked;
     
     private BuildingType buildingType;
+
+    private List<AdditionalFloorDTO> floorSelections;
 }

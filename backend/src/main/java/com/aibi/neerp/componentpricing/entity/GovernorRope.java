@@ -30,4 +30,15 @@ public class GovernorRope {
 
     @NotBlank(message = "Quantity cannot be blank")
     private String quantity;
+
+    @Override
+    public String toString() {
+        return "GovernorRope{" +
+                "id=" + id +
+                ", governorName='" + governorName + '\'' +
+                ", prize=" + prize +
+                ", floor=" + floor +
+                ", quantity='" + quantity + '\'' +
+                '}';
+    }
 }

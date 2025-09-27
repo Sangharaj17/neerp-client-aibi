@@ -16,7 +16,7 @@ import java.util.List;
 public class AmcQuotationRequestDto {
 
 	private  Integer amcquatationId;
-    private String quatationDate;
+    private LocalDate quatationDate;
 
     // ---------- Foreign Keys ----------
     private Integer leadId;
@@ -29,8 +29,8 @@ public class AmcQuotationRequestDto {
     // ---------- Other Fields ----------
     private Integer noOfElevator;
     private String typeOfElevator;
-    private String  fromDate;
-    private String toDate;
+    private LocalDate  fromDate;
+    private LocalDate toDate;
 
     private BigDecimal amountOrdinary;
     private BigDecimal gstOrdinary;
@@ -51,7 +51,7 @@ public class AmcQuotationRequestDto {
     private BigDecimal gstPercentage;
     private Integer isFinal;
     private Integer jobStatus;
-    private String  forecastMonth;
+    private LocalDate  forecastMonth;
 
     // ---------- Nested Combined Quotations ----------
     private List<AmcCombinedQuotationRequestDto> combinedQuotations = new ArrayList<>();

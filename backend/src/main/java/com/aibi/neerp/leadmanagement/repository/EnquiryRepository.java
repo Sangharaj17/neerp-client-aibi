@@ -2,6 +2,7 @@ package com.aibi.neerp.leadmanagement.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -30,6 +31,9 @@ public interface EnquiryRepository extends JpaRepository<Enquiry, Integer> {
 	@Transactional
 	@Query(value = "DELETE FROM tbl_enquiry WHERE enquiry_id = :id", nativeQuery = true)
 	void deleteByEnquiryId(@Param("id") Integer id);
+
+
+	List<Enquiry> findByLead_LeadIdAndCombinedEnquiryId(Integer leadId, Integer enquiryId);
 
 
 

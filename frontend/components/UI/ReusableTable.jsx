@@ -192,7 +192,8 @@ const ReusableTable = ({
                         col.align || "text-left"
                       )}
                     >
-                      {item[col.key]}
+                      {/* {item[col.key]} */}
+                      {col.render ? col.render(item) : item[col.key]}
                     </td>
                   ))}
 

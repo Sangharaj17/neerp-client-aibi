@@ -8,7 +8,11 @@ import {
   User,
 } from 'lucide-react';
 
+import { useRouter } from 'next/navigation';
+
 export default function AmcJobList() {
+
+  const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -19,20 +23,62 @@ export default function AmcJobList() {
   const [direction, setDirection] = useState('desc');
   const [totalPages, setTotalPages] = useState(0);
 
+  // const fetchJobs = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const res = await axiosInstance.get('/api/amc-jobs/getAllJobs', {
+  //       params: { search, page, size, sortBy, direction },
+  //     });
+  //     setJobs(res.data.content || []);
+  //     setTotalPages(res.data.totalPages || 0);
+  //   } catch (err) {
+  //     setError('Failed to load AMC Jobs');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get('/api/amc-jobs/getAllJobs', {
-        params: { search, page, size, sortBy, direction },
-      });
-      setJobs(res.data.content || []);
-      setTotalPages(res.data.totalPages || 0);
-    } catch (err) {
-      setError('Failed to load AMC Jobs');
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+    setError(null);
+
+    // Regex to detect date in YYYY-MM-DD format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+    let textSearch = search; // normal search term
+    let dateSearch = "";     // dateSearch param
+
+    if (dateRegex.test(search)) {
+      dateSearch = search;
+      textSearch = ""; // clear text search if it's a date
     }
-  };
+
+    const params = {
+      search: textSearch,
+      page,
+      size,
+      sortBy,
+      direction,
+    };
+
+    if (dateSearch) {
+      params.dateSearch = dateSearch; // include only if a date
+    }
+
+    const res = await axiosInstance.get('/api/amc-jobs/getAllJobs', { params });
+
+    setJobs(res.data.content || []);
+    setTotalPages(res.data.totalPages || 0);
+    //setTotalElements(res.data.totalElements || 0);
+  } catch (err) {
+    console.error('Error fetching AMC Jobs:', err);
+    setError('Failed to load AMC Jobs');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     fetchJobs();
@@ -183,7 +229,11 @@ export default function AmcJobList() {
                  {/* Combined Actions with default colors */}
 <td className="px-3 py-2 text-center">
   <div className="flex items-center justify-center gap-3">
-    <button title="View">
+    <button  onClick={() => {
+        router.push(`/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list/view_amc_job_detail?jobId=${job.jobId}`);
+    //router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
+
+      }} title="View">
       <Eye className="w-4 h-4 text-blue-500" />
     </button>
     <button title="Invoice">

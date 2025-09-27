@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface LandingDoorSubTypeRepository extends JpaRepository<LandingDoorSubType, Integer> {
     List<LandingDoorSubType> findByLandingDoorType_DoorTypeId(int id);
+
+    // 🔹 New method to search by operatorElevator id (liftType)
+    List<LandingDoorSubType> findByOperatorElevator_Id(Integer operatorElevatorId);
+
 }

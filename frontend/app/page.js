@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
 export default function Home() {
-  redirect('/aibi/login'); // Redirect to a default tenant's login page
+  // Middleware will rewrite to /<tenant>/..., so redirect to /login which will be rewritten
+  redirect('/login');
 }

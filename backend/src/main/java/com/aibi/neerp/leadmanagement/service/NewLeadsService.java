@@ -396,6 +396,7 @@ public class NewLeadsService {
                 .toList();
     }
 
+
     private NewLeadsResponseDto convertToDto(NewLeads lead) {
         NewLeadsResponseDto dto = new NewLeadsResponseDto();
         dto.setLeadId(lead.getLeadId());

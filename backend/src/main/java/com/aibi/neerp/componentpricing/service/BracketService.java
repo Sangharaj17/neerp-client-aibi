@@ -122,9 +122,11 @@ public class BracketService {
     private BracketResponseDTO mapToResponse(Bracket bracket) {
         return BracketResponseDTO.builder()
                 .id(bracket.getId())
+                .bracketTypeId(bracket.getBracketType().getId())
                 .bracketTypeName(bracket.getBracketType().getName())
                 .price(bracket.getPrice())
                 .floorName(bracket.getFloor().getFloorName())
+                .floorId(bracket.getFloor().getId())
                 .build();
     }
 }

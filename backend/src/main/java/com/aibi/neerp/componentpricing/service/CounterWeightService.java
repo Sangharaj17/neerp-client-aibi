@@ -3,12 +3,9 @@ package com.aibi.neerp.componentpricing.service;
 import com.aibi.neerp.componentpricing.dto.CounterWeightRequestDTO;
 import com.aibi.neerp.componentpricing.dto.CounterWeightResponseDTO;
 import com.aibi.neerp.componentpricing.entity.*;
+import com.aibi.neerp.componentpricing.repository.*;
 import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
-import com.aibi.neerp.componentpricing.repository.CounterWeightRepository;
-import com.aibi.neerp.componentpricing.repository.CounterFrameTypeRepository;
-import com.aibi.neerp.componentpricing.repository.TypeOfLiftRepository;
-import com.aibi.neerp.componentpricing.repository.FloorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.owasp.encoder.Encode;
@@ -25,30 +22,28 @@ import java.util.stream.Collectors;
 public class CounterWeightService {
 
     private final CounterWeightRepository repository;
-    private final TypeOfLiftRepository typeOfLiftRepository;
-    private final CounterFrameTypeRepository counterFrameTypeRepository;
+    private final CounterWeightTypeRepository counterWeightTypeRepository;
     private final FloorRepository floorRepository;
 
     @Transactional(readOnly = true)
     public List<CounterWeightResponseDTO> findAll() {
-        log.info("Fetching all Counter Weights sorted by counterFrameName ASC");
+        log.info("Fetching all Counter Weights sorted by id ASC");
         return repository.findAll()
                 .stream()
-                .sorted(Comparator.comparing(cw -> cw.getCounterFrameName() == null ? "" : cw.getCounterFrameName(), String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparing(CounterWeight::getId))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public ApiResponse<CounterWeightResponseDTO> create(CounterWeightRequestDTO dto) {
-        log.info("Creating Counter Weight with Frame Name: {}", dto.getCounterFrameName());
+        log.info("Creating Counter Weight with Frame Name: {}", dto.getCounterWeightName());
 
         CounterWeight entity = new CounterWeight();
-        entity.setCounterFrameName(sanitize(dto.getCounterFrameName()));
-        entity.setTypeOfLift(typeOfLiftRepository.findById(dto.getTypeOfLiftId())
-                .orElseThrow(() -> new ResourceNotFoundException("Type of Lift not found")));
-        entity.setCounterFrameType(counterFrameTypeRepository.findById(dto.getCounterFrameTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Counter Frame Type not found")));
+        //entity.setCounterFrameName(sanitize(dto.getCounterFrameName().trim()));
+        entity.setCounterWeightName(dto.getCounterWeightName().trim());
+        entity.setCounterWeightType(counterWeightTypeRepository.findById(Long.valueOf(dto.getCounterWeightTypeId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Counter Weight Type not found")));
         entity.setFloors(floorRepository.findById(Long.valueOf(dto.getFloorsId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found")));
         entity.setPrice(dto.getPrice());
@@ -64,11 +59,10 @@ public class CounterWeightService {
         CounterWeight entity = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Counter Weight not found"));
 
-        entity.setCounterFrameName(sanitize(dto.getCounterFrameName()));
-        entity.setTypeOfLift(typeOfLiftRepository.findById(dto.getTypeOfLiftId())
-                .orElseThrow(() -> new ResourceNotFoundException("Type of Lift not found")));
-        entity.setCounterFrameType(counterFrameTypeRepository.findById(dto.getCounterFrameTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Counter Frame Type not found")));
+        //entity.setCounterFrameName(sanitize(dto.getCounterFrameName()));
+        entity.setCounterWeightName(dto.getCounterWeightName().trim());
+        entity.setCounterWeightType(counterWeightTypeRepository.findById(Long.valueOf(dto.getCounterWeightTypeId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Counter Weight Type not found")));
         entity.setFloors(floorRepository.findById(Long.valueOf(dto.getFloorsId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found")));
         entity.setPrice(dto.getPrice());
@@ -95,9 +89,10 @@ public class CounterWeightService {
     private CounterWeightResponseDTO mapToResponse(CounterWeight entity) {
         return CounterWeightResponseDTO.builder()
                 .id(entity.getId())
-                .counterFrameName(entity.getCounterFrameName() != null ? Encode.forHtml(entity.getCounterFrameName()) : null)
-                .typeOfLiftName(entity.getTypeOfLift().getLiftTypeName())
-                .counterFrameTypeName(entity.getCounterFrameType().getFrameTypeName())
+                .counterWeightName(entity.getCounterWeightName() != null ? Encode.forHtml(entity.getCounterWeightName()) : null)
+                .counterWeightTypeId(Math.toIntExact(entity.getCounterWeightType().getId()))
+                .counterWeightTypeName(entity.getCounterWeightType().getName())
+                .floorId(entity.getFloors().getId())
                 .floorName(entity.getFloors().getFloorName())
                 .price(entity.getPrice())
                 .build();

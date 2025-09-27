@@ -1,5 +1,6 @@
 package com.aibi.neerp.amc.jobs.initial.dto;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import lombok.*;
@@ -27,15 +28,15 @@ public class AmcJobRequestDto {
     private String jobNo;
     private String customerGstNo;
     private String jobType;
-    private String startDate;
-    private String endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private Integer noOfServices;
     private String jobAmount;
     private String amountWithGst;
     private String amountWithoutGst;
     private String paymentTerm;
     private Integer gstPercentage;
-    private String dealDate;
+    private LocalDate dealDate;
     private String jobLiftDetail;
     private String jobStatus;
     private Boolean status;

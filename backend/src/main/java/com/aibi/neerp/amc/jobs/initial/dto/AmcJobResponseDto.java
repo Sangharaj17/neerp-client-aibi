@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.jobs.initial.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Getter
@@ -22,8 +23,8 @@ public class AmcJobResponseDto {
     private String model;
     private String jobAmount;
     private String paymentTerm;
-    private String startDate;
-    private String endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private String jobStatus;
 }
 

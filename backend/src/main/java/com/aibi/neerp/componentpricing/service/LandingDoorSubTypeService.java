@@ -62,6 +62,14 @@ public class LandingDoorSubTypeService {
         repo.delete(subtype);
     }
 
+    public List<LandingDoorSubTypeResponseDTO> getByLiftType(Integer operatorElevatorId) {
+        return repo.findByOperatorElevator_Id(operatorElevatorId)
+                .stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+
     private LandingDoorSubType mapToEntity(LandingDoorSubTypeRequestDTO dto, LandingDoorSubType entity) {
         OperatorElevator operator = operatorRepo.findById(dto.getOperatorTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator not found"));

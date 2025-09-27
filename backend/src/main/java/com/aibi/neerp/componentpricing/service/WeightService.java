@@ -32,7 +32,7 @@ public class WeightService {
 
     public List<WeightResponseDTO> getAllWeights() {
         return weightRepo.findAll(Sort.by("id").ascending()).stream().map(w ->
-                new WeightResponseDTO(w.getId(), w.getUnit().getId(), w.getWeightValue(), w.getCapacityType().getId())
+                new WeightResponseDTO(w.getId(), w.getUnit().getId(), w.getWeightValue(), w.getCapacityType().getId(), w.getUnit().getUnitName(), w.getWeightValue() +" "+w.getUnit().getUnitName())
         ).collect(Collectors.toList());
     }
 
@@ -59,7 +59,7 @@ public class WeightService {
         weightRepo.save(weight);
 
         return new ApiResponse<>(true, "Weight added successfully", new WeightResponseDTO(
-                weight.getId(), unit.getId(), weight.getWeightValue(), capacityType.getId()));
+                weight.getId(), unit.getId(), weight.getWeightValue(), capacityType.getId(), unit.getUnitName(), weight.getWeightValue() +" "+weight.getUnit().getUnitName()));
     }
 
     @Transactional
@@ -80,7 +80,7 @@ public class WeightService {
         weightRepo.save(weight);
 
         return new ApiResponse<>(true, "Weight updated successfully", new WeightResponseDTO(
-                weight.getId(), unit.getId(), weight.getWeightValue(), capacityType.getId()));
+                weight.getId(), unit.getId(), weight.getWeightValue(), capacityType.getId(), unit.getUnitName(), weight.getWeightValue() +" "+weight.getUnit().getUnitName() ));
     }
 
     public ApiResponse<String> deleteWeight(Integer id) {
@@ -99,7 +99,9 @@ public class WeightService {
                 weight.getId(),
                 weight.getUnit().getId(),
                 weight.getWeightValue(),
-                weight.getCapacityType().getId()
+                weight.getCapacityType().getId(),
+                weight.getUnit().getUnitName(),
+                weight.getWeightValue() +" "+weight.getUnit().getUnitName()
         );
 
         return new ApiResponse<>(true, "Weight fetched", dto);
