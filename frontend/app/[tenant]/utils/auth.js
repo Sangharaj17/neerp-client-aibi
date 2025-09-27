@@ -3,7 +3,7 @@ export const handleLogout = async (tenant, router, customMessage = null) => {
     const tokenKey = `${tenant}_token`;
     const storedToken = localStorage.getItem(tokenKey);
 
-    const res = await fetch("http://localhost:8080/api/logout", {
+    const res = await fetch("https://neerp-client-aibi-backend.scrollconnect.com/api/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${storedToken}`,

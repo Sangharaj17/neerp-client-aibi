@@ -18,7 +18,7 @@
 
 //       // Base URL from environment or default to localhost:8080
 //       const baseUrl =
-//         process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+//         process.env.NEXT_PUBLIC_API_BASE_URL || "https://neerp-client-aibi-backend.scrollconnect.com";
 
 //       // Correct backend API endpoint for Activity List
 //       const url = `${baseUrl}/api/leadmanagement/lead-activity/leadTodoActivitylist?search=${encodeURIComponent(

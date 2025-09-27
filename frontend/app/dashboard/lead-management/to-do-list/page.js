@@ -101,7 +101,7 @@ export default function TodoListPage() {
       // If leadId not present on the row, fetch todo detail to get leadId
       if (!leadId) {
         try {
-          const res = await axios.get(`http://localhost:8080/api/leadmanagement/lead-todos/${todo.todoId}`);
+          const res = await axios.get(`https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-todos/${todo.todoId}`);
           const detail = res.data || res.data?.data || {};
           leadId = detail.leadId ?? detail.lead?.leadId ?? detail.leadId;
         } catch (err) {
