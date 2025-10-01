@@ -1,6 +1,7 @@
 package com.aibi.neerp.customer.controller;
 
 import com.aibi.neerp.customer.dto.SiteDto;
+import com.aibi.neerp.customer.dto.SiteWithCustomerDto;
 import com.aibi.neerp.customer.service.SiteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,4 +42,12 @@ public class SiteController {
         siteService.deleteSite(id);
         return ResponseEntity.noContent().build();
     }
+    
+    @GetMapping("/sites-with-customer")
+    public ResponseEntity<List<SiteWithCustomerDto>> getSitesWithCustomer() {
+        List<SiteWithCustomerDto> sites = siteService.getSitesWithCustomer();
+        return ResponseEntity.ok(sites);
+    }
+
+
 }

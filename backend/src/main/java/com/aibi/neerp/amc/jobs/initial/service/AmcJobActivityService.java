@@ -268,7 +268,8 @@ public class AmcJobActivityService {
 
 	                if (lastMonth == currentMonth) {
 	                    currentServiceStatus = "Completed";
-	                  //  pendingServices = totalServices - currentServiceNumber;
+	                    amcJob.setPreviousServicingDate(lastActivityDate);
+	                    //  pendingServices = totalServices - currentServiceNumber;
 	                } else {
 	                    currentServiceStatus = "Pending";
 	                    completedCount = 0;

@@ -6,24 +6,35 @@ import { useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 
-export default function AddActivity({ closeModal, leadId , handleActivityAdded}) {
+export default function AddActivity({ closeModal, leadId , handleActivityAdded , todoid}) {
   const { tenant } = useParams();
+
 
   const [todos, setTodos] = useState([]);
   const [executives, setExecutives] = useState([]);
   const [form, setForm] = useState({
-    todoId: '',
+    todoId: todoid || '',
     activityByEmpId: '',
     purpose: '',
     todoDate: '',
     time: '',
     venue: '',
   });
+   // ✅ Keep todoId in sync with prop
+  useEffect(() => {
+    if (todoid) {
+      setForm((prev) => ({
+        ...prev,
+        todoId: todoid,
+      }));
+    }
+  }, [todoid]);
   const [error, setError] = useState('');
 
   // Fetch Todos by leadId
   useEffect(() => {
     if (!leadId) return;
+
 
     axiosInstance
       .get(`/api/leadmanagement/lead-todos/by-lead/${leadId}`)

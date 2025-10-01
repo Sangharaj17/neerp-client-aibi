@@ -3,6 +3,7 @@ package com.aibi.neerp.leadmanagement.service;
 import com.aibi.neerp.leadmanagement.dto.*;
 import com.aibi.neerp.leadmanagement.entity.LeadStage;
 import com.aibi.neerp.leadmanagement.entity.LeadStatus;
+import com.aibi.neerp.leadmanagement.entity.LeadStatusCloseData;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.leadmanagement.entity.ProjectStage;
 import com.aibi.neerp.leadmanagement.repository.*;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -122,8 +124,15 @@ public class NewLeadsService {
         lead.setDesignation(designationRepository.findById(dto.getDesignationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Designation not found")));
         
+        
+        LeadStatus leadStatus = leadStatusRepository.findByStatusNameIgnoreCase("Active")
+                .orElseThrow(() -> new IllegalArgumentException("LeadStatus 'Active' not found"));
+
+        lead.setLeadStatus(leadStatus);
 
 
+      
+       
         if (dto.getDesignation2Id() != null) {
             lead.setDesignation2(designationRepository.findById(dto.getDesignation2Id())
                     .orElseThrow(() -> new ResourceNotFoundException("Designation2 not found")));
@@ -404,4 +413,7 @@ public class NewLeadsService {
         dto.setLeadType(lead.getLeadType());
         return dto;
     }
+    
+    
+   
 }

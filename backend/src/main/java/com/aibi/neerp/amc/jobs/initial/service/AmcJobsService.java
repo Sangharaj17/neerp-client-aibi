@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.jobs.initial.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -10,10 +11,13 @@ import org.springframework.stereotype.Service;
 import com.aibi.neerp.amc.jobs.initial.dto.AddJobDetailsData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.AmcJobsServiceEnginnersServicesReport;
+import com.aibi.neerp.amc.jobs.initial.dto.AmcServiceAlertData;
 import com.aibi.neerp.amc.jobs.initial.dto.EmployeeDto;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.dto.RoutesDto;
 import com.aibi.neerp.amc.jobs.initial.dto.SelectDetailForJob;
+import com.aibi.neerp.amc.jobs.initial.dto.ServiceEmployeeReport;
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.entity.Routes;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
@@ -24,6 +28,7 @@ import com.aibi.neerp.amc.quatation.initial.repository.AmcQuotationRepository;
 import com.aibi.neerp.amc.quatation.initial.repository.RevisedAmcQuotationRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.employeemanagement.repository.EmployeeRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.Enquiry;
@@ -34,7 +39,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -402,7 +409,8 @@ public class AmcJobsService {
         job.setDealDate(dto.getDealDate());
         job.setJobLiftDetail(dto.getJobLiftDetail());
         job.setJobStatus(dto.getJobStatus());
-        job.setStatus(dto.getStatus());
+        // false means job not completed and true means job completed
+        job.setStatus(true);
         job.setRenewalRemark(dto.getRenewalRemark());
         job.setIsNew(dto.getIsNew());
         job.setCurrentServiceNumber(dto.getCurrentServiceNumber());
@@ -504,6 +512,149 @@ public class AmcJobsService {
     	return buildLiftData(combinedEnquiry);
     } 
     
+    /*  here generating dashboard employee service report
+     * 
+     * */
+    
+    public AmcJobsServiceEnginnersServicesReport amcJobsServiceEnginnersServicesReport() {
+
+        AmcJobsServiceEnginnersServicesReport report = new AmcJobsServiceEnginnersServicesReport();
+
+        Integer totalAmcJobs = 0;
+        Integer amcDoneCounts = 0;
+        Integer amcPendingCounts = 0;
+
+        List<ServiceEmployeeReport> serviceEmployeeReports = new ArrayList<>();
+        List<AmcJob> amcJobs = amcJobRepository.findAll();
+
+        HashMap<Integer, ServiceEmployeeReport> employeeReportMap = new HashMap<>();
+
+        if (amcJobs != null) {
+            for (AmcJob amcJob : amcJobs) {
+
+                Integer totalServicesOfThisJob = amcJob.getNoOfServices();
+                totalAmcJobs += totalServicesOfThisJob;
+
+                Integer currentServiceDoneCounts = amcJob.getCurrentServiceNumber();
+                String currentServiceLiftStatus = amcJob.getCurrentServiceStatus();
+
+                if ("Pending".equalsIgnoreCase(currentServiceLiftStatus)) {
+                    currentServiceDoneCounts--;
+                }
+
+                amcDoneCounts += currentServiceDoneCounts;
+
+                // Assigned employee reports
+                List<Employee> assignedEmployees = amcJob.getRoute().getEmployees();
+
+                for (Employee employee : assignedEmployees) {
+                    Integer empId = employee.getEmployeeId();
+                    ServiceEmployeeReport serviceEmployeeReport = employeeReportMap.get(empId);
+
+                    if (serviceEmployeeReport == null) {
+                        serviceEmployeeReport = new ServiceEmployeeReport();
+                        serviceEmployeeReport.setEmpName(employee.getEmployeeName());
+                        serviceEmployeeReport.setAssginedServiceCounts(totalServicesOfThisJob);
+                        serviceEmployeeReport.setDoneServiceCounts(currentServiceDoneCounts);
+                        serviceEmployeeReport.setPendingServicesCounts(totalServicesOfThisJob - currentServiceDoneCounts);
+                        employeeReportMap.put(empId, serviceEmployeeReport);
+                    } else {
+                        serviceEmployeeReport.setAssginedServiceCounts(serviceEmployeeReport.getAssginedServiceCounts() + totalServicesOfThisJob);
+                        serviceEmployeeReport.setDoneServiceCounts(serviceEmployeeReport.getDoneServiceCounts() + currentServiceDoneCounts);
+                        serviceEmployeeReport.setPendingServicesCounts(serviceEmployeeReport.getPendingServicesCounts() + (totalServicesOfThisJob - currentServiceDoneCounts));
+                    }
+                }
+            }
+
+            amcPendingCounts = totalAmcJobs - amcDoneCounts;
+        }
+
+        // Add all employee reports to the list
+        serviceEmployeeReports.addAll(employeeReportMap.values());
+
+        report.setTotalAmcJobs(totalAmcJobs);
+        report.setAmcDoneCounts(amcDoneCounts);
+        report.setAmcPendingCounts(amcPendingCounts);
+        report.setServiceEmployeeReports(serviceEmployeeReports);
+
+        return report;
+    }
+    
+    
+    public Page<AmcServiceAlertData> serviceAlertDatas(
+            String search,
+            int page,
+            int size,
+            String sortBy,
+            String direction) {
+
+        // Build sorting
+        Sort sort = direction.equalsIgnoreCase("desc") ?
+                Sort.by(sortBy).descending() :
+                Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // ✅ Fetch only "pending" jobs directly from DB instead of filtering in memory
+        Page<AmcJob> amcJobsPage = amcJobRepository.findByStatusTrue(search, pageable);
+
+        List<AmcServiceAlertData> alertDataList = amcJobsPage.stream().map(amcJob -> {
+
+            AmcServiceAlertData alertData = new AmcServiceAlertData();
+            
+            alertData.setCurrentServiceCompletedLiftCounts(amcJob.getNoOfLiftsCurrentServiceCompletedCount());         
+            
+            alertData.setCurrentServicePendingLiftCounts(amcJob.getNoOfElevator() - amcJob.getNoOfLiftsCurrentServiceCompletedCount()) ;           		
+            		
+            alertData.setCurrentServiceTotalLiftsCounts(amcJob.getNoOfElevator()) ;           
+          
+            Site site = amcJob.getSite();
+            Customer customer = amcJob.getCustomer();
+
+            alertData.setAmcJobid(amcJob.getJobId());
+            alertData.setSite(site != null ? site.getSiteName() : "");
+            
+            alertData.setMonth(LocalDate.now().getMonth().name());
+
+            
+            String place = "";
+            if (amcJob.getAmcQuotation() != null) {
+                place = amcJob.getAmcQuotation().getLead().getArea().getAreaName();
+            } else if (amcJob.getRevisedAmcQuotation() != null) {
+                place = amcJob.getRevisedAmcQuotation().getLead().getArea().getAreaName();
+            }
+            alertData.setPlace(place);
+
+            alertData.setCustomer(customer != null ? customer.getCustomerName() : "");
+            alertData.setPreviousServicingDate(amcJob.getPreviousServicingDate());
+            alertData.setRemark(amcJob.getCurrentServiceStatus());
+            alertData.setService("Service " + amcJob.getCurrentServiceNumber());
+
+            // ✅ Map Employees → EmployeeDtos
+            List<EmployeeDto> employeeDtos = new ArrayList<>();
+            if (amcJob.getRoute() != null && amcJob.getRoute().getEmployees() != null) {
+                for (Employee employee : amcJob.getRoute().getEmployees()) {
+                    EmployeeDto dto = new EmployeeDto();
+                    dto.setAddress(employee.getAddress());
+                    dto.setEmployeeId(employee.getEmployeeId());
+                    dto.setName(employee.getEmployeeName());
+                    dto.setRole(employee.getRole().getRole());
+                    employeeDtos.add(dto);
+                }
+            }
+            alertData.setAssignedServiceEmployess(employeeDtos);
+
+            return alertData;
+        }).collect(Collectors.toList());
+
+        return new PageImpl<>(alertDataList, pageable, amcJobsPage.getTotalElements());
+    }
+
+    
+    
+
+
+
     
 
 

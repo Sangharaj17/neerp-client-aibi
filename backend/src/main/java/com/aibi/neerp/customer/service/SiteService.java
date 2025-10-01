@@ -1,6 +1,7 @@
 package com.aibi.neerp.customer.service;
 
 import com.aibi.neerp.customer.dto.SiteDto;
+import com.aibi.neerp.customer.dto.SiteWithCustomerDto;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.customer.repository.CustomerRepository;
@@ -73,4 +74,18 @@ public class SiteService {
                 .customer(customer)
                 .build();
     }
+    
+    
+    public List<SiteWithCustomerDto> getSitesWithCustomer() {
+        return siteRepository.findAll().stream()
+                .map(site -> SiteWithCustomerDto.builder()
+                        .siteId(site.getSiteId())
+                        .siteName(site.getSiteName())
+                        .siteAddress(site.getSiteAddress())
+                        .customerId(site.getCustomer().getCustomerId())
+                        .customerName(site.getCustomer().getCustomerName())
+                        .build())
+                .toList();
+    }
+
 }

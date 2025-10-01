@@ -1,8 +1,13 @@
 package com.aibi.neerp.leadmanagement.controller;
 
 import com.aibi.neerp.common.dto.PaginatedResponse;
+import com.aibi.neerp.leadmanagement.dto.LeadStatusCloseDataRequestDto;
+import com.aibi.neerp.leadmanagement.dto.LeadStatusCloseDataResponseDto;
 import com.aibi.neerp.leadmanagement.dto.NewLeadsRequestDto;
 import com.aibi.neerp.leadmanagement.dto.NewLeadsResponseDto;
+import com.aibi.neerp.leadmanagement.entity.LeadStatusCloseData;
+import com.aibi.neerp.leadmanagement.service.LeadStatusCloseDataService;
+import com.aibi.neerp.leadmanagement.service.LeadStatusService;
 import com.aibi.neerp.leadmanagement.service.NewLeadsService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +21,9 @@ public class NewLeadsController {
 
     @Autowired
     private NewLeadsService newLeadsService;
+    
+    @Autowired
+    private LeadStatusCloseDataService leadStatusCloseDataService;
 
     @PostMapping
     public ResponseEntity<NewLeadsResponseDto> create( @RequestBody NewLeadsRequestDto dto) {
@@ -81,6 +89,22 @@ public class NewLeadsController {
     public ResponseEntity<List<NewLeadsResponseDto>> getFilteredLeads() {
         System.out.println(newLeadsService.getFilteredLeads());
         return ResponseEntity.ok(newLeadsService.getFilteredLeads());
+    }
+    
+    @PostMapping("/{leadId}/close")
+    public ResponseEntity<String> createCloseRequest(
+            @PathVariable Integer leadId,
+            @RequestBody LeadStatusCloseDataRequestDto requestDto) {
+
+        // Call service method
+        leadStatusCloseDataService.createCloseRequest(
+                leadId,
+                requestDto.getReason(),
+                requestDto.getExpiryDate()
+        );
+
+        // Return success message
+        return ResponseEntity.ok("Lead close request created successfully.");
     }
 
 }

@@ -3,6 +3,7 @@ package com.aibi.neerp.amc.jobs.initial.controller;
 import com.aibi.neerp.amc.jobs.initial.dto.AddJobDetailsData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.AmcServiceAlertData;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.dto.SelectDetailForJob;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
@@ -102,6 +103,17 @@ public class AmcJobsController {
     public List<LiftData> getAllLiftsForAddBreakDownTodoByJobId(Integer jobId) {
         return amcJobsService.getAllLiftsForAddBreakDownTodo(jobId);
     }
+    
+    @GetMapping("/amc-service-alerts")
+    public Page<AmcServiceAlertData> getAmcServiceAlerts(
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "jobId") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+        return amcJobsService.serviceAlertDatas(search, page, size, sortBy, direction);
+    }
+
     
     
 }

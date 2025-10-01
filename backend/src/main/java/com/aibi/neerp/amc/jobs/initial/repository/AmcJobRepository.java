@@ -1,6 +1,7 @@
 package com.aibi.neerp.amc.jobs.initial.repository;
 
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -103,6 +104,21 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    WHERE j.status = true
 		""")
 		List<AmcJob> findAllActiveJobs();
+	
+	@Query("""
+			SELECT j FROM AmcJob j
+			WHERE j.status = true
+			  AND (LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+			    OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+			    OR LOWER(j.currentServiceStatus) LIKE LOWER(CONCAT('%', :search, '%')))
+			""")
+			Page<AmcJob> findByStatusTrue(@Param("search") String search, Pageable pageable);
+
+
+
+
+	Integer countByRenewlStatusAndEndDateBefore(int i, LocalDate currentDate);
+
 
 
 }

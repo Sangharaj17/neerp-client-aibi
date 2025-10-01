@@ -1,13 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import axiosInstance from "@/utils/axiosInstance";
 
-export default function BreakdownTodoForm() {
-  let prefilledJobId = "";
-  if (typeof window !== 'undefined') {
-    const params = new URLSearchParams(window.location.search);
-    prefilledJobId = params.get("jobId") || "";
-  }
+export default function BreakdownTodoForm({onClose}) {
+  const searchParams = useSearchParams();
+  const prefilledJobId = searchParams.get("jobId");
 
   const [formData, setFormData] = useState({
     userId: "", // new field
@@ -83,19 +81,39 @@ export default function BreakdownTodoForm() {
     fetchUsers();
   }, []);
 
+  // const handleChange = (e) => {
+  //   const { name, value, type, checked } = e.target;
+  //   if (name === "liftIds") {
+  //     const updatedLiftIds = checked
+  //       ? [...formData.liftIds, Number(value)]
+  //       : formData.liftIds.filter((id) => id !== Number(value));
+  //     setFormData({ ...formData, liftIds: updatedLiftIds });
+  //   } else if (type === "checkbox") {
+  //     setFormData({ ...formData, [name]: checked });
+  //   } else {
+  //     setFormData({ ...formData, [name]: value });
+  //   }
+  // };
+
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (name === "liftIds") {
-      const updatedLiftIds = checked
-        ? [...formData.liftIds, Number(value)]
-        : formData.liftIds.filter((id) => id !== Number(value));
-      setFormData({ ...formData, liftIds: updatedLiftIds });
-    } else if (type === "checkbox") {
-      setFormData({ ...formData, [name]: checked });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
+  const { name, value, type, checked } = e.target;
+
+  if (name === "liftIds") {
+    const updatedLiftIds = checked
+      ? [...formData.liftIds, Number(value)]
+      : formData.liftIds.filter((id) => id !== Number(value));
+    setFormData({ ...formData, liftIds: updatedLiftIds });
+  } else if (type === "checkbox") {
+    setFormData({ ...formData, [name]: checked ? 1 : 0 }); // if status is integer
+  } else if (name === "time") {
+    // Ensure time is in HH:mm:ss format
+    const formattedTime = value.length === 5 ? value + ":00" : value; 
+    setFormData({ ...formData, [name]: formattedTime });
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
+
 
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -110,7 +128,7 @@ export default function BreakdownTodoForm() {
     e.preventDefault();
     try {
       await axiosInstance.post("/api/breakdown-todo", formData);
-      alert("✅ Breakdown Todo added successfully!");
+      //alert("✅ Breakdown Todo added successfully!");
       setFormData((prev) => ({
         ...prev,
         purpose: "",
@@ -125,6 +143,7 @@ export default function BreakdownTodoForm() {
       setSelectAllLifts(false);
       setJobSearch("");
       setUserSearch("");
+      onClose(); // Close the modal after successful submission
     } catch (error) {
       console.error("Failed to add Breakdown Todo:", error);
       alert("❌ Failed to add Breakdown Todo.");
@@ -311,17 +330,18 @@ export default function BreakdownTodoForm() {
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2">Time</label>
-            <input
-              type="text"
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-              placeholder="HH:MM"
-              className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
+         <div>
+  <label className="block text-sm font-semibold mb-2">Time*</label>
+  <input
+    type="time"
+    name="time"
+    value={formData.time}
+    onChange={handleChange}
+    className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-400"
+    required
+  />
+</div>
+
           <div>
             <label className="block text-sm font-semibold mb-2">Venue</label>
             <input

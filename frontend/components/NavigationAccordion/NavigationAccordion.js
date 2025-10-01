@@ -149,7 +149,7 @@ const NavigationAccordion = () => {
       title: 'Dashboard',
       icon: BarChart3,
       hasSubmenu: false,
-      href: '/dashboard'
+      href: '/dashboard/dashboard-data'
     },
     {
       id: 'user-resource',
@@ -216,13 +216,13 @@ const NavigationAccordion = () => {
 
       ]
     },
-    {
+     {
       id: 'customers',
       title: 'Customers',
       icon: UserCheck,
       hasSubmenu: true,
       submenu: [
-        { title: 'Customer List', href: '/customers' },
+        { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list` },
         { title: 'Customer Groups', href: '/customer-groups' },
         { title: 'Customer History', href: '/customer-history' },
         { title: 'Feedback', href: '/feedback' }

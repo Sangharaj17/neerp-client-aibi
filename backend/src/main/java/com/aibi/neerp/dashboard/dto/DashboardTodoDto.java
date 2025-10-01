@@ -11,6 +11,8 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DashboardTodoDto {
+	private Integer leadId;
+	private Integer todoId;
     private String todoName;
     private String dateAndTime;
 }

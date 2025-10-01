@@ -153,5 +153,8 @@ public class AmcJob {
     @Column(name = "pending_service_count")
     private Integer pendingServiceCount;
     
+    @Column(name = "previous_servicing_date")
+    private LocalDate previousServicingDate;
+    
 }
 

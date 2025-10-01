@@ -10,6 +10,8 @@ export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdat
 
   const [statuses, setStatuses] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [reason, setReason] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
   const [error, setError] = useState('');
 
   // Fetch all statuses
@@ -28,19 +30,45 @@ export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdat
     }
 
     try {
-      const res = await axiosInstance.put(
-        `/api/leadmanagement/leads/${leadId}/updateStatus`,
-        {},
-        { params: { statusId: selectedStatus } }
-      );
+      const selectedStatusObj = statuses.find((s) => s.id === Number(selectedStatus));
+      const isClosed = selectedStatusObj?.statusName?.toLowerCase() === 'closed';
 
-      const updatedLead = res.data;
-      toast.success(
-        `Lead status updated to "${updatedLead.statusName || 'Updated'}" successfully.`
-      );
+      if (isClosed) {
+        // Validate reason and expiry date
+        if (!reason.trim()) {
+          setError('Please provide a reason for closing this lead.');
+          return;
+        }
+        if (!expiryDate) {
+          setError('Please select an expiry date.');
+          return;
+        }
 
-      handleStatusUpdated(updatedLead);
-      closeModal();
+        // ✅ Call new API for closing lead
+        await axiosInstance.post(`/api/leadmanagement/leads/${leadId}/close`, {
+          reason,
+          expiryDate,
+        });
+
+        toast.success('Lead successfully marked as closed.');
+       // handleStatusUpdated({ leadStatus: 'CLOSED' });
+        closeModal();
+
+      } else {
+        // ✅ Call existing API for status update
+        const res = await axiosInstance.put(
+          `/api/leadmanagement/leads/${leadId}/updateStatus`,
+          {},
+          { params: { statusId: selectedStatus } }
+        );
+
+        const updatedLead = res.data;
+        toast.success(
+          `Lead status updated to "${updatedLead.statusName || 'Updated'}" successfully.`
+        );
+        handleStatusUpdated(updatedLead);
+        closeModal();
+      }
     } catch (err) {
       console.error('Submit error:', err);
       const msg = err.response?.data || err.message;
@@ -52,7 +80,9 @@ export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdat
 
   return (
     <div className="max-w-3xl mx-auto p-8 bg-white shadow-lg rounded-xl">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Update Lead Status</h1>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">
+        Update Lead Status
+      </h1>
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
@@ -76,6 +106,42 @@ export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdat
           ))}
         </select>
       </div>
+
+      {/* Show extra fields only if status is Closed */}
+      {(() => {
+        const selectedStatusObj = statuses.find((s) => s.id === Number(selectedStatus));
+        const isClosed = selectedStatusObj?.statusName?.toLowerCase() === 'closed';
+        if (!isClosed) return null;
+
+        return (
+          <>
+            <div className="mb-6">
+              <label className="block font-semibold mb-2 text-gray-700">
+                Reason for Closing
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Enter reason"
+              />
+            </div>
+
+            <div className="mb-6">
+              <label className="block font-semibold mb-2 text-gray-700">
+                Expiry Date
+              </label>
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </>
+        );
+      })()}
 
       {/* Submit Button */}
       <div className="flex justify-end">

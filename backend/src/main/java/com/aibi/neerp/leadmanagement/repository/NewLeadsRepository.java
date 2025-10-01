@@ -31,4 +31,6 @@ public interface NewLeadsRepository extends JpaRepository<NewLeads, Integer> {
     // Spring Data JPA will generate:
     // SELECT * FROM new_leads WHERE lead_type IN ('New Installation','Modernization')
     List<NewLeads> findByLeadTypeIn(List<String> leadTypes);
+
+	Integer countByLeadStatus_StatusName(String string);
 }

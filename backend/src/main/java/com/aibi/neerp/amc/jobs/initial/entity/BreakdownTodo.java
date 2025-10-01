@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
@@ -39,8 +40,8 @@ public class BreakdownTodo {
     private LocalDate todoDate; // Changed to String
 
     @Column(name = "time", nullable = false)
-    private String time;
-
+    private LocalTime time; 
+    
     @Column(name = "venue", nullable = false)
     private String venue;
 

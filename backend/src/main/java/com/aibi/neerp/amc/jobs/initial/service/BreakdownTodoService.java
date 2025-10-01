@@ -2,11 +2,15 @@ package com.aibi.neerp.amc.jobs.initial.service;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
@@ -200,6 +204,49 @@ public class BreakdownTodoService {
       
     	return amcJobActivityService.getUncompletedBreakDownActivityLifts(breakdownId);
     }
+    
+    public Page<BreakdownTodoResponseDto> getUpcomingBreakdownTodos(String search, Pageable pageable) {
+        LocalDate today = LocalDate.now();
+        return breakdownTodoRepository.searchUpcomingBreakdownTodos(search, today, pageable)
+                .map(this::mapToDto);
+    }
+
+    public Page<BreakdownTodoResponseDto> getMissedBreakdownTodos(String search, Pageable pageable) {
+        LocalDate today = LocalDate.now();
+        return breakdownTodoRepository.searchMissedBreakdownTodos(search, today, pageable)
+                .map(this::mapToDto);
+    }
+
+    private BreakdownTodoResponseDto mapToDto(BreakdownTodo b) {
+        if (b == null) return null;
+
+        // Safely extract values
+        Integer todoId = b.getCustTodoId();
+        String purpose = (b.getPurpose() != null) ? b.getPurpose() : "";
+        LocalDate todoDate = b.getTodoDate();
+        LocalTime time = (b.getTime() != null) ? b.getTime() : null;
+        String venue = (b.getVenue() != null) ? b.getVenue() : "";
+        String complaintName = (b.getComplaintName() != null) ? b.getComplaintName() : "";
+        String complaintMob = (b.getComplaintMob() != null) ? b.getComplaintMob() : "";
+
+        String siteName = (b.getCustomerSite() != null) ? b.getCustomerSite().getSiteName() : "";
+        String siteAddress = (b.getCustomerSite() != null) ? b.getCustomerSite().getSiteAddress() : "";
+
+        String description = String.format("%s for %s at %s" ,
+                purpose, siteName ,siteAddress);
+
+        return BreakdownTodoResponseDto.builder()
+                .custTodoId(todoId)
+                .purpose(purpose)
+                .todoDate(todoDate)
+                .time(time)
+                .venue(venue)
+                .complaintName(complaintName)
+                .complaintMob(complaintMob)
+                .description(description)
+                .build();
+    }
+
    
     
     
