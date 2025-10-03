@@ -3,6 +3,7 @@ package com.aibi.neerp.dashboard.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
@@ -10,6 +11,7 @@ import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.repository.AmcQuotationRepository;
 import com.aibi.neerp.customer.repository.CustomerRepository;
+import com.aibi.neerp.dashboard.dto.DashboardAmcRenewalsListData;
 import com.aibi.neerp.dashboard.dto.DashboardCountsData;
 import com.aibi.neerp.dashboard.dto.DashboardTodoDto;
 import com.aibi.neerp.dashboard.dto.MissedActivityDto;
@@ -20,10 +22,12 @@ import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Pageable;
+
 
 @Service
 public class DashboardService {
@@ -93,7 +97,7 @@ public class DashboardService {
 
 		    // Count AMC jobs for renewal
 		    LocalDate currentDate = LocalDate.now();
-		    Integer totalAmcForRenewalsCounts = amcJobRepository.countByRenewlStatusAndEndDateBefore(0, currentDate);
+		    Integer totalAmcForRenewalsCounts = amcJobRepository.countByRenewlStatusAndEndDateDiffLessThan30(0, currentDate);
 
 		    // Set values in DTO
 		    dashboardCountsData.setTotalActiveLeadCounts(totalActiveLeadCounts);
@@ -105,8 +109,31 @@ public class DashboardService {
 		    return dashboardCountsData;
 		}
 
-	 
+	 public Page<DashboardAmcRenewalsListData> getAmcRenewals(
+	            String search, int page, int size, String sortBy, String direction) {
 
+	        Sort sort = direction.equalsIgnoreCase("desc")
+	                ? Sort.by(sortBy).descending()
+	                : Sort.by(sortBy).ascending();
+
+	        Pageable pageable = PageRequest.of(page, size, sort);
+	        LocalDate currentDate = LocalDate.now();
+
+	        Page<AmcJob> amcJobs = amcJobRepository.searchAmcRenewals(0, currentDate,
+	                (search == null ? "" : search), pageable);
+
+	        return amcJobs.map(amcJob -> {
+	            DashboardAmcRenewalsListData dto = new DashboardAmcRenewalsListData();
+	            dto.setAmcJobId(amcJob.getJobId());
+	            dto.setAmount(amcJob.getJobAmount());
+	            dto.setAmcPeriod(amcJob.getStartDate() + " to " + amcJob.getEndDate());
+	            dto.setCustomerName(amcJob.getCustomer().getCustomerName());
+	            dto.setCustomerSiteName(amcJob.getSite().getSiteName());
+	            long diff = java.time.temporal.ChronoUnit.DAYS.between(currentDate, amcJob.getEndDate());
+	            dto.setRemainingDays((int) diff);
+	            return dto;
+	        });
+	    }
     
 }
 

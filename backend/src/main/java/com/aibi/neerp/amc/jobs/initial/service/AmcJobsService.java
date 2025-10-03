@@ -71,47 +71,95 @@ public class AmcJobsService {
 
    
 
-    public List<SelectDetailForJob> getPendingJobs() {
+//    public List<SelectDetailForJob> getPendingJobs() {
+//
+//        // AMC Quotation
+//        List<SelectDetailForJob> amcList = amcQuotationRepository.findFinalPendingAmcQuotations()
+//            .stream()
+//            .map(a -> {
+//                String salutation = a.getLead() != null && a.getLead().getSalutations() != null
+//                        ? a.getLead().getSalutations().trim()
+//                        : "";
+//                String display = "AMC for " +
+//                        (salutation.isEmpty() ? "" : salutation + " ") +  // ✅ Add Mr./Mrs. if available
+//                        a.getCustomer().getCustomerName() +
+//                        " / " + a.getSite().getSiteName();
+//
+//                return new SelectDetailForJob(display, a.getAmcQuatationId(), null);
+//            })
+//            .collect(Collectors.toList());
+//
+//        // Revised AMC Quotation
+//        List<SelectDetailForJob> revisedList = revisedAmcQuotationRepository.findFinalPendingRevisedAmcQuotations()
+//            .stream()
+//            .map(r -> {
+//                String salutation = (r.getAmcQuotation() != null &&
+//                        r.getAmcQuotation().getLead() != null &&
+//                        r.getAmcQuotation().getLead().getSalutations() != null)
+//                        ? r.getAmcQuotation().getLead().getSalutations().trim()
+//                        : "";
+//
+//                String display = "AMC for " +
+//                        (salutation.isEmpty() ? "" : salutation + " ") +
+//                        r.getCustomer().getCustomerName() +
+//                        " / " + r.getSite().getSiteName() +
+//                        " / " + r.getRevisedEdition();
+//
+//                return new SelectDetailForJob(display, null, r.getRevisedQuatationId());
+//            })
+//            .collect(Collectors.toList());
+//
+//        amcList.addAll(revisedList);
+//        return amcList;
+//    }
+	    
+	    public List<SelectDetailForJob> getPendingJobs() {
 
-        // AMC Quotation
-        List<SelectDetailForJob> amcList = amcQuotationRepository.findFinalPendingAmcQuotations()
-            .stream()
-            .map(a -> {
-                String salutation = a.getLead() != null && a.getLead().getSalutations() != null
-                        ? a.getLead().getSalutations().trim()
-                        : "";
-                String display = "AMC for " +
-                        (salutation.isEmpty() ? "" : salutation + " ") +  // ✅ Add Mr./Mrs. if available
-                        a.getCustomer().getCustomerName() +
-                        " / " + a.getSite().getSiteName();
+	        // AMC Quotation
+	        List<SelectDetailForJob> amcList = amcQuotationRepository.findFinalPendingAmcQuotations()
+	            .stream()
+	            .map(a -> {
+	                // Salutation still from Lead if available
+	                String salutation = a.getLead() != null && a.getLead().getSalutations() != null
+	                        ? a.getLead().getSalutations().trim()
+	                        : "";
 
-                return new SelectDetailForJob(display, a.getAmcQuatationId(), null);
-            })
-            .collect(Collectors.toList());
+	                // Take customer and site directly from AMC quotation
+	                String display = "AMC for " +
+	                        (salutation.isEmpty() ? "" : salutation + " ") +
+	                        a.getCustomer().getCustomerName() +
+	                        " / " + a.getSite().getSiteName();
 
-        // Revised AMC Quotation
-        List<SelectDetailForJob> revisedList = revisedAmcQuotationRepository.findFinalPendingRevisedAmcQuotations()
-            .stream()
-            .map(r -> {
-                String salutation = (r.getAmcQuotation() != null &&
-                        r.getAmcQuotation().getLead() != null &&
-                        r.getAmcQuotation().getLead().getSalutations() != null)
-                        ? r.getAmcQuotation().getLead().getSalutations().trim()
-                        : "";
+	                return new SelectDetailForJob(display, a.getAmcQuatationId(), null);
+	            })
+	            .collect(Collectors.toList());
 
-                String display = "AMC for " +
-                        (salutation.isEmpty() ? "" : salutation + " ") +
-                        r.getCustomer().getCustomerName() +
-                        " / " + r.getSite().getSiteName() +
-                        " / " + r.getRevisedEdition();
+	        // Revised AMC Quotation
+	        List<SelectDetailForJob> revisedList = revisedAmcQuotationRepository.findFinalPendingRevisedAmcQuotations()
+	            .stream()
+	            .map(r -> {
+	                // Salutation from AMC quotation's original lead
+	                String salutation = (r.getAmcQuotation() != null &&
+	                        r.getAmcQuotation().getLead() != null &&
+	                        r.getAmcQuotation().getLead().getSalutations() != null)
+	                        ? r.getAmcQuotation().getLead().getSalutations().trim()
+	                        : "";
 
-                return new SelectDetailForJob(display, null, r.getRevisedQuatationId());
-            })
-            .collect(Collectors.toList());
+	                // Customer and site directly from Revised AMC quotation
+	                String display = "AMC for " +
+	                        (salutation.isEmpty() ? "" : salutation + " ") +
+	                        r.getCustomer().getCustomerName() +
+	                        " / " + r.getSite().getSiteName() +
+	                        " / " + r.getRevisedEdition();
 
-        amcList.addAll(revisedList);
-        return amcList;
-    }
+	                return new SelectDetailForJob(display, null, r.getRevisedQuatationId());
+	            })
+	            .collect(Collectors.toList());
+
+	        amcList.addAll(revisedList);
+	        return amcList;
+	    }
+
     
     public AddJobDetailsData getAddJobDetailsData(SelectDetailForJob selectDetailForJob) {
 
@@ -401,7 +449,8 @@ public class AmcJobsService {
         job.setNoOfServices(dto.getNoOfServices());
         job.setPendingServiceCount(dto.getNoOfServices());
         job.setJobAmount(dto.getJobAmount());
-        job.setBalanceAmount(new BigDecimal(dto.getJobAmount()));
+        job.setBalanceAmount(dto.getJobAmount());
+
         job.setAmountWithGst(dto.getAmountWithGst());
         job.setAmountWithoutGst(dto.getAmountWithoutGst());
         job.setPaymentTerm(dto.getPaymentTerm());

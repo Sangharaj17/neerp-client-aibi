@@ -13,6 +13,7 @@ import {
   Search,
   Edit2
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import LeadsSection from './LeadsSection';
 import CustomerTodoAndMissedActivity from './CustomerTodoAndMissedActivity';
@@ -20,6 +21,8 @@ import OfficeActivity from './OfficeActivity';
 import BreakdownTodos from './BreakdownTodos';
 
 const Dashboard = () => {
+
+  const router = useRouter();
   // --- global / counts
   const [activeTab, setActiveTab] = useState('leads');
   const [counts, setCounts] = useState(null);
@@ -233,6 +236,14 @@ const Dashboard = () => {
                   card.actions.map((action, index) => (
                     <button
                       key={index}
+                        onClick={() => {
+                          if (action === "AMC Quotation") {
+                            router.push(`/dashboard/quotations/amc_quatation_list`);
+                          }else if(action === "Add New Lead"){
+                            router.push(`/dashboard/lead-management/lead-list/add-lead`);
+                          }
+                          // for other actions you can add different routing later if needed
+                        }}
                       className="flex items-center justify-between w-full text-left text-sm text-gray-600 hover:text-gray-900 py-1 group"
                     >
                       <span>{action}</span>
@@ -240,7 +251,15 @@ const Dashboard = () => {
                     </button>
                   ))
                 ) : (
-                  <button className="flex items-center justify-between w-full text-left text-sm text-gray-600 hover:text-gray-900 py-1 group">
+                  <button onClick={()=>{
+                    if(card.action === "Add New Lead"){
+                            router.push(`/dashboard/lead-management/lead-list/add-lead`);
+                    }else if(card.action === "See More Details"){
+                      router.push(`/dashboard/customer/customer-list`);
+                    }else if(card.action === "View Details"){
+                      router.push(`/dashboard/dashboard-data/amc_renewals_list`);
+                    }
+                  }} className="flex items-center justify-between w-full text-left text-sm text-gray-600 hover:text-gray-900 py-1 group">
                     <span>{card.action}</span>
                     <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </button>

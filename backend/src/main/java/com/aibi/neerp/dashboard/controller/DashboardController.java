@@ -7,6 +7,7 @@ import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.initial.service.BreakdownTodoService;
 import com.aibi.neerp.customer.dto.CustomerSiteTodoResponseDto;
 import com.aibi.neerp.customer.service.CustomerSiteTodoService;
+import com.aibi.neerp.dashboard.dto.DashboardAmcRenewalsListData;
 import com.aibi.neerp.dashboard.dto.DashboardCountsData;
 import com.aibi.neerp.dashboard.dto.DashboardTodoDto;
 import com.aibi.neerp.dashboard.dto.OfficeActivityResponseDto;
@@ -14,6 +15,9 @@ import com.aibi.neerp.dashboard.service.DashboardService;
 import com.aibi.neerp.dashboard.service.OfficeActivityService;
 
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -105,6 +109,19 @@ public class DashboardController {
     @GetMapping("/counts")
     public ResponseEntity<DashboardCountsData> getDashboardCounts() {
         return ResponseEntity.ok(dashboardService.getDashboardCountsData());
+    }
+    
+    @GetMapping("/amc-renewals")
+    public ResponseEntity<Page<DashboardAmcRenewalsListData>> getAmcRenewals(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "endDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Page<DashboardAmcRenewalsListData> result =
+                dashboardService.getAmcRenewals(search, page, size, sortBy, direction);
+        return ResponseEntity.ok(result);
     }
 
     // ✅ Small helper method to avoid repeating PageRequest.of everywhere

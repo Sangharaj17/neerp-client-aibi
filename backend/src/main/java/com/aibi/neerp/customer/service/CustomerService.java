@@ -9,6 +9,11 @@ import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +36,22 @@ public class CustomerService {
     }
 
     // ✅ Get All Customers
-    public List<CustomerDto> getAllCustomers() {
-        return customerRepository.findAll()
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+    public Page<CustomerDto> getAllCustomers(String search, int page, int size, String sortBy, String direction) {
+     //   log.info("Fetching Customers with search='{}', page={}, size={}, sortBy={}, direction={}",
+        //        search, page, size, sortBy, direction);
+
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Customer> results = customerRepository.searchAll(
+                (search == null ? "" : search),
+                pageable
+        );
+
+        return results.map(this::mapToDto);
     }
 
     // ✅ Get Customer by ID

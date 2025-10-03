@@ -99,7 +99,7 @@ public class AmcJob {
     private Integer noOfServices;
 
     @Column(name = "job_amount", nullable = false)
-    private String jobAmount;
+    private BigDecimal jobAmount;
 
     @Column(name = "amount_with_GST", nullable = false)
     private String amountWithGst;

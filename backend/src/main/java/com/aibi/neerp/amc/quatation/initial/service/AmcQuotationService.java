@@ -567,6 +567,9 @@ public class AmcQuotationService {
             
             amcQuotation.setCustomer(customer);
             repository.save(amcQuotation);
+         }else {
+        	 amcQuotation.setCustomer(customer);
+             repository.save(amcQuotation);
          }
         
         String siteName= "";

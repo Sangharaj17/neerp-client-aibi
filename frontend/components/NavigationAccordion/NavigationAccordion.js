@@ -222,6 +222,7 @@ const NavigationAccordion = () => {
       icon: UserCheck,
       hasSubmenu: true,
       submenu: [
+        { title: 'Customer List', href: '/dashboard/customer/customer-list' },
         { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list` },
         { title: 'Customer Groups', href: '/customer-groups' },
         { title: 'Customer History', href: '/customer-history' },
