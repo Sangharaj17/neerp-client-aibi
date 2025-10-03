@@ -230,7 +230,9 @@ export default function AmcJobList() {
 <td className="px-3 py-2 text-center">
   <div className="flex items-center justify-center gap-3">
     <button  onClick={() => {
-        router.push(`/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list/view_amc_job_detail?jobId=${job.jobId}`);
+
+          router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${job.jobId}`);
+      //  router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail?jobId=${job.jobId}`);
     //router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
 
       }} title="View">

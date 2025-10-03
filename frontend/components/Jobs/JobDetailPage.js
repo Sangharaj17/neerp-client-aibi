@@ -27,9 +27,15 @@ const JobDetailPage = ({ jobId }) => {
   useEffect(() => {
     const fetchJobDetail = async () => {
       try {
-        const response = await axiosInstance.get(
-          `/api/jobs/initial/amc-job-activities/job-detail/${jobId}`
-        );
+        // const response = await axiosInstance.get(
+        //   `/api/jobs/initial/amc-job-activities/job-detail/${jobId}`
+        // );
+
+           const finalUrl = `/api/jobs/initial/amc-job-activities/job-detail/${jobId}`;
+      //alert(`Calling API: ${axiosInstance.defaults.baseURL}${finalUrl}`);
+
+      const response = await axiosInstance.get(finalUrl);
+
 
         const data = response.data;
         setJobDetails(data.jobDetails || {});

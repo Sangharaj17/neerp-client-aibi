@@ -1,18 +1,16 @@
 "use client";
 
 import JobDetailPage from "@/components/Jobs/JobDetailPage";
+import { useParams } from "next/navigation";
 
 export default function JobDetailPageWrapper() {
-  let jobId = "";
-  if (typeof window !== 'undefined') {
-    const params = new URLSearchParams(window.location.search);
-    jobId = params.get("jobId") || "";
-  }
+  const params = useParams();
+  const { jobid } = params; // matches your folder [jobid] dynamic route
 
   return (
     <div className="w-full h-screen">
       {/* Pass jobId as prop */}
-      <JobDetailPage jobId={jobId} />
+      <JobDetailPage jobId={jobid} />
     </div>
   );
 }
