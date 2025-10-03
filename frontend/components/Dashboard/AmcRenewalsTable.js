@@ -120,11 +120,11 @@ const AmcRenewalsTable = () => {
   };
 
   const tableHeaders = [
-    { key: "amcJobId", label: "Job ID" },
+    { key: "jobId", label: "Job ID" },
     { key: "customerName", label: "Customer" },
     { key: "customerSiteName", label: "Site" },
     { key: "amcPeriod", label: "AMC Period" },
-    { key: "amount", label: "Amount" },
+    { key: "jobAmount", label: "Amount" },
     { key: "remainingDays", label: "Remaining Days" },
     { key: "status", label: "Status" }, // Status column restored
     { key: "actions", label: "Actions" }, // Actions column for Renew and Delete

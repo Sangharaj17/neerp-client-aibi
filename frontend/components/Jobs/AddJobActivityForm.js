@@ -227,7 +227,7 @@ export default function AddJobActivityForm({jobId}) {
       setBreakdowns([]);
       setLifts([]);
       toast.success("Job activity added successfully!");
-  router.push(`/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list/view_amc_job_detail?jobId=${jobId}`);
+router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
 
     } catch (err) {
       console.error(err);

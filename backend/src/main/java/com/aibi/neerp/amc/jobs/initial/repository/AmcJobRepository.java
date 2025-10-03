@@ -131,22 +131,45 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    @Param("currentDate") LocalDate currentDate
 		);
 	
-	 @Query("""
-		        SELECT j
-		        FROM AmcJob j
-		        WHERE j.renewlStatus = :renewlStatus
-		          AND j.lead.leadStatus.statusName = 'Active'
-		          AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
-		          AND (:search IS NULL OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
-		              OR LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%')))
+//	 @Query("""
+//		        SELECT j
+//		        FROM AmcJob j
+//		        WHERE j.renewlStatus = :renewlStatus
+//		          AND j.lead.leadStatus.statusName = 'Active'
+//		          AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
+//		          AND (:search IS NULL OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+//		              OR LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%')))
+//		    """)
+//		    Page<AmcJob> searchAmcRenewals(
+//		            @Param("renewlStatus") Integer renewlStatus,
+//		            @Param("currentDate") LocalDate currentDate,
+//		            @Param("search") String search,
+//		            Pageable pageable
+//		    );
+	
+	@Query("""
+		    SELECT j
+		    FROM AmcJob j
+		    WHERE j.renewlStatus = :renewlStatus
+		      AND j.lead.leadStatus.statusName = 'Active'
+		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
+		      AND (
+		            :search IS NULL
+		            OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+		            OR LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+		            OR CAST(j.jobId AS string) LIKE CONCAT('%', :search, '%')
+		            OR CAST(j.jobAmount AS string) LIKE CONCAT('%', :search, '%')
+		          )
 		    """)
-		    Page<AmcJob> searchAmcRenewals(
-		            @Param("renewlStatus") Integer renewlStatus,
-		            @Param("currentDate") LocalDate currentDate,
-		            @Param("search") String search,
-		            Pageable pageable
-		    );
+		Page<AmcJob> searchAmcRenewals(
+		        @Param("renewlStatus") Integer renewlStatus,
+		        @Param("currentDate") LocalDate currentDate,
+		        @Param("search") String search,
+		        Pageable pageable
+		);
 
+
+	
 
 
 
