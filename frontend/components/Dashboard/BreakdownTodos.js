@@ -5,12 +5,20 @@ import { Search, Edit2, Plus } from 'lucide-react';
 import ActionModal from '../AMC/ActionModal';
 import BreakdownTodoForm from '../Jobs/BreakdownTodoForm';
 
-function BreakdownTodoItem({ item }) {
+// Modified to accept a 'status' prop for conditional styling
+function BreakdownTodoItem({ item, status }) {
+  // Determine badge color based on status
+  const badgeClasses =
+    status === 'missed'
+      ? 'bg-red-100 text-red-600' // Red for missed activities
+      : 'bg-green-100 text-green-600'; // Green for upcoming todos
+
   return (
     <div className="flex items-center justify-between gap-3 bg-white rounded px-3 py-2 border border-gray-100">
       <div className="text-sm text-gray-800 font-medium">{item.description}</div>
       <div className="flex items-center gap-2">
-        <div className="px-2 py-1 rounded-full bg-red-100 text-red-600 text-xs">
+        {/* Conditional badge class applied here */}
+        <div className={`px-2 py-1 rounded-full text-xs ${badgeClasses}`}>
           {item.todoDate} {item.time}
         </div>
         <button className="p-1 rounded bg-white border border-blue-200 hover:bg-blue-50">
@@ -77,17 +85,16 @@ export default function BreakdownTodos() {
     fetchMissed();
   }, [missedPage, missedSize, missedSearch]);
 
-  useEffect(()=>{
-    if(isModalOpen === false)
-    {
-        fetchUpcoming();
-        fetchMissed();
+  useEffect(() => {
+    if (isModalOpen === false) {
+      fetchUpcoming();
+      fetchMissed();
     }
-  },[isModalOpen])
+  }, [isModalOpen]);
 
   return (
     <>
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* --- Upcoming Breakdown Todos --- */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center justify-between bg-blue-600 text-white px-4 py-2 rounded-t-lg">
@@ -136,11 +143,12 @@ export default function BreakdownTodos() {
               </div>
             </div>
 
-            <div className="min-h-[120px]">
+            <div className="min-h-[120px] space-y-2">
               {upcomingLoading ? (
                 <div className="text-center py-6 text-gray-500">Loading...</div>
               ) : upcoming.length > 0 ? (
-                upcoming.map((t, idx) => <BreakdownTodoItem key={idx} item={t} />)
+                // Pass status="upcoming" to show green badge
+                upcoming.map((t, idx) => <BreakdownTodoItem key={idx} item={t} status="upcoming" />)
               ) : (
                 <div className="text-center py-6 text-gray-500">No upcoming todos</div>
               )}
@@ -237,7 +245,8 @@ export default function BreakdownTodos() {
               {missedLoading ? (
                 <div className="text-center py-6 text-gray-500">Loading...</div>
               ) : missed.length > 0 ? (
-                missed.map((m, i) => <BreakdownTodoItem key={i} item={m} />)
+                // Pass status="missed" to show red badge
+                missed.map((m, i) => <BreakdownTodoItem key={i} item={m} status="missed" />)
               ) : (
                 <div className="text-center py-6 text-gray-500">No missed todos</div>
               )}

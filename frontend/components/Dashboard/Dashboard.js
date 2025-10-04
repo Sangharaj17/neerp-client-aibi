@@ -20,14 +20,19 @@ import CustomerTodoAndMissedActivity from './CustomerTodoAndMissedActivity';
 import OfficeActivity from './OfficeActivity';
 import BreakdownTodos from './BreakdownTodos';
 
-const Dashboard = () => {
+// Helper function to get the assigned employee names as a string
+const getAssignedEmployees = (employees) => {
+  if (!employees || employees.length === 0) return 'Unassigned';
+  return employees.map(emp => emp.name).join(', ');
+};
 
+const Dashboard = () => {
   const router = useRouter();
   // --- global / counts
   const [activeTab, setActiveTab] = useState('leads');
   const [counts, setCounts] = useState(null);
 
-  // --- AMC alerts (kept)
+  // --- AMC alerts
   const [amcServiceAlerts, setAmcServiceAlerts] = useState([]);
   const [amcPage, setAmcPage] = useState(0);
   const [amcSize, setAmcSize] = useState(10);
@@ -37,6 +42,7 @@ const Dashboard = () => {
 
 
   // --- Customer To Do
+  // State for Customer To Do (Note: logic kept but moved inside renderTabContent)
   const [customerTodos, setCustomerTodos] = useState([]);
   const [customerPage, setCustomerPage] = useState(0);
   const [customerSize, setCustomerSize] = useState(10);
@@ -109,11 +115,11 @@ const Dashboard = () => {
       icon: Users,
       color: 'blue',
       bgColor: 'bg-blue-50',
-      borderColor: 'border-b-blue-500'
+      borderColor: 'border-blue-500' // Changed from border-b- to simple color
     },
     {
       id: 'installation',
-      title: 'New Installation',
+      title: 'New Quotations',
       count: counts?.totalNewInstallationQuatationCounts ?? 0,
       subCount: counts?.totalAmcQuatationCounts ?? 0,
       subTitle: 'AMC',
@@ -121,7 +127,7 @@ const Dashboard = () => {
       icon: Wrench,
       color: 'green',
       bgColor: 'bg-green-50',
-      borderColor: 'border-b-green-500'
+      borderColor: 'border-green-500'
     },
     {
       id: 'customers',
@@ -131,7 +137,7 @@ const Dashboard = () => {
       icon: UserCheck,
       color: 'purple',
       bgColor: 'bg-purple-50',
-      borderColor: 'border-b-purple-500'
+      borderColor: 'border-purple-500'
     },
     {
       id: 'renewals',
@@ -141,13 +147,13 @@ const Dashboard = () => {
       icon: FileText,
       color: 'orange',
       bgColor: 'bg-orange-50',
-      borderColor: 'border-b-orange-500'
+      borderColor: 'border-orange-500'
     }
   ];
 
   const tabs = [
     { id: 'leads', label: 'Leads To Do', icon: Users },
-    { id: 'customers', label: 'Customer To Do', icon: Users },
+    { id: 'customers', label: 'Customer To Do', icon: UserCheck }, // Used UserCheck here for distinction
     { id: 'activity', label: 'Daily Activity', icon: Activity },
     { id: 'breakdown', label: 'BreakDown Calls', icon: Phone }
   ];
@@ -159,12 +165,23 @@ const Dashboard = () => {
         return (<>
         <LeadsSection/>
         </>);
-           
+          
       case 'customers':
         return (
-         <>
-         <CustomerTodoAndMissedActivity/>
-         </>
+          <>
+          {/* Passed existing customer props for potential internal use in the component */}
+          <CustomerTodoAndMissedActivity
+            customerTodos={customerTodos}
+            customerPage={customerPage}
+            setCustomerPage={setCustomerPage}
+            customerSize={customerSize}
+            setCustomerSize={setCustomerSize}
+            customerTotalPages={customerTotalPages}
+            customerSearch={customerSearch}
+            setCustomerSearch={setCustomerSearch}
+            customerLoading={customerLoading}
+          />
+          </>
         );
       
       case 'activity':
@@ -176,9 +193,9 @@ const Dashboard = () => {
       
       case 'breakdown':
         return (
-         <>
-         <BreakdownTodos/>
-         </>
+          <>
+          <BreakdownTodos/>
+          </>
         );
       
       default:
@@ -200,68 +217,78 @@ const Dashboard = () => {
     return colors[color] || 'text-gray-600';
   };
 
+  const handleAmcEdit = (amcJobid) => {
+    // Navigate to a specific AMC Job detail page using the ID
+    router.push(`/dashboard/amc-management/job-details/${amcJobid}`);
+  };
+
+
   return (
-    <div className="space-y-8 w-full p-6">
+    <div className="space-y-8 w-full p-6 bg-gray-50 min-h-screen">
+      
       {/* Header */}
       <div>
-        <h2 className="text-lg font-medium text-gray-900">Dashboard Overview</h2>
-        <p className="text-gray-500">Here you can find a summary of your dashboard activities.</p>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <p className="text-gray-500 text-sm">Welcome back! Here's a summary of your key business metrics and tasks.</p>
       </div>
 
-      {/* Stat Cards */}
+      {/* Stat Cards - IMPROVED DESIGN */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card) => (
           <div
             key={card.id}
-            className={`bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 transform hover:-translate-y-1 border-b-4 ${card.borderColor}`}
+            className={`bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out border-t-4 border-l-2 ${card.borderColor.replace('border-b', 'border-t')} border-opacity-70`}
           >
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               <div className="flex items-start justify-between">
-                <div className="flex items-baseline space-x-3">
-                  <span className="text-3xl font-light text-gray-900">{card.count}</span>
-                  {card.subCount !== undefined && (
-                    <>
-                      <span className="text-xl font-light text-gray-600">{card.subCount}</span>
-                      <span className="text-sm text-gray-500">{card.subTitle}</span>
-                    </>
-                  )}
+                <div className={`p-3 rounded-full ${card.bgColor} shadow-md`}>
+                  <card.icon className={`w-6 h-6 ${getIconColor(card.color)}`} />
                 </div>
-                <div className={`p-2 rounded-lg ${card.bgColor}`}>
-                  <card.icon className={`w-5 h-5 ${getIconColor(card.color)}`} />
+                <div className="flex flex-col items-end">
+                  <span className="text-4xl font-extrabold tracking-tight text-gray-900 leading-none">{card.count}</span>
+                  <h3 className="text-sm font-semibold text-gray-500 mt-1">{card.title}</h3>
                 </div>
               </div>
-              <h3 className="text-sm font-medium text-gray-700">{card.title}</h3>
-              <div className="space-y-2">
+              <div className="space-y-1 pt-2">
+                
+                {/* Secondary data for Quotaion card */}
+                {card.subCount !== undefined && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                    <span className="font-medium text-lg text-gray-700">{card.subCount}</span>
+                    <span className="text-sm">{card.subTitle} Quotations</span>
+                  </div>
+                )}
+                
+                {/* Action Buttons Group (Refined Look) */}
                 {card.actions ? (
                   card.actions.map((action, index) => (
                     <button
                       key={index}
-                        onClick={() => {
-                          if (action === "AMC Quotation") {
-                            router.push(`/dashboard/quotations/amc_quatation_list`);
-                          }else if(action === "Add New Lead"){
-                            router.push(`/dashboard/lead-management/lead-list/add-lead`);
-                          }
-                          // for other actions you can add different routing later if needed
-                        }}
-                      className="flex items-center justify-between w-full text-left text-sm text-gray-600 hover:text-gray-900 py-1 group"
+                      onClick={() => {
+                        if (action === "AMC Quotation") {
+                          router.push(`/dashboard/quotations/amc_quatation_list`);
+                        } else if (action === "New Installation") {
+                           router.push(`/dashboard/quotations/installation_quatation_list`);
+                        }
+                      }}
+                      className={`flex items-center justify-between w-full text-left text-sm font-medium ${getIconColor(card.color).replace('text-', 'text-')} hover:text-gray-900 py-1 group transition-colors`}
                     >
                       <span>{action}</span>
-                      <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
                     </button>
                   ))
                 ) : (
                   <button onClick={()=>{
                     if(card.action === "Add New Lead"){
-                            router.push(`/dashboard/lead-management/lead-list/add-lead`);
+                      router.push(`/dashboard/lead-management/lead-list/add-lead`);
                     }else if(card.action === "See More Details"){
                       router.push(`/dashboard/customer/customer-list`);
                     }else if(card.action === "View Details"){
                       router.push(`/dashboard/dashboard-data/amc_renewals_list`);
                     }
-                  }} className="flex items-center justify-between w-full text-left text-sm text-gray-600 hover:text-gray-900 py-1 group">
+                  }} className={`flex items-center justify-between w-full text-left text-sm font-medium ${getIconColor(card.color).replace('text-', 'text-')} hover:text-gray-900 py-1 group transition-colors`}>
                     <span>{card.action}</span>
-                    <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
                   </button>
                 )}
               </div>
@@ -270,16 +297,18 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Tabs Section */}
-      <div className="bg-white border border-gray-200 rounded-lg">
-        <div className="border-b border-gray-200">
-          <div className="flex">
+      {/* Tabs Section - IMPROVED DESIGN */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+        <div className="border-b border-gray-200 px-2 sm:px-4">
+          <div className="flex overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                className={`flex items-center space-x-2 px-4 sm:px-6 py-4 text-sm font-semibold transition-all duration-200 whitespace-nowrap ${
+                  activeTab === tab.id 
+                    ? 'text-blue-600 border-b-2 border-blue-600'
+                    : 'text-gray-600 hover:text-blue-500 border-b-2 border-transparent hover:border-blue-200'
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -288,86 +317,121 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
-        <div className="min-h-96">{renderTabContent()}</div>
+        <div className="min-h-96 p-4 sm:p-6">{renderTabContent()}</div>
       </div>
 
-      {/* AMC Service Alerts (kept below tabs) */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3 gap-3">
+      {/* AMC Service Alerts - IMPROVED DESIGN & PAGINATION FIX */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <FileText className="w-5 h-5 text-blue-600" />
+            <div className="p-3 bg-blue-50 rounded-lg shadow-sm">
+              <FileText className="w-6 h-6 text-blue-600" />
             </div>
-            <span className="font-medium text-gray-900">AMC Service Alerts</span>
+            <span className="text-xl font-semibold text-gray-900">AMC Service Alerts</span>
           </div>
 
-          <div className="relative w-full md:w-64">
+          <div className="relative w-full md:w-80">
             <input
               type="text"
-              placeholder="Search customer/site..."
+              placeholder="Search customer, site, or place..."
               value={amcSearch}
               onChange={(e) => {
                 setAmcSearch(e.target.value);
                 setAmcPage(0);
               }}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
             />
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           </div>
         </div>
 
-        {amcServiceAlerts.length > 0 ? (
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-            <table className="min-w-full text-sm">
-              <thead className="bg-blue-100 text-gray-700 text-xs uppercase">
+        {amcLoading ? (
+          <div className="text-center py-10 text-gray-500 font-medium">
+            <div className="flex justify-center items-center space-x-2">
+              <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Loading AMC Alerts...</span>
+            </div>
+          </div>
+        ) : amcServiceAlerts.length > 0 ? (
+          <div className="overflow-x-auto rounded-lg shadow-inner border border-gray-100">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left">Customer</th>
-                  <th className="px-4 py-3 text-left">Site</th>
-                  <th className="px-4 py-3 text-left">Place</th>
-                  <th className="px-4 py-3 text-left">Service</th>
-                  <th className="px-4 py-3 text-left">Month</th>
-                  <th className="px-4 py-3 text-left">Pending</th>
+                  {/* --- SR NO ADDED HERE --- */}
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Sr No</th>
+                  {/* ------------------------ */}
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site / Place</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Assigned</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Serviced</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Remark</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status (Pending/Total)</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Action</th>
                 </tr>
               </thead>
-              <tbody>
-                {amcLoading ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-6 text-gray-500">Loading...</td>
-                  </tr>
-                ) : (
-                  amcServiceAlerts.map((alert) => (
-                    <tr key={alert.amcJobid} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 border-b">{alert.customer}</td>
-                      <td className="px-4 py-2 border-b">{alert.site}</td>
-                      <td className="px-4 py-2 border-b">{alert.place}</td>
-                      <td className="px-4 py-2 border-b">{alert.service}</td>
-                      <td className="px-4 py-2 border-b">{alert.month}</td>
-                      <td className="px-4 py-2 border-b">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${alert.currentServicePendingLiftCounts > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+              <tbody className="bg-white divide-y divide-gray-100 text-sm">
+                {amcServiceAlerts.map((alert, index) => {
+                  const isCompleted = alert.remark === 'Completed';
+                  // --- SERIAL NUMBER CALCULATION ---
+                  const srNo = amcPage * amcSize + index + 1;
+                  // ---------------------------------
+                  return (
+                    <tr key={alert.amcJobid} className="hover:bg-blue-50/50 transition-colors">
+                      {/* --- SR NO DISPLAYED HERE --- */}
+                      <td className="px-6 py-3 whitespace-nowrap text-center text-gray-600 font-mono">{srNo}</td>
+                      {/* ---------------------------- */}
+                      <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{alert.customer}</td>
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-600">
+                        {alert.site} <span className="text-xs text-gray-400">({alert.place})</span>
+                      </td>
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-600">{alert.service} - {alert.month}</td>
+                      <td className="px-6 py-3 whitespace-nowrap text-xs text-gray-700">{getAssignedEmployees(alert.assignedServiceEmployess)}</td>
+                      <td className="px-6 py-3 whitespace-nowrap text-gray-500 text-xs">{alert.previousServicingDate ? new Date(alert.previousServicingDate).toLocaleDateString() : 'N/A'}</td>
+                      <td className="px-6 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {alert.remark}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-center">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isCompleted ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
                           {alert.currentServicePendingLiftCounts} / {alert.currentServiceTotalLiftsCounts}
                         </span>
                       </td>
+                      <td className="px-6 py-3 text-center">
+                        <button
+                          onClick={() => handleAmcEdit(alert.amcJobid)}
+                          className="p-2 rounded-full text-gray-500 hover:text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          title={`View/Edit Job ${alert.amcJobid}`}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
-                  ))
-                )}
+                  );
+                })}
               </tbody>
             </table>
           </div>
         ) : (
-          !amcLoading && <p className="text-sm text-gray-500">No pending AMC alerts</p>
+          <p className="text-sm text-gray-500 text-center py-6">All clear! No pending AMC service alerts found for the current search.</p>
         )}
 
-        {amcTotalPages > 1 && (
-          <div className="flex items-center justify-between mt-4 text-sm">
-            <div className="flex items-center space-x-2">
-              <span>Rows per page:</span>
+        {/* Pagination Controls - FIX APPLIED HERE */}
+        {amcServiceAlerts.length > 0 && ( 
+          <div className="flex items-center justify-between mt-4 text-sm px-2">
+            <div className="flex items-center space-x-3">
+              <span className="text-gray-600">Rows per page:</span>
               <select
                 value={amcSize}
                 onChange={(e) => {
                   setAmcSize(Number(e.target.value));
                   setAmcPage(0);
                 }}
-                className="border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="border border-gray-300 rounded-md shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {[5, 10, 20, 50].map((s) => (
                   <option key={s} value={s}>{s}</option>
@@ -375,18 +439,20 @@ const Dashboard = () => {
               </select>
             </div>
             <div className="flex items-center space-x-3">
+              {/* This will correctly show "Page 1 of 1" for your example response */}
+              <span className="text-gray-600">Page {amcPage + 1} of {amcTotalPages}</span>
               <button
                 disabled={amcPage === 0}
                 onClick={() => setAmcPage((p) => p - 1)}
-                className={`px-3 py-1 rounded-lg border text-sm ${amcPage === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-100 text-blue-600 border-blue-300'}`}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
               >
                 Prev
               </button>
-              <span className="text-gray-600">Page {amcPage + 1} of {amcTotalPages}</span>
               <button
+                // This correctly disables the 'Next' button when on the last page (e.g., page 1 of 1)
                 disabled={amcPage + 1 >= amcTotalPages}
                 onClick={() => setAmcPage((p) => p + 1)}
-                className={`px-3 py-1 rounded-lg border text-sm ${amcPage + 1 >= amcTotalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-100 text-blue-600 border-blue-300'}`}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage + 1 >= amcTotalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
               >
                 Next
               </button>

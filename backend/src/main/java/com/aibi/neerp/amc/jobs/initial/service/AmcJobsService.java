@@ -68,8 +68,12 @@ public class AmcJobsService {
 	 
 	    @Autowired
 	    private RoutesRepository routesRepository;
-
-   
+	    
+	    
+	  
+//	    @Autowired
+//	    private AmcJobActivityService amcJobActivityService;
+//   
 
 //    public List<SelectDetailForJob> getPendingJobs() {
 //
@@ -341,6 +345,81 @@ public class AmcJobsService {
         }).toList();
     }
     
+    public String getStatusOfCurrentService(Integer jobId) {
+	    AmcJob amcJob = amcJobRepository.findById(jobId)
+	            .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
+
+	    Integer completedCount = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
+	    Integer requiredCount = amcJob.getNoOfLifsServiceNeedToCompleteCount();
+	    String currentServiceStatus = amcJob.getCurrentServiceStatus();
+	    Integer currentServiceNumber = amcJob.getCurrentServiceNumber();
+	    
+	    Integer pendingServices = 0;
+	    Integer totalServices = amcJob.getNoOfServices();
+	    
+	   // pendingServices = totalServices - currentServiceNumber;
+
+	    if (completedCount != null && requiredCount != null && completedCount > 0 && requiredCount > 0) {
+	        if (completedCount.equals(requiredCount)) {
+	            LocalDate lastActivityDate = amcJob.getLastActivityDate();
+
+	            if (lastActivityDate != null) {
+	                int lastMonth = lastActivityDate.getMonthValue();
+	                int currentMonth = LocalDate.now().getMonthValue();
+	                
+	               // System.out.println(lastMonth+" lastmonth "+currentMonth);
+
+	                if (lastMonth == currentMonth) {
+	                    currentServiceStatus = "Completed";
+	                    amcJob.setPreviousServicingDate(lastActivityDate);
+	                    //  pendingServices = totalServices - currentServiceNumber;
+	                } else {
+	                    currentServiceStatus = "Pending";
+	                    completedCount = 0;
+	                    lastActivityDate = null;
+	                    currentServiceNumber++;
+	                    
+	                   
+	                    //amcJob.setPendingServiceCount(pendingServices);	 
+	                }
+	            } else {
+	                currentServiceStatus = "Pending";
+	                completedCount = 0;
+	                currentServiceNumber++;
+	                
+	               // pendingServices = totalServices - currentServiceNumber;
+	               // amcJob.setPendingServiceCount(pendingServices);	 
+	            }
+
+	            amcJob.setNoOfLiftsCurrentServiceCompletedCount(completedCount);
+	            amcJob.setCurrentServiceNumber(currentServiceNumber);
+	            amcJob.setCurrentServiceStatus(currentServiceStatus);
+	            amcJob.setLastActivityDate(lastActivityDate);
+	            amcJobRepository.save(amcJob);
+
+	        } else {
+	            currentServiceStatus = "Pending";
+	            amcJob.setCurrentServiceStatus(currentServiceStatus);
+	            amcJobRepository.save(amcJob);
+	        }
+	    } else {
+	        currentServiceStatus = "Pending";
+	        amcJob.setCurrentServiceStatus(currentServiceStatus);
+
+	        if (currentServiceNumber == 0) {
+	            currentServiceNumber++;
+	            //pendingServices = totalServices - currentServiceNumber;
+	            amcJob.setCurrentServiceNumber(currentServiceNumber);
+	           // amcJob.setPendingServiceCount(pendingServices);	     
+	        }
+
+	        amcJobRepository.save(amcJob);
+	    }
+
+	    return currentServiceStatus;
+	}
+
+    
     
     public void createAmcJob(AmcJobRequestDto dto) {
     	
@@ -464,9 +543,20 @@ public class AmcJobsService {
         job.setIsNew(dto.getIsNew());
         job.setCurrentServiceNumber(dto.getCurrentServiceNumber());
 
-        amcJobRepository.save(job);
+        AmcJob amcJob = amcJobRepository.save(job);
+        
+        getStatusOfCurrentService(amcJob.getJobId());
+
+        
+       // updateAmcJobActivityStatus(amcJob);
         log.info("AMC Job saved successfully for leadId: {}", dto.getLeadId());
     }
+    
+//    public void updateAmcJobActivityStatus(AmcJob amcJob) {
+//    	
+//    	amcJobActivityService.getStatusOfCurrentService(amcJob.getJobId());
+//    	
+//    }
     
 //    public Page<AmcJobResponseDto> getAllJobs(String search, int page, int size, String sortBy, String direction) {
 //        Sort sort = direction.equalsIgnoreCase("desc")
