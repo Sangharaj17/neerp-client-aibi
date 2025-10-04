@@ -108,8 +108,11 @@ public class AmcJobActivityService {
 	        amcJobActivityRepository.save(activity);
 	    }
 	    
+	    
+	    
 	    if(jobActivityType.getActivityName().equalsIgnoreCase("service")){
 	    	updateAmcJobAfterAddingActivity(dto.getJobId() , job ,  dto.getLiftIds() , dto.getActivityDate());
+	    	getStatusOfCurrentService(job.getJobId());
 	    }
 	    
 	    if (dto.getBreakdownTodoId() != null) {

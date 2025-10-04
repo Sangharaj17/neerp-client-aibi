@@ -4,7 +4,8 @@ import axiosInstance from "@/utils/axiosInstance";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-export default function AddJobActivityForm({jobId}) {
+// Added onSuccess prop
+export default function AddJobActivityForm({ jobId, onSuccess , comingFromDashboard}) {
   const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
@@ -12,13 +13,14 @@ export default function AddJobActivityForm({jobId}) {
   const [lifts, setLifts] = useState([]);
   const [employees, setEmployees] = useState([]);
 
-   
+  // The jobId passed as a prop will override the initial form state's jobId
   useEffect(()=>{
     if(jobId){
         const selectedJob = jobs.find((j) => j.jobId.toString() === jobId);
         setMailId(selectedJob ? selectedJob.mailId : "");
+        setFormData((prev) => ({ ...prev, jobId: jobId }));
     }
-  })
+  }, [jobId, jobs])
 
   const [formData, setFormData] = useState({
     jobId: jobId || "",  
@@ -45,6 +47,11 @@ export default function AddJobActivityForm({jobId}) {
 
   // --- Initial fetch ---
   useEffect(() => {
+    // Note: Re-setting formData.jobId here to handle the case where jobId is passed as a prop initially.
+    if(jobId) {
+        setFormData((prev) => ({ ...prev, jobId: jobId }));
+    }
+    
     axiosInstance.get("/api/amc-jobs/getAllActiveJobs")
       .then((res) => setJobs(res.data || []))
       .catch(() => setJobs([]));
@@ -56,7 +63,7 @@ export default function AddJobActivityForm({jobId}) {
     axiosInstance.get("/api/employees/executives")
       .then((res) => setEmployees(res.data || []))
       .catch(() => setEmployees([]));
-  }, []);
+  }, []); // Dependancy array is empty to run once on mount
 
   // Fetch breakdown todos if breakdown activity selected
   useEffect(() => {
@@ -65,7 +72,6 @@ export default function AddJobActivityForm({jobId}) {
         .get(`/api/breakdown-todo/job/${formData.jobId}`)
         .then((res) => {
           setBreakdowns(res.data || []);
-         // alert(res.data.length+" breakdown todos found for this job.");
         })
         .catch(() => setBreakdowns([]));
     } else {
@@ -73,7 +79,7 @@ export default function AddJobActivityForm({jobId}) {
       setFormData((prev) => ({ ...prev, breakdownTodoId: "", liftIds: [] }));
       setLifts([]);
     }
-  }, [formData.jobId, formData.jobActivityTypeId]);
+  }, [formData.jobId, formData.jobActivityTypeId, activityTypes]);
 
   // Fetch lifts if breakdown todo selected
   useEffect(() => {
@@ -103,19 +109,17 @@ export default function AddJobActivityForm({jobId}) {
 
     useEffect(() => {
     if (isServiceSelected() && formData.jobId) {
-      // Call your API when service is selected and jobId exists
       axiosInstance
         .get(`/api/jobs/initial/amc-job-activities/current-service-status/${formData.jobId}`)
         .then((response) => {
-           
           setCurrentServiceStatus(response.data);
         })
         .catch((error) => {
           console.error("Error fetching current service status:", error);
-          setCurrentServiceStatus(""); // fallback if error occurs
+          setCurrentServiceStatus("");
         });
     }
-  }, [formData.jobActivityTypeId, formData.jobId]); // re-run when jobActivityTypeId or jobId changes
+  }, [formData.jobActivityTypeId, formData.jobId]);
 
   useEffect(()=>{
     if(isBreakdownSelected()){
@@ -127,9 +131,7 @@ export default function AddJobActivityForm({jobId}) {
 
  // Fetch AddServiceActivityGetData if status is pending
   useEffect(() => {
-
     if (currentServiceStatus === "Pending" && formData.jobId) {
-         // alert(currentServiceStatus+" "+formData.jobId);
       axiosInstance
         .get(`/api/jobs/initial/amc-job-activities/getAddServiceActivityData/${formData.jobId}`)
         .then((response) => {
@@ -162,16 +164,16 @@ export default function AddJobActivityForm({jobId}) {
   };
 
   const validate = () => {
-    if (!formData.jobId) { alert("Please select job"); return false; }
-    if (!formData.jobActivityTypeId) { alert("Please select activity type"); return false; }
-    if (!formData.activityDate) { alert("Please select activity date"); return false; }
-    if (!formData.activityTime) { alert("Please select activity time"); return false; }
+    if (!formData.jobId) { toast.error("Please select job"); return false; }
+    if (!formData.jobActivityTypeId) { toast.error("Please select activity type"); return false; }
+    if (!formData.activityDate) { toast.error("Please select activity date"); return false; }
+    if (!formData.activityTime) { toast.error("Please select activity time"); return false; }
     if (!formData.jobActivityById && !formData.jobActivityBy2) {
-      alert("Please select activity by (select an employee or enter name)");
+      toast.error("Please select activity by (select an employee or enter name)");
       return false;
     }
     if (isBreakdownSelected() && !formData.breakdownTodoId) {
-      alert("Please select breakdown todo");
+      toast.error("Please select breakdown todo");
       return false;
     }
     return true;
@@ -204,9 +206,10 @@ export default function AddJobActivityForm({jobId}) {
 
     try {
       await axiosInstance.post("/api/jobs/initial/amc-job-activities/add", payload);
-     // alert("Job activity added successfully!");
+      
+      // Reset form state
       setFormData({
-        jobId: "",
+        jobId: jobId || "", // Keep the prop jobId after submission
         jobActivityTypeId: "",
         activityDate: "",
         activityTime: "",
@@ -227,18 +230,28 @@ export default function AddJobActivityForm({jobId}) {
       setBreakdowns([]);
       setLifts([]);
       toast.success("Job activity added successfully!");
-router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
+      
+      // NEW: Call the success callback to close the modal
+      if (onSuccess) {
+        onSuccess();
+      }
+      
+      if(!comingFromDashboard){
+      // Existing redirect logic (can be removed if modal is the only use case)
+      router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${payload.jobId}`);
+      }
+      
 
     } catch (err) {
       console.error(err);
-      alert("Failed to submit job activity.");
+      toast.error("Failed to submit job activity.");
     }
   };
 
-  const [selectedJobActivityTypeId , setSelectedJobActivityTypeId] = useState("");
+  // const [selectedJobActivityTypeId , setSelectedJobActivityTypeId] = useState("");
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-6xl mx-auto p-6 space-y-8 bg-white rounded-2xl shadow-xl">
+    <form onSubmit={handleSubmit} className="max-w-full mx-auto p-6 space-y-8 bg-white rounded-2xl shadow-xl">
       <h2 className="text-3xl font-bold text-blue-600 mb-6 text-center">Add Job Activity</h2>
 
       {/* Job & Activity Type */}
@@ -254,7 +267,9 @@ router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
               const selectedJob = jobs.find((j) => j.jobId.toString() === selectedJobId);
               setMailId(selectedJob ? selectedJob.mailId : "");
             }}
-            className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+            // Disable job selection if jobId is passed as a prop
+            disabled={!!jobId}
+            className={`border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 ${jobId ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
           >
             <option value="">-- Select Job --</option>
             {jobs.map((j) => (
@@ -327,82 +342,82 @@ router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
       )}
 
       {currentServiceStatus === "Pending" && addServiceActivityGetData && (
-  <div className="space-y-6 mt-4">
-    {/* Display service name */}
-    <div>
-      <label className="font-semibold text-gray-700">Service Name</label>
-      <input
-        type="text"
-        value={addServiceActivityGetData.serviceName}
-        readOnly
-        className="w-full mt-2 p-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-700"
-      />
-    </div>
-
-    {/* Display lifts as selectable grid */}
-    {addServiceActivityGetData.serviceLifsDatas &&
-      addServiceActivityGetData.serviceLifsDatas.length > 0 && (
-        <div>
-          <label className="font-semibold text-gray-700 mb-3 block">
-            Select Lifts
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-72 overflow-y-auto">
-            {addServiceActivityGetData.serviceLifsDatas.map((lift, idx) => (
-              <div
-                key={lift.enquiryId}
-                className={`p-4 border rounded-xl cursor-pointer flex flex-col items-center justify-center text-center transition
-                  ${
-                    formData.liftIds.includes(lift.enquiryId)
-                      ? "bg-blue-100 border-blue-500"
-                      : "bg-white hover:bg-gray-100"
-                  }`}
-                onClick={() => handleLiftToggle(lift.enquiryId)}
-              >
-                <span className="font-semibold text-gray-800">
-                  {lift.liftName || `Lift ${idx + 1}`}
-                </span>
-                <span className="text-sm text-gray-500 mt-1">
-                  {lift.capacityValue || "N/A"} -{" "}
-                  {lift.typeOfElevators || "N/A"}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {lift.noOfFloors ? `${lift.noOfFloors} Floors` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-  </div>
-)}
-
-{currentServiceStatus === "Completed" && (
-  <div className="mt-6 flex justify-center">
-    <div className="bg-green-50 border border-green-300 text-green-800 rounded-2xl shadow-md p-6 max-w-md text-center">
-      <svg
-        className="mx-auto mb-3 w-12 h-12 text-green-500"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+    <div className="space-y-6 mt-4">
+      {/* Display service name */}
+      <div>
+        <label className="font-semibold text-gray-700">Service Name</label>
+        <input
+          type="text"
+          value={addServiceActivityGetData.serviceName}
+          readOnly
+          className="w-full mt-2 p-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-700"
         />
-      </svg>
-      <h2 className="text-xl font-bold">Service Completed</h2>
-      <p className="mt-2 text-gray-600">
-        The service for this job has already been completed for the current month.
-        <br />
-        <span className="font-semibold text-gray-700">
-          The next service will unlock in the next month.
-        </span>
-      </p>
+      </div>
+
+      {/* Display lifts as selectable grid */}
+      {addServiceActivityGetData.serviceLifsDatas &&
+        addServiceActivityGetData.serviceLifsDatas.length > 0 && (
+          <div>
+            <label className="font-semibold text-gray-700 mb-3 block">
+              Select Lifts
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-72 overflow-y-auto">
+              {addServiceActivityGetData.serviceLifsDatas.map((lift, idx) => (
+                <div
+                  key={lift.enquiryId}
+                  className={`p-4 border rounded-xl cursor-pointer flex flex-col items-center justify-center text-center transition
+                    ${
+                      formData.liftIds.includes(lift.enquiryId)
+                        ? "bg-blue-100 border-blue-500"
+                        : "bg-white hover:bg-gray-100"
+                    }`}
+                  onClick={() => handleLiftToggle(lift.enquiryId)}
+                >
+                  <span className="font-semibold text-gray-800">
+                    {lift.liftName || `Lift ${idx + 1}`}
+                  </span>
+                  <span className="text-sm text-gray-500 mt-1">
+                    {lift.capacityValue || "N/A"} -{" "}
+                    {lift.typeOfElevators || "N/A"}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {lift.noOfFloors ? `${lift.noOfFloors} Floors` : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
     </div>
-  </div>
-)}
+    )}
+
+    {currentServiceStatus === "Completed" && (
+      <div className="mt-6 flex justify-center">
+        <div className="bg-green-50 border border-green-300 text-green-800 rounded-2xl shadow-md p-6 max-w-md text-center">
+          <svg
+            className="mx-auto mb-3 w-12 h-12 text-green-500"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h2 className="text-xl font-bold">Service Completed</h2>
+          <p className="mt-2 text-gray-600">
+            The service for this job has already been completed for the current month.
+            <br />
+            <span className="font-semibold text-gray-700">
+              The next service will unlock in the next month.
+            </span>
+          </p>
+        </div>
+      </div>
+    )}
 
 
       {/* Date & Time */}
@@ -410,12 +425,12 @@ router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
         <div className="flex flex-col">
           <label className="font-semibold text-gray-700 mb-2">Activity Date</label>
           <input type="date" name="activityDate" value={formData.activityDate}
-                 onChange={handleChange} className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
+                    onChange={handleChange} className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
         </div>
         <div className="flex flex-col">
           <label className="font-semibold text-gray-700 mb-2">Activity Time</label>
           <input type="time" name="activityTime" value={formData.activityTime}
-                 onChange={handleChange} className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
+                    onChange={handleChange} className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
         </div>
       </div>
 
@@ -431,35 +446,26 @@ router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
         />
       </div>
 
-      {/* Job Type Work */}
-
-      
-          {/* Job Type Work */}
-{/* Job Type Work */}
-{isBreakdownSelected() && (
-  <div className="flex flex-col md:w-1/2">
-    <label className="font-semibold text-gray-700 mb-2">Job Type Work</label>
-    <input
-      type="text"
-      name="jobTypeWork"
-      value={formData.jobTypeWork}
-      onChange={handleChange}
-      className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-    />
-  </div>
-)}
-
-
-
-
-      
+      {/* Job Type Work (Conditional) */}
+      {isBreakdownSelected() && (
+        <div className="flex flex-col md:w-1/2">
+          <label className="font-semibold text-gray-700 mb-2">Job Type Work</label>
+          <input
+            type="text"
+            name="jobTypeWork"
+            value={formData.jobTypeWork}
+            onChange={handleChange}
+            className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+          />
+        </div>
+      )}
 
       {/* Activity By & Executive */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col">
           <label className="font-semibold text-gray-700 mb-2">Activity By</label>
           <select name="jobActivityById" value={formData.jobActivityById} onChange={handleChange}
-                  className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                    className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
             <option value="">-- Select Employee --</option>
             {employees.map((e) => <option key={e.employeeId} value={e.employeeId}>{e.employeeName}</option>)}
           </select>
@@ -467,25 +473,25 @@ router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${jobId}`);
         <div className="flex flex-col">
           <label className="font-semibold text-gray-700 mb-2">Select Executive</label>
           <select name="executiveId" value={formData.executiveId} onChange={handleChange}
-                  className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+                    className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
             <option value="">-- Select Employee --</option>
             {employees.map((e) => <option key={e.employeeId} value={e.employeeId}>{e.employeeName}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Mail Sent */}
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col ">
-          <label className="font-semibold text-gray-700 mb-2">Mail Sent</label>
+      {/* Mail Sent & Remark */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         <div className="flex flex-col ">
+          <label className="font-semibold text-gray-700 mb-2">Customer Mail ID</label>
           <input type="text" name="mailSent" readOnly value={mailId}
-                className="border border-gray-300 rounded-xl p-3 bg-gray-100 cursor-not-allowed" />
+                    className="border border-gray-300 rounded-xl p-3 bg-gray-100 cursor-not-allowed" />
         </div>
 
         <div className="flex flex-col ">
           <label className="font-semibold text-gray-700 mb-2">Activity Remark</label>
           <input onChange={handleChange} type="text" name="remark"  value={formData.remark}
-                className="border border-gray-300 rounded-xl p-3 bg-gray-100" />
+                    className="border border-gray-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-400 focus:border-blue-400" />
         </div>
         </div>
 
