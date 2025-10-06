@@ -105,6 +105,8 @@ public class DashboardService {
 		    dashboardCountsData.setTotalAmcQuatationCounts(totalAmcQuatationCounts);
 		    dashboardCountsData.setTotalCustomerCounts(totalCustomerCounts);
 		    dashboardCountsData.setTotalAmcForRenewalsCounts(totalAmcForRenewalsCounts);
+		    
+		    
 
 		    return dashboardCountsData;
 		}
@@ -121,6 +123,8 @@ public class DashboardService {
 
 	        Page<AmcJob> amcJobs = amcJobRepository.searchAmcRenewals(0, currentDate,
 	                (search == null ? "" : search), pageable);
+	        
+	       
 
 	        return amcJobs.map(amcJob -> {
 	            DashboardAmcRenewalsListData dto = new DashboardAmcRenewalsListData();
@@ -131,6 +135,17 @@ public class DashboardService {
 	            dto.setCustomerSiteName(amcJob.getSite().getSiteName());
 	            long diff = java.time.temporal.ChronoUnit.DAYS.between(currentDate, amcJob.getEndDate());
 	            dto.setRemainingDays((int) diff);
+	            
+	            if(amcJob.getAmcQuotation()!=null) {
+	            	
+	            	 dto.setQuatationid(amcJob.getAmcQuotation().getAmcQuatationId());
+	            	 
+	            }else {
+	            	dto.setQuatationid(amcJob.getRevisedAmcQuotation().getRevisedQuatationId());
+
+	            }
+	            
+	            
 	            return dto;
 	        });
 	    }

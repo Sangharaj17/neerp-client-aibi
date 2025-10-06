@@ -17,5 +17,9 @@ public class DashboardAmcRenewalsListData {
     private BigDecimal amount;     // AMC amount
     private Integer remainingDays; // Days left before renewal
     private String status;         // e.g., "Active", "Expired"
+    
+    private Integer quatationid;
+    private Integer reviseQuatationId;
+    
 
 }

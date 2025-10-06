@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import axiosInstance from "@/utils/axiosInstance";
 // Importing icons
-import { ArrowUp, ArrowDown, Search, ChevronLeft, ChevronRight, Trash2, Repeat2 } from "lucide-react"; 
+import { ArrowUp, ArrowDown, Search, ChevronLeft, ChevronRight, Trash2, Repeat2, Router } from "lucide-react"; 
+
+import { useRouter } from "next/navigation";
 
 // Helper component for sort icon
 const SortIcon = ({ column, sortBy, direction }) => {
@@ -23,6 +25,8 @@ const AmcRenewalsTable = () => {
   const [sortBy, setSortBy] = useState("endDate");
   const [direction, setDirection] = useState("asc");
   const [loading, setLoading] = useState(false);
+
+  const router = useRouter();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -70,11 +74,19 @@ const AmcRenewalsTable = () => {
     setPage(0); 
   };
   
-  const handleRenew = (amcJobId) => {
-    // **IMPORTANT: Implement your renewal logic here (e.g., opening a modal, navigating to a renewal form, or calling an API)**
-    alert(`[ACTION] Initiating renewal process for AMC Job ID: ${amcJobId}`);
-    console.log(`Renewal action triggered for Job ID: ${amcJobId}`);
-  };
+ const handleRenew = (amcJobId, quatationid, reviseQuatationId) => {
+  // Replace null/undefined with '0' for safety
+  const primaryQid = quatationid || '0';
+  const secondaryQid = reviseQuatationId || '0'; 
+  const jobID = amcJobId || '0';
+
+  // Combine them into a single route
+  const path = `/dashboard/dashboard-data/amc_renewals_list/add_amc_renewal_form/${primaryQid}/${secondaryQid}/${jobID}`;
+
+  // Navigate
+  router.push(path);
+};
+
 
   const handleDelete = async (amcJobId) => {
     if (window.confirm(`Are you sure you want to delete AMC Job ID: ${amcJobId}? This action cannot be undone.`)) {
@@ -212,7 +224,7 @@ const AmcRenewalsTable = () => {
                     {/* --- UPDATED: Action Buttons (Renewal and Delete) --- */}
                     <td className="py-3 px-6 whitespace-nowrap text-sm flex space-x-2">
                       <button
-                        onClick={() => handleRenew(item.amcJobId)}
+                        onClick={() => handleRenew(item.amcJobId , item.quatationid , item.reviseQuatationId)}
                         disabled={loading}
                         className="flex items-center justify-center px-3 py-1 text-white bg-blue-600 hover:bg-blue-700 rounded-md transition duration-150 disabled:opacity-50 text-xs font-medium"
                       >

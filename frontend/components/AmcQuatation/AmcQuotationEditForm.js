@@ -6,7 +6,10 @@ import toast from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
 
 
-export default function AmcQuotationEditForm({quotationId , qid , revise , revision}) {
+export default function AmcQuotationEditForm({quotationId , qid , revise , revision , amcJobId,
+  isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal
+}) {
+
 
       const router = useRouter();
 const {  tenant } = useParams();
@@ -188,6 +191,16 @@ const handleCreateAmcRevisedQuotation = async () => {
 
       if (revision === true) {
         url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
+      }
+
+  // isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal
+
+      if(renewal === true){
+        if(isQuatationIdPresent === true){
+           url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
+        }else{
+           url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
+        }
       }
 
 
@@ -656,13 +669,32 @@ useEffect(() => {
 
         {/* Page Header */}
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-700">AMC Quotation Edit</h1>
+          <h1 className="text-2xl font-bold text-gray-700">
+            {
+              renewal === true ? "AMC Quotation Renewal" : revise === true ? "AMC Quotation Revision" :
+            "AMC Quotation Edit"
+           }
+            </h1>
           <button   type="button"  onClick={()=>{
-            if(revision == true){
-                  router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
-            }else{
-                  router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
+
+           let url ="";
+           if(qid!= null && qid != undefined && qid != "")
+             url = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`;
+          
+            if(qid == null || qid == undefined || qid == ""){
+              url = `/dashboard/quotations/amc_quatation_list`;
             }
+
+            if(renewal === true){
+              url = `/dashboard/dashboard-data/amc_renewals_list`
+            }
+
+            router.push(url);
+            // if(revision == true){
+            //       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
+            // }else{
+            //       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
+            // }
 
           }} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
             back to List
