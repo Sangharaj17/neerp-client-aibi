@@ -11,10 +11,9 @@ import {
   Wrench,
   UserCheck,
   Search,
-  // --- NEW IMPORTS FOR COLLAPSIBLE ---
   ChevronUp,
   ChevronDown,
-  // ----------------------------------
+  List, // New icon for the Service Engineer Report button
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -34,12 +33,67 @@ const getAssignedEmployees = (employees) => {
   return employees.map(emp => emp.name).join(', ');
 };
 
+// --- NEW Component for displaying the Service Engineer Report in the modal ---
+const ServiceEngineerReportContent = ({ reports, totalAmcJobs, amcDoneCounts, amcPendingCounts }) => {
+    return (
+        <div className="p-4 sm:p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Service Engineer Performance Report</h3>
+
+            {/* Summary Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                    <p className="text-sm text-blue-700 font-medium">Total AMC Jobs</p>
+                    <p className="text-2xl font-bold text-blue-900">{totalAmcJobs}</p>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-500 shadow-sm">
+                    <p className="text-sm text-green-700 font-medium">Completed Jobs</p>
+                    <p className="text-2xl font-bold text-green-900">{amcDoneCounts}</p>
+                </div>
+                <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500 shadow-sm">
+                    <p className="text-sm text-red-700 font-medium">Pending Jobs</p>
+                    <p className="text-2xl font-bold text-red-900">{amcPendingCounts}</p>
+                </div>
+            </div>
+
+            {/* Employee Reports Grid */}
+            <h4 className="text-lg font-semibold text-gray-700 mb-4">Engineer Breakdown:</h4>
+            {reports.length > 0 ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {reports.map((report, index) => (
+                        <div key={index} className="bg-white p-5 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
+                            <p className="text-lg font-bold text-gray-900 mb-3">{report.empName}</p>
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Assigned Services:</span>
+                                    <span className="font-semibold text-blue-600">{report.assginedServiceCounts}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Done Services:</span>
+                                    <span className="font-semibold text-green-600">{report.doneServiceCounts}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">Pending Services:</span>
+                                    <span className="font-semibold text-red-600">{report.pendingServicesCounts}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="text-gray-500 text-center py-4">No service engineer reports available.</p>
+            )}
+        </div>
+    );
+};
+// ---------------------------------------------------------------------------
+
+
 const Dashboard = () => {
   const router = useRouter();
 
-  // --- Visibility State (NEW) ---
-  const [isTodoListCollapsed, setIsTodoListCollapsed] = useState(true); // Default: Hide (true) for Leads/Customer/Activity/Breakdown tabs
-  const [isAmcAlertsCollapsed, setIsAmcAlertsCollapsed] = useState(false); // Default: Show (false) for AMC alerts
+  // --- Visibility State (Unchanged) ---
+  const [isTodoListCollapsed, setIsTodoListCollapsed] = useState(true); // Default: Hide
+  const [isAmcAlertsCollapsed, setIsAmcAlertsCollapsed] = useState(false); // Default: Show
   // ------------------------------
 
   // --- global / counts (Unchanged)
@@ -62,30 +116,43 @@ const Dashboard = () => {
   const [customerSearch, setCustomerSearch] = useState('');
   const [customerLoading, setCustomerLoading] = useState(false);
 
-  // --- NEW: State for Modal Management --- (Unchanged)
+  // --- NEW: Service Engineer Report State ---
+  const [engineerReport, setEngineerReport] = useState(null);
+  const [isReportLoading, setIsReportLoading] = useState(false);
+  // ------------------------------------------
+
+  // --- NEW: State for Modal Management ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
+  const [modalContentType, setModalContentType] = useState(null); // 'ACTIVITY' or 'REPORT'
   const [loadingBtn, setLoadingBtn] = useState(null);
 
-  // Function to open the modal and set the jobId (Unchanged)
+  // Function to open the modal for Add Activity
   const openAddActivityModal = (jobId) => {
       setSelectedJobId(jobId);
+      setModalContentType('ACTIVITY');
       setIsModalOpen(true);
   };
 
-  // Function to close the modal (Unchanged)
+  // Function to open the modal for Service Engineer Report
+  const openReportModal = () => {
+      setModalContentType('REPORT');
+      setIsModalOpen(true);
+  };
+
+  // Function to close the modal
   const closeAddActivityModal = () => {
       setIsModalOpen(false);
       setSelectedJobId(null);
+      setModalContentType(null);
   };
 
-  // Function to close the modal AND trigger a refresh of the alerts table (Unchanged)
+  // Function to close the modal AND trigger a refresh of the alerts table
   const handleActivitySuccess = () => {
     closeAddActivityModal();
     fetchAmcAlerts();
   };
   // ---------------------------------------
-
 
   // fetch counts (unchanged)
   useEffect(() => {
@@ -99,6 +166,24 @@ const Dashboard = () => {
     };
     fetchCounts();
   }, []);
+
+  // --- NEW: Fetch Service Engineer Report ---
+  const fetchServiceEngineerReport = useCallback(async () => {
+      try {
+          setIsReportLoading(true);
+          const res = await axiosInstance.get('/api/dashboard/service-engineers-report');
+          setEngineerReport(res.data);
+      } catch (err) {
+          console.error('Error fetching service engineer report:', err);
+      } finally {
+          setIsReportLoading(false);
+      }
+  }, []);
+
+  useEffect(() => {
+      fetchServiceEngineerReport();
+  }, [fetchServiceEngineerReport]);
+  // ------------------------------------------
 
   // fetch AMC alerts - Wrapped in useCallback for cleaner dependency (Unchanged)
   const fetchAmcAlerts = useCallback(async () => {
@@ -121,7 +206,7 @@ const Dashboard = () => {
   }, [fetchAmcAlerts]); // Depend on the memoized function
 
 
-  // fetch Customer To Do (Existing logic) (Unchanged)
+  // fetch Customer To Do (Existing logic) (Adjusted to respect collapse state)
   useEffect(() => {
     const fetchCustomerTodos = async () => {
       try {
@@ -143,51 +228,12 @@ const Dashboard = () => {
     }
   }, [customerPage, customerSize, customerSearch, activeTab, isTodoListCollapsed]);
 
-  /* --------- stat cards & tabs ---------- */
-  // statCards and tabs definitions (Unchanged)
+  /* stat cards & tabs, renderTabContent, getIconColor (Unchanged) */
   const statCards = [
-    {
-        id: 'leads',
-        title: 'Leads',
-        count: counts?.totalActiveLeadCounts ?? 0,
-        action: 'Add New Lead',
-        icon: Users,
-        color: 'blue',
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-500'
-    },
-    {
-        id: 'installation',
-        title: 'New Quotations',
-        count: counts?.totalNewInstallationQuatationCounts ?? 0,
-        subCount: counts?.totalAmcQuatationCounts ?? 0,
-        subTitle: 'AMC',
-        actions: ['New Installation', 'AMC Quotation'],
-        icon: Wrench,
-        color: 'green',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-500'
-    },
-    {
-        id: 'customers',
-        title: 'Customers',
-        count: counts?.totalCustomerCounts ?? 0,
-        action: 'See More Details',
-        icon: UserCheck,
-        color: 'purple',
-        bgColor: 'bg-purple-50',
-        borderColor: 'border-purple-500'
-    },
-    {
-        id: 'renewals',
-        title: 'AMC Renewals',
-        count: counts?.totalAmcForRenewalsCounts ?? 0,
-        action: 'View Details',
-        icon: FileText,
-        color: 'orange',
-        bgColor: 'bg-orange-50',
-        borderColor: 'border-orange-500'
-    }
+    { id: 'leads', title: 'Leads', count: counts?.totalActiveLeadCounts ?? 0, action: 'Add New Lead', icon: Users, color: 'blue', bgColor: 'bg-blue-50', borderColor: 'border-blue-500' },
+    { id: 'installation', title: 'New Quotations', count: counts?.totalNewInstallationQuatationCounts ?? 0, subCount: counts?.totalAmcQuatationCounts ?? 0, subTitle: 'AMC', actions: ['New Installation', 'AMC Quotation'], icon: Wrench, color: 'green', bgColor: 'bg-green-50', borderColor: 'border-green-500' },
+    { id: 'customers', title: 'Customers', count: counts?.totalCustomerCounts ?? 0, action: 'See More Details', icon: UserCheck, color: 'purple', bgColor: 'bg-purple-50', borderColor: 'border-purple-500' },
+    { id: 'renewals', title: 'AMC Renewals', count: counts?.totalAmcForRenewalsCounts ?? 0, action: 'View Details', icon: FileText, color: 'orange', bgColor: 'bg-orange-50', borderColor: 'border-orange-500' }
   ];
 
   const tabs = [
@@ -197,12 +243,9 @@ const Dashboard = () => {
     { id: 'breakdown', label: 'BreakDown Calls', icon: Phone }
   ];
 
-  /* ---------- Tab Content Renderer (Unchanged) ---------- */
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'leads':
-        return (<LeadsSection/>);
-
+      case 'leads': return (<LeadsSection/>);
       case 'customers':
         return (
           <CustomerTodoAndMissedActivity
@@ -217,19 +260,9 @@ const Dashboard = () => {
             customerLoading={customerLoading}
           />
         );
-
-      case 'activity':
-        return (<OfficeActivity/>);
-
-      case 'breakdown':
-        return (<BreakdownTodos/>);
-
-      default:
-        return (
-          <div className="p-8 text-center">
-            <p className="text-gray-500 text-sm">Select a tab to view content</p>
-          </div>
-        );
+      case 'activity': return (<OfficeActivity/>);
+      case 'breakdown': return (<BreakdownTodos/>);
+      default: return (<div className="p-8 text-center"><p className="text-gray-500 text-sm">Select a tab to view content</p></div>);
     }
   };
 
@@ -242,6 +275,7 @@ const Dashboard = () => {
     };
     return colors[color] || 'text-gray-600';
   };
+  /* ----------------------------------------------------------------------- */
 
 
   return (
@@ -253,7 +287,7 @@ const Dashboard = () => {
         <p className="text-gray-500 text-sm">Welcome back! Here's a summary of your key business metrics and tasks.</p>
       </div>
 
-      {/* Stat Cards - IMPROVED DESIGN (Unchanged) */}
+      {/* Stat Cards (Unchanged) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card) => (
           <div
@@ -272,7 +306,7 @@ const Dashboard = () => {
               </div>
               <div className="space-y-1 pt-2">
 
-                {/* Secondary data for Quotaion card (Unchanged) */}
+                {/* Secondary data for Quotaion card */}
                 {card.subCount !== undefined && (
                   <div className="flex items-center space-x-2 text-sm text-gray-500">
                     <span className="font-medium text-lg text-gray-700">{card.subCount}</span>
@@ -280,7 +314,7 @@ const Dashboard = () => {
                   </div>
                 )}
 
-                {/* Action Buttons Group (Refined Look) (Unchanged) */}
+                {/* Action Buttons Group */}
                 {card.actions ? (
                   card.actions.map((action, index) => (
                     <button
@@ -327,15 +361,13 @@ const Dashboard = () => {
                     )}
                   </button>
                 )}
-
-
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Tabs Section - MODIFIED WITH HIDE/SHOW */}
+      {/* Tabs Section - To Do & Activity List (Collapsible) */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800">To Do & Activity List</h3>
@@ -353,8 +385,6 @@ const Dashboard = () => {
             )}
           </button>
         </div>
-
-        {/* Conditional Content Rendering for Tabs */}
         <div id="todo-activity-content" className={`transition-all duration-300 ease-in-out overflow-hidden ${isTodoListCollapsed ? 'max-h-0 opacity-0' : 'max-h-screen opacity-100'}`}>
           <div className="border-b border-gray-200 px-2 sm:px-4">
             <div className="flex overflow-x-auto">
@@ -378,7 +408,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* AMC Service Alerts - MODIFIED WITH HIDE/SHOW */}
+      {/* AMC Service Alerts - MODIFIED TO INCLUDE REPORT SUMMARY & BUTTON */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between p-6 gap-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -419,11 +449,50 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Conditional Content Rendering for AMC Alerts */}
-        <div id="amc-alerts-content" className={`transition-all duration-300 ease-in-out overflow-hidden ${isAmcAlertsCollapsed ? 'max-h-0 opacity-0' : 'max-h-screen opacity-100 p-6 pt-0'}`}>
+        {/* --- Service Engineer Summary and Report Button --- */}
+        {engineerReport && !isAmcAlertsCollapsed && (
+            <div className="p-6 pt-4 space-y-4 border-b border-gray-100">
+                <h4 className="text-lg font-semibold text-gray-700">Service Engineer Summary (Current Jobs)</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Total AMC Jobs */}
+                    <div className="bg-blue-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-blue-500">
+                        <span className="text-sm font-medium text-blue-700">Total Jobs:</span>
+                        <span className="text-xl font-bold text-blue-900">{engineerReport.totalAmcJobs}</span>
+                    </div>
+                    {/* AMC Done Counts */}
+                    <div className="bg-green-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-green-500">
+                        <span className="text-sm font-medium text-green-700">Jobs Done:</span>
+                        <span className="text-xl font-bold text-green-900">{engineerReport.amcDoneCounts}</span>
+                    </div>
+                    {/* AMC Pending Counts */}
+                    <div className="bg-red-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-red-500">
+                        <span className="text-sm font-medium text-red-700">Jobs Pending:</span>
+                        <span className="text-xl font-bold text-red-900">{engineerReport.amcPendingCounts}</span>
+                    </div>
+                </div>
 
+                {/* Button to View Detailed Report in Modal */}
+                <div className="text-right pt-2">
+                    <button
+                        onClick={openReportModal}
+                        disabled={isReportLoading}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                    >
+                        {isReportLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <List className="w-4 h-4 mr-2" />
+                        )}
+                        {isReportLoading ? 'Loading Report...' : 'View Engineer Report'}
+                    </button>
+                </div>
+            </div>
+        )}
+        {/* ------------------------------------------------------------------- */}
+
+        {/* Conditional Content Rendering for AMC Alerts (Table) */}
+        <div id="amc-alerts-content" className={`transition-all duration-300 ease-in-out overflow-hidden ${isAmcAlertsCollapsed ? 'max-h-0 opacity-0' : 'max-h-screen opacity-100 p-6 pt-4'}`}>
           {amcLoading ? (
-            // Loading state (Unchanged)
             <div className="text-center py-10 text-gray-500 font-medium">
               <div className="flex justify-center items-center space-x-2">
                 <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -434,12 +503,11 @@ const Dashboard = () => {
               </div>
             </div>
           ) : amcServiceAlerts.length > 0 ? (
-            // Table content (Unchanged structure)
             <>
-              <div className="overflow-x-auto rounded-lg shadow-inner border border-gray-100 mt-4">
+              <div className="overflow-x-auto rounded-lg shadow-inner border border-gray-100">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
-                    <tr>{/* FIX: Whitespace removed for hydration error prevention */}
+                    <tr>
                       <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Sr No</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site / Place</th>
@@ -451,12 +519,12 @@ const Dashboard = () => {
                       <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Add Activity</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100 text-sm">{/* FIX: Whitespace removed for hydration error prevention */}
+                  <tbody className="bg-white divide-y divide-gray-100 text-sm">
                     {amcServiceAlerts.map((alert, index) => {
                       const isCompleted = alert.remark === 'Completed';
                       const srNo = amcPage * amcSize + index + 1;
                       return (
-                        <tr key={alert.amcJobid} className="hover:bg-blue-50/50 transition-colors">{/* FIX: Whitespace removed for hydration error prevention */}
+                        <tr key={alert.amcJobid} className="hover:bg-blue-50/50 transition-colors">
                           <td className="px-6 py-3 whitespace-nowrap text-center text-gray-600 font-mono">{srNo}</td>
                           <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{alert.customer}</td>
                           <td className="px-6 py-3 whitespace-nowrap text-gray-600">
@@ -480,7 +548,7 @@ const Dashboard = () => {
                               {/* Add Activity Button (Opens Modal) */}
                               <button
                                 onClick={() => openAddActivityModal(alert.amcJobid)}
-                                disabled={isCompleted} // Optionally disable if completed
+                                disabled={isCompleted}
                                 className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2
                                   ${isCompleted
                                       ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
@@ -494,11 +562,11 @@ const Dashboard = () => {
                         </tr>
                       );
                     })}
-                  </tbody>{/* FIX: Whitespace removed for hydration error prevention */}
+                  </tbody>
                 </table>
               </div>
 
-              {/* Pagination Controls (Unchanged) */}
+              {/* Pagination Controls */}
               <div className="flex items-center justify-between mt-4 text-sm px-2">
                 <div className="flex items-center space-x-3">
                   <span className="text-gray-600">Rows per page:</span>
@@ -540,18 +608,32 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* --- Action Modal Component (Unchanged) --- */}
+      {/* --- Action Modal Component (Now handles two types of content) --- */}
       <ActionModal
-        isOpen={isModalOpen}
-        onCancel={closeAddActivityModal}
+          isOpen={isModalOpen}
+          onCancel={closeAddActivityModal}
+          // Customize the modal title based on content type
+          title={modalContentType === 'REPORT' ? 'Service Engineer Performance' : 'Add Job Activity'}
       >
-        {selectedJobId && (
-          <AddJobActivityForm
-            jobId={selectedJobId}
-            onSuccess={handleActivitySuccess}
-            comingFromDashboard={true}
-          />
-        )}
+          {/* Render AddJobActivityForm if modalContentType is 'ACTIVITY' */}
+          {modalContentType === 'ACTIVITY' && selectedJobId && (
+              <AddJobActivityForm
+                  jobId={selectedJobId}
+                  onSuccess={handleActivitySuccess}
+                  comingFromDashboard={true}
+              />
+          )}
+
+          {/* Render ServiceEngineerReportContent if modalContentType is 'REPORT' */}
+          {modalContentType === 'REPORT' && engineerReport && (
+              <ServiceEngineerReportContent
+                  reports={engineerReport.serviceEmployeeReports}
+                  totalAmcJobs={engineerReport.totalAmcJobs}
+                  amcDoneCounts={engineerReport.amcDoneCounts}
+                  amcPendingCounts={engineerReport.amcPendingCounts}
+              />
+          )}
+
       </ActionModal>
       {/* ------------------------------------- */}
     </div>
