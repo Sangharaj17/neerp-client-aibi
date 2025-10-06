@@ -23,6 +23,8 @@ import BreakdownTodos from './BreakdownTodos';
 import ActionModal from '../AMC/ActionModal';
 import AddJobActivityForm from '../Jobs/AddJobActivityForm';
 
+import { Loader2 } from 'lucide-react';
+
 
 // Helper function to get the assigned employee names as a string
 const getAssignedEmployees = (employees) => {
@@ -55,6 +57,8 @@ const Dashboard = () => {
   // --- NEW: State for Modal Management ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(null);
+
+  const [loadingBtn, setLoadingBtn] = useState(null);
 
   // Function to open the modal and set the jobId
   const openAddActivityModal = (jobId) => {
@@ -275,37 +279,54 @@ const Dashboard = () => {
                 )}
 
                 {/* Action Buttons Group (Refined Look) */}
-                {card.actions ? (
-                  card.actions.map((action, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        if (action === "AMC Quotation") {
-                          router.push(`/dashboard/quotations/amc_quatation_list`);
-                        } else if (action === "New Installation") {
-                           router.push(`/dashboard/quotations/installation_quatation_list`);
-                        }
-                      }}
-                      className={`flex items-center justify-between w-full text-left text-sm font-medium ${getIconColor(card.color).replace('text-', 'text-')} hover:text-gray-900 py-1 group transition-colors`}
-                    >
-                      <span>{action}</span>
-                      <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))
-                ) : (
-                  <button onClick={()=>{
-                    if(card.action === "Add New Lead"){
-                      router.push(`/dashboard/lead-management/lead-list/add-lead`);
-                    }else if(card.action === "See More Details"){
-                      router.push(`/dashboard/customer/customer-list`);
-                    }else if(card.action === "View Details"){
-                      router.push(`/dashboard/dashboard-data/amc_renewals_list`);
-                    }
-                  }} className={`flex items-center justify-between w-full text-left text-sm font-medium ${getIconColor(card.color).replace('text-', 'text-')} hover:text-gray-900 py-1 group transition-colors`}>
-                    <span>{card.action}</span>
-                    <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                )}
+{card.actions ? (
+  card.actions.map((action, index) => (
+    <button
+      key={index}
+      onClick={() => {
+        setLoadingBtn(action);
+        if (action === "AMC Quotation") {
+          router.push(`/dashboard/quotations/amc_quatation_list`);
+        } else if (action === "New Installation") {
+          router.push(`/dashboard/quotations/installation_quatation_list`);
+        }
+      }}
+      disabled={loadingBtn === action}
+      className={`flex items-center justify-between w-full text-left text-sm font-medium ${getIconColor(card.color).replace('text-', 'text-')} hover:text-gray-900 py-1 group transition-colors disabled:opacity-60`}
+    >
+      <span>{action}</span>
+      {loadingBtn === action ? (
+        <Loader2 className="w-4 h-4 ml-2 animate-spin text-purple-500" />
+      ) : (
+        <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
+      )}
+    </button>
+  ))
+) : (
+  <button
+    onClick={() => {
+      setLoadingBtn(card.action);
+      if (card.action === "Add New Lead") {
+        router.push(`/dashboard/lead-management/lead-list/add-lead`);
+      } else if (card.action === "See More Details") {
+        router.push(`/dashboard/customer/customer-list`);
+      } else if (card.action === "View Details") {
+        router.push(`/dashboard/dashboard-data/amc_renewals_list`);
+      }
+    }}
+    disabled={loadingBtn === card.action}
+    className={`flex items-center justify-between w-full text-left text-sm font-medium ${getIconColor(card.color).replace('text-', 'text-')} hover:text-gray-900 py-1 group transition-colors disabled:opacity-60`}
+  >
+    <span>{card.action}</span>
+    {loadingBtn === card.action ? (
+      <Loader2 className="w-4 h-4 ml-2 animate-spin text-purple-500" />
+    ) : (
+      <ArrowRight className="w-4 h-4 ml-2 opacity-70 group-hover:opacity-100 transition-opacity" />
+    )}
+  </button>
+)}
+
+
               </div>
             </div>
           </div>
