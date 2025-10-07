@@ -7,8 +7,10 @@ import { useRouter, useParams } from "next/navigation";
 
 
 export default function AmcQuotationEditForm({quotationId , qid , revise , revision , amcJobId,
-  isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal
+  isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal , 
+  renewalEdit
 }) {
+
 
 
       const router = useRouter();
@@ -52,6 +54,9 @@ const {  tenant } = useParams();
 
   const [formData, setFormData] = useState({
     amcquatationId: 10,
+    amcRenewQuatationId: null,
+    revisedRenewQuatationId: null,
+    preJobId : 0,
     quatationDate: today,
     leadId: null,
     combinedEnquiryId: null,
@@ -92,6 +97,15 @@ const {  tenant } = useParams();
     combinedQuotations: [],
   });
 
+  const [pjobid, setPjobid] = useState(0);
+
+  useEffect(() => {
+  if (amcJobId) {
+   setPjobid(amcJobId);
+    //alert(amcJobId);
+  }
+}, []);
+
  
 
    const handleUpdateAmcQuotation = async () => {
@@ -123,6 +137,42 @@ const {  tenant } = useParams();
 
       // ✅ Redirect back to the list after successful update
       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
+    }
+  } catch (error) {
+    console.error("Error updating AMC Quotation:", error);
+    toast.error("Failed to update AMC Quotation. Please try again.");
+  }
+};
+
+ const handleUpdateRenewAmcQuotation = async () => {
+  try {
+    // ✅ Validate typeContract before submit
+    if (!formData.typeContract || formData.typeContract.trim() === "") {
+      toast.error("Please select at least one contract type before submitting.");
+      return; // stop form submission
+    }
+
+    // Build payload from formData
+    const payload = {
+      ...formData,
+      combinedQuotations: formData.combinedQuotations.length
+        ? formData.combinedQuotations
+        : [combinedQuotationBase], // fallback if empty
+    };
+
+    console.log("Sending Payload to Backend for Update:", payload);
+
+    // ✅ Use PUT instead of POST for update
+    const response = await axiosInstance.put(
+      "/api/amc/quotation/renewal", // ✅ your update API endpoint
+      payload
+    );
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Quotation updated successfully!");
+
+      // ✅ Redirect back to the list after successful update
+      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
     }
   } catch (error) {
     console.error("Error updating AMC Quotation:", error);
@@ -181,6 +231,64 @@ const handleCreateAmcRevisedQuotation = async () => {
   }
 };
 
+useEffect(()=>{
+
+  if(formData.preJobId != null && formData.preJobId != undefined && formData.preJobId != 0){
+
+    handleCallAmcRenewQuotation();
+  }
+
+},[formData.preJobId]);
+
+const handleCreateAmcRenewQuotation = async () => {
+  // ✅ Update formData with pjobid
+    setFormData(prevData => ({
+      ...prevData,
+      preJobId: pjobid
+    }));
+};
+
+
+const handleCallAmcRenewQuotation = async () => {
+
+  try {
+
+   // alert(formData.preJobId);
+
+    // ✅ Validate required field before submission
+    if (!formData.typeContract || formData.typeContract.trim() === "") {
+      toast.error("Please select at least one contract type before submitting.");
+      return; // stop form submission
+    }
+
+    // ✅ Prepare payload (similar to revised quotation)
+    const payload = {
+      ...formData,
+      combinedQuotations: formData.combinedQuotations?.length
+        ? formData.combinedQuotations
+        : [combinedQuotationBase], // fallback if empty
+    };
+
+    console.log("Sending AMC Renewal Payload to Backend:", payload);
+
+    // ✅ API call to backend
+    const response = await axiosInstance.post(
+      "/api/amc/quotation/renewal",
+      payload
+    );
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Quotation created successfully!");
+      
+      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+    
+    }
+  } catch (error) {
+    console.error("Error creating AMC Renewal Quotation:", error);
+    toast.error("Failed to create AMC Renewal Quotation. Please try again.");
+  }
+};
+
 
 
 
@@ -203,6 +311,10 @@ const handleCreateAmcRevisedQuotation = async () => {
         }
       }
 
+      if(renewalEdit === true){
+         url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
+      }
+
 
       const res = await axiosInstance.get(`${url}/${quotationId}`);
       const data = res.data;
@@ -211,6 +323,8 @@ const handleCreateAmcRevisedQuotation = async () => {
           quatationDate: data.quatationDate ?? today,
           leadId: data.leadId ?? null,
           amcquatationId:data.amcQuatationId ?? null,
+          amcRenewQuatationId: data.amcRenewQuatationId ?? null,
+          revisedRenewQuatationId: data.revisedRenewQuatationId ?? null,
           combinedEnquiryId: data.combinedEnquiryId ?? null,
           enquiryId: data.enquiryId ?? null,
           makeOfElevatorId: data.makeOfElevatorId ?? null,
@@ -660,10 +774,19 @@ useEffect(() => {
       <div className="max-w-7xl mx-auto">
         <form onSubmit={(e) => { 
             e.preventDefault();
-            if(!revise)
-             handleUpdateAmcQuotation(); 
-            else{
-                handleCreateAmcRevisedQuotation();
+
+            if(renewalEdit === true){
+               handleUpdateRenewAmcQuotation();
+            }else{
+              if(renewal === true){
+                handleCreateAmcRenewQuotation();
+              }else{
+                  if(!revise)
+                  handleUpdateAmcQuotation(); 
+                  else{
+                      handleCreateAmcRevisedQuotation();
+                  }
+              }
             }
         }}>
 
@@ -687,6 +810,10 @@ useEffect(() => {
 
             if(renewal === true){
               url = `/dashboard/dashboard-data/amc_renewals_list`
+            }
+
+            if(renewalEdit === true){
+              url = `/dashboard/quotations/amc-renewal-quatation-list`
             }
 
             router.push(url);

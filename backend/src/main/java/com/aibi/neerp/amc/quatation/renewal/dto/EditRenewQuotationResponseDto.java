@@ -1,19 +1,20 @@
-package com.aibi.neerp.amc.quatation.initial.dto;
+package com.aibi.neerp.amc.quatation.renewal.dto;
+
 
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.aibi.neerp.amc.quatation.initial.dto.CombinedQuotationDto;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EditQuotationResponseDto {
+public class EditRenewQuotationResponseDto {
 
-    private Integer amcQuatationId;
-    private Integer revisedQuatationId;
     private Integer amcRenewQuatationId;
     private Integer revisedRenewQuatationId;
     private LocalDate quatationDate;
@@ -56,3 +57,4 @@ public class EditQuotationResponseDto {
 
     private List<CombinedQuotationDto> combinedQuotations;
 }
+

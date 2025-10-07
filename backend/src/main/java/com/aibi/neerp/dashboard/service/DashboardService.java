@@ -97,7 +97,7 @@ public class DashboardService {
 
 		    // Count AMC jobs for renewal
 		    LocalDate currentDate = LocalDate.now();
-		    Integer totalAmcForRenewalsCounts = amcJobRepository.countByRenewlStatusAndEndDateDiffLessThan30(0, currentDate);
+		    Integer totalAmcForRenewalsCounts = amcJobRepository.countAmcRenewalsDueWithin30Days(0, currentDate);
 
 		    // Set values in DTO
 		    dashboardCountsData.setTotalActiveLeadCounts(totalActiveLeadCounts);
@@ -120,6 +120,9 @@ public class DashboardService {
 
 	        Pageable pageable = PageRequest.of(page, size, sort);
 	        LocalDate currentDate = LocalDate.now();
+	        
+	        System.out.println("current date is ");
+	        System.out.println(currentDate.toString());
 
 	        Page<AmcJob> amcJobs = amcJobRepository.searchAmcRenewals(0, currentDate,
 	                (search == null ? "" : search), pageable);

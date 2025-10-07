@@ -6,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import ConfirmDeleteModal from '../AMC/ConfirmDeleteModal';
 import { toast } from 'react-hot-toast';
 import { Loader2, FileText, RefreshCw, ThumbsUp, ThumbsDown, Mail, Eye, Pencil, Trash2 } from 'lucide-react';
-import AmcQuotationView from './AmcQuotationView';
+import AmcRenewalQuotationView from './AmcRenewalQuotationView';
 import { AlignJustify } from 'lucide-react';
 
-export default function AMCQuotationList() {
+export default function AMCRenewalQuotationList() {
   const router = useRouter();
   const [quotations, setQuotations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,7 @@ const fetchQuotations = async () => {
       params.dateSearch = dateSearch; // include only if date is present
     }
 
-    const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+    const response = await axiosInstance.get('/api/amc/quotation/renewal/searchAmcRenewalQuatations', { params });
 
     setQuotations(response.data.content);
     setTotalPages(response.data.totalPages);
@@ -176,7 +176,7 @@ const fetchQuotations = async () => {
 
   const handleEdit = (quotationId) => {
     let tenant = localStorage.getItem('tenant');
-    router.push(`/dashboard/quotations/amc_quatation_list/amc_quatation_edit/${quotationId}`);
+    router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc_renewal_quatation_edit/${quotationId}`);
   };
 
   const handleRevise = (quotationId) => {
@@ -235,7 +235,7 @@ const fetchQuotations = async () => {
       </Head>
 
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">AMC Quotation List</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">AMC Renewal Quotation List</h1>
 
         {/* Search & Page Size */}
         <div className="bg-white p-3 rounded-lg shadow mb-4">
@@ -484,7 +484,7 @@ const fetchQuotations = async () => {
             <button className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl font-bold" onClick={closeModal}>
               ✕
             </button>
-            <AmcQuotationView params={{ quotationId: selectedQuotationId }} />
+            <AmcRenewalQuotationView params={{ quotationId: selectedQuotationId }} />
           </div>
         </div>
       )}

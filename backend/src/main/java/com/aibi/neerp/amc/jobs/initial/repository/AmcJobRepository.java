@@ -152,7 +152,7 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    FROM AmcJob j
 		    WHERE j.renewlStatus = :renewlStatus
 		      AND j.lead.leadStatus.statusName = 'Active'
-		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
+		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) >= -30
 		      AND (
 		            :search IS NULL
 		            OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
@@ -167,6 +167,20 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		        @Param("search") String search,
 		        Pageable pageable
 		);
+
+	
+	@Query("""
+		    SELECT COUNT(j)
+		    FROM AmcJob j
+		    WHERE j.renewlStatus = :renewlStatus
+		      AND j.lead.leadStatus.statusName = 'Active'
+		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) >= -30
+		""")
+		Integer countAmcRenewalsDueWithin30Days(
+		        @Param("renewlStatus") Integer renewlStatus,
+		        @Param("currentDate") LocalDate currentDate
+		);
+
 
 
 	
