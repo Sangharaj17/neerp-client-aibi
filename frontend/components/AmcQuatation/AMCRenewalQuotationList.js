@@ -181,12 +181,12 @@ const fetchQuotations = async () => {
 
   const handleRevise = (quotationId) => {
     let tenant = localStorage.getItem('tenant');
-    router.push(`/dashboard/quotations/amc_quatation_list/revise/${quotationId}`);
+    router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc_renewal_quatation_revise/${quotationId}`);
   };
 
   const handleClickRevision = (quotationId) => {
     let tenant = localStorage.getItem('tenant');
-    router.push(`/dashboard/quotations/amc_quatation_list/revise_quatation_list/${quotationId}`);
+    router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${quotationId}`);
   };
 
   const confirmDelete = (id) => {

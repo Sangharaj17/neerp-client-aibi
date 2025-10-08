@@ -8,7 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 
 export default function AmcQuotationEditForm({quotationId , qid , revise , revision , amcJobId,
   isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal , 
-  renewalEdit
+  renewalEdit , renewalRevise , renewalRevision
 }) {
 
 
@@ -291,11 +291,59 @@ const handleCallAmcRenewQuotation = async () => {
 
 
 
+const handleCreateAmcRenewReviseQuotation = async () => {
+
+  try {
+
+   // alert(formData.preJobId);
+
+    // ✅ Validate required field before submission
+    if (!formData.typeContract || formData.typeContract.trim() === "") {
+      toast.error("Please select at least one contract type before submitting.");
+      return; // stop form submission
+    }
+
+    // ✅ Prepare payload (similar to revised quotation)
+    const payload = {
+      ...formData,
+      combinedQuotations: formData.combinedQuotations?.length
+        ? formData.combinedQuotations
+        : [combinedQuotationBase], // fallback if empty
+    };
+
+    console.log("Sending AMC Renewal Revise Payload to Backend:", payload);
+
+    // ✅ API call to backend
+    const response = await axiosInstance.post(
+      "/api/amc/quotation/renewal/revise",
+      payload
+    );
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Revise Quotation created successfully!");
+      
+      if(renewalRevision === true)
+    router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`);
+     else
+      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+    
+    }
+  } catch (error) {
+    console.error("Error creating AMC Renewal Revise Quotation:", error);
+    toast.error("Failed to create AMC Renewal Revise Quotation. Please try again.");
+  }
+};
+
+
 
   useEffect(() => {
   const fetchQuotation = async () => {
     try {
       let url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
+
+      if(renewalRevision === true){
+          url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
+      }
 
       if (revision === true) {
         url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
@@ -311,7 +359,7 @@ const handleCallAmcRenewQuotation = async () => {
         }
       }
 
-      if(renewalEdit === true){
+      if(renewalEdit === true || renewalRevise === true){
          url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
       }
 
@@ -775,19 +823,24 @@ useEffect(() => {
         <form onSubmit={(e) => { 
             e.preventDefault();
 
-            if(renewalEdit === true){
-               handleUpdateRenewAmcQuotation();
+            if(renewalRevise === true || renewalRevision === true){
+              handleCreateAmcRenewReviseQuotation();
             }else{
-              if(renewal === true){
-                handleCreateAmcRenewQuotation();
-              }else{
-                  if(!revise)
-                  handleUpdateAmcQuotation(); 
-                  else{
-                      handleCreateAmcRevisedQuotation();
+                if(renewalEdit === true){
+                  handleUpdateRenewAmcQuotation();
+                }else{
+                  if(renewal === true){
+                    handleCreateAmcRenewQuotation();
+                  }else{
+                      if(!revise)
+                      handleUpdateAmcQuotation(); 
+                      else{
+                          handleCreateAmcRevisedQuotation();
+                      }
                   }
+                }
               }
-            }
+
         }}>
 
         {/* Page Header */}
@@ -795,26 +848,32 @@ useEffect(() => {
           <h1 className="text-2xl font-bold text-gray-700">
             {
               renewal === true ? "AMC Quotation Renewal" : revise === true ? "AMC Quotation Revision" :
-            "AMC Quotation Edit"
+               renewalEdit ? "AMC Quotation Edit" : "AMC Quotation Revise"
            }
             </h1>
           <button   type="button"  onClick={()=>{
 
            let url ="";
-           if(qid!= null && qid != undefined && qid != "")
-             url = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`;
-          
-            if(qid == null || qid == undefined || qid == ""){
-              url = `/dashboard/quotations/amc_quatation_list`;
-            }
 
-            if(renewal === true){
-              url = `/dashboard/dashboard-data/amc_renewals_list`
-            }
+           if(renewalRevision === true){
+              url = `/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`;
+           }else{
 
-            if(renewalEdit === true){
-              url = `/dashboard/quotations/amc-renewal-quatation-list`
-            }
+              if(qid!= null && qid != undefined && qid != "")
+                url = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`;
+              
+                if(qid == null || qid == undefined || qid == ""){
+                  url = `/dashboard/quotations/amc_quatation_list`;
+                }
+
+                if(renewal === true){
+                  url = `/dashboard/dashboard-data/amc_renewals_list`
+                }
+
+                if(renewalEdit === true || renewalRevise === true){
+                  url = `/dashboard/quotations/amc-renewal-quatation-list`
+                }
+              }
 
             router.push(url);
             // if(revision == true){
