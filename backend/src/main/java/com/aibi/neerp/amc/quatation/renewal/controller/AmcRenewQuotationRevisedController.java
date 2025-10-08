@@ -64,6 +64,22 @@ public class AmcRenewQuotationRevisedController {
         return ResponseEntity.ok(responseDto);
     }
     
+    @GetMapping("/{quotationId}")
+    public ResponseEntity<AmcRenewalQuotationViewResponseDto> getAmcRenewalQuotationViewDetails(
+            @PathVariable Integer quotationId) {
+        log.info("Fetching AMC Renewal Revised Quotation view details for ID: {}", quotationId);
+
+        AmcRenewalQuotationViewResponseDto responseDto = amcRenewalQuotationService.getAmcRenewalQuotationDetails(quotationId);
+
+        return ResponseEntity.ok(responseDto);
+    }
+    
+    @PutMapping("/{id}/finalize")
+    public ResponseEntity<String> finalizeQuotation(@PathVariable("id") Integer quotationId) {
+        String result = amcRenewalQuotationService.setIsFinal(quotationId);
+        return ResponseEntity.ok(result);
+    }
+    
 //    // ================= GET ALL =================
 //    @GetMapping("/searchAmcRenewalQuatations")
 //    public Page<AmcQuotationRenewalResponseDto> searchAmcRenewalQuotations(

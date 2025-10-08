@@ -196,8 +196,8 @@ const fetchQuotations = async () => {
 
   const handleConfirmDeleteAmcQuotation = async () => {
     try {
-      await axiosInstance.delete(`/api/amc/quotation/initial/${deleteId}`);
-      toast.success('AMC Quotation deleted successfully.');
+      await axiosInstance.delete(`/api/amc/quotation/renewal/${deleteId}`);
+      toast.success('AMC Renewal Quotation deleted successfully.');
       setModalOpen(false);
       setRefreshKey((prev) => prev + 1);
     } catch (err) {
@@ -217,7 +217,7 @@ const fetchQuotations = async () => {
     try {
      // setLoading(true);
        setLoadingBtn(`final-${quotationId}`);
-      const res = await axiosInstance.put(`/api/amc/quotation/initial/${quotationId}/finalize`);
+      const res = await axiosInstance.put(`/api/amc/quotation/renewal/${quotationId}/finalize`);
       toast.success("Quotation finalized successfully!");
       fetchQuotations(); // ✅ Re-fetch the quotations list
     } catch (error) {
@@ -422,7 +422,7 @@ const fetchQuotations = async () => {
                         >
                           {loadingBtn === `edit-${q.id}` ? <Loader2 className="w-4 h-4 animate-spin text-orange-500" /> : <Pencil className="w-4 h-4" />}
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => {
                             confirmDelete(q.id);
                             setLoadingBtn(`delete-${q.id}`);
@@ -430,7 +430,7 @@ const fetchQuotations = async () => {
                           className="text-purple-600 hover:text-purple-900 p-0.5"
                         >
                           <Trash2 className="w-4 h-4" />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

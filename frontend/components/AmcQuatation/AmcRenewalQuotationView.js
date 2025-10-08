@@ -14,6 +14,10 @@ export default function AmcRenewalQuotationView({ params }) {
 
         let url = `/api/amc/quotation/renewal/${quotationId}`;
 
+        if(revision == true){
+          url = `/api/amc/quotation/renewal/revise/${quotationId}`;
+        }
+
         const res = await axiosInstance.get(`${url}`);
         setData(res.data);
       } catch (error) {

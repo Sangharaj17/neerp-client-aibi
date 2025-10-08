@@ -34,6 +34,8 @@ import com.aibi.neerp.customer.repository.CustomerRepository;
 import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.employeemanagement.repository.EmployeeRepository;
+import com.aibi.neerp.exception.ResourceInUseException;
+import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.amc.common.entity.ElevatorMake;
 import com.aibi.neerp.amc.common.entity.NumberOfService;
 import com.aibi.neerp.amc.common.entity.PaymentTerm;
@@ -46,6 +48,8 @@ import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -456,6 +460,43 @@ public class AmcRenewalQuotationService {
 
         repository.save(amcQuotation);
     }
+
+	  @Transactional
+    public String setIsFinal(Integer quotationId) {
+
+        // ✅ 1. Get Quotation
+        AmcRenewalQuotation amcQuotation = repository.findById(quotationId)
+                .orElseThrow(() -> new EntityNotFoundException("Quotation not found with id: " + quotationId));
+
+        // ✅ 2. Mark as Final
+        amcQuotation.setIsFinal(1);
+        repository.save(amcQuotation);
+        
+        return "Success";
+        
+	 }
+
+	  public String deleteAmcQuotation(Integer id) {
+		    try {
+		        // Check if record exists
+		        if (!repository.existsById(id)) {
+		            throw new ResourceNotFoundException("AMC Quotation not found with ID: " + id);
+		        }
+
+		        // Try deleting
+		        repository.deleteById(id);
+		        return "AMC Quotation deleted successfully.";
+
+		    } catch (DataIntegrityViolationException ex) {
+		        // Thrown when record is referenced in another table (foreign key constraint)
+		        throw new ResourceInUseException("AMC Quotation with ID " + id + " cannot be deleted because it is in use.");
+		    } catch (EmptyResultDataAccessException ex) {
+		        // If deleteById() fails because the record doesn’t exist
+		        throw new ResourceNotFoundException("AMC Quotation not found with ID: " + id);
+		    }
+		}
+
+
 
 
 

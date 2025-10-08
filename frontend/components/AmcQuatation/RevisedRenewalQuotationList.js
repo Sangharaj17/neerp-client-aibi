@@ -7,7 +7,7 @@ import { Loader2, FileText, RefreshCw, ThumbsUp, ThumbsDown, Mail, Eye } from "l
 import { AlignJustify } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 
-import AmcQuotationView from "./AmcQuotationView";
+import AmcRenewalQuotationView from "./AmcRenewalQuotationView";
 
 import toast from "react-hot-toast";
 
@@ -82,7 +82,7 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
       try {
        // setLoading(true);
          setLoadingBtn(`final-${quotationId}`);
-        const res = await axiosInstance.put(`/api/amc/quotation/initial/revised/${quotationId}/finalize`);
+        const res = await axiosInstance.put(`/api/amc/quotation/renewal/revise/${quotationId}/finalize`);
         toast.success("Quotation finalized successfully!");
         fetchRevisedQuotations(); // ✅ Re-fetch the quotations list
       } catch (error) {
@@ -275,7 +275,7 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
                   <button className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl font-bold" onClick={closeModal}>
                     ✕
                   </button>
-                  <AmcQuotationView params={{ quotationId: selectedQuotationId , revision : true }} />
+                  <AmcRenewalQuotationView params={{ quotationId: selectedQuotationId , revision : true }} />
                 </div>
               </div>
             )}

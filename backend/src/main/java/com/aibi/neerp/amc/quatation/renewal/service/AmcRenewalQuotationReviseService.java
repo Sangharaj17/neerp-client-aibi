@@ -28,6 +28,7 @@ import com.aibi.neerp.amc.quatation.initial.repository.AmcQuotationRepository;
 import com.aibi.neerp.amc.quatation.initial.repository.RevisedAmcQuotationRepository;
 import com.aibi.neerp.amc.quatation.renewal.dto.AmcQuotationRenewalResponseDto;
 import com.aibi.neerp.amc.quatation.renewal.dto.AmcRenewalQuotationRequestDto;
+import com.aibi.neerp.amc.quatation.renewal.dto.AmcRenewalQuotationViewResponseDto;
 import com.aibi.neerp.amc.quatation.renewal.dto.EditRenewQuotationResponseDto;
 import com.aibi.neerp.amc.quatation.renewal.entity.AmcRenewalQuotation;
 import com.aibi.neerp.amc.quatation.renewal.entity.RevisedRenewalAmcQuotation;
@@ -292,6 +293,85 @@ public class AmcRenewalQuotationReviseService {
 		                .build();
 		    }
 
+		 
+		 
+		 public AmcRenewalQuotationViewResponseDto getAmcRenewalQuotationDetails(Integer quotationId) {
+			 
+		       RevisedRenewalAmcQuotation  amcQuotation = revisedAmcQuotationRepository.findById(quotationId)
+		                .orElseThrow(() -> new RuntimeException("Amc Renewal Quotation not found"));
+
+		        return AmcRenewalQuotationViewResponseDto.builder()
+		                .revisedAmcRenewalQuatationId(amcQuotation.getRevisedRenewalId())
+		                .quatationDate(amcQuotation.getQuatationDate())
+		                .typeContract(amcQuotation.getTypeContract())
+		                .makeOfElevator(amcQuotation.getMakeOfElevator() != null ?
+		                        amcQuotation.getMakeOfElevator().getName() : null)
+		                .paymentTerm(amcQuotation.getPaymentTerm() != null ?
+		                        amcQuotation.getPaymentTerm().getTermName(): null)
+		                .noOfServices(amcQuotation.getNumberOfService() != null ?
+		                        amcQuotation.getNumberOfService().getValue() : null)
+		                .fromDate(amcQuotation.getFromDate())
+		                .toDate(amcQuotation.getToDate())
+		                .amountOrdinary(amcQuotation.getAmountOrdinary())
+		                .gstOrdinary(amcQuotation.getGstOrdinary())
+		                .finalOrdinary(amcQuotation.getIsFinalOrdinary())
+		                .amountSemiComp(amcQuotation.getAmountSemiComp())
+		                .gstSemi(amcQuotation.getGstSemi())
+		                .finalSemiComp(amcQuotation.getIsFinalSemiComp())
+		                .amountComp(amcQuotation.getAmountComp())
+		                .gstComp(amcQuotation.getGstComp())
+		                .finalComp(amcQuotation.getIsFinalComp())
+		                .combinedQuotations(amcQuotation.getCombinedQuotations()
+		                        .stream()
+		                        .map(cq -> {
+		                            // Extract enquiry safely
+		                            var enquiry = cq.getEnquiry();
+
+		                            String capacity = null;
+		                            if (enquiry != null) {
+		                                if (enquiry.getPersonCapacity() != null) {
+		                                    capacity = enquiry.getPersonCapacity().getDisplayName();
+		                                } else if (enquiry.getWeight() != null) {
+		                                    capacity = enquiry.getWeight().getWeightValue()+ " Kg";
+		                                }
+		                            }
+
+		                            return AmcRenewalQuotationViewResponseDto.CombinedQuotationDto.builder()
+		                                    .noOfElevators(enquiry != null && enquiry.getNoOfLift() != null
+		                                            ? enquiry.getNoOfLift().getQuantity() : null)
+		                                    .typeOfElevators(enquiry != null && enquiry.getLiftType() != null
+		                                            ? enquiry.getLiftType().getName() : null)
+		                                    .amountOrdinary(cq.getAmountOrdinary())
+		                                    .gstOrdinary(cq.getGstOrdinary())
+		                                    .totalAmountOrdinary(cq.getTotalAmountOrdinary())
+		                                    .amountSemi(cq.getAmountSemi())
+		                                    .gstSemi(cq.getGstSemi())
+		                                    .totalAmountSemi(cq.getTotalAmountSemi())
+		                                    .amountComp(cq.getAmountComp())
+		                                    .gstComp(cq.getGstComp())
+		                                    .totalAmountComp(cq.getTotalAmountComp())
+		                                    .capacity(capacity)
+		                                    .build();
+		                        })
+		                        .collect(Collectors.toList()))
+		                .build();
+		    }
+
+		 
+		 @Transactional
+		    public String setIsFinal(Integer quotationId) {
+
+		        // ✅ 1. Get Quotation
+			 RevisedRenewalAmcQuotation amcQuotation = revisedAmcQuotationRepository.findById(quotationId)
+		                .orElseThrow(() -> new EntityNotFoundException("Quotation not found with id: " + quotationId));
+
+		        // ✅ 2. Mark as Final
+		        amcQuotation.setIsFinal(1);
+		        revisedAmcQuotationRepository.save(amcQuotation);
+		        
+		        return "Success";
+		        
+			 }
 
 
 	

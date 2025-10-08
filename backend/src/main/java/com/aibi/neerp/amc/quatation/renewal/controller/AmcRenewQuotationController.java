@@ -76,6 +76,26 @@ public class AmcRenewQuotationController {
         amcRenewalQuotationService.updateAmcRenewQuotation(dto);
         return ResponseEntity.ok("AMC Renew Quotation updated successfully");
     }
+    
+ // ✅ Finalize Quotation and Create Customer + Site if Needed
+    @PutMapping("/{id}/finalize")
+    public ResponseEntity<String> finalizeQuotation(@PathVariable("id") Integer quotationId) {
+        String result = amcRenewalQuotationService.setIsFinal(quotationId);
+        return ResponseEntity.ok(result);
+    }
+    
+ // ================= DELETE =================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteAmcRenewalQuotation(@PathVariable Integer id) {
+        log.info("Deleting AMC Renewal Quotation with ID {}", id);
+        
+        // Service method will throw exceptions or return success message
+        String message = amcRenewalQuotationService.deleteAmcQuotation(id);
+        
+        log.info("AMC Renewal Quotation deleted successfully with ID {}", id);
+        return ResponseEntity.ok(message);
+    }
+
 
 
 }
