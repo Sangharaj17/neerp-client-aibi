@@ -517,7 +517,7 @@ public class AmcJobsService {
 
         // Map other fields
         job.setRenewlStatus(dto.getRenewlStatus());
-        job.setContractType(dto.getContractType());
+        //sjob.setContractType(dto.getContractType());
         job.setMakeOfElevator(dto.getMakeOfElevator());
       //  job.setNoOfElevator(dto.getNoOfElevator());
         job.setJobNo(dto.getJobNo());
@@ -600,6 +600,10 @@ public class AmcJobsService {
             job.getAmcQuotation().getLead() != null &&
             job.getAmcQuotation().getLead().getArea() != null) {
             place = job.getAmcQuotation().getLead().getArea().getAreaName();
+        }else if(job.getRevisedAmcQuotation() != null &&
+                job.getRevisedAmcQuotation().getLead() != null &&
+                job.getRevisedAmcQuotation().getLead().getArea() != null) {
+                place = job.getRevisedAmcQuotation().getLead().getArea().getAreaName();
         }
 
         return AmcJobResponseDto.builder()

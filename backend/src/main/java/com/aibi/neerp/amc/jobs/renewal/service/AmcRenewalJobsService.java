@@ -461,6 +461,10 @@ public class AmcRenewalJobsService {
 	            job.getAmcRenewalQuotation().getLead() != null &&
 	            job.getAmcRenewalQuotation().getLead().getArea() != null) {
 	            place = job.getAmcRenewalQuotation().getLead().getArea().getAreaName();
+	        }else if(job.getRevisedRenewalAmcQuotation()!=null 
+	        		&& job.getRevisedRenewalAmcQuotation().getLead()!=null && 
+	        		job.getRevisedRenewalAmcQuotation().getLead().getArea()!=null ){
+	        	place = job.getRevisedRenewalAmcQuotation().getLead().getArea().getAreaName();
 	        }
 
 	        return AmcRenewalJobResponseDto.builder()

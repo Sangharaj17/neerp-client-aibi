@@ -363,8 +363,12 @@ const handleSubmitRenewalJob = async () => {
     if (response.status === 200) {
       toast.success("AMC Renewal Job saved successfully!");
       // `/${tenant}/dashboard/jobs/amc_job_list`
+      let isRenewal = false;
+      if(selectedJob.thisJobIsRenewal === true){
+        isRenewal = true;
+      }
         router.push(
-              `/dashboard/jobs/amc_job_list`
+              `/dashboard/jobs/amc_job_list/${isRenewal}`
             );
     } else {
       toast.error("Something went wrong while saving!");
