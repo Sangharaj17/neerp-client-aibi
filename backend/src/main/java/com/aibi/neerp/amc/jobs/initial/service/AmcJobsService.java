@@ -134,7 +134,7 @@ public class AmcJobsService {
 	                        a.getCustomer().getCustomerName() +
 	                        " / " + a.getSite().getSiteName();
 
-	                return new SelectDetailForJob(display, a.getAmcQuatationId(), null);
+	                return new SelectDetailForJob(display, a.getAmcQuatationId(), null , false);
 	            })
 	            .collect(Collectors.toList());
 
@@ -156,7 +156,7 @@ public class AmcJobsService {
 	                        " / " + r.getSite().getSiteName() +
 	                        " / " + r.getRevisedEdition();
 
-	                return new SelectDetailForJob(display, null, r.getRevisedQuatationId());
+	                return new SelectDetailForJob(display, null, r.getRevisedQuatationId() , false);
 	            })
 	            .collect(Collectors.toList());
 

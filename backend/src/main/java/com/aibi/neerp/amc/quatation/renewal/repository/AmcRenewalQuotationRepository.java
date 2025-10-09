@@ -3,6 +3,8 @@ package com.aibi.neerp.amc.quatation.renewal.repository;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.renewal.entity.AmcRenewalQuotation;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,6 +40,12 @@ public interface AmcRenewalQuotationRepository extends JpaRepository<AmcRenewalQ
 		    Pageable pageable
 		);
 
+	
+	  @Query("SELECT a FROM AmcRenewalQuotation a " +
+	            "JOIN FETCH a.customer c " +
+	            "JOIN FETCH a.site s " +
+	            "WHERE a.isFinal = 1 AND a.jobStatus = 0")
+	     List<AmcRenewalQuotation> findFinalPendingAmcRenewalQuotations();
     
 
 }
