@@ -43,6 +43,8 @@ public interface BreakdownTodoRepository extends JpaRepository<BreakdownTodo, In
               LOWER(c.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
         """)
     Page<BreakdownTodo> searchMissedBreakdownTodos(String search, LocalDate today, Pageable pageable);
+
+	List<BreakdownTodo> findByRenewalJob_RenewalJobId(Integer renewalJobId);
 	
 }
 

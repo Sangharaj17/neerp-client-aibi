@@ -61,10 +61,10 @@ const JobDetailPage = ({ jobId }) => {
   }
 
   const handleBack = () =>
-    router.push(`/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list`);
+    router.push(`/dashboard/jobs/amc_job_list/false`);
 
   const handleAddActivity = () =>
-    router.push(`/${localStorage.getItem("tenant")}/dashboard/jobs/add-job-activity/${jobId}`);
+    router.push(`/dashboard/jobs/add-job-activity/${jobId}`);
 
 
   const exportJobActivityToExcel = () => {

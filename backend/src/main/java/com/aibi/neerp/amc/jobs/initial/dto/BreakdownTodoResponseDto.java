@@ -24,4 +24,6 @@ public class BreakdownTodoResponseDto {
     private String complaintMob;
     
     private String description;
+    
+    private String renewal;
 }

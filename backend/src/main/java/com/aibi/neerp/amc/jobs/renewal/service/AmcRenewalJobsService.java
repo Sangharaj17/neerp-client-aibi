@@ -489,6 +489,31 @@ public class AmcRenewalJobsService {
 	                .jobStatus(job.getJobStatus())
 	                .build();
 	    }	
+	    
+	    public List<AmcRenewalJob> getAllActiveRenewalJobs() {
+	        log.info("Fetching all active AMC Renewal jobs with customer and site");
+	        return amcRenewalJobRepository.findAllActiveRenewalJobs();
+	    }
+
+	 public List<LiftData> getAllLiftsForAddBreakDownTodo(Integer jobId){
+    	
+    	AmcRenewalJob amcJob = amcRenewalJobRepository.findById(jobId).get();
+    	AmcRenewalQuotation amcQuotation = null;
+    	RevisedRenewalAmcQuotation revisedAmcQuotation = null;
+    	
+    	amcQuotation = amcJob.getAmcRenewalQuotation();
+    	revisedAmcQuotation = amcJob.getRevisedRenewalAmcQuotation();
+    	
+    	CombinedEnquiry combinedEnquiry = null;
+    	
+    	if(amcQuotation!=null) {
+    	  combinedEnquiry = amcQuotation.getCombinedEnquiry();
+    	}else {
+    		combinedEnquiry = revisedAmcQuotation.getCombinedEnquiry();
+    	}
+    	
+    	return buildLiftData(combinedEnquiry);
+    } 
 	
 
 }

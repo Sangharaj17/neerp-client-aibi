@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.jobs.renewal.controller;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aibi.neerp.amc.jobs.initial.controller.AmcJobsController.JobDropdownResponse;
 import com.aibi.neerp.amc.jobs.initial.dto.AddJobDetailsData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.dto.SelectDetailForJob;
 import com.aibi.neerp.amc.jobs.renewal.dto.AddRenewalJobDetailsData;
 import com.aibi.neerp.amc.jobs.renewal.dto.AmcRenewalJobRequestDto;
@@ -69,6 +72,31 @@ public class AmcRenewalJobsController {
     ) {
         log.info("Request received to fetch AMC Renewal Jobs with search='{}', date='{}'", search, dateSearch);
         return amcRenewalJobsService.getAllRenewalJobs(search, dateSearch, page, size, sortBy, direction);
+    }
+    
+    @GetMapping("/getAllActiveRenewalJobs")
+    public List<JobDropdownResponse> getAllActiveRenewalJobs() {
+        log.info("API Call: Get all active renewal jobs with customer + site names");
+
+        return amcRenewalJobsService.getAllActiveRenewalJobs().stream()
+                .map(job -> new JobDropdownResponse(
+                        job.getRenewalJobId(),
+                        job.getCustomer() != null ? job.getCustomer().getCustomerName() : "Unknown Customer",
+                        job.getSite() != null ? job.getSite().getSiteName() : "Unknown Site",
+                        job.getLead().getEmailId(),
+                        "renewal"
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // Updated record to include customer name
+    public record JobDropdownResponse(Integer renewalJobId, String customerName, String siteName , String mailId , String renewal) {}
+
+    
+    @GetMapping("/getAllRenewalLiftsForAddBreakDownTodo")
+    public List<LiftData> getAllLiftsForAddBreakDownTodoByJobId(Integer jobId) {
+    	
+        return amcRenewalJobsService.getAllLiftsForAddBreakDownTodo(jobId);
     }
     
     

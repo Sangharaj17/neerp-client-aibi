@@ -1,5 +1,7 @@
 package com.aibi.neerp.amc.jobs.renewal.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -41,6 +43,16 @@ public interface AmcRenewalJobRepository extends JpaRepository<AmcRenewalJob, In
 		    @Param("dateSearch") String dateSearch,
 		    Pageable pageable
 		);
+	
+	
+	@Query("""
+		    SELECT j
+		    FROM AmcRenewalJob j
+		    LEFT JOIN FETCH j.customer c
+		    LEFT JOIN FETCH j.site s
+		    WHERE j.status = true
+		""")
+		List<AmcRenewalJob> findAllActiveRenewalJobs();
 
 	
 }

@@ -24,6 +24,7 @@ public class BreakdownTodoRequestDto {
     private String complaintName;
     private String complaintMob;
     private Integer jobId;
+    private Integer renewalJobId;
     private List<Integer> liftIds; // List of Enquiry IDs
 }
 

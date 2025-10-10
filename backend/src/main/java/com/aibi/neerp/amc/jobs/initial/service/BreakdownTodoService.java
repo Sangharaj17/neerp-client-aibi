@@ -24,6 +24,8 @@ import com.aibi.neerp.amc.jobs.initial.entity.BreakdownTodoLiftMapping;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import com.aibi.neerp.amc.jobs.initial.repository.BreakdownTodoLiftMappingRepository;
 import com.aibi.neerp.amc.jobs.initial.repository.BreakdownTodoRepository;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
+import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.employeemanagement.entity.Employee;
@@ -61,6 +63,9 @@ public class BreakdownTodoService {
     
     @Autowired AmcJobActivityService amcJobActivityService;
     
+    @Autowired
+    private AmcRenewalJobRepository amcRenewalJobRepository;
+    
    
 
     public String createBreakdownTodo(BreakdownTodoRequestDto dto) {
@@ -76,6 +81,10 @@ public class BreakdownTodoService {
         AmcJob job = amcJobRepository.findById(dto.getJobId())
                 .orElseThrow(() -> new RuntimeException("AMC Job not found"));
         
+//        AmcRenewalJob renewalJob = amcRenewalJobRepository.findById(dto.getJobId())
+//                .orElseThrow(() -> new RuntimeException("AMC Renewal Job not found"));
+//      
+//        
         System.out.println("callledededede");
 
        // JobActivityType jobActivityType = jobActivityTypeRepository.findById(dto.getJobActivityTypeId())
