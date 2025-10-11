@@ -22,12 +22,15 @@ import com.aibi.neerp.amc.jobs.initial.entity.BreakdownTodoLiftMapping;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobActivityRepository;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import com.aibi.neerp.amc.jobs.initial.repository.BreakdownTodoRepository;
+import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJobActivity;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobActivityRepository;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
+import com.aibi.neerp.amc.quatation.renewal.entity.AmcRenewalQuotation;
+import com.aibi.neerp.amc.quatation.renewal.entity.RevisedRenewalAmcQuotation;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.employeemanagement.repository.EmployeeRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
@@ -54,6 +57,7 @@ public class AmcRenewalJobActivityService {
 	@Autowired private  EmployeeRepository employeeRepository;
 	@Autowired private  EnquiryRepository liftRepository;
 	@Autowired private  BreakdownTodoRepository breakdownTodoRepository;
+	@Autowired private AmcJobsService amcJobsService;
 	
 	//@Autowired private  AmcJobsService amcJobsService;
 	
@@ -115,8 +119,8 @@ public class AmcRenewalJobActivityService {
 	    
 	    
 	    if(jobActivityType.getActivityName().equalsIgnoreCase("service")){
-	    	//updateAmcJobAfterAddingActivity(dto.getJobId() , job ,  dto.getLiftIds() , dto.getActivityDate());
-	    	//getStatusOfCurrentService(job.getJobId());
+	    	updateAmcJobAfterAddingActivity(dto.getJobId() , job ,  dto.getLiftIds() , dto.getActivityDate());
+	    	getStatusOfCurrentService(job.getRenewalJobId());
 	    }
 	    
 	    if (dto.getBreakdownTodoId() != null) {
@@ -124,29 +128,29 @@ public class AmcRenewalJobActivityService {
 	    }
 	}
 	
-//	public void updateAmcJobAfterAddingActivity(Integer jobId , AmcJob amcJob , List<Integer> liftIds , LocalDate date) {
-//		
-//		Integer count = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
-//		int newLiftsDoneServicesCount = liftIds.size();
-//		count+=newLiftsDoneServicesCount;
-//		
-//		amcJob.setNoOfLiftsCurrentServiceCompletedCount(count);
-//		
-//		amcJob.setLastActivityDate(date);
-//		
-//		int needToCompleteServiceLifts = amcJob.getNoOfLifsServiceNeedToCompleteCount();
-//		
-//		if(needToCompleteServiceLifts == count) {
-//			int pendingServicesCount = amcJob.getPendingServiceCount();
-//            pendingServicesCount--;
-//            
-//            amcJob.setPendingServiceCount(pendingServicesCount);
-//            
-//		}
-//
-//		
-//		amcJobRepository.save(amcJob);
-//	}
+	public void updateAmcJobAfterAddingActivity(Integer jobId , AmcRenewalJob amcJob , List<Integer> liftIds , LocalDate date) {
+		
+		Integer count = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
+		int newLiftsDoneServicesCount = liftIds.size();
+		count+=newLiftsDoneServicesCount;
+		
+		amcJob.setNoOfLiftsCurrentServiceCompletedCount(count);
+		
+		amcJob.setLastActivityDate(date);
+		
+		int needToCompleteServiceLifts = amcJob.getNoOfLifsServiceNeedToCompleteCount();
+		
+		if(needToCompleteServiceLifts == count) {
+			int pendingServicesCount = amcJob.getPendingServiceCount();
+            pendingServicesCount--;
+            
+            amcJob.setPendingServiceCount(pendingServicesCount);
+            
+		}
+
+		
+		amcJobRepository.save(amcJob);
+	}
 	
 	public void updateBreakdownTodoStatus(Integer brekdownTodoId) {
 		
@@ -190,6 +194,226 @@ public class AmcRenewalJobActivityService {
 		}
 	   
 	}
+
+	 public JobDetailPageResponseDto getJobDetailPage(Integer jobId) {
+        AmcRenewalJob job = amcJobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
+
+        JobDetailResponseDto jobDetailDto = new JobDetailResponseDto();
+
+        // Safely map job details
+        jobDetailDto.setJobNo(job.getJobNo());
+        jobDetailDto.setCustomerName(job.getCustomer() != null ? job.getCustomer().getCustomerName() : null);
+        jobDetailDto.setSiteName(job.getSite() != null ? job.getSite().getSiteName() : null);
+        jobDetailDto.setOrderDate(job.getStartDate());
+
+        jobDetailDto.setNumberOfLift(job.getNoOfElevator());
+        jobDetailDto.setJobLiftDetail(job.getJobLiftDetail());
+
+        jobDetailDto.setSalesExecutive(job.getSalesExecutive() != null ? job.getSalesExecutive().getEmployeeName() : null);
+        jobDetailDto.setServiceEngineer(job.getServiceEngineer() != null ? job.getServiceEngineer().getEmployeeName() : null);
+
+        jobDetailDto.setJobStatus(job.getJobStatus());
+        jobDetailDto.setTotalService(job.getNoOfServices() != null ? job.getNoOfServices() + " Service" : null);
+        jobDetailDto.setJobType(job.getJobType());
+
+        jobDetailDto.setSiteAddress(job.getSite() != null ? job.getSite().getSiteAddress() : null);
+        jobDetailDto.setStartDate(job.getStartDate() != null ? job.getStartDate() : null);
+        jobDetailDto.setEndDate(job.getEndDate() != null ? job.getEndDate() : null);
+
+        jobDetailDto.setJobAmount(job.getJobAmount() != null ? job.getJobAmount().toString() : null);
+        jobDetailDto.setReceivedAmount(job.getReceivedAmount() != null ? job.getReceivedAmount().toString() : null);
+        jobDetailDto.setBalanceAmount(job.getBalanceAmount() != null ? job.getBalanceAmount().toString() : null);
+
+        jobDetailDto.setPendingService(job.getPendingServiceCount() != null ? job.getPendingServiceCount().toString() : null);
+
+        // Map job activities
+        List<AmcRenewalJobActivity> activities = amcJobActivityRepository.findByAmcRenewalJobRenewalJobId(jobId);
+
+        List<JobActivityResponseDto> activityDtos = activities.stream()
+                .map(act -> {
+                    String activityName = act.getJobActivityType() != null 
+                            ? act.getJobActivityType().getActivityName() 
+                            : null;
+
+                    String serviceOrWorkType = null;
+                    if (activityName != null && activityName.equalsIgnoreCase("service")) {
+                        serviceOrWorkType = act.getJobService() != null ? act.getJobService() : null;
+                    } else {
+                        serviceOrWorkType = act.getJobTypeWork() != null ? act.getJobTypeWork() : null;
+                    }
+                    
+                    System.out.println(act.getLift().getLiftName()+" liftnameis");
+
+                    return new JobActivityResponseDto(
+                    	    act.getJobActivityId(),
+                    	    act.getActivityDate() != null ? act.getActivityDate().toString() : null,
+                    	    act.getJobActivityBy() != null ? act.getJobActivityBy().getEmployeeName() : null,
+                    	    activityName,
+                    	    serviceOrWorkType,
+                    	    act.getActivityDescription(),
+                    	    act.getRemark(),
+                    	    "",
+                    	    act.getLift() != null ? act.getLift().getLiftName() : null
+                    	);
+
+
+                })
+                .collect(Collectors.toList());
+        
+        List<LiftData> liftDatas = null;
+        
+        CombinedEnquiry combinedEnquiry = null;
+        
+        if(job.getAmcRenewalQuotation()!=null) {
+        	combinedEnquiry = job.getAmcRenewalQuotation().getCombinedEnquiry();
+        }else {
+        	combinedEnquiry = job.getRevisedRenewalAmcQuotation().getCombinedEnquiry();
+        }
+        
+        if(combinedEnquiry!=null) {
+        	
+        	liftDatas = amcJobsService.buildLiftData(combinedEnquiry);
+        }
+        
+        List<EmployeeDto> employeeDtos = new ArrayList<EmployeeDto>();
+        
+        List<Employee> employees = job.getRoute().getEmployees();
+        
+        if(employees!=null) {
+        	for(Employee employee : employees) {
+        		EmployeeDto employeeDto = new EmployeeDto();
+        		employeeDto.setAddress(employee.getAddress());
+        		employeeDto.setEmployeeId(employee.getEmployeeId());
+        		employeeDto.setName(employee.getEmployeeName());
+        		employeeDto.setRole(employee.getRole().getRole());  
+        		
+        		employeeDtos.add(employeeDto);   
+        	}
+        }
+
+
+        return new JobDetailPageResponseDto(jobDetailDto, activityDtos , liftDatas , employeeDtos);
+    }
+
+		public String getStatusOfCurrentService(Integer jobId) {
+		    AmcRenewalJob amcJob = amcJobRepository.findById(jobId)
+		            .orElseThrow(() -> new RuntimeException("AmcRenewalJob not found with id " + jobId));
+
+		    Integer completedCount = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
+		    Integer requiredCount = amcJob.getNoOfLifsServiceNeedToCompleteCount();
+		    String currentServiceStatus = amcJob.getCurrentServiceStatus();
+		    Integer currentServiceNumber = amcJob.getCurrentServiceNumber();
+		    
+		    Integer pendingServices = 0;
+		    Integer totalServices = amcJob.getNoOfServices();
+		    
+		   // pendingServices = totalServices - currentServiceNumber;
+
+		    if (completedCount != null && requiredCount != null && completedCount > 0 && requiredCount > 0) {
+		        if (completedCount.equals(requiredCount)) {
+		            LocalDate lastActivityDate = amcJob.getLastActivityDate();
+
+		            if (lastActivityDate != null) {
+		                int lastMonth = lastActivityDate.getMonthValue();
+		                int currentMonth = LocalDate.now().getMonthValue();
+		                
+		               // System.out.println(lastMonth+" lastmonth "+currentMonth);
+
+		                if (lastMonth == currentMonth) {
+		                    currentServiceStatus = "Completed";
+		                    amcJob.setPreviousServicingDate(lastActivityDate);
+		                    //  pendingServices = totalServices - currentServiceNumber;
+		                } else {
+		                    currentServiceStatus = "Pending";
+		                    completedCount = 0;
+		                    lastActivityDate = null;
+		                    currentServiceNumber++;
+		                    
+		                   
+		                    //amcJob.setPendingServiceCount(pendingServices);	 
+		                }
+		            } else {
+		                currentServiceStatus = "Pending";
+		                completedCount = 0;
+		                currentServiceNumber++;
+		                
+		               // pendingServices = totalServices - currentServiceNumber;
+		               // amcJob.setPendingServiceCount(pendingServices);	 
+		            }
+
+		            amcJob.setNoOfLiftsCurrentServiceCompletedCount(completedCount);
+		            amcJob.setCurrentServiceNumber(currentServiceNumber);
+		            amcJob.setCurrentServiceStatus(currentServiceStatus);
+		            amcJob.setLastActivityDate(lastActivityDate);
+		            amcJobRepository.save(amcJob);
+
+		        } else {
+		            currentServiceStatus = "Pending";
+		            amcJob.setCurrentServiceStatus(currentServiceStatus);
+		            amcJobRepository.save(amcJob);
+		        }
+		    } else {
+		        currentServiceStatus = "Pending";
+		        amcJob.setCurrentServiceStatus(currentServiceStatus);
+
+		        if (currentServiceNumber == 0) {
+		            currentServiceNumber++;
+		            //pendingServices = totalServices - currentServiceNumber;
+		            amcJob.setCurrentServiceNumber(currentServiceNumber);
+		           // amcJob.setPendingServiceCount(pendingServices);	     
+		        }
+
+		        amcJobRepository.save(amcJob);
+		    }
+
+		    return currentServiceStatus;
+		}
+
+
+	    
+	    
+	    public AddServiceActivityGetData getAddServiceActivityGetData(Integer jobId) {
+
+	        AmcRenewalJob amcJob = amcJobRepository.findById(jobId)
+	                .orElseThrow(() -> new RuntimeException("AmcJob Renewal not found with id: " + jobId));
+
+	        String serviceName = "Service " + amcJob.getCurrentServiceNumber();
+
+	        // Get CombinedEnquiry (from AmcQuotation or RevisedAmcQuotation)
+	        CombinedEnquiry combinedEnquiry = Optional.ofNullable(amcJob.getAmcRenewalQuotation())
+	                .map(AmcRenewalQuotation::getCombinedEnquiry)
+	                .orElseGet(() -> Optional.ofNullable(amcJob.getRevisedRenewalAmcQuotation())
+	                        .map(RevisedRenewalAmcQuotation::getCombinedEnquiry)
+	                        .orElseThrow(() -> new RuntimeException("CombinedEnquiry not found for jobId: " + jobId)));
+
+	        List<Enquiry> allServiceLifts = combinedEnquiry.getEnquiries();
+	        if (allServiceLifts == null) allServiceLifts = new ArrayList<>();
+
+	        // Get completed lifts
+	        Set<Integer> completedLiftIds = amcJobActivityRepository.findByAmcRenewalJobRenewalJobId(jobId).stream()
+	                .filter(a -> "Service".equalsIgnoreCase(a.getJobActivityType().getActivityName()) &&
+	                             serviceName.equalsIgnoreCase(a.getJobService()))
+	                .map(a -> a.getLift().getEnquiryId())
+	                .collect(Collectors.toSet());
+
+	        // Filter remaining lifts
+	        List<Enquiry> pendingLifts = allServiceLifts.stream()
+	                .filter(e -> !completedLiftIds.contains(e.getEnquiryId()))
+	                .toList();
+
+	        CombinedEnquiry pendingCombined = new CombinedEnquiry();
+	        pendingCombined.setEnquiries(pendingLifts);
+
+	        List<LiftData> serviceLiftDatas = amcJobsService.buildLiftData(pendingCombined);
+
+	        return AddServiceActivityGetData.builder()
+	                .serviceName(serviceName)
+	                .serviceLifsDatas(serviceLiftDatas)
+	                .build();
+	    }
+
+
 	
 //	public List<LiftData> getUncompletedBreakDownActivityLifts(Integer breakdownTodoId) {
 //

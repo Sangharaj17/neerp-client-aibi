@@ -32,6 +32,24 @@ public class AmcRenewalJobActivityController {
         return ResponseEntity.ok("Job activities added successfully");
     }
     
+    @GetMapping("/getAddServiceActivityData/{jobId}")
+    public ResponseEntity<AddServiceActivityGetData> getAddServiceActivityData(@PathVariable Integer jobId) {
+        AddServiceActivityGetData response = amcJobActivityService.getAddServiceActivityGetData(jobId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/current-service-status/{jobId}")
+    public ResponseEntity<String> getCurrentServiceStatus(@PathVariable Integer jobId) {
+    	System.out.println("called getCurrentServiceStatus");
+        String status = amcJobActivityService.getStatusOfCurrentService(jobId);
+        return ResponseEntity.ok(status);
+    }
+    
+    @GetMapping("/job-detail/{jobId}")
+    public JobDetailPageResponseDto getJobDetail(@PathVariable Integer jobId) {
+        return amcJobActivityService.getJobDetailPage(jobId);
+    }
+    
 //    @GetMapping("/getAddServiceActivityData/{jobId}")
 //    public ResponseEntity<AddServiceActivityGetData> getAddServiceActivityData(@PathVariable Integer jobId) {
 //        AddServiceActivityGetData response = amcJobActivityService.getAddServiceActivityGetData(jobId);

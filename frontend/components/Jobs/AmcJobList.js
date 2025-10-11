@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import axiosInstance from '@/utils/axiosInstance';
 import {
+  Loader2,
   Eye,
   FileText,
   Trash2,
@@ -44,6 +45,9 @@ export default function AmcJobList({isAmcJobRenewal}) {
   // --- Common Loading/Error State ---
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+    const [loadingBtn, setLoadingBtn] = useState(null);
+
 
   /**
    * Fetches the appropriate job list based on the active tab and current state.
@@ -324,15 +328,21 @@ export default function AmcJobList({isAmcJobRenewal}) {
                       <button
                         onClick={() => {
                           const id = job[idKey];
+                            setLoadingBtn(`view-${id}`);
                           const path = activeTab === 'amcJobs'
                             ? `/dashboard/jobs/amc_job_list/view_amc_job_detail/${id}`
-                            : `/dashboard/jobs/amc_renewal_job_list/view_amc_renewal_job_detail/${id}`; // Adjust path for renewal job detail if needed
+                            : `/dashboard/jobs/amc_job_list/view_amc_renewal_job_detail/${id}`; // Adjust path for renewal job detail if needed
                           router.push(path);
                         }}
                         title="View"
                       >
-                        <Eye className="w-4 h-4 text-blue-500" />
+                        
+{loadingBtn === `view-${job[idKey]}` ? 
+<Loader2 className="w-4 h-4 animate-spin text-orange-500" /> : <Eye className="w-4 h-4 text-blue-500" />}
+
                       </button>
+
+                      
                       {/* Invoice Button */}
                       <button title="Invoice">
                         <FileText className="w-4 h-4 text-green-500" />

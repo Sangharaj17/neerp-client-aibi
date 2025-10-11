@@ -10,4 +10,6 @@ public interface AmcRenewalJobActivityRepository extends JpaRepository<AmcRenewa
 
 	List<AmcRenewalJobActivity> findByBreakdownTodo_CustTodoId(Integer breakdownTodoId);
 
+	List<AmcRenewalJobActivity> findByAmcRenewalJobRenewalJobId(Integer jobId);
+
 }

@@ -110,7 +110,7 @@ export default function AddRenewalJobActivityForm({ renewalJobId, onSuccess , co
     useEffect(() => {
     if (isServiceSelected() && formData.renewalJobId) {
       axiosInstance
-        .get(`/api/jobs/initial/amc-job-activities/current-service-status/${formData.renewalJobId}`)
+        .get(`/api/jobs/renewal/amc-renewal-job-activities/current-service-status/${formData.renewalJobId}`)
         .then((response) => {
           setCurrentServiceStatus(response.data);
         })
@@ -133,7 +133,7 @@ export default function AddRenewalJobActivityForm({ renewalJobId, onSuccess , co
   useEffect(() => {
     if (currentServiceStatus === "Pending" && formData.renewalJobId) {
       axiosInstance
-        .get(`/api/jobs/initial/amc-job-activities/getAddServiceActivityData/${formData.renewalJobId}`)
+        .get(`/api/jobs/renewal/amc-renewal-job-activities/getAddServiceActivityData/${formData.renewalJobId}`)
         .then((response) => {
           setAddServiceActivityGetData(response.data);
         })
@@ -142,7 +142,7 @@ export default function AddRenewalJobActivityForm({ renewalJobId, onSuccess , co
           setAddServiceActivityGetData(null);
         });
     }
-  }, [currentServiceStatus, formData.jobId]);
+  }, [currentServiceStatus, formData.renewalJobId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -229,17 +229,19 @@ export default function AddRenewalJobActivityForm({ renewalJobId, onSuccess , co
       });
       setBreakdowns([]);
       setLifts([]);
-      toast.success("Job activity added successfully!");
+      toast.success("Renewal Job activity added successfully!");
       
       // NEW: Call the success callback to close the modal
-      if (onSuccess) {
-        onSuccess();
-      }
+    //   if (onSuccess) {
+    //     onSuccess();
+    //   }
       
-      if(!comingFromDashboard){
-      // Existing redirect logic (can be removed if modal is the only use case)
-      router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${payload.jobId}`);
-      }
+    //   if(!comingFromDashboard){
+    //   // Existing redirect logic (can be removed if modal is the only use case)
+    //   router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${payload.jobId}`);
+    //   }
+
+     router.push(`/dashboard/jobs/amc_job_list/view_amc_renewal_job_detail/${renewalJobId}`);
       
 
     } catch (err) {
