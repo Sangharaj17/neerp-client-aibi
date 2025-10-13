@@ -5,6 +5,7 @@ import com.aibi.neerp.amc.jobs.initial.dto.AmcServiceAlertData;
 import com.aibi.neerp.amc.jobs.initial.dto.BreakdownTodoResponseDto;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.initial.service.BreakdownTodoService;
+import com.aibi.neerp.amc.jobs.renewal.service.AmcRenewalJobsService;
 import com.aibi.neerp.customer.dto.CustomerSiteTodoResponseDto;
 import com.aibi.neerp.customer.service.CustomerSiteTodoService;
 import com.aibi.neerp.dashboard.dto.DashboardAmcRenewalsListData;
@@ -34,6 +35,7 @@ public class DashboardController {
     private final AmcJobsService amcJobsService;
     private final BreakdownTodoService breakdownTodoService;
     private final OfficeActivityService officeActivityService;
+    private final AmcRenewalJobsService amcRenewalJobsService;
 
     @GetMapping("/leadsTodoList")
     public Page<DashboardTodoDto> getTodos(
@@ -75,6 +77,17 @@ public class DashboardController {
             @RequestParam(defaultValue = "jobId") String sortBy,
             @RequestParam(defaultValue = "asc") String direction) {
         return amcJobsService.serviceAlertDatas(search, page, size, sortBy, direction);
+    }
+    
+    @GetMapping("/amc-renewal-alerts")
+    public Page<AmcServiceAlertData> getAmcRenewalAlerts( // Return type is the reused DTO
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "renewalJobId") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        return amcRenewalJobsService.serviceAlertDatas(search, page, size, sortBy, direction);
     }
 
     @GetMapping("/service-engineers-report")

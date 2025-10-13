@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.AmcServiceAlertData;
 import com.aibi.neerp.amc.jobs.initial.dto.EmployeeDto;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.dto.RoutesDto;
@@ -37,6 +39,7 @@ import com.aibi.neerp.amc.quatation.renewal.repository.AmcRenewalQuotationReposi
 import com.aibi.neerp.amc.quatation.renewal.repository.RevisedRenewalAmcQuotationRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.employeemanagement.repository.EmployeeRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.Enquiry;
@@ -64,6 +67,9 @@ public class AmcRenewalJobsService {
 	
 	@Autowired
 	private AmcRenewalJobRepository amcRenewalJobRepository;
+	
+	@Autowired
+	private AmcRenewalJobActivityService amcRenewalJobActivityService;
 	
 	
     public List<SelectDetailForRenewalJob> getPendingRenewalJobs() {
@@ -423,7 +429,8 @@ public class AmcRenewalJobsService {
 
 	        AmcRenewalJob amcJob = amcRenewalJobRepository.save(job);
 	        
-	       // getStatusOfCurrentService(amcJob.getRenewalJobId());)
+	        amcRenewalJobActivityService.getStatusOfCurrentService(amcJob.getRenewalJobId());
+
 
 	        
 	       // updateAmcJobActivityStatus(amcJob);
@@ -514,6 +521,83 @@ public class AmcRenewalJobsService {
     	
     	return buildLiftData(combinedEnquiry);
     } 
+	 
+	 
+	    public Page<AmcServiceAlertData> serviceAlertDatas(
+	            String search,
+	            int page,
+	            int size,
+	            String sortBy,
+	            String direction) {
+
+	        // Build sorting
+	        Sort sort = direction.equalsIgnoreCase("desc") ?
+	                Sort.by(sortBy).descending() :
+	                Sort.by(sortBy).ascending();
+
+	        Pageable pageable = PageRequest.of(page, size, sort);
+
+	        // ✅ Fetch only "pending" jobs directly from DB instead of filtering in memory
+	        Page<AmcRenewalJob> amcJobsPage = amcRenewalJobRepository.findByStatusTrue(search, pageable);
+
+	        List<AmcServiceAlertData> alertDataList = amcJobsPage.stream().map(amcJob -> {
+
+	            AmcServiceAlertData alertData = new AmcServiceAlertData();
+	            
+	            alertData.setCurrentServiceCompletedLiftCounts(amcJob.getNoOfLiftsCurrentServiceCompletedCount());         
+	            
+	            int completedCounts = 0;
+	            if(amcJob.getNoOfLiftsCurrentServiceCompletedCount()!=null)
+	            completedCounts = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
+	            
+	            alertData.setCurrentServicePendingLiftCounts(amcJob.getNoOfElevator() - completedCounts) ;           		
+	            		
+	            alertData.setCurrentServiceTotalLiftsCounts(amcJob.getNoOfElevator()) ;           
+	          
+	            Site site = amcJob.getSite();
+	            Customer customer = amcJob.getCustomer();
+
+	            alertData.setRenewalJobId(amcJob.getRenewalJobId());
+
+
+	            alertData.setSite(site != null ? site.getSiteName() : "");
+	            
+	            alertData.setMonth(LocalDate.now().getMonth().name());
+
+	            
+	            String place = "";
+	            if (amcJob.getAmcRenewalQuotation() != null) {
+	                place = amcJob.getAmcRenewalQuotation().getLead().getArea().getAreaName();
+	            } else if (amcJob.getRevisedRenewalAmcQuotation() != null) {
+	                place = amcJob.getRevisedRenewalAmcQuotation().getLead().getArea().getAreaName();
+	            }
+	            alertData.setPlace(place);
+
+	            alertData.setCustomer(customer != null ? customer.getCustomerName() : "");
+	            alertData.setPreviousServicingDate(amcJob.getPreviousServicingDate());
+	            alertData.setRemark(amcJob.getCurrentServiceStatus());
+	            alertData.setService("Service " + amcJob.getCurrentServiceNumber());
+
+	            // ✅ Map Employees → EmployeeDtos
+	            List<EmployeeDto> employeeDtos = new ArrayList<>();
+	            if (amcJob.getRoute() != null && amcJob.getRoute().getEmployees() != null) {
+	                for (Employee employee : amcJob.getRoute().getEmployees()) {
+	                    EmployeeDto dto = new EmployeeDto();
+	                    dto.setAddress(employee.getAddress());
+	                    dto.setEmployeeId(employee.getEmployeeId());
+	                    dto.setName(employee.getEmployeeName());
+	                    dto.setRole(employee.getRole().getRole());
+	                    employeeDtos.add(dto);
+	                }
+	            }
+	            alertData.setAssignedServiceEmployess(employeeDtos);
+
+	            return alertData;
+	        }).collect(Collectors.toList());
+
+	        return new PageImpl<>(alertDataList, pageable, amcJobsPage.getTotalElements());
+	    }
+
 	
 
 }

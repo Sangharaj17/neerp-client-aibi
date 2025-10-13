@@ -9,6 +9,9 @@ import lombok.Data;
 public class AmcServiceAlertData {
 	
 	private Integer amcJobid;
+	// NEW: Renewal Job ID
+    private Integer renewalJobId; // Added this field
+   
 	private String site;
 	private String place;
 	private String customer;

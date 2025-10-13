@@ -19,6 +19,7 @@ import com.aibi.neerp.amc.jobs.initial.controller.AmcJobsController.JobDropdownR
 import com.aibi.neerp.amc.jobs.initial.dto.AddJobDetailsData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
+import com.aibi.neerp.amc.jobs.initial.dto.AmcServiceAlertData;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.dto.SelectDetailForJob;
 import com.aibi.neerp.amc.jobs.renewal.dto.AddRenewalJobDetailsData;
@@ -97,6 +98,17 @@ public class AmcRenewalJobsController {
     public List<LiftData> getAllLiftsForAddBreakDownTodoByJobId(Integer jobId) {
     	
         return amcRenewalJobsService.getAllLiftsForAddBreakDownTodo(jobId);
+    }
+    
+    @GetMapping("/amc-renewal-alerts")
+    public Page<AmcServiceAlertData> getAmcRenewalAlerts( // Return type is the reused DTO
+            @RequestParam(defaultValue = "") String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "renewalJobId") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        return amcRenewalJobsService.serviceAlertDatas(search, page, size, sortBy, direction);
     }
     
     

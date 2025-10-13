@@ -53,6 +53,16 @@ public interface AmcRenewalJobRepository extends JpaRepository<AmcRenewalJob, In
 		    WHERE j.status = true
 		""")
 		List<AmcRenewalJob> findAllActiveRenewalJobs();
+	
+	
+	   @Query("""
+				SELECT j FROM AmcRenewalJob j
+				WHERE j.status = true
+				 AND (LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+			    OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+			    OR LOWER(j.currentServiceStatus) LIKE LOWER(CONCAT('%', :search, '%')))
+				""")
+				Page<AmcRenewalJob> findByStatusTrue(@Param("search") String search, Pageable pageable);
 
 	
 }

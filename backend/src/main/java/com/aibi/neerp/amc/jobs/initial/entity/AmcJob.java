@@ -3,7 +3,9 @@ package com.aibi.neerp.amc.jobs.initial.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
 import com.aibi.neerp.customer.entity.Customer;
@@ -155,6 +157,9 @@ public class AmcJob {
     
     @Column(name = "previous_servicing_date")
     private LocalDate previousServicingDate;
+    
+//    @OneToMany(mappedBy = "preJobId", fetch = FetchType.LAZY)
+//    private List<AmcRenewalJob> renewalJobs;
     
 }
 

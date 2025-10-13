@@ -301,7 +301,7 @@ const [jobDetailsData, setJobDetailsData] = useState(null);
       toast.success("AMC Job saved successfully!");
       // `/${tenant}/dashboard/jobs/amc_job_list`
         router.push(
-              `/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list`
+              `/dashboard/jobs/amc_job_list/false`
             );
     } else {
       toast.error("Something went wrong while saving!");
