@@ -25,6 +25,7 @@ import ActionModal from '../AMC/ActionModal';
 import AddJobActivityForm from '../Jobs/AddJobActivityForm';
 
 import { Loader2 } from 'lucide-react';
+import AddRenewalJobActivityForm from '../Jobs/AddRenewalJobActivityForm';
 
 
 // Helper function to get the assigned employee names as a string (Unchanged)
@@ -108,6 +109,15 @@ const Dashboard = () => {
   const [amcSearch, setAmcSearch] = useState('');
   const [amcLoading, setAmcLoading] = useState(false);
 
+  // --- Renewal alerts
+const [renewalServiceAlerts, setRenewalServiceAlerts] = useState([]);
+const [renewalPage, setRenewalPage] = useState(0);
+const [renewalSize, setRenewalSize] = useState(10);
+const [renewalTotalPages, setRenewalTotalPages] = useState(0);
+const [renewalSearch, setRenewalSearch] = useState('');
+const [renewalLoading, setRenewalLoading] = useState(false);
+
+
   // --- Customer To Do (Existing state) (Unchanged)
   const [customerTodos, setCustomerTodos] = useState([]);
   const [customerPage, setCustomerPage] = useState(0);
@@ -134,6 +144,12 @@ const Dashboard = () => {
       setIsModalOpen(true);
   };
 
+  const openRenewalAddActivityModal = (jobId) => {
+      setSelectedJobId(jobId);
+      setModalContentType('Renewal');
+      setIsModalOpen(true);
+  };
+
   // Function to open the modal for Service Engineer Report
   const openReportModal = () => {
       setModalContentType('REPORT');
@@ -151,6 +167,11 @@ const Dashboard = () => {
   const handleActivitySuccess = () => {
     closeAddActivityModal();
     fetchAmcAlerts();
+  };
+
+  const handleRenewalActivitySuccess = () => {
+    closeAddActivityModal();
+    fetchRenewalAlerts();
   };
   // ---------------------------------------
 
@@ -204,6 +225,28 @@ const Dashboard = () => {
   useEffect(() => {
       fetchAmcAlerts();
   }, [fetchAmcAlerts]); // Depend on the memoized function
+
+
+  // fetch Renewal alerts - Wrapped in useCallback for cleaner dependency
+const fetchRenewalAlerts = useCallback(async () => {
+    try {
+        setRenewalLoading(true);
+        const res = await axiosInstance.get('/api/dashboard/amc-renewal-alerts', {
+            params: { page: renewalPage, size: renewalSize, search: renewalSearch }
+        });
+        setRenewalServiceAlerts(res.data.content || []);
+        setRenewalTotalPages(res.data.totalPages ?? 0);
+    } catch (err) {
+        console.error('Error fetching Renewal service alerts:', err);
+    } finally {
+        setRenewalLoading(false);
+    }
+}, [renewalPage, renewalSize, renewalSearch]);
+
+useEffect(() => {
+    fetchRenewalAlerts();
+}, [fetchRenewalAlerts]); // Depend on the memoized function
+
 
 
   // fetch Customer To Do (Existing logic) (Adjusted to respect collapse state)
@@ -276,6 +319,8 @@ const Dashboard = () => {
     return colors[color] || 'text-gray-600';
   };
   /* ----------------------------------------------------------------------- */
+
+      const [activeAlertTab, setActiveAlertTab] = useState('service'); 
 
 
   return (
@@ -450,162 +495,335 @@ const Dashboard = () => {
         </div>
 
         {/* --- Service Engineer Summary and Report Button --- */}
-        {engineerReport && !isAmcAlertsCollapsed && (
-            <div className="p-6 pt-4 space-y-4 border-b border-gray-100">
-                <h4 className="text-lg font-semibold text-gray-700">Service Engineer Summary (Current Jobs)</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Total AMC Jobs */}
-                    <div className="bg-blue-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-blue-500">
-                        <span className="text-sm font-medium text-blue-700">Total Jobs:</span>
-                        <span className="text-xl font-bold text-blue-900">{engineerReport.totalAmcJobs}</span>
-                    </div>
-                    {/* AMC Done Counts */}
-                    <div className="bg-green-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-green-500">
-                        <span className="text-sm font-medium text-green-700">Jobs Done:</span>
-                        <span className="text-xl font-bold text-green-900">{engineerReport.amcDoneCounts}</span>
-                    </div>
-                    {/* AMC Pending Counts */}
-                    <div className="bg-red-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-red-500">
-                        <span className="text-sm font-medium text-red-700">Jobs Pending:</span>
-                        <span className="text-xl font-bold text-red-900">{engineerReport.amcPendingCounts}</span>
-                    </div>
-                </div>
-
-                {/* Button to View Detailed Report in Modal */}
-                <div className="text-right pt-2">
-                    <button
-                        onClick={openReportModal}
-                        disabled={isReportLoading}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                    >
-                        {isReportLoading ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                            <List className="w-4 h-4 mr-2" />
-                        )}
-                        {isReportLoading ? 'Loading Report...' : 'View Engineer Report'}
-                    </button>
-                </div>
+ {engineerReport && !isAmcAlertsCollapsed && (
+    <div className="p-6 pt-4 space-y-4 border-b border-gray-100">
+        <h4 className="text-lg font-semibold text-gray-700">Service Engineer Summary (Current Jobs)</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Total AMC Jobs */}
+            <div className="bg-blue-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-blue-500">
+                <span className="text-sm font-medium text-blue-700">Total Jobs:</span>
+                <span className="text-xl font-bold text-blue-900">{engineerReport.totalAmcJobs}</span>
             </div>
-        )}
+            {/* AMC Done Counts */}
+            <div className="bg-green-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-green-500">
+                <span className="text-sm font-medium text-green-700">Jobs Done:</span>
+                <span className="text-xl font-bold text-green-900">{engineerReport.amcDoneCounts}</span>
+            </div>
+            {/* AMC Pending Counts */}
+            <div className="bg-red-50 p-3 rounded-lg flex justify-between items-center border-l-4 border-red-500">
+                <span className="text-sm font-medium text-red-700">Jobs Pending:</span>
+                <span className="text-xl font-bold text-red-900">{engineerReport.amcPendingCounts}</span>
+            </div>
+        </div>
+
+        {/* Buttons Section: Alert Buttons (Left) and Report Button (Right) */}
+        <div className="pt-2 flex justify-between items-center">
+            
+            {/* 1. New Alert Buttons (Grouped on the Left) - Using TEAL for highlighted state */}
+            <div className="flex space-x-3">
+                {/* New AMC Service Alerts Button */}
+                <button
+                    onClick={() => setActiveAlertTab('service')}
+                    className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm transition-colors 
+                        ${activeAlertTab === 'service' 
+                            // TEAL highlighted style
+                            ? 'border-teal-600 bg-teal-600 text-white hover:bg-teal-700' 
+                            // Default style
+                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500`}
+                >
+                    AMC Service Alerts
+                </button>
+                
+                {/* New AMC Renewal Service Alert Button */}
+                <button
+                    onClick={() => setActiveAlertTab('renewal')}
+                    className={`inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md shadow-sm transition-colors
+                        ${activeAlertTab === 'renewal' 
+                            // TEAL highlighted style
+                            ? 'border-teal-600 bg-teal-600 text-white hover:bg-teal-700' 
+                            // Default style
+                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500`}
+                >
+                    AMC Renewal Service Alert
+                </button>
+            </div>
+
+
+            {/* 2. Original Report Button (On the Right) - Retains INDIGO color */}
+            <div>
+                <button
+                    onClick={openReportModal}
+                    disabled={isReportLoading}
+                    // Retaining the original indigo color
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                >
+                    {isReportLoading ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                        <List className="w-4 h-4 mr-2" />
+                    )}
+                    {isReportLoading ? 'Loading Report...' : 'View Engineer Report'}
+                </button>
+            </div>
+        </div>
+    </div>
+)}
         {/* ------------------------------------------------------------------- */}
+
 
         {/* Conditional Content Rendering for AMC Alerts (Table) */}
         <div id="amc-alerts-content" className={`transition-all duration-300 ease-in-out overflow-hidden ${isAmcAlertsCollapsed ? 'max-h-0 opacity-0' : 'max-h-screen opacity-100 p-6 pt-4'}`}>
-          {amcLoading ? (
-            <div className="text-center py-10 text-gray-500 font-medium">
-              <div className="flex justify-center items-center space-x-2">
-                <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Loading AMC Alerts...</span>
-              </div>
-            </div>
-          ) : amcServiceAlerts.length > 0 ? (
-            <>
-              <div className="overflow-x-auto rounded-lg shadow-inner border border-gray-100">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Sr No</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site / Place</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Assigned</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Serviced</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Remark</th>
-                      <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Pending Lifts / Total Lifts</th>
-                      <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Add Activity</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-100 text-sm">
-                    {amcServiceAlerts.map((alert, index) => {
-                      const isCompleted = alert.remark === 'Completed';
-                      const srNo = amcPage * amcSize + index + 1;
-                      return (
-                        <tr key={alert.amcJobid} className="hover:bg-blue-50/50 transition-colors">
-                          <td className="px-6 py-3 whitespace-nowrap text-center text-gray-600 font-mono">{srNo}</td>
-                          <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{alert.customer}</td>
-                          <td className="px-6 py-3 whitespace-nowrap text-gray-600">
-                            {alert.site} <span className="text-xs text-gray-400">({alert.place})</span>
-                          </td>
-                          <td className="px-6 py-3 whitespace-nowrap text-gray-600">{alert.service} - {alert.month}</td>
-                          <td className="px-6 py-3 whitespace-nowrap text-xs text-gray-700">{getAssignedEmployees(alert.assignedServiceEmployess)}</td>
-                          <td className="px-6 py-3 whitespace-nowrap text-gray-500 text-xs">{alert.previousServicingDate ? new Date(alert.previousServicingDate).toLocaleDateString() : 'N/A'}</td>
-                          <td className="px-6 py-3 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {alert.remark}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3 text-center">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isCompleted ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
-                              {alert.currentServicePendingLiftCounts} / {alert.currentServiceTotalLiftsCounts}
-                            </span>
-                          </td>
-                          <td className="px-6 py-3 text-center whitespace-nowrap">
-                            <div className="flex items-center justify-center space-x-2">
-                              {/* Add Activity Button (Opens Modal) */}
-                              <button
-                                onClick={() => openAddActivityModal(alert.amcJobid)}
-                                disabled={isCompleted}
-                                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2
-                                  ${isCompleted
-                                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
-                                      : 'text-green-600 hover:text-white hover:bg-green-500 focus:ring-green-500'}`}
-                                title={isCompleted ? "Service Completed" : `Add Activity to Job ${alert.amcJobid}`}
-                              >
-                                <Plus className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                      
+            {
 
-              {/* Pagination Controls */}
-              <div className="flex items-center justify-between mt-4 text-sm px-2">
-                <div className="flex items-center space-x-3">
-                  <span className="text-gray-600">Rows per page:</span>
-                  <select
-                    value={amcSize}
-                    onChange={(e) => {
-                      setAmcSize(Number(e.target.value));
-                      setAmcPage(0);
-                    }}
-                    className="border border-gray-300 rounded-md shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {[5, 10, 20, 50].map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-gray-600">Page {amcPage + 1} of {amcTotalPages}</span>
-                  <button
-                    disabled={amcPage === 0}
-                    onClick={() => setAmcPage((p) => p - 1)}
-                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
-                  >
-                    Prev
-                  </button>
-                  <button
-                    disabled={amcPage + 1 >= amcTotalPages}
-                    onClick={() => setAmcPage((p) => p + 1)}
-                    className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage + 1 >= amcTotalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <p className="text-sm text-gray-500 text-center py-6">All clear! No pending AMC service alerts found for the current search.</p>
-          )}
+              activeAlertTab === 'service' && (
+                
+                amcLoading ? (
+                  <div className="text-center py-10 text-gray-500 font-medium">
+                    <div className="flex justify-center items-center space-x-2">
+                      <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Loading AMC Alerts...</span>
+                    </div>
+                  </div>
+                ) : amcServiceAlerts.length > 0 ? (
+                  <>
+                    <div className="overflow-x-auto rounded-lg shadow-inner border border-gray-100">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Sr No</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site / Place</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Assigned</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Serviced</th>
+                            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Remark</th>
+                            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Pending Lifts / Total Lifts</th>
+                            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Add Activity</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100 text-sm">
+                          {amcServiceAlerts.map((alert, index) => {
+                            const isCompleted = alert.remark === 'Completed';
+                            const srNo = amcPage * amcSize + index + 1;
+                            return (
+                              <tr key={alert.amcJobid} className="hover:bg-blue-50/50 transition-colors">
+                                <td className="px-6 py-3 whitespace-nowrap text-center text-gray-600 font-mono">{srNo}</td>
+                                <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{alert.customer}</td>
+                                <td className="px-6 py-3 whitespace-nowrap text-gray-600">
+                                  {alert.site} <span className="text-xs text-gray-400">({alert.place})</span>
+                                </td>
+                                <td className="px-6 py-3 whitespace-nowrap text-gray-600">{alert.service} - {alert.month}</td>
+                                <td className="px-6 py-3 whitespace-nowrap text-xs text-gray-700">{getAssignedEmployees(alert.assignedServiceEmployess)}</td>
+                                <td className="px-6 py-3 whitespace-nowrap text-gray-500 text-xs">{alert.previousServicingDate ? new Date(alert.previousServicingDate).toLocaleDateString() : 'N/A'}</td>
+                                <td className="px-6 py-3 whitespace-nowrap">
+                                  <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    {alert.remark}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3 text-center">
+                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isCompleted ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                                    {alert.currentServicePendingLiftCounts} / {alert.currentServiceTotalLiftsCounts}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-3 text-center whitespace-nowrap">
+                                  <div className="flex items-center justify-center space-x-2">
+                                    {/* Add Activity Button (Opens Modal) */}
+                                    <button
+                                      onClick={() => openAddActivityModal(alert.amcJobid)}
+                                      disabled={isCompleted}
+                                      className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2
+                                        ${isCompleted
+                                            ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                                            : 'text-green-600 hover:text-white hover:bg-green-500 focus:ring-green-500'}`}
+                                      title={isCompleted ? "Service Completed" : `Add Activity to Job ${alert.amcJobid}`}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    <div className="flex items-center justify-between mt-4 text-sm px-2">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-gray-600">Rows per page:</span>
+                        <select
+                          value={amcSize}
+                          onChange={(e) => {
+                            setAmcSize(Number(e.target.value));
+                            setAmcPage(0);
+                          }}
+                          className="border border-gray-300 rounded-md shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          {[5, 10, 20, 50].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-gray-600">Page {amcPage + 1} of {amcTotalPages}</span>
+                        <button
+                          disabled={amcPage === 0}
+                          onClick={() => setAmcPage((p) => p - 1)}
+                          className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
+                        >
+                          Prev
+                        </button>
+                        <button
+                          disabled={amcPage + 1 >= amcTotalPages}
+                          onClick={() => setAmcPage((p) => p + 1)}
+                          className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage + 1 >= amcTotalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-6">All clear! No pending AMC service alerts found for the current search.</p>
+                )
+
+              ) 
+                
+            }
+
+           {activeAlertTab === 'renewal' && (
+  <>
+    {renewalLoading ? (
+      <div className="text-center py-10 text-gray-500 font-medium">
+        <div className="flex justify-center items-center space-x-2">
+          <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Loading Renewal Alerts...</span>
         </div>
+      </div>
+    ) : renewalServiceAlerts.length > 0 ? (
+      <>
+        <div className="overflow-x-auto rounded-lg shadow-inner border border-gray-100">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Sr No</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Site / Place</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Assigned</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Serviced</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Remark</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Pending Lifts / Total Lifts</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Add Activity</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100 text-sm">
+              {renewalServiceAlerts.map((alert, index) => {
+                const isCompleted = alert.remark === 'Completed';
+                const srNo = renewalPage * renewalSize + index + 1;
+                return (
+                  <tr key={alert.renewalJobId} className="hover:bg-blue-50/50 transition-colors">
+                    <td className="px-6 py-3 whitespace-nowrap text-center text-gray-600 font-mono">{srNo}</td>
+                    <td className="px-6 py-3 whitespace-nowrap font-medium text-gray-900">{alert.customer}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-600">
+                      {alert.site} <span className="text-xs text-gray-400">({alert.place})</span>
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-600">{alert.service} - {alert.month}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-xs text-gray-700">{getAssignedEmployees(alert.assignedServiceEmployess)}</td>
+                    <td className="px-6 py-3 whitespace-nowrap text-gray-500 text-xs">{alert.previousServicingDate ? new Date(alert.previousServicingDate).toLocaleDateString() : 'N/A'}</td>
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {alert.remark}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-center">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isCompleted ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                        {alert.currentServicePendingLiftCounts} / {alert.currentServiceTotalLiftsCounts}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center space-x-2">
+                        {/* Add Activity Button (Opens Modal) */}
+                        <button
+                          onClick={() => openRenewalAddActivityModal(alert.renewalJobId)}
+                          disabled={isCompleted}
+                          className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2
+                            ${isCompleted
+                                ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
+                                : 'text-green-600 hover:text-white hover:bg-green-500 focus:ring-green-500'}`}
+                          title={isCompleted ? "Service Completed" : `Add Activity to Job ${alert.renewalJobId}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4 text-sm px-2">
+          <div className="flex items-center space-x-3">
+            <span className="text-gray-600">Rows per page:</span>
+            <select
+              value={renewalSize}
+              onChange={(e) => {
+                setRenewalSize(Number(e.target.value));
+                setRenewalPage(0);
+              }}
+              className="border border-gray-300 rounded-md shadow-sm px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {[5, 10, 20, 50].map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center space-x-3">
+            <span className="text-gray-600">Page {renewalPage + 1} of {renewalTotalPages}</span>
+            <button
+              disabled={renewalPage === 0}
+              onClick={() => setRenewalPage((p) => p - 1)}
+              className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${renewalPage === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
+            >
+              Prev
+            </button>
+            <button
+              disabled={renewalPage + 1 >= renewalTotalPages}
+              onClick={() => setRenewalPage((p) => p + 1)}
+              className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors ${renewalPage + 1 >= renewalTotalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-blue-600 text-white bg-blue-500 shadow-md'}`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </>
+    ) : (
+      <p className="text-sm text-gray-500 text-center py-6">
+        All clear! No pending Renewal service alerts found for the current search.
+      </p>
+    )}
+  </>
+)}
+
+            
+
+
+        </div>
+
+
       </div>
 
       {/* --- Action Modal Component (Now handles two types of content) --- */}
@@ -613,13 +831,24 @@ const Dashboard = () => {
           isOpen={isModalOpen}
           onCancel={closeAddActivityModal}
           // Customize the modal title based on content type
-          title={modalContentType === 'REPORT' ? 'Service Engineer Performance' : 'Add Job Activity'}
+          title={modalContentType === 'REPORT' ? 'Service Engineer Performance' :
+            modalContentType === 'ACTIVITY' ? 
+             'Add Job Activity' : "Add Renewal Job Activity"
+            }
       >
           {/* Render AddJobActivityForm if modalContentType is 'ACTIVITY' */}
           {modalContentType === 'ACTIVITY' && selectedJobId && (
               <AddJobActivityForm
                   jobId={selectedJobId}
                   onSuccess={handleActivitySuccess}
+                  comingFromDashboard={true}
+              />
+          )}
+
+           {modalContentType === 'Renewal' && selectedJobId && (
+              <AddRenewalJobActivityForm
+                  renewalJobId={selectedJobId}
+                  onSuccess={handleRenewalActivitySuccess}
                   comingFromDashboard={true}
               />
           )}

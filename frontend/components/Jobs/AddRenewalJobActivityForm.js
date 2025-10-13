@@ -241,7 +241,10 @@ export default function AddRenewalJobActivityForm({ renewalJobId, onSuccess , co
     //   router.push(`/dashboard/jobs/amc_job_list/view_amc_job_detail/${payload.jobId}`);
     //   }
 
-     router.push(`/dashboard/jobs/amc_job_list/view_amc_renewal_job_detail/${renewalJobId}`);
+    if(comingFromDashboard){
+     onSuccess();
+    }else
+      router.push(`/dashboard/jobs/amc_job_list/view_amc_renewal_job_detail/${renewalJobId}`);
       
 
     } catch (err) {
