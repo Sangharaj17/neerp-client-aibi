@@ -158,6 +158,11 @@ public class AmcJob {
     @Column(name = "previous_servicing_date")
     private LocalDate previousServicingDate;
     
+    @Column(name = "is_renewal_quatation_created")
+    private Boolean isRenewalQuatationCreated = false;
+    
+    
+    
 //    @OneToMany(mappedBy = "preJobId", fetch = FetchType.LAZY)
 //    private List<AmcRenewalJob> renewalJobs;
     

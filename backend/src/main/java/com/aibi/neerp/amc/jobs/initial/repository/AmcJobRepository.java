@@ -124,6 +124,7 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    FROM AmcJob j
 		    WHERE j.renewlStatus = :renewlStatus
 		      AND j.lead.leadStatus.statusName = 'Active'
+		       AND j.isRenewalQuatationCreated =false
 		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
 		""")
 		Integer countByRenewlStatusAndEndDateDiffLessThan30(
@@ -152,6 +153,7 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    FROM AmcJob j
 		    WHERE j.renewlStatus = :renewlStatus
 		      AND j.lead.leadStatus.statusName = 'Active'
+		      AND j.isRenewalQuatationCreated =false
 		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) >= -30
 		      AND (
 		            :search IS NULL

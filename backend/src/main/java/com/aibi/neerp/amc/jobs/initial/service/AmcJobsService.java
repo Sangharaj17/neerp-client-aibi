@@ -22,6 +22,8 @@ import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.entity.Routes;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import com.aibi.neerp.amc.jobs.initial.repository.RoutesRepository;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
+import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.repository.AmcQuotationRepository;
@@ -68,6 +70,9 @@ public class AmcJobsService {
 	 
 	    @Autowired
 	    private RoutesRepository routesRepository;
+	    
+	    @Autowired
+	    private AmcRenewalJobRepository amcRenewalJobRepository;
 	    
 	    
 	  
@@ -709,8 +714,54 @@ public class AmcJobsService {
                 }
             }
 
-            amcPendingCounts = totalAmcJobs - amcDoneCounts;
+            //amcPendingCounts = totalAmcJobs - amcDoneCounts;
         }
+        
+        List<AmcRenewalJob> amcRenewalJobs = amcRenewalJobRepository.findAll();
+        
+        if (amcRenewalJobs != null) {
+            for (AmcRenewalJob amcJob : amcRenewalJobs) {
+
+                Integer totalServicesOfThisJob = amcJob.getNoOfServices();
+                totalAmcJobs += totalServicesOfThisJob;
+
+                Integer currentServiceDoneCounts = amcJob.getCurrentServiceNumber();
+                String currentServiceLiftStatus = amcJob.getCurrentServiceStatus();
+
+                if ("Pending".equalsIgnoreCase(currentServiceLiftStatus)) {
+                    currentServiceDoneCounts--;
+                }
+
+                amcDoneCounts += currentServiceDoneCounts;
+
+                // Assigned employee reports
+                List<Employee> assignedEmployees = amcJob.getRoute().getEmployees();
+
+                for (Employee employee : assignedEmployees) {
+                    Integer empId = employee.getEmployeeId();
+                    ServiceEmployeeReport serviceEmployeeReport = employeeReportMap.get(empId);
+
+                    if (serviceEmployeeReport == null) {
+                        serviceEmployeeReport = new ServiceEmployeeReport();
+                        serviceEmployeeReport.setEmpName(employee.getEmployeeName());
+                        serviceEmployeeReport.setAssginedServiceCounts(totalServicesOfThisJob);
+                        serviceEmployeeReport.setDoneServiceCounts(currentServiceDoneCounts);
+                        serviceEmployeeReport.setPendingServicesCounts(totalServicesOfThisJob - currentServiceDoneCounts);
+                        employeeReportMap.put(empId, serviceEmployeeReport);
+                    } else {
+                        serviceEmployeeReport.setAssginedServiceCounts(serviceEmployeeReport.getAssginedServiceCounts() + totalServicesOfThisJob);
+                        serviceEmployeeReport.setDoneServiceCounts(serviceEmployeeReport.getDoneServiceCounts() + currentServiceDoneCounts);
+                        serviceEmployeeReport.setPendingServicesCounts(serviceEmployeeReport.getPendingServicesCounts() + (totalServicesOfThisJob - currentServiceDoneCounts));
+                    }
+                }
+            }
+
+        }
+        
+        amcPendingCounts = totalAmcJobs - amcDoneCounts;
+
+        
+        
 
         // Add all employee reports to the list
         serviceEmployeeReports.addAll(employeeReportMap.values());

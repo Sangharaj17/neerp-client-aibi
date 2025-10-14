@@ -21,6 +21,8 @@ public class AmcRenewalQuotationRequestDto {
     
     private Integer amcRenewQuatationId;
     private Integer revisedRenewQuatationId;
+    
+    private Integer renewalJobId;
 
     // ---------- Foreign Keys ----------
     private Integer preJobId;

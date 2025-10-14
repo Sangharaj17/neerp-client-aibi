@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 public class DashboardAmcRenewalsListData {
 
     private Integer amcJobId;
+    private Integer renewalJobId;
     private String customerName;
     private String customerSiteName;
     private String amcPeriod;      // e.g., "Jan 2025 - Dec 2025"

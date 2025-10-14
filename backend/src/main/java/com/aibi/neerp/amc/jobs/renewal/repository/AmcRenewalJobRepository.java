@@ -1,5 +1,6 @@
 package com.aibi.neerp.amc.jobs.renewal.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -63,6 +64,55 @@ public interface AmcRenewalJobRepository extends JpaRepository<AmcRenewalJob, In
 			    OR LOWER(j.currentServiceStatus) LIKE LOWER(CONCAT('%', :search, '%')))
 				""")
 				Page<AmcRenewalJob> findByStatusTrue(@Param("search") String search, Pageable pageable);
+	   
+
+		    @Query("""
+		        SELECT j
+		        FROM AmcRenewalJob j
+		        WHERE 
+		            j.renewalJobId IN (
+		                SELECT MAX(jr.renewalJobId)
+		                FROM AmcRenewalJob jr
+		                WHERE 
+		                    jr.preJobId.lead.leadStatus.statusName = 'Active'
+		                    AND jr.isRenewalQuatationCreated = false
+		                    AND FUNCTION('TIMESTAMPDIFF', DAY, jr.endDate, :currentDate) >= -30
+		                GROUP BY jr.preJobId
+		            )
+		            AND (
+		                  :search IS NULL
+		                  OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+		                  OR LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+		                  OR CAST(j.renewalJobId AS string) LIKE CONCAT('%', :search, '%')
+		                  OR CAST(j.jobAmount AS string) LIKE CONCAT('%', :search, '%')
+		            )
+		        """)
+		    Page<AmcRenewalJob> searchAmcLatestRenewals(
+		           
+		            @Param("currentDate") LocalDate currentDate,
+		            @Param("search") String search,
+		            Pageable pageable
+		    );
+		    
+		    @Query("""
+		    	    SELECT COUNT(j)
+		    	    FROM AmcRenewalJob j
+		    	    WHERE 
+		    	        j.renewalJobId IN (
+		    	            SELECT MAX(jr.renewalJobId)
+		    	            FROM AmcRenewalJob jr
+		    	            WHERE 
+		    	                jr.preJobId.lead.leadStatus.statusName = 'Active'
+		    	                AND jr.isRenewalQuatationCreated = false
+		    	                AND FUNCTION('TIMESTAMPDIFF', DAY, jr.endDate, :currentDate) >= -30
+		    	            GROUP BY jr.preJobId
+		    	        )
+		    	    """)
+		    	Long countAmcLatestRenewals(
+		    	        @Param("currentDate") LocalDate currentDate
+		    	);
+
+		
 
 	
 }

@@ -160,6 +160,11 @@ public class AmcRenewalJob {
     @Column(name = "previous_servicing_date")
     private LocalDate previousServicingDate;
     
+    @Column(name = "is_renewal_quatation_created")
+    private Boolean isRenewalQuatationCreated = false;
+    
+    
+    
 }
 
 

@@ -8,7 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 
 export default function AmcQuotationEditForm({quotationId , qid , revise , revision , amcJobId,
   isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal , 
-  renewalEdit , renewalRevise , renewalRevision
+  renewalEdit , renewalRevise , renewalRevision , renewalRenewal , renJobId
 }) {
 
 
@@ -57,6 +57,7 @@ const {  tenant } = useParams();
     amcRenewQuatationId: null,
     revisedRenewQuatationId: null,
     preJobId : 0,
+    renewalJobId: null,
     quatationDate: today,
     leadId: null,
     combinedEnquiryId: null,
@@ -98,10 +99,12 @@ const {  tenant } = useParams();
   });
 
   const [pjobid, setPjobid] = useState(0);
+  const[renewalJobId, setRenewalJobId] = useState(0);
 
   useEffect(() => {
   if (amcJobId) {
    setPjobid(amcJobId);
+    setRenewalJobId(renJobId);
     //alert(amcJobId);
   }
 }, []);
@@ -235,16 +238,27 @@ useEffect(()=>{
 
   if(formData.preJobId != null && formData.preJobId != undefined && formData.preJobId != 0){
 
-    handleCallAmcRenewQuotation();
+    if(formData.renewalJobId == null || formData.renewalJobId == undefined || formData.renewalJobId == 0)
+       handleCallAmcRenewQuotation();
   }
 
 },[formData.preJobId]);
+
+useEffect(()=>{
+
+  if(formData.renewalJobId != null && formData.renewalJobId != undefined && formData.renewalJobId != 0){
+
+    handleCallAmcRenewQuotation();
+  }
+
+},[formData.renewalJobId]);
 
 const handleCreateAmcRenewQuotation = async () => {
   // ✅ Update formData with pjobid
     setFormData(prevData => ({
       ...prevData,
-      preJobId: pjobid
+      preJobId: pjobid,
+      renewalJobId: renJobId
     }));
 };
 
@@ -340,6 +354,14 @@ const handleCreateAmcRenewReviseQuotation = async () => {
   const fetchQuotation = async () => {
     try {
       let url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
+
+      if(renewalRenewal === true){
+         if(isQuatationIdPresent === true){
+           url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
+          }else{
+            url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
+          }
+      }
 
       if(renewalRevision === true){
           url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
@@ -823,23 +845,27 @@ useEffect(() => {
         <form onSubmit={(e) => { 
             e.preventDefault();
 
-            if(renewalRevise === true || renewalRevision === true){
-              handleCreateAmcRenewReviseQuotation();
-            }else{
-                if(renewalEdit === true){
-                  handleUpdateRenewAmcQuotation();
+             if(renewalRenewal === true){
+                handleCreateAmcRenewQuotation();
+             }else{
+                if(renewalRevise === true || renewalRevision === true){
+                  handleCreateAmcRenewReviseQuotation();
                 }else{
-                  if(renewal === true){
-                    handleCreateAmcRenewQuotation();
-                  }else{
-                      if(!revise)
-                      handleUpdateAmcQuotation(); 
-                      else{
-                          handleCreateAmcRevisedQuotation();
+                    if(renewalEdit === true){
+                      handleUpdateRenewAmcQuotation();
+                    }else{
+                      if(renewal === true){
+                        handleCreateAmcRenewQuotation();
+                      }else{
+                          if(!revise)
+                          handleUpdateAmcQuotation(); 
+                          else{
+                              handleCreateAmcRevisedQuotation();
+                          }
                       }
-                  }
+                    }
                 }
-              }
+            }
 
         }}>
 

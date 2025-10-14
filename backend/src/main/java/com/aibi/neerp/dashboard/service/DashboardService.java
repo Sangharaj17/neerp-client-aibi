@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
+import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.repository.AmcQuotationRepository;
 import com.aibi.neerp.customer.repository.CustomerRepository;
@@ -42,6 +44,8 @@ public class DashboardService {
 	@Autowired AmcJobRepository amcJobRepository;
 	
 	@Autowired CustomerRepository customerRepository;
+	
+	@Autowired AmcRenewalJobRepository amcRenewalJobRepository;
 	
 
 	 public Page<DashboardTodoDto> getDashboardTodoList(String search, int page, int size) {
@@ -98,7 +102,10 @@ public class DashboardService {
 		    // Count AMC jobs for renewal
 		    LocalDate currentDate = LocalDate.now();
 		    Integer totalAmcForRenewalsCounts = amcJobRepository.countAmcRenewalsDueWithin30Days(0, currentDate);
-
+		    
+		    Long renewalJobsRenewalCounts = amcRenewalJobRepository.countAmcLatestRenewals(currentDate);
+		    totalAmcForRenewalsCounts = totalAmcForRenewalsCounts + renewalJobsRenewalCounts.intValue();
+		    
 		    // Set values in DTO
 		    dashboardCountsData.setTotalActiveLeadCounts(totalActiveLeadCounts);
 		    dashboardCountsData.setClosedLeadsCounts(closedLeadsCounts);
@@ -144,7 +151,7 @@ public class DashboardService {
 	            	 dto.setQuatationid(amcJob.getAmcQuotation().getAmcQuatationId());
 	            	 
 	            }else {
-	            	dto.setQuatationid(amcJob.getRevisedAmcQuotation().getRevisedQuatationId());
+	            	dto.setReviseQuatationId(amcJob.getRevisedAmcQuotation().getRevisedQuatationId());
 
 	            }
 	            
@@ -152,6 +159,54 @@ public class DashboardService {
 	            return dto;
 	        });
 	    }
+	 
+	    public Page<DashboardAmcRenewalsListData> getAmcRenewalsRenewals(
+	            String search, int page, int size, String sortBy, String direction) {
+
+	        // Sorting
+	        Sort sort = direction.equalsIgnoreCase("desc")
+	                ? Sort.by(sortBy).descending()
+	                : Sort.by(sortBy).ascending();
+
+	        Pageable pageable = PageRequest.of(page, size, sort);
+
+	        LocalDate currentDate = LocalDate.now();
+
+	        // Call repository method
+	     // Call repository method using first version logic
+	        Page<AmcRenewalJob> renewalJobs = amcRenewalJobRepository.searchAmcLatestRenewals(
+	                currentDate, 
+	                (search == null ? "" : search),  // treat null as empty string
+	                pageable
+	        );
+
+
+	        // Map entity to DTO
+	        return renewalJobs.map(job -> {
+	            DashboardAmcRenewalsListData dto = new DashboardAmcRenewalsListData();
+	            dto.setAmcJobId(job.getPreJobId().getJobId());
+
+	            dto.setRenewalJobId(job.getRenewalJobId());
+	            dto.setAmount(job.getJobAmount());
+	            dto.setAmcPeriod(job.getPreJobId().getStartDate() + " to " + job.getPreJobId().getEndDate());
+	            dto.setCustomerName(job.getCustomer().getCustomerName());
+	            dto.setCustomerSiteName(job.getSite().getSiteName());
+
+	            long remainingDays = ChronoUnit.DAYS.between(currentDate, job.getPreJobId().getEndDate());
+	            dto.setRemainingDays((int) remainingDays);
+
+	            if (job.getAmcRenewalQuotation() != null) {
+	                dto.setQuatationid(job.getAmcRenewalQuotation().getRenewalQuaId());
+	            } else if (job.getRevisedRenewalAmcQuotation() != null) {
+	                dto.setReviseQuatationId(job.getRevisedRenewalAmcQuotation().getRevisedRenewalId());
+
+	            }
+
+	            return dto;
+	        });
+	    }
+	 
+	 
     
 }
 

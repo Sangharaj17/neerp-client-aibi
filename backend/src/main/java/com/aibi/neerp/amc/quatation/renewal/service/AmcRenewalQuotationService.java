@@ -44,6 +44,8 @@ import com.aibi.neerp.amc.common.repository.NumberOfServiceRepository;
 import com.aibi.neerp.amc.common.repository.PaymentTermRepository;
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
+import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +82,8 @@ public class AmcRenewalQuotationService {
     private final CombinedEnquiryRepository combinedEnquiryRepository;
     private final NumberOfServiceRepository numberOfServiceRepository;
     private final AmcJobRepository amcJobRepository;
+    
+    private final AmcRenewalJobRepository amcRenewalJobRepository;
 
     // ================= CREATE =================
     public void createAmcRenewQuotation(AmcRenewalQuotationRequestDto dto) {
@@ -172,9 +176,19 @@ public class AmcRenewalQuotationService {
 
         repository.save(amcRenewalQuotation);
         
+        amcJob.setIsRenewalQuatationCreated(true);     
         amcJob.setRenewlStatus(1);
         
         amcJobRepository.save(amcJob);
+        
+        
+        if(dto.getRenewalJobId()!=null) {
+        	
+        	AmcRenewalJob amcRenewalJob = amcRenewalJobRepository.findById(dto.getRenewalJobId()).get();
+        	amcRenewalJob.setIsRenewalQuatationCreated(true);     
+        	
+        	amcRenewalJobRepository.save(amcRenewalJob);
+        }
         
     }
     

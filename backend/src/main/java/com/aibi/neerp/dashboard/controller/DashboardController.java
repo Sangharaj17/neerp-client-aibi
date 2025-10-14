@@ -136,6 +136,19 @@ public class DashboardController {
                 dashboardService.getAmcRenewals(search, page, size, sortBy, direction);
         return ResponseEntity.ok(result);
     }
+    
+    @GetMapping("/amc-renewal-renewals")
+    public ResponseEntity<Page<DashboardAmcRenewalsListData>> getAmcRenewalRenewals(
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "endDate") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction
+    ) {
+        Page<DashboardAmcRenewalsListData> result =
+                dashboardService.getAmcRenewalsRenewals(search, page, size, sortBy, direction);
+        return ResponseEntity.ok(result);
+    }
 
     // ✅ Small helper method to avoid repeating PageRequest.of everywhere
     private Pageable createPageable(int page, int size) {
