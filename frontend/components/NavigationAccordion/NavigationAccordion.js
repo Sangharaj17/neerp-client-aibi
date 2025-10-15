@@ -239,7 +239,9 @@ const NavigationAccordion = () => {
         { title: 'AMC Quotation List', href: `/dashboard/quotations/amc_quatation_list` },
         { title: 'Material Repair Quotation List', href: `/dashboard/quotations/templates` },
         { title: 'Oncall Quotation List', href: `/dashboard/quotations/approved` },
-        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/amc-renewal-quatation-list` }
+        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/amc-renewal-quatation-list` },
+      { title: 'AMC Quatation Setup', href: `/dashboard/quotations/amc_quatation_setup` }
+
       ]
     },
     {
