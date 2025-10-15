@@ -139,7 +139,7 @@ const {  tenant } = useParams();
       toast.success("AMC Quotation updated successfully!");
 
       // ✅ Redirect back to the list after successful update
-      router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
+      router.push(`/dashboard/quotations/amc_quatation_list`);
     }
   } catch (error) {
     console.error("Error updating AMC Quotation:", error);
@@ -191,7 +191,7 @@ const {  tenant } = useParams();
        id = qid;
     }
 
-    router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${id}`);
+    router.push(`/dashboard/quotations/amc_quatation_list/revise_quatation_list/${id}`);
   };
 
 const handleCreateAmcRevisedQuotation = async () => {
@@ -744,7 +744,7 @@ const handleCreateAmcQuotation = async () => {
         toast.success('AMC Quotation created successfully!');
       
             router.push(
-              `/${tenant}/dashboard/quotations/amc_quatation_list`
+              `/dashboard/quotations/amc_quatation_list`
             );
     }
   } catch (error) {
