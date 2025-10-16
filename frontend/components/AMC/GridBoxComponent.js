@@ -24,12 +24,14 @@ const colorMap = {
   yellow: { button: 'bg-yellow-600 hover:bg-yellow-700', header: 'bg-yellow-500', ring: 'focus:ring-yellow-400', activeSidebar: 'bg-yellow-600', textAccent: 'text-yellow-600' },
   lime: { button: 'bg-lime-600 hover:bg-lime-700', header: 'bg-lime-500', ring: 'focus:ring-lime-400', activeSidebar: 'bg-lime-600', textAccent: 'text-lime-600' },
   brown: { button: 'bg-amber-800 hover:bg-amber-900', header: 'bg-amber-700', ring: 'focus:ring-amber-600', activeSidebar: 'bg-amber-800', textAccent: 'text-amber-800' },
-  navy: { button: 'bg-sky-800 hover:bg-sky-900', header: 'bg-sky-700', ring: 'focus:ring-sky-600', activeSidebar: 'bg-sky-800', textAccent: 'text-sky-800' }
+  navy: { button: 'bg-sky-800 hover:bg-sky-900', header: 'bg-sky-700', ring: 'focus:ring-sky-600', activeSidebar: 'bg-sky-800', textAccent: 'text-sky-800' },
+  // ADDED: New color config for Enquiry Type
+  pink: { button: 'bg-pink-600 hover:bg-pink-700', header: 'bg-pink-500', ring: 'focus:ring-pink-400', activeSidebar: 'bg-pink-600', textAccent: 'text-pink-600' }
 };
 
 /** Helper functions to get ID and Name dynamically */
-const getId = (item) => item?.areaId ?? item?.stageId ?? item?.leadSourceId ?? item?.designationId ?? item?.id ?? item?.buildingTypeId ?? item?.liftUsageTypeId ?? item?.unitId ?? item?.id ?? item?.id ?? '';
-const getName = (item) => item?.areaName ?? item?.stageName ?? item?.sourceName ?? item?.designationName ?? item?.statusName ?? item?.buildingType ?? item?.name ?? item?.unitName ?? item?.type ?? item?.displayName ?? item?.quantity ?? '';
+const getId = (item) => item?.areaId ?? item?.stageId ?? item?.leadSourceId ?? item?.designationId ?? item?.id ?? item?.buildingTypeId ?? item?.liftUsageTypeId ?? item?.unitId ?? item?.id ?? item?.id ?? item?.enquiryTypeId ?? '';
+const getName = (item) => item?.areaName ?? item?.stageName ?? item?.sourceName ?? item?.designationName ?? item?.statusName ?? item?.buildingType ?? item?.name ?? item?.unitName ?? item?.type ?? item?.displayName ?? item?.quantity ?? item?.enquiryTypeName ?? '';
 
 const GridBoxComponent = () => {
 
@@ -75,7 +77,9 @@ const GridBoxComponent = () => {
     { id: 12, title: 'Add Capacity Type', api: '/api/capacityTypes', type: 'capacityType', color: 'yellow' },
     { id: 13, title: 'Add Person Capacity', api: '/api/personCapacity', type: 'personCapacity', color: 'lime' },
     { id: 14, title: 'Add Weight', api: '/api/weights', type: 'weight', color: 'brown' },
-    { id: 15, title: 'Add Lift Quantity', api: '/api/leadmanagement/lift-quantities', type: 'liftQuantity', color: 'navy' } 
+    { id: 15, title: 'Add Lift Quantity', api: '/api/leadmanagement/lift-quantities', type: 'liftQuantity', color: 'navy' },
+    // ADDED: New box for Enquiry Type
+    { id: 16, title: 'Add Enquiry Type', api: '/api/enquiry-types', type: 'enquiryType', color: 'pink' } 
   ];
 
   const [formData, setFormData] = useState({});
@@ -240,6 +244,16 @@ const GridBoxComponent = () => {
             setLoading(false); return;
         }
     }
+    
+    // Enquiry Type Validation (Added)
+    if (selectedBox.type === 'enquiryType') {
+        const { enquiryTypeName } = formData;
+        if (!enquiryTypeName) {
+            toast.error('Enquiry Type Name is required.');
+            setLoading(false); return;
+        }
+    }
+
 
     setLoading(true);
     try {
@@ -310,6 +324,8 @@ const GridBoxComponent = () => {
           idField = 'id';
           break;
       case 'city': fields = { cityName: item.name }; idField = 'id'; break;
+      // ADDED: New case for Enquiry Type
+      case 'enquiryType': fields = { enquiryTypeName: item.enquiryTypeName }; idField = 'enquiryTypeId'; break;
       default: break;
     }
 
@@ -402,6 +418,8 @@ const GridBoxComponent = () => {
       'state': { label: 'State Name', key: 'name' },
       'unit': { label: 'Unit Name', key: 'unitName' },
       'capacityType': { label: 'Capacity Type', key: 'type' },
+      // ADDED: New config for Enquiry Type
+      'enquiryType': { label: 'Enquiry Type Name', key: 'enquiryTypeName' }, 
       'personCapacity': { label: 'Capacity Label', key: 'label' },
       'weight': { label: 'Weight Value', key: 'weightValue' },
       'liftQuantity': { label: 'Lift Quantity', key: 'quantity' } 
@@ -473,14 +491,14 @@ const GridBoxComponent = () => {
 
           {/* Render Lift Quantity 'Add' button */}
           {isLiftQuantity ? (
-             <div className='p-4 border rounded-lg bg-gray-50'>
+              <div className='p-4 border rounded-lg bg-gray-50'>
                 <p className='mb-2 text-lg font-semibold text-gray-700'>
                     Next Quantity to Add: <span className={`${colorCfg.textAccent} font-bold text-xl`}>{nextQuantity}</span>
                 </p>
                 <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow`} disabled={loading}>
                     {loading ? 'Adding...' : `Add Quantity ${nextQuantity}`}
                 </button>
-             </div>
+              </div>
 
           ) : (
             // Render Person Capacity or Weight Input Fields
@@ -547,7 +565,7 @@ const GridBoxComponent = () => {
                 </div>
               </>
             ) : (
-                // Render single-field forms (standard entities)
+                // Render single-field forms (standard entities including Enquiry Type)
                 currentConfig && (
                     <div>
                         <label className="block mb-1 font-medium">{currentConfig.label}</label>
