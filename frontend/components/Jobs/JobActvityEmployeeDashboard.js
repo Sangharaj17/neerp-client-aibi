@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import axiosInstance from "@/utils/axiosInstance";
-import { ChevronLeft, ChevronRight, Search, Zap, Repeat2, Wrench, ShieldCheck } from "lucide-react";
+import { 
+    ChevronLeft, 
+    ChevronRight, 
+    Search
+} from "lucide-react"; // Only keeping essential icons
 
 // Configuration
 const PAGE_SIZE = 5;
@@ -195,15 +199,12 @@ export default function JobActivityEmployeeDashboard() {
   const handleRenewalNext = () => setRenewalPage((prev) => Math.min(renewalTotalPages - 1, prev + 1));
 
   // -------------------- COMPONENTS --------------------
-  const DashboardCard = ({ title, count, colorClass, icon: Icon }) => (
-    <div className="bg-white shadow-lg rounded-xl p-4 transition-all duration-300 border border-gray-100 hover:shadow-xl hover:border-indigo-100 flex items-center space-x-4">
-        <div className={`p-3 rounded-full ${colorClass.iconBg} ${colorClass.iconColor}`}>
-            <Icon className="w-5 h-5" />
-        </div>
-        <div className="flex flex-col justify-center">
-            <h3 className="text-gray-500 text-xs font-medium tracking-wide leading-tight">{title}</h3>
-            <p className="text-3xl font-extrabold text-gray-900 mt-0.5 leading-none">{count || 0}</p>
-        </div>
+  
+  // Dashboard Card with improved styling, NO ICON, and border color
+  const DashboardCard = ({ title, count, colorClass }) => (
+    <div className={`bg-white shadow-xl rounded-xl p-5 transition-all duration-300 transform hover:scale-[1.02] border-l-4 ${colorClass.border} flex flex-col justify-center space-y-1`}>
+        <p className={`text-sm font-medium tracking-wide leading-snug ${colorClass.titleColor}`}>{title}</p>
+        <p className="text-4xl font-extrabold text-gray-900 leading-none">{count || 0}</p>
     </div>
   );
 
@@ -216,7 +217,7 @@ export default function JobActivityEmployeeDashboard() {
         <div className="overflow-hidden bg-white shadow-2xl rounded-xl border border-gray-200 flex-grow">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-indigo-50">
+              <thead className="bg-indigo-50/70 sticky top-0 z-10">
                 <tr>
                   <th className="px-5 py-3 text-left text-xs font-bold uppercase tracking-wider text-indigo-700 w-16">
                     Sr No
@@ -231,13 +232,13 @@ export default function JobActivityEmployeeDashboard() {
               <tbody className="divide-y divide-gray-100">
                 {formattedData.length > 0 ? (
                   formattedData.map((item) => (
-                    <tr key={item.srNo} className="hover:bg-gray-50 transition duration-150">
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-500 font-medium">{item.srNo}</td>
+                    <tr key={item.srNo} className="hover:bg-indigo-50/50 transition duration-150">
+                      <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">{item.srNo}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900">{item.activityDate}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-medium text-indigo-600">{item.customerName}</td>
+                      <td className="px-5 py-3 whitespace-nowrap text-sm font-medium text-indigo-700">{item.customerName}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900">{item.siteName}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.activityType.toLowerCase().includes('renewal') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${item.activityType.toLowerCase().includes('renewal') ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
                             {item.activityType}
                         </span>
                       </td>
@@ -262,12 +263,12 @@ export default function JobActivityEmployeeDashboard() {
 
   // -------------------- RENDER --------------------
   return (
-    <div className="min-h-screen bg-gray-100 p-6 sm:p-10">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-8 border-b border-gray-300 pb-3">Employee Activity Dashboard ✨</h1>
+    <div className="min-h-screen bg-gray-50 p-6 sm:p-10">
+      <h1 className="text-3xl font-extrabold text-gray-900 mb-8 border-b-2 border-indigo-200 pb-3">Employee Activity Dashboard 📊</h1>
 
       {/* Filter Inputs */}
       <div className="bg-white shadow-xl rounded-xl p-6 mb-8 border border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Filter Controls</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Filter Controls ⚙️</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Employee Dropdown */}
           <div className="flex flex-col">
@@ -278,7 +279,7 @@ export default function JobActivityEmployeeDashboard() {
               id="empId"
               value={empId || ""}
               onChange={(e) => setEmpId(Number(e.target.value))}
-              className="border border-gray-300 p-2.5 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white"
+              className="border border-gray-300 p-2.5 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white hover:border-indigo-400"
             >
               {employeeList.map((emp) => (
                 <option key={emp.employeeId} value={emp.employeeId}>
@@ -295,7 +296,7 @@ export default function JobActivityEmployeeDashboard() {
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 p-2.5 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white"
+              className="border border-gray-300 p-2.5 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white hover:border-indigo-400"
             />
           </div>
 
@@ -306,7 +307,7 @@ export default function JobActivityEmployeeDashboard() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 p-2.5 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white"
+              className="border border-gray-300 p-2.5 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white hover:border-indigo-400"
             />
           </div>
           
@@ -320,7 +321,7 @@ export default function JobActivityEmployeeDashboard() {
                     placeholder="Customer, Site, Type..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border border-gray-300 p-2.5 pl-10 w-full rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white"
+                    className="border border-gray-300 p-2.5 pl-10 w-full rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm bg-white hover:border-indigo-400"
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
@@ -345,43 +346,39 @@ export default function JobActivityEmployeeDashboard() {
       {/* Dashboard Cards */}
       {!loading && (
         <>
-          <h2 className="text-2xl font-bold text-gray-800 mb-5">Activity Totals Overview</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5 mb-10">
+          <h2 className="text-2xl font-bold text-gray-800 mb-5">Activity Totals Overview 📈</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
+            {/* Cards without icons, using a left border for color differentiation */}
+            
             <DashboardCard 
                 title="Non-Renewal Jobs" 
                 count={counts.totalNonRenewalJobActivityCount} 
-                colorClass={{ iconBg: 'bg-blue-100', iconColor: 'text-blue-600' }} 
-                icon={Zap} 
+                colorClass={{ border: 'border-rose-400', titleColor: 'text-rose-600' }} 
             />
             <DashboardCard 
                 title="Renewal Jobs" 
                 count={counts.totalRenewalJobActivityCount} 
-                colorClass={{ iconBg: 'bg-green-100', iconColor: 'text-green-600' }} 
-                icon={ShieldCheck} 
+                colorClass={{ border: 'border-emerald-400', titleColor: 'text-emerald-600' }} 
             />
             <DashboardCard 
                 title="Non-Renewal Services" 
                 count={counts.totalNonRenewalServiceActivityCount} 
-                colorClass={{ iconBg: 'bg-yellow-100', iconColor: 'text-yellow-600' }} 
-                icon={Wrench} 
+                colorClass={{ border: 'border-orange-400', titleColor: 'text-orange-600' }} 
             />
             <DashboardCard 
                 title="Renewal Services" 
                 count={counts.totalRenewalServiceActivityCount} 
-                colorClass={{ iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600' }} 
-                icon={Repeat2} 
+                colorClass={{ border: 'border-indigo-400', titleColor: 'text-indigo-600' }} 
             />
             <DashboardCard 
                 title="Non-Renewal Breakdowns" 
                 count={counts.totalNonRenewalBreakdownActivityRenewalCount} 
-                colorClass={{ iconBg: 'bg-red-100', iconColor: 'text-red-600' }} 
-                icon={Zap} 
+                colorClass={{ border: 'border-red-400', titleColor: 'text-red-600' }} 
             />
             <DashboardCard 
                 title="Renewal Breakdowns" 
                 count={counts.totalRenewalBreakdownActivityCount} 
-                colorClass={{ iconBg: 'bg-purple-100', iconColor: 'text-purple-600' }} 
-                icon={ShieldCheck} 
+                colorClass={{ border: 'border-purple-400', titleColor: 'text-purple-600' }} 
             />
           </div>
         </>
@@ -391,7 +388,7 @@ export default function JobActivityEmployeeDashboard() {
       {!loading && (
         <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-8">
           <DataTable
-            title="Non-Renewal Activities Details"
+            title="Non-Renewal Activities Details 🚨"
             data={nonRenewalData}
             currentPage={nonRenewalPage}
             totalPages={nonRenewalTotalPages}
@@ -401,7 +398,7 @@ export default function JobActivityEmployeeDashboard() {
           />
 
           <DataTable
-            title="Renewal Activities Details"
+            title="Renewal Activities Details ✅"
             data={renewalData}
             currentPage={renewalPage}
             totalPages={renewalTotalPages}
