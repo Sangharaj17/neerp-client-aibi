@@ -118,7 +118,7 @@ public class ComplaintFormController {
     
     // here start api calling for add breakdown activities 
     
-    @GetMapping("/job/{jobId}")
+    @GetMapping("/getTodosByJob/{jobId}")
     public List<BreakdownTodoResponseDto> getTodosByJob(@PathVariable Integer jobId) {
         return breakdownTodoService.getByJobId(jobId);
     }
@@ -128,7 +128,7 @@ public class ComplaintFormController {
         return breakdownTodoService.getLiftDatasByBreakdownId(breakdownid);
     }
     
-    @GetMapping("/job/{renewalJobId}")
+    @GetMapping("/getTodosByRenewalJob/{renewalJobId}")
     public List<BreakdownTodoResponseDto> getTodosByRenewalJob(@PathVariable Integer renewalJobId) {
         return breakdownTodoRenewalService.getByRenewalJobId(renewalJobId);
     }

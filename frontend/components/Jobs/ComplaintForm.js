@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import axiosInstance from '@/utils/axiosInstance'; // Make sure the path is correct
+import axiosInstance from '@/utils/axiosInstance'; 
 
 /**
  * Complaint Form component.
@@ -20,12 +20,12 @@ export default function ComplaintForm({
     siteName,
     userId = 1, // Defaulting for testing, replace with actual user context/prop
 }) {
-    // --- State Management ---
+    // --- State Management (Customer) ---
     const [userType, setUserType] = useState('customer');
     const [lifts, setLifts] = useState([]);
     const [selectedLiftIds, setSelectedLiftIds] = useState([]);
     const [formData, setFormData] = useState({
-        activityType: '1', // Default: Breakdown
+        activityType: '1', // Default: Breakdown (for customer)
         todoDate: new Date().toISOString().split('T')[0],
         yourName: '',
         yourNumber: '',
@@ -48,6 +48,11 @@ export default function ComplaintForm({
         inTime: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }),
         outTime: '',
     });
+    const [empActivityType, setEmpActivityType] = useState('service'); // 'service' or 'breakdown'
+    const [breakdownTodos, setBreakdownTodos] = useState([]);
+    const [selectedTodoId, setSelectedTodoId] = useState(''); // Stores the selected BreakdownTodo ID
+    const [todosLoading, setTodosLoading] = useState(false);
+
 
     // Clean and determine the active ID
     const cleanJobId = jobId ? parseInt(jobId, 10) : null;
@@ -55,9 +60,96 @@ export default function ComplaintForm({
     const activeJobId = cleanJobId || cleanRenewalId;
     const isRenewal = !!cleanRenewalId;
     
-    // --- Data Fetching Effect (Lifts) ---
-    // (Existing Lift fetching logic remains the same for CustomerForm)
-    // ...
+    // --- Data Fetching Effect (Lifts - Customer) ---
+    // (Existing Lift fetching logic remains the same)
+    useEffect(() => {
+        // Only fetch lifts if customer view AND an active job/renewal ID exists
+        if (userType !== 'customer' || !activeJobId) {
+            setLoading(false);
+            if (!activeJobId && userType === 'customer') {
+                setError('Missing Job ID or Renewal ID.');
+            }
+            return;
+        }
+
+        const fetchLifts = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const endpoint = isRenewal
+                    ? `/api/amc/complaint-form/getAllRenewalLiftsForAddBreakDownTodo`
+                    : `/api/amc/complaint-form/getAllLiftsForAddBreakDownTodo`;
+                
+                const response = await axiosInstance.get(endpoint, { 
+                    params: { jobId: activeJobId }
+                });
+                
+                setLifts(response.data || []);
+                
+            } catch (err) {
+                console.error("Error fetching lifts:", err);
+                setError(err.response?.data?.message || 'Failed to load lift data.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLifts();
+    }, [activeJobId, isRenewal, userType]);
+
+
+    // --- EFFECT: Fetch Breakdown Todos for Employee (UPDATED LOGIC) ---
+    useEffect(() => {
+        if (userType === 'employee' && empActivityType === 'breakdown' && activeJobId) {
+            const fetchTodos = async () => {
+                setTodosLoading(true);
+                setBreakdownTodos([]);
+                setSelectedTodoId('');
+
+                let endpoint = '';
+                let idToPass = null;
+                
+                if (cleanJobId) {
+                    // Use Job ID endpoint
+                    endpoint = `/api/amc/complaint-form/getTodosByJob/${cleanJobId}`;
+                    idToPass = cleanJobId;
+                } else if (cleanRenewalId) {
+                    // Use Renewal ID endpoint
+                    endpoint = `/api/amc/complaint-form/getTodosByRenewalJob/${cleanRenewalId}`;
+                    idToPass = cleanRenewalId;
+                }
+                
+                if (!idToPass) {
+                    setEmpError("Cannot fetch breakdown tickets: Missing Job ID or Renewal ID.");
+                    setTodosLoading(false);
+                    return;
+                }
+
+                try {
+                    // API call based on whether it's a Job or a Renewal
+                    const response = await axiosInstance.get(endpoint);
+                    
+                    if (response.data && response.data.length > 0) {
+                        setBreakdownTodos(response.data);
+                        setEmpError(null); // Clear any previous error if successful
+                    } else {
+                        setEmpError("No pending breakdown tickets found for this job/renewal.");
+                    }
+                } catch (err) {
+                    console.error("Breakdown Todo Fetch Error:", err);
+                    setEmpError('Failed to fetch breakdown tickets. Check API connection.');
+                } finally {
+                    setTodosLoading(false);
+                }
+            };
+
+            fetchTodos();
+        } else if (empActivityType === 'service') {
+            setBreakdownTodos([]);
+            setSelectedTodoId('');
+        }
+    }, [userType, empActivityType, cleanJobId, cleanRenewalId, activeJobId]);
+
 
     // --- Handlers ---
 
@@ -74,7 +166,6 @@ export default function ComplaintForm({
         );
     };
 
-    // --- NEW EMPLOYEE ACTIVITY HANDLER ---
     const handleEmpActivityChange = (e) => {
         const { id, value } = e.target;
         setEmpActivityData(prev => ({ ...prev, [id]: value }));
@@ -100,7 +191,6 @@ export default function ComplaintForm({
             
             if (fetchedData && fetchedData.empCode) {
                 setEmpData(fetchedData);
-                // Reset errors and loading after success
                 setEmpError(null); 
             } else {
                 setEmpError(`Employee not found for code: ${empCode}`);
@@ -117,7 +207,6 @@ export default function ComplaintForm({
 
 
     const handleSubmit = async (e) => {
-        // (Submission logic remains the same)
         e.preventDefault();
         setSubmitStatus('submitting');
         setError(null);
@@ -128,18 +217,102 @@ export default function ComplaintForm({
             setSubmitStatus(null);
             return;
         }
-        
-        // ... build payload ...
+
+        const payload = {
+            userId: userId, 
+            purpose: formData.complaintFeedback,
+            todoDate: formData.todoDate,
+            time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }), 
+            venue: `${siteName} - ${customerName}`,
+            jobActivityTypeId: parseInt(formData.activityType), 
+            status: 1, 
+            complaintName: formData.yourName,
+            complaintMob: formData.yourNumber,
+            jobId: !isRenewal ? activeJobId : null,
+            renewalJobId: isRenewal ? activeJobId : null,
+            liftIds: selectedLiftIds, 
+        };
+
+        try {
+            await axiosInstance.post('/api/amc/complaint-form/create-breakdown-todo', payload);
+            
+            setSubmitStatus('success');
+            // Reset form data
+            setFormData(prev => ({ ...prev, yourName: '', yourNumber: '', complaintFeedback: '' }));
+            setSelectedLiftIds([]);
+
+        } catch (err) {
+            console.error("Submission Error:", err.response ? err.response.data : err.message);
+            setSubmitStatus('error');
+            setError('Submission failed: ' + (err.response?.data?.message || 'Network error.'));
+        }
     };
     
-    // --- Render Components ---
+    // ----------------------------------------------------------------------
+    // --- RENDER COMPONENTS (DEFINED BEFORE USE) ---------------------------
+    // ----------------------------------------------------------------------
     
     // --- NEW EMPLOYEE ACTIVITY FORM COMPONENT ---
     const EmployeeActivityForm = () => (
         <div style={{...styles.form, marginTop: '25px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px'}}>
             <h3 style={{marginBottom: '15px', color: '#444'}}>Log Employee Activity</h3>
 
-            {/* Date Field */}
+            {/* 1. Select Activity Type (Radio Button) */}
+            <div style={{...styles.inputGroup, marginBottom: '20px'}}>
+                <label style={styles.label}>Select Activity Type</label>
+                <div style={styles.radioGroup}>
+                    <label style={styles.radioLabelSmall}>
+                        <input 
+                            type="radio" 
+                            name="empActivityType" 
+                            value="service" 
+                            checked={empActivityType === 'service'} 
+                            onChange={() => setEmpActivityType('service')} 
+                        /> Service
+                    </label>
+                    <label style={styles.radioLabelSmall}>
+                        <input 
+                            type="radio" 
+                            name="empActivityType" 
+                            value="breakdown" 
+                            checked={empActivityType === 'breakdown'} 
+                            onChange={() => setEmpActivityType('breakdown')} 
+                        /> Breakdown
+                    </label>
+                </div>
+            </div>
+
+            {/* 2. Breakdown Ticket Selection (Conditional Dropdown) */}
+            {empActivityType === 'breakdown' && (
+                <div style={styles.inputGroup}>
+                    <label htmlFor="selectedTodoId" style={styles.label}>Select Breakdown Ticket</label>
+                    {todosLoading ? (
+                        <p style={{color: '#007bff'}}>Loading tickets...</p>
+                    ) : (
+                        <select 
+                            id="selectedTodoId" 
+                            value={selectedTodoId} 
+                            onChange={(e) => setSelectedTodoId(e.target.value)} 
+                            style={styles.input} 
+                            required
+                        >
+                            <option value="">-- Select a Ticket --</option>
+                            {breakdownTodos.length > 0 ? (
+                                breakdownTodos.map(todo => (
+                                    <option key={todo.custTodoId} value={todo.custTodoId}>
+                                        {`ID: ${todo.custTodoId} | Date: ${todo.todoDate} | Purpose: ${todo.purpose}`}
+                                    </option>
+                                ))
+                            ) : (
+                                <option value="" disabled>No pending breakdown tickets found.</option>
+                            )}
+                        </select>
+                    )}
+                    
+                </div>
+            )}
+            
+            {/* 3. Date Field */}
             <div style={styles.inputGroup}>
                 <label htmlFor="date" style={styles.label}>Date</label>
                 <input 
@@ -152,7 +325,7 @@ export default function ComplaintForm({
                 />
             </div>
 
-            {/* Site Selection Field */}
+            {/* 4. Site Selection Field */}
             <div style={styles.inputGroup}>
                 <label htmlFor="selectedSite" style={styles.label}>Select Site</label>
                 <select 
@@ -162,16 +335,13 @@ export default function ComplaintForm({
                     style={styles.input} 
                     required
                 >
-                    {/* The current site/job context is the default/only option */}
                     <option value={`${customerName} - ${siteName}`}>
                         {customerName} - {siteName} (Job/Renewal ID: {activeJobId})
                     </option>
-                    {/* Placeholder for future options if employee has multiple assigned jobs */}
-                    {/* <option value="other_site">Other Site - Other Customer</option> */}
                 </select>
             </div>
 
-            {/* In Time and Out Time */}
+            {/* 5. In Time and Out Time */}
             <div style={styles.row}>
                 <div style={styles.inputGroupHalf}>
                     <label htmlFor="inTime" style={styles.label}>In Time</label>
@@ -196,22 +366,19 @@ export default function ComplaintForm({
                 </div>
             </div>
 
-            {/* Future: Submit button for this activity form */}
             <button 
-                type="button" // Use type="button" since this is not the main complaint submission
-                onClick={() => alert(`Activity Data Captured: ${JSON.stringify(empActivityData)}`)}
+                type="button"
+                onClick={() => alert(`Log Data: ${JSON.stringify({ ...empActivityData, activityType: empActivityType, selectedTodo: selectedTodoId })}`)}
                 style={{...styles.submitButton, backgroundColor: '#007bff'}}
             >
-                Log Attendance / Start Task
+                Log Activity
             </button>
         </div>
     );
-    // --- END EMPLOYEE ACTIVITY FORM COMPONENT ---
 
 
     const CustomerForm = () => (
         <form onSubmit={handleSubmit} style={styles.form}>
-            {/* ... (Existing CustomerForm content remains the same) ... */}
             {/* Read-Only Info */}
             <div style={styles.inputGroup}>
                 <label style={styles.label}>Site & Customer Name</label>
@@ -292,7 +459,7 @@ export default function ComplaintForm({
         </form>
     );
 
-    // --- EMPLOYEE COMPONENT (WITH NEW ACTIVITY FORM) ---
+    // --- EMPLOYEE COMPONENT (FINAL LOGIC) ---
     const EmployeeForm = () => (
         <div>
             {/* 1. Employee Code Input Form (Always Visible) */}
@@ -333,18 +500,16 @@ export default function ComplaintForm({
                     </p>
                     
                     <EmployeeActivityForm />
-                    
-                    <p style={{marginTop: '15px', color: '#555', fontSize: '0.9em'}}>
-                        Use the form above to log your attendance and activity for this site.
-                    </p>
                 </div>
             )}
-            
         </div>
     );
     // --- END EMPLOYEE COMPONENT ---
 
-    // --- Main Render ---
+
+    // ----------------------------------------------------------------------
+    // --- MAIN RENDER ------------------------------------------------------
+    // ----------------------------------------------------------------------
     return (
         <div style={styles.container}>
             <h1>Feedback / Complaint Form</h1>
@@ -358,7 +523,7 @@ export default function ComplaintForm({
                         value="customer" 
                         checked={userType === 'customer'} 
                         // Clear employee context when switching to customer
-                        onChange={() => { setUserType('customer'); setEmpData(null); setEmpCode(''); setEmpError(null);}} 
+                        onChange={() => { setUserType('customer'); setEmpData(null); setEmpCode(''); setEmpError(null); setEmpActivityType('service'); setBreakdownTodos([]);}} 
                     /> Customer
                 </label>
                 <label style={styles.radioLabel}>
@@ -387,9 +552,8 @@ export default function ComplaintForm({
     );
 }
 
-// --- Basic Inline Styles (Updated to include activity form colors) ---
+// --- Basic Inline Styles (Remains the same) ---
 const styles = {
-    // ... (Container and main styles remain the same)
     container: {
         fontFamily: 'Arial, sans-serif',
         padding: '20px',
@@ -409,6 +573,12 @@ const styles = {
         fontSize: '1.1em',
         fontWeight: 'bold',
         cursor: 'pointer',
+    },
+    radioLabelSmall: { // Style for activity type
+        fontSize: '1em',
+        fontWeight: 'normal',
+        cursor: 'pointer',
+        marginRight: '15px',
     },
     divider: {
         margin: '15px 0',
