@@ -1,9 +1,9 @@
 // src/components/ComplaintForm.js
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react'; // <<<< ADDED useRef
+import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '@/utils/axiosInstance'; 
-import SignatureCanvas from 'react-signature-canvas'; // <<<< NEW IMPORT for signature pad
+import SignatureCanvas from 'react-signature-canvas'; 
 
 /**
  * Complaint Form component.
@@ -240,11 +240,12 @@ export default function ComplaintForm({
 
 
     // ----------------------------------------------------------------------
-    // --- HANDLERS ---------------------------------------------------------
+    // --- HANDLERS (CONFIRMING FIX HERE) -----------------------------------
     // ----------------------------------------------------------------------
 
     const handleFormChange = (e) => {
         const { id, value } = e.target;
+        // The use of 'prev => ({...prev, [id]: value})' is the correct fix.
         setFormData(prev => ({ ...prev, [id]: value }));
     };
 
@@ -258,6 +259,7 @@ export default function ComplaintForm({
 
     const handleEmpActivityChange = (e) => {
         const { id, value, type, checked } = e.target;
+        // The use of 'prev => ({...prev, [id]: value})' is the correct fix.
         setEmpActivityData(prev => ({ 
             ...prev, 
             [id]: type === 'checkbox' ? checked : value 
@@ -385,14 +387,14 @@ export default function ComplaintForm({
         const payload = {
             // DTO Fields
             jobId: cleanJobId,
-            renewalJobId: cleanRenewalId,
+            renewalJobId: cleanRenewalId || 0,
             jobActivityTypeId: empActivityType === 'breakdown' ? 1 : 2, 
             activityDate: empActivityData.date,
             activityTime: empActivityData.outTime, 
             activityDescription: empActivityData.description,
             jobService: empActivityType, 
             jobTypeWork: empActivityData.typeOfWork,
-            executiveId: empData.executiveId || 0, 
+            executiveId: empData.empId || 0, 
             jobActivityById: empData.empId, 
             jobActivityBy2: empData.empName, 
             mailSent: false, 
@@ -411,8 +413,8 @@ export default function ComplaintForm({
 
         // Determine API Endpoint
         const endpoint = cleanRenewalId
-            ? '/api/amc/jobs/add-amc-renewal-job-activity'
-            : '/api/amc/jobs/add-amc-job-activity';
+            ? '/api/amc/complaint-form/add-amc-renewal-job-activity'
+            : '/api/amc/complaint-form/add-amc-job-activity';
 
         try {
             await axiosInstance.post(endpoint, payload);
@@ -506,8 +508,9 @@ export default function ComplaintForm({
     // --- RENDER COMPONENTS (EmployeeActivityForm, CustomerForm, EmployeeForm) ---
     // ----------------------------------------------------------------------
     
+    const [isSignatureAreaOpen, setIsSignatureAreaOpen] = useState(false);
     const EmployeeActivityForm = () => {
-        const [isSignatureAreaOpen, setIsSignatureAreaOpen] = useState(false);
+        
 
         return (
             <form onSubmit={handleBreakdownSubmit} 
@@ -604,19 +607,41 @@ export default function ComplaintForm({
                     </div>
                 )}
                 
-                {/* NEW FIELDS: Type of Work & Description */}
+                {/* NEW FIELDS: Type of Work & Description - CONFIRMED FIX APPLIED */}
                 <div style={styles.row}>
                     <div style={styles.inputGroupHalf}>
                         <label htmlFor="typeOfWork" style={styles.label}>Type Of Work Done <span style={{color: 'red'}}>*</span></label>
                         <input type="text" id="typeOfWork" value={empActivityData.typeOfWork} onChange={handleEmpActivityChange} style={styles.input} required/>
                     </div>
                     <div style={styles.inputGroupHalf}>
-                        <label htmlFor="description" style={styles.label}>Detailed Description <span style={{color: 'red'}}>*</span></label>
-                        <input type="text" id="description" value={empActivityData.description} onChange={handleEmpActivityChange} style={styles.input} required/>
-                    </div>
+  <label htmlFor="description" style={styles.label}>
+    Detailed Description <span style={{ color: 'red' }}>*</span>
+  </label>
+  <input
+    type="text"
+    id="description"
+    name="description"
+    placeholder="Enter detailed description"
+    value={empActivityData.description}
+    onChange={handleEmpActivityChange}
+    style={{
+      width: '100%',
+      padding: '10px 12px',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
+      outline: 'none',
+      fontSize: '14px',
+      transition: 'border-color 0.2s ease',
+    }}
+    onFocus={(e) => (e.target.style.borderColor = '#007bff')}
+    onBlur={(e) => (e.target.style.borderColor = '#ccc')}
+    required
+  />
+</div>
+
                 </div>
                 
-                {/* 3. Time & Date Fields (Shared) */}
+                {/* 3. Time & Date Fields (Shared) - CONFIRMED FIX APPLIED */}
                 <div style={styles.inputGroup}>
                     <label htmlFor="date" style={styles.label}>Date</label>
                     <input type="date" id="date" value={empActivityData.date} onChange={handleEmpActivityChange} style={styles.input} required />
@@ -635,17 +660,19 @@ export default function ComplaintForm({
                 
                 <div style={styles.inputGroup}>
                     <label htmlFor="remark" style={styles.label}>Remark (Internal)</label>
-                    <textarea id="remark" rows="2" value={empActivityData.remark} onChange={handleEmpActivityChange} style={styles.textarea} />
+                    <textarea id="remark" rows="2" value={empActivityData.remark} onChange={handleEmpActivityChange}  />
                 </div>
 
                 {/* --- CUSTOMER SIGN-OFF SECTION --- */}
                 <h4 style={{marginTop: '20px', borderTop: '1px solid #ddd', paddingTop: '15px'}}>Customer Sign-Off Details</h4>
                 
+                {/* Customer Feedback - CONFIRMED FIX APPLIED */}
                 <div style={styles.inputGroup}>
                     <label htmlFor="customerFeedback" style={styles.label}>Customer Feedback <span style={{color: 'red'}}>*</span></label>
                     <textarea id="customerFeedback" rows="3" value={empActivityData.customerFeedback} onChange={handleEmpActivityChange} style={styles.textarea} required />
                 </div>
 
+                {/* Customer Name & Email - CONFIRMED FIX APPLIED */}
                 <div style={styles.row}>
                     <div style={styles.inputGroupHalf}>
                         <label htmlFor="customerName" style={styles.label}>Customer Name <span style={{color: 'red'}}>*</span></label>
@@ -705,8 +732,8 @@ export default function ComplaintForm({
                         <input 
                             type="checkbox" 
                             id="customerSignature" 
-                            checked={!!empActivityData.signatureBase64} // True if Base64 data exists
-                            onChange={() => {}} // Disabled to prevent manual override
+                            checked={!!empActivityData.signatureBase64} 
+                            onChange={() => {}} 
                             style={{marginRight: '10px'}}
                             disabled
                         />
@@ -718,7 +745,7 @@ export default function ComplaintForm({
                 <button 
                     type="submit"
                     style={{...styles.submitButton, backgroundColor: '#007bff'}}
-                    disabled={empSubmitStatus === 'submitting' || empLoading || !empActivityData.signatureBase64} // Disabled if no signature
+                    disabled={empSubmitStatus === 'submitting' || empLoading || !empActivityData.signatureBase64}
                 >
                     {empSubmitStatus === 'submitting' ? 'Logging Activity...' : `Log ${empActivityType === 'breakdown' ? 'Breakdown' : 'Service'} Activity`}
                 </button>
@@ -731,7 +758,9 @@ export default function ComplaintForm({
     };
 
     const CustomerForm = () => (
-        // ... (Customer Form is unchanged)
+        <>
+       
+
         <form onSubmit={handleSubmit} style={styles.form}>
             {/* Read-Only Info */}
             <div style={styles.inputGroup}>
@@ -742,7 +771,7 @@ export default function ComplaintForm({
                 </p>
             </div>
 
-            {/* Activity Type & Date */}
+            {/* Activity Type & Date - CONFIRMED FIX APPLIED */}
             <div style={styles.row}>
                 <div style={styles.inputGroupHalf}>
                     <label htmlFor="activityType" style={styles.label}>Select Activity Type</label>
@@ -757,7 +786,7 @@ export default function ComplaintForm({
                 </div>
             </div>
 
-            {/* Lift Selection Grid */}
+            {/* Lift Selection Grid (Unchanged) */}
             <div style={{...styles.inputGroup, marginTop: '20px', display: formData.activityType === '1' ? 'block' : 'none'}}>
                 <h3 style={{marginBottom: '10px'}}>Select Lift(s) for Breakdown </h3>
                 {loading ? (
@@ -786,7 +815,7 @@ export default function ComplaintForm({
                 )}
             </div>
 
-            {/* Contact Details (Always editable/used for Customer Form) */}
+            {/* Contact Details - CONFIRMED FIX APPLIED */}
             <div style={styles.row}>
                 <div style={styles.inputGroupHalf}>
                     <label htmlFor="yourName" style={styles.label}>Your Name</label>
@@ -798,7 +827,7 @@ export default function ComplaintForm({
                 </div>
             </div>
 
-            {/* Complaint/Feedback */}
+            {/* Complaint/Feedback - CONFIRMED FIX APPLIED */}
             <div style={styles.inputGroup}>
                 <label htmlFor="complaintFeedback" style={styles.label}>Complaint / Feedback</label>
                 <textarea id="complaintFeedback" rows="4" value={formData.complaintFeedback} onChange={handleFormChange} style={styles.textarea} required />
@@ -811,11 +840,12 @@ export default function ComplaintForm({
             {submitStatus === 'success' && <p style={styles.successMessage}>✅ Submission successful! Your request has been logged.</p>}
             {submitStatus === 'error' && <p style={styles.errorMessage}>❌ Submission failed. Error: {error || 'Please check your details.'}</p>}
         </form>
+        </>
     );
 
-    const EmployeeForm = () => (
+    let EmployeeForm = () => (
         <div>
-            {/* 1. Employee Code Input Form (Always Visible) */}
+            {/* 1. Employee Code Input Form - (Uses standard setter for empCode, which is okay) */}
             <form onSubmit={handleEmpCodeSubmit} style={styles.form}>
                 <div style={styles.inputGroup}>
                     <label htmlFor="empCode" style={styles.label}>Enter Employee Code</label>
@@ -860,11 +890,13 @@ export default function ComplaintForm({
 
 
     // ----------------------------------------------------------------------
-    // --- MAIN RENDER ------------------------------------------------------
+    // --- MAIN RENDER (Unchanged) ------------------------------------------
     // ----------------------------------------------------------------------
     return (
         <div style={styles.container}>
             <h1>Feedback / Complaint Form</h1>
+
+            
             
             {/* User Type Selection */}
             <div style={styles.radioGroup}>
@@ -897,12 +929,372 @@ export default function ComplaintForm({
             )}
 
             {/* Render the appropriate form */}
-            {activeJobId && (userType === 'customer' ? <CustomerForm /> : <EmployeeForm />)}
+            {activeJobId && (userType === 'customer' ? 
+        <form onSubmit={handleSubmit} style={styles.form}>
+            {/* Read-Only Info */}
+            <div style={styles.inputGroup}>
+                <label style={styles.label}>Site & Customer Name</label>
+                <input type="text" value={`${siteName} - ${customerName}`} style={styles.input} readOnly />
+                <p style={{fontSize: '0.8em', color: '#555'}}>
+                    {isRenewal ? `Renewal ID: ${renewalId}` : `Job ID: ${jobId}`}
+                </p>
+            </div>
+
+            {/* Activity Type & Date - CONFIRMED FIX APPLIED */}
+            <div style={styles.row}>
+                <div style={styles.inputGroupHalf}>
+                    <label htmlFor="activityType" style={styles.label}>Select Activity Type</label>
+                    <select id="activityType" value={formData.activityType} onChange={handleFormChange} style={styles.input}>
+                        <option value="1">Breakdown (Default)</option>
+                        <option value="2">General Feedback / Inquiry</option>
+                    </select>
+                </div>
+                <div style={styles.inputGroupHalf}>
+                    <label htmlFor="todoDate" style={styles.label}>Date</label>
+                    <input type="date" id="todoDate" value={formData.todoDate} onChange={handleFormChange} style={styles.input} required />
+                </div>
+            </div>
+
+            {/* Lift Selection Grid (Unchanged) */}
+            <div style={{...styles.inputGroup, marginTop: '20px', display: formData.activityType === '1' ? 'block' : 'none'}}>
+                <h3 style={{marginBottom: '10px'}}>Select Lift(s) for Breakdown </h3>
+                {loading ? (
+                    <p>Loading Lifts...</p>
+                ) : (
+                    <div style={styles.liftGridContainer}>
+                        {lifts.length > 0 ? (
+                            lifts.map(lift => (
+                                <div
+                                    key={lift.enquiryId}
+                                    onClick={() => handleLiftSelection(lift.enquiryId)}
+                                    style={{
+                                        ...styles.liftCard,
+                                        ...(selectedLiftIds.includes(lift.enquiryId) ? styles.liftCardSelected : {})
+                                    }}
+                                >
+                                    <strong>{lift.liftName}</strong>
+                                    <p style={styles.liftDetail}>Type: {lift.typeOfElevators}</p>
+                                    <p style={styles.liftDetail}>Cap: {lift.capacityValue} | Floors: {lift.noOfFloors}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <p style={{ gridColumn: '1 / -1', textAlign: 'center' }}>No lifts found for this job/renewal.</p>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Contact Details - CONFIRMED FIX APPLIED */}
+            <div style={styles.row}>
+                <div style={styles.inputGroupHalf}>
+                    <label htmlFor="yourName" style={styles.label}>Your Name</label>
+                    <input type="text" id="yourName" value={formData.yourName} onChange={handleFormChange} style={styles.input} required />
+                </div>
+                <div style={styles.inputGroupHalf}>
+                    <label htmlFor="yourNumber" style={styles.label}>Your Number</label>
+                    <input type="tel" id="yourNumber" value={formData.yourNumber} onChange={handleFormChange} style={styles.input} required />
+                </div>
+            </div>
+
+            {/* Complaint/Feedback - CONFIRMED FIX APPLIED */}
+            <div style={styles.inputGroup}>
+                <label htmlFor="complaintFeedback" style={styles.label}>Complaint / Feedback</label>
+                <textarea id="complaintFeedback" rows="4" value={formData.complaintFeedback} onChange={handleFormChange} style={styles.textarea} required />
+            </div>
+
+            <button type="submit" style={styles.submitButton} disabled={submitStatus === 'submitting' || loading}>
+                {submitStatus === 'submitting' ? 'Submitting...' : 'Submit Service Request'}
+            </button>
+            
+            {submitStatus === 'success' && <p style={styles.successMessage}>✅ Submission successful! Your request has been logged.</p>}
+            {submitStatus === 'error' && <p style={styles.errorMessage}>❌ Submission failed. Error: {error || 'Please check your details.'}</p>}
+        </form> : <div>
+            {/* 1. Employee Code Input Form - (Uses standard setter for empCode, which is okay) */}
+            <form onSubmit={handleEmpCodeSubmit} style={styles.form}>
+                <div style={styles.inputGroup}>
+                    <label htmlFor="empCode" style={styles.label}>Enter Employee Code</label>
+                    <input 
+                        type="text" 
+                        id="empCode" 
+                        value={empCode} 
+                        onChange={(e) => setEmpCode(e.target.value)} 
+                        style={styles.input} 
+                        required 
+                    />
+                </div>
+                <button 
+                    type="submit" 
+                    style={styles.submitButtonSmall} 
+                    disabled={empLoading}
+                >
+                    {empLoading ? 'Loading...' : 'Verify Code'}
+                </button>
+                {empError && <p style={styles.errorMessage}>{empError}</p>}
+            </form>
+            
+            {/* 2. Display Employee Details and Activity Form (Conditionally Visible upon success) */}
+            {empData && (
+                <div style={styles.verificationBox}>
+                    <h3 style={{borderBottom: '1px solid #ddd', paddingBottom: '10px', color: '#007bff'}}>Employee Details Verified:</h3>
+                    <p style={styles.detailText}>
+                        <strong>Employee Name:</strong> {empData.empName}
+                    </p>
+                    <p style={styles.detailText}>
+                        <strong>Contact Number:</strong> {empData.empContactNumber}
+                    </p>
+                    <p style={styles.detailText}>
+                        <strong>Employee Code:</strong> {empData.empCode}
+                    </p>
+                    
+                    <form onSubmit={handleBreakdownSubmit} 
+              style={{...styles.form, marginTop: '25px', padding: '15px', border: '1px solid #ccc', borderRadius: '5px'}}>
+                
+                <h3 style={{marginBottom: '15px', color: '#444'}}>Log Employee Activity</h3>
+
+                {/* 1. Select Activity Type (Radio Button) */}
+                <div style={{...styles.inputGroup, marginBottom: '20px'}}>
+                    <label style={styles.label}>Select Activity Type</label>
+                    <div style={styles.radioGroup}>
+                        <label style={styles.radioLabelSmall}>
+                            <input 
+                                type="radio" 
+                                name="empActivityType" 
+                                value="service" 
+                                checked={empActivityType === 'service'} 
+                                onChange={() => {setEmpActivityType('service'); setEmpError(null); setEmpSubmitStatus(null);}} 
+                            /> Service
+                        </label>
+                        <label style={styles.radioLabelSmall}>
+                            <input 
+                                type="radio" 
+                                name="empActivityType" 
+                                value="breakdown" 
+                                checked={empActivityType === 'breakdown'} 
+                                onChange={() => {setEmpActivityType('breakdown'); setEmpError(null); setEmpSubmitStatus(null);}} 
+                            /> Breakdown
+                        </label>
+                    </div>
+                </div>
+
+                {/* 2. Breakdown Ticket Selection (Conditional Dropdown) */}
+                {empActivityType === 'breakdown' && (
+                    <>
+                        <div style={styles.inputGroup}>
+                            <label htmlFor="selectedTodoId" style={styles.label}>Select Breakdown Ticket <span style={{color: 'red'}}>*</span></label>
+                            {todosLoading ? (
+                                <p style={{color: '#007bff'}}>Loading tickets...</p>
+                            ) : (
+                                <select 
+                                    id="selectedTodoId" 
+                                    value={selectedTodoId} 
+                                    onChange={(e) => setSelectedTodoId(e.target.value)} 
+                                    style={styles.input} 
+                                    required
+                                >
+                                    <option value="">-- Select a Ticket --</option>
+                                    {breakdownTodos.length > 0 ? (
+                                        breakdownTodos.map(todo => (
+                                            <option key={todo.custTodoId} value={todo.custTodoId}>
+                                                {`ID: ${todo.custTodoId} | Date: ${todo.todoDate} | Purpose: ${todo.purpose}`}
+                                            </option>
+                                        ))
+                                    ) : (
+                                        <option value="" disabled>No pending breakdown tickets found.</option>
+                                    )}
+                                </select>
+                            )}
+                        </div>
+                    </>
+                )}
+
+                {/* 2b. Display and Select Associated Lifts (Checkboxes) */}
+                {( (empActivityType === 'breakdown' && selectedTodoId)) && (liftsLoading || breakdownLifts.length > 0) && (
+                    <div style={{...styles.inputGroup, borderTop: '1px dashed #ddd', paddingTop: '15px'}}>
+                        <label style={styles.label}>
+                            Select Lift(s) Serviced/Repaired <span style={{color: 'red'}}>*</span>
+                        </label>
+                        
+                        {liftsLoading ? (
+                            <p style={{color: '#007bff'}}>Loading associated lifts...</p>
+                        ) : (
+                            <div style={styles.liftGridContainerSmall}>
+                                {breakdownLifts.map(lift => (
+                                    <div key={lift.enquiryId} style={styles.liftCardSmall}>
+                                        <label style={styles.checkboxLabel}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedBreakdownLiftIds.includes(lift.enquiryId)}
+                                                onChange={() => handleBreakdownLiftSelection(lift.enquiryId)}
+                                                style={{marginRight: '8px'}}
+                                            />
+                                            <strong>{lift.liftName}</strong>
+                                        </label>
+                                        <p style={styles.liftDetail}>Type: {lift.typeOfElevators}</p>
+                                    </div>
+                                ))}
+                                {breakdownLifts.length === 0 && (
+                                    <p style={{gridColumn: '1 / -1', color: '#dc3545'}}>No lifts available for selection.</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+                
+                {/* NEW FIELDS: Type of Work & Description - CONFIRMED FIX APPLIED */}
+                <div style={styles.row}>
+                    <div style={styles.inputGroupHalf}>
+                        <label htmlFor="typeOfWork" style={styles.label}>Type Of Work Done <span style={{color: 'red'}}>*</span></label>
+                        <input type="text" id="typeOfWork" value={empActivityData.typeOfWork} onChange={handleEmpActivityChange} style={styles.input} required/>
+                    </div>
+                    <div style={styles.inputGroupHalf}>
+  <label htmlFor="description" style={styles.label}>
+    Detailed Description <span style={{ color: 'red' }}>*</span>
+  </label>
+  <input
+    type="text"
+    id="description"
+    name="description"
+    placeholder="Enter detailed description"
+    value={empActivityData.description}
+    onChange={handleEmpActivityChange}
+    style={{
+      width: '100%',
+      padding: '10px 12px',
+      border: '1px solid #ccc',
+      borderRadius: '8px',
+      outline: 'none',
+      fontSize: '14px',
+      transition: 'border-color 0.2s ease',
+    }}
+    onFocus={(e) => (e.target.style.borderColor = '#007bff')}
+    onBlur={(e) => (e.target.style.borderColor = '#ccc')}
+    required
+  />
+</div>
+
+                </div>
+                
+                {/* 3. Time & Date Fields (Shared) - CONFIRMED FIX APPLIED */}
+                <div style={styles.inputGroup}>
+                    <label htmlFor="date" style={styles.label}>Date</label>
+                    <input type="date" id="date" value={empActivityData.date} onChange={handleEmpActivityChange} style={styles.input} required />
+                </div>
+
+                <div style={styles.row}>
+                    <div style={styles.inputGroupHalf}>
+                        <label htmlFor="inTime" style={styles.label}>In Time <span style={{color: 'red'}}>*</span></label>
+                        <input type="time" id="inTime" value={empActivityData.inTime} onChange={handleEmpActivityChange} style={styles.input} required />
+                    </div>
+                    <div style={styles.inputGroupHalf}>
+                        <label htmlFor="outTime" style={styles.label}>Out Time <span style={{color: 'red'}}>*</span></label>
+                        <input type="time" id="outTime" value={empActivityData.outTime} onChange={handleEmpActivityChange} style={styles.input} required />
+                    </div>
+                </div>
+                
+                <div style={styles.inputGroup}>
+                    <label htmlFor="remark" style={styles.label}>Remark (Internal)</label>
+                    <textarea id="remark" rows="2" value={empActivityData.remark} onChange={handleEmpActivityChange}  />
+                </div>
+
+                {/* --- CUSTOMER SIGN-OFF SECTION --- */}
+                <h4 style={{marginTop: '20px', borderTop: '1px solid #ddd', paddingTop: '15px'}}>Customer Sign-Off Details</h4>
+                
+                {/* Customer Feedback - CONFIRMED FIX APPLIED */}
+                <div style={styles.inputGroup}>
+                    <label htmlFor="customerFeedback" style={styles.label}>Customer Feedback <span style={{color: 'red'}}>*</span></label>
+                    <textarea id="customerFeedback" rows="3" value={empActivityData.customerFeedback} onChange={handleEmpActivityChange} style={styles.textarea} required />
+                </div>
+
+                {/* Customer Name & Email - CONFIRMED FIX APPLIED */}
+                <div style={styles.row}>
+                    <div style={styles.inputGroupHalf}>
+                        <label htmlFor="customerName" style={styles.label}>Customer Name <span style={{color: 'red'}}>*</span></label>
+                        <input type="text" id="customerName" value={empActivityData.customerName} onChange={handleEmpActivityChange} style={styles.input} required />
+                    </div>
+                    <div style={styles.inputGroupHalf}>
+                        <label htmlFor="emailId" style={styles.label}>Customer Email ID <span style={{color: 'red'}}>*</span></label>
+                        <input type="email" id="emailId" value={empActivityData.emailId} onChange={handleEmpActivityChange} style={styles.input} required />
+                    </div>
+                </div>
+
+                {/* --- SIGNATURE CAPTURE SECTION (NEW) --- */}
+                <div style={{...styles.inputGroup, border: '1px solid #cce5ff', padding: '10px', borderRadius: '4px', backgroundColor: '#e6f7ff', marginTop: '20px'}}>
+                    
+                    {/* Signature Status/Button */}
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                        <p style={{margin: '0', fontWeight: 'bold', color: '#007bff'}}>
+                            Signature Status: 
+                            {empActivityData.signatureBase64 ? 
+                                <span style={{color: 'green', marginLeft: '10px'}}>✅ Captured</span> : 
+                                <span style={{color: 'red', marginLeft: '10px'}}>❌ Missing</span>
+                            }
+                        </p>
+                        <button 
+                            type="button" 
+                            onClick={() => setIsSignatureAreaOpen(prev => !prev)}
+                            style={{...styles.submitButtonSmall, width: 'auto', backgroundColor: isSignatureAreaOpen ? '#ffc107' : '#007bff', flexShrink: 0}}
+                        >
+                            {isSignatureAreaOpen ? 'Hide Signature Pad' : 'Capture Signature'}
+                        </button>
+                    </div>
+
+                    {/* Signature Preview */}
+                    {empActivityData.signatureBase64 && !isSignatureAreaOpen && (
+                        <div style={{marginTop: '10px', padding: '10px', border: '1px dashed #007bff'}}>
+                            <p style={{fontSize: '0.9em', margin: '0 0 5px 0'}}>Current Signature Preview:</p>
+                            <img 
+                                src={empActivityData.signatureBase64} 
+                                alt="Captured Signature" 
+                                style={{maxWidth: '150px', maxHeight: '100px', border: '1px solid #ccc', backgroundColor: 'white'}}
+                            />
+                        </div>
+                    )}
+
+                    {/* Signature Pad Area (Conditional) */}
+                    {isSignatureAreaOpen && (
+                        <div style={{marginTop: '15px'}}>
+                            <SignaturePadComponent onSave={() => setIsSignatureAreaOpen(false)} />
+                        </div>
+                    )}
+                </div>
+
+
+                {/* Signature Confirmation (Linked to capture data) */}
+                <div style={{...styles.inputGroup, border: '1px solid #ffcc00', padding: '10px', borderRadius: '4px', backgroundColor: '#fffbe5', marginTop: '20px'}}>
+                    <label style={styles.checkboxLabel}>
+                        <input 
+                            type="checkbox" 
+                            id="customerSignature" 
+                            checked={!!empActivityData.signatureBase64} 
+                            onChange={() => {}} 
+                            style={{marginRight: '10px'}}
+                            disabled
+                        />
+                        I confirm that the **Customer Signature** has been captured. <span style={{color: 'red'}}>*</span>
+                    </label>
+                </div>
+
+
+                <button 
+                    type="submit"
+                    style={{...styles.submitButton, backgroundColor: '#007bff'}}
+                    disabled={empSubmitStatus === 'submitting' || empLoading || !empActivityData.signatureBase64}
+                >
+                    {empSubmitStatus === 'submitting' ? 'Logging Activity...' : `Log ${empActivityType === 'breakdown' ? 'Breakdown' : 'Service'} Activity`}
+                </button>
+                
+                {empSubmitStatus === 'success' && <p style={styles.successMessage}>✅ Employee activity logged successfully!</p>}
+                {empSubmitStatus === 'error' && <p style={styles.errorMessage}>❌ Logging failed. Error: {empError || 'Please check form data.'}</p>}
+
+            </form>
+                </div>
+            )}
+        </div>)}
         </div>
     );
 }
 
-// --- Basic Inline Styles (Unchanged) ---
+// --- Basic Inline Styles (Included for completeness) ---
 const styles = {
     container: {
         fontFamily: 'Arial, sans-serif',

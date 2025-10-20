@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class ComplaintFormEmpData {
 	
+	private Integer empId;
 	private String empCode;
 	private String empName;
 	private String empContactNumber;

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.aibi.neerp.amc.common.dto.ComplaintFormEmpData;
 import com.aibi.neerp.amc.common.service.ComplaintFormService;
+import com.aibi.neerp.amc.jobs.initial.dto.AddServiceActivityGetData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobActivityRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.BreakdownTodoRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.BreakdownTodoResponseDto;
@@ -149,11 +150,26 @@ public class ComplaintFormController {
     
     @PostMapping("/add-amc-renewal-job-activity")
     public ResponseEntity<String> addAmcRenewalJobActivity(@RequestBody AmcJobActivityRequestDto dto) {
+    	
+    	System.out.println("call add-amc-renewal-job-activity");
         log.info("API Call: Add renewal job activity for jobId: {}", dto.getJobId());
 
         amcRenewalJobActivityService.addJobActivity(dto);
 
         return ResponseEntity.ok("Job renewal activities added successfully");
+    }
+    
+    @GetMapping("/getAddServiceActivityData/{jobId}")
+    public ResponseEntity<AddServiceActivityGetData> getAddServiceActivityData(@PathVariable Integer jobId) {
+        AddServiceActivityGetData response = amcJobActivityService.getAddServiceActivityGetData(jobId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/current-service-status/{jobId}")
+    public ResponseEntity<String> getCurrentServiceStatus(@PathVariable Integer jobId) {
+    	System.out.println("called getCurrentServiceStatus");
+        String status = amcJobActivityService.getStatusOfCurrentService(jobId);
+        return ResponseEntity.ok(status);
     }
     
     

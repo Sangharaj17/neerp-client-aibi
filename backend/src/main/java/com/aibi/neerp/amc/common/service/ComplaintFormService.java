@@ -20,6 +20,7 @@ public class ComplaintFormService {
 	        // Map Employee to ComplaintFormEmpData
 	        ComplaintFormEmpData empData = new ComplaintFormEmpData();
 	        
+	        empData.setEmpId(employee.getEmployeeId());
 	        empData.setEmpCode(emp_code);
 	        empData.setEmpName(employee.getEmployeeName());
 	        empData.setEmpContactNumber(employee.getContactNumber());
