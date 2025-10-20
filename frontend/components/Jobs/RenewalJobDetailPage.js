@@ -12,6 +12,7 @@ import "jspdf-autotable";
 import { Eye, Loader2 } from "lucide-react";
 
 import autoTable from "jspdf-autotable";
+import QrCodeGenerator from "./QrCodeGenerator";
 
 const RenewalJobDetailPage = ({ jobId }) => {
   const router = useRouter();
@@ -27,6 +28,7 @@ const RenewalJobDetailPage = ({ jobId }) => {
 
         const [loadingBtn, setLoadingBtn] = useState(null);
 
+          const [isQrModalOpen, setIsQrModalOpen] = useState(false); // <--- New State
 
 
   useEffect(() => {
@@ -154,6 +156,23 @@ const exportToPDF = () => {
 };
 
 
+// NEW HANDLER for QR Code
+  const handleGenerateQrCode = () => {
+    setIsQrModalOpen(true);
+  };
+  
+  // Data for the QrCodeGenerator component
+  // Use jobDetails.jobNo for the non-renewal job ID as requested.
+  // We'll use the unique jobId prop for renewalId to satisfy the component's required props.
+ const qrCodeProps = {
+    jobId: 0 || "N/A",  // Non-renewal job ID
+    renewalId: jobId,  // Using the unique database ID to satisfy the required prop
+    customerName: jobDetails.customerName || "N/A",
+    siteName: jobDetails.siteName || "N/A",
+  };
+
+
+
 
   return (
     <div className="p-4 space-y-6">
@@ -173,7 +192,8 @@ const exportToPDF = () => {
               ()=>handleBack(label) : label === "Add Job Activity" ? 
               ()=>handleAddActivity(label) : label === "Export Job Activity to Excel" ? 
               ()=>exportJobActivityToExcel(label) : label === "Export Activity Details to PDF" ? 
-              ()=>exportActivityDetailsToPDF(label) : null}
+              ()=>exportActivityDetailsToPDF(label) : label === "Generate QR Code" ?
+            ()=>handleGenerateQrCode() : null}
             className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded"
           >
             {label}
@@ -358,6 +378,22 @@ const exportToPDF = () => {
     )}
   </div>
 </ActionModal>
+
+{/* QR Code Generation Modal */}
+      <ActionModal
+        isOpen={isQrModalOpen}
+        onCancel={() => setIsQrModalOpen(false)}
+      >
+        <div className="flex flex-col items-center p-4">
+          <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">
+            Generate Renewal Job QR Code
+          </h2>
+          <div className="p-4 border-2 border-gray-200 rounded-lg bg-white shadow-xl">
+            {/* QrCodeGenerator is called here with the correct props */}
+            <QrCodeGenerator {...qrCodeProps} />
+          </div>
+        </div>
+      </ActionModal>
 
 
       {/* Lift Modal using ActionModal */}

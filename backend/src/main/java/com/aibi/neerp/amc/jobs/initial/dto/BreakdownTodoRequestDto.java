@@ -15,6 +15,7 @@ import java.util.List;
 public class BreakdownTodoRequestDto {
 //    private Integer customerSiteId;
     private Integer userId;
+    // perpose means for complaint form Complaint / Feedback
     private String purpose;
     private LocalDate todoDate;
     private LocalTime time;

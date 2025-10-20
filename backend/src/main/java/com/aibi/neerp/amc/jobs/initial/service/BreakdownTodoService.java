@@ -75,9 +75,12 @@ public class BreakdownTodoService {
 //        Site site = siteRepository.findById(dto.getCustomerSiteId())
 //                .orElseThrow(() -> new RuntimeException("Site not found"));
 
-        Employee employee = employeeRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
-
+        Employee employee = null;
+        if (dto.getUserId() != null) {
+            employee = employeeRepository.findById(dto.getUserId())
+                    .orElse(null); // Don't throw exception
+        }
+        
         AmcJob job = amcJobRepository.findById(dto.getJobId())
                 .orElseThrow(() -> new RuntimeException("AMC Job not found"));
         
