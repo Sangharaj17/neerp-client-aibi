@@ -52,6 +52,10 @@ export default function ComplaintForm({
     const [breakdownTodos, setBreakdownTodos] = useState([]);
     const [selectedTodoId, setSelectedTodoId] = useState(''); // Stores the selected BreakdownTodo ID
     const [todosLoading, setTodosLoading] = useState(false);
+    
+    // --- NEW LIFT STATE FOR EMPLOYEE BREAKDOWN ---
+    const [breakdownLifts, setBreakdownLifts] = useState([]);
+    const [liftsLoading, setLiftsLoading] = useState(false);
 
 
     // Clean and determine the active ID
@@ -61,9 +65,8 @@ export default function ComplaintForm({
     const isRenewal = !!cleanRenewalId;
     
     // --- Data Fetching Effect (Lifts - Customer) ---
-    // (Existing Lift fetching logic remains the same)
     useEffect(() => {
-        // Only fetch lifts if customer view AND an active job/renewal ID exists
+        // ... (Lift fetching logic for Customer Form remains the same)
         if (userType !== 'customer' || !activeJobId) {
             setLoading(false);
             if (!activeJobId && userType === 'customer') {
@@ -98,7 +101,7 @@ export default function ComplaintForm({
     }, [activeJobId, isRenewal, userType]);
 
 
-    // --- EFFECT: Fetch Breakdown Todos for Employee (UPDATED LOGIC) ---
+    // --- EFFECT 1: Fetch Breakdown Todos for Employee (No Change) ---
     useEffect(() => {
         if (userType === 'employee' && empActivityType === 'breakdown' && activeJobId) {
             const fetchTodos = async () => {
@@ -110,11 +113,9 @@ export default function ComplaintForm({
                 let idToPass = null;
                 
                 if (cleanJobId) {
-                    // Use Job ID endpoint
                     endpoint = `/api/amc/complaint-form/getTodosByJob/${cleanJobId}`;
                     idToPass = cleanJobId;
                 } else if (cleanRenewalId) {
-                    // Use Renewal ID endpoint
                     endpoint = `/api/amc/complaint-form/getTodosByRenewalJob/${cleanRenewalId}`;
                     idToPass = cleanRenewalId;
                 }
@@ -126,12 +127,11 @@ export default function ComplaintForm({
                 }
 
                 try {
-                    // API call based on whether it's a Job or a Renewal
                     const response = await axiosInstance.get(endpoint);
                     
                     if (response.data && response.data.length > 0) {
                         setBreakdownTodos(response.data);
-                        setEmpError(null); // Clear any previous error if successful
+                        setEmpError(null); 
                     } else {
                         setEmpError("No pending breakdown tickets found for this job/renewal.");
                     }
@@ -151,7 +151,54 @@ export default function ComplaintForm({
     }, [userType, empActivityType, cleanJobId, cleanRenewalId, activeJobId]);
 
 
-    // --- Handlers ---
+    // --- EFFECT 2: Fetch Lifts when Breakdown Todo is Selected (No Change) ---
+    useEffect(() => {
+        if (empActivityType === 'breakdown' && selectedTodoId) {
+            const fetchLifts = async () => {
+                setLiftsLoading(true);
+                setBreakdownLifts([]);
+
+                let endpoint = '';
+                const breakdownId = parseInt(selectedTodoId, 10);
+                
+                if (cleanJobId) {
+                    endpoint = `/api/amc/complaint-form/getLiftsByBreakDownId/${breakdownId}`;
+                } else if (cleanRenewalId) {
+                    endpoint = `/api/amc/complaint-form/getRenewalLiftsByBreakDownId/${breakdownId}`;
+                }
+                
+                if (!endpoint) {
+                    setLiftsLoading(false);
+                    return;
+                }
+
+                try {
+                    const response = await axiosInstance.get(endpoint);
+                    
+                    if (response.data && response.data.length > 0) {
+                        setBreakdownLifts(response.data);
+                        setEmpError(null);
+                    } else {
+                        setEmpError(`No lifts found associated with ticket ID: ${breakdownId}.`);
+                    }
+                } catch (err) {
+                    console.error("Lifts by Breakdown ID Fetch Error:", err);
+                    setEmpError('Failed to fetch associated lift data.');
+                } finally {
+                    setLiftsLoading(false);
+                }
+            };
+
+            fetchLifts();
+        } else {
+            setBreakdownLifts([]);
+        }
+    }, [selectedTodoId, cleanJobId, cleanRenewalId, empActivityType]);
+
+
+    // ----------------------------------------------------------------------
+    // --- HANDLERS (MOVED UP FOR DEFINITION ORDER) -------------------------
+    // ----------------------------------------------------------------------
 
     const handleFormChange = (e) => {
         const { id, value } = e.target;
@@ -171,7 +218,6 @@ export default function ComplaintForm({
         setEmpActivityData(prev => ({ ...prev, [id]: value }));
     };
 
-    // --- EMPLOYEE CODE HANDLER ---
     const handleEmpCodeSubmit = async (e) => {
         e.preventDefault();
         setEmpLoading(true);
@@ -203,9 +249,8 @@ export default function ComplaintForm({
             setEmpLoading(false);
         }
     };
-    // --- END EMPLOYEE HANDLER ---
 
-
+    // THIS IS THE FUNCTION THAT CAUSED THE ERROR
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitStatus('submitting');
@@ -249,7 +294,7 @@ export default function ComplaintForm({
     };
     
     // ----------------------------------------------------------------------
-    // --- RENDER COMPONENTS (DEFINED BEFORE USE) ---------------------------
+    // --- RENDER COMPONENTS (NOW DEFINED AFTER ALL HANDLERS) ---------------
     // ----------------------------------------------------------------------
     
     // --- NEW EMPLOYEE ACTIVITY FORM COMPONENT ---
@@ -284,32 +329,53 @@ export default function ComplaintForm({
 
             {/* 2. Breakdown Ticket Selection (Conditional Dropdown) */}
             {empActivityType === 'breakdown' && (
-                <div style={styles.inputGroup}>
-                    <label htmlFor="selectedTodoId" style={styles.label}>Select Breakdown Ticket</label>
-                    {todosLoading ? (
-                        <p style={{color: '#007bff'}}>Loading tickets...</p>
-                    ) : (
-                        <select 
-                            id="selectedTodoId" 
-                            value={selectedTodoId} 
-                            onChange={(e) => setSelectedTodoId(e.target.value)} 
-                            style={styles.input} 
-                            required
-                        >
-                            <option value="">-- Select a Ticket --</option>
-                            {breakdownTodos.length > 0 ? (
-                                breakdownTodos.map(todo => (
-                                    <option key={todo.custTodoId} value={todo.custTodoId}>
-                                        {`ID: ${todo.custTodoId} | Date: ${todo.todoDate} | Purpose: ${todo.purpose}`}
-                                    </option>
-                                ))
-                            ) : (
-                                <option value="" disabled>No pending breakdown tickets found.</option>
-                            )}
-                        </select>
+                <>
+                    <div style={styles.inputGroup}>
+                        <label htmlFor="selectedTodoId" style={styles.label}>Select Breakdown Ticket</label>
+                        {todosLoading ? (
+                            <p style={{color: '#007bff'}}>Loading tickets...</p>
+                        ) : (
+                            <select 
+                                id="selectedTodoId" 
+                                value={selectedTodoId} 
+                                onChange={(e) => setSelectedTodoId(e.target.value)} 
+                                style={styles.input} 
+                                required
+                            >
+                                <option value="">-- Select a Ticket --</option>
+                                {breakdownTodos.length > 0 ? (
+                                    breakdownTodos.map(todo => (
+                                        <option key={todo.custTodoId} value={todo.custTodoId}>
+                                            {`ID: ${todo.custTodoId} | Date: ${todo.todoDate} | Purpose: ${todo.purpose}`}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="" disabled>No pending breakdown tickets found.</option>
+                                )}
+                            </select>
+                        )}
+                    </div>
+
+                    {/* 2b. Display Associated Lifts (New Section) */}
+                    {(liftsLoading || breakdownLifts.length > 0) && (
+                         <div style={{...styles.inputGroup, borderTop: '1px dashed #ddd', paddingTop: '15px'}}>
+                             <label style={styles.label}>Associated Lifts:</label>
+                             {liftsLoading ? (
+                                 <p style={{color: '#007bff'}}>Loading associated lifts...</p>
+                             ) : (
+                                 <div style={styles.liftGridContainerSmall}>
+                                     {breakdownLifts.map(lift => (
+                                          <div key={lift.enquiryId} style={styles.liftCardSmall}>
+                                              <strong>{lift.liftName}</strong>
+                                              <p style={styles.liftDetail}>Type: {lift.typeOfElevators}</p>
+                                              <p style={styles.liftDetail}>Cap: {lift.capacityValue} | Floors: {lift.noOfFloors}</p>
+                                          </div>
+                                     ))}
+                                 </div>
+                             )}
+                         </div>
                     )}
-                    
-                </div>
+                </>
             )}
             
             {/* 3. Date Field */}
@@ -368,7 +434,7 @@ export default function ComplaintForm({
 
             <button 
                 type="button"
-                onClick={() => alert(`Log Data: ${JSON.stringify({ ...empActivityData, activityType: empActivityType, selectedTodo: selectedTodoId })}`)}
+                onClick={() => alert(`Log Data: ${JSON.stringify({ ...empActivityData, activityType: empActivityType, selectedTodo: selectedTodoId, associatedLifts: breakdownLifts.map(l => l.enquiryId) })}`)}
                 style={{...styles.submitButton, backgroundColor: '#007bff'}}
             >
                 Log Activity
@@ -523,7 +589,7 @@ export default function ComplaintForm({
                         value="customer" 
                         checked={userType === 'customer'} 
                         // Clear employee context when switching to customer
-                        onChange={() => { setUserType('customer'); setEmpData(null); setEmpCode(''); setEmpError(null); setEmpActivityType('service'); setBreakdownTodos([]);}} 
+                        onChange={() => { setUserType('customer'); setEmpData(null); setEmpCode(''); setEmpError(null); setEmpActivityType('service'); setBreakdownTodos([]); setBreakdownLifts([]);}} 
                     /> Customer
                 </label>
                 <label style={styles.radioLabel}>
@@ -554,6 +620,7 @@ export default function ComplaintForm({
 
 // --- Basic Inline Styles (Remains the same) ---
 const styles = {
+    // ... (Styles are unchanged)
     container: {
         fontFamily: 'Arial, sans-serif',
         padding: '20px',
@@ -628,6 +695,11 @@ const styles = {
         borderRadius: '5px',
         backgroundColor: '#f9f9f9',
     },
+    liftGridContainerSmall: { // New style for displaying breakdown lifts
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: '10px',
+    },
     liftCard: {
         padding: '10px',
         border: '2px solid #ddd',
@@ -637,6 +709,13 @@ const styles = {
         transition: 'border-color 0.2s, background-color 0.2s',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         lineHeight: '1.4',
+    },
+    liftCardSmall: {
+        padding: '10px',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        backgroundColor: '#fff',
+        lineHeight: '1.3',
     },
     liftCardSelected: {
         borderColor: '#007bff',
