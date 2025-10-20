@@ -71,8 +71,10 @@ public class AmcJobActivity {
     private String signatureName;
 
     @Lob
+    @Basic(fetch = FetchType.LAZY)
     @Column(name = "signature_value", nullable = true)
     private byte[] signatureValue;
+
 
     @Column(name = "customer_feedback", nullable = true)
     private String customerFeedback;

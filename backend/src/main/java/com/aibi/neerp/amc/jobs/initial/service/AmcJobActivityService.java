@@ -192,7 +192,7 @@ public class AmcJobActivityService {
 		}
 	   
 	}
-	
+	@Transactional
 	public List<LiftData> getUncompletedBreakDownActivityLifts(Integer breakdownTodoId) {
 
 	    if (breakdownTodoId == null) {
@@ -250,7 +250,7 @@ public class AmcJobActivityService {
 	
 	
 	
-	
+	@Transactional
 	public String getStatusOfCurrentService(Integer jobId) {
 	    AmcJob amcJob = amcJobRepository.findById(jobId)
 	            .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
@@ -327,7 +327,7 @@ public class AmcJobActivityService {
 
 
     
-    
+	@Transactional
     public AddServiceActivityGetData getAddServiceActivityGetData(Integer jobId) {
 
         AmcJob amcJob = amcJobRepository.findById(jobId)
@@ -369,7 +369,7 @@ public class AmcJobActivityService {
     }
 
 	
-	
+	@Transactional
     public JobDetailPageResponseDto getJobDetailPage(Integer jobId) {
         AmcJob job = amcJobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
