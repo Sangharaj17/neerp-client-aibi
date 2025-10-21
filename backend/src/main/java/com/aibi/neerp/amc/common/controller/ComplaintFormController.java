@@ -173,5 +173,19 @@ public class ComplaintFormController {
     }
     
     
+    @GetMapping("/getRenewalAddServiceActivityData/{jobId}")
+    public ResponseEntity<AddServiceActivityGetData> getRenewalAddServiceActivityData(@PathVariable Integer jobId) {
+        AddServiceActivityGetData response = amcRenewalJobActivityService.getAddServiceActivityGetData(jobId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @GetMapping("/get-renewal-current-service-status/{jobId}")
+    public ResponseEntity<String> getRenewalCurrentServiceStatus(@PathVariable Integer jobId) {
+    	System.out.println("called getCurrentServiceStatus");
+        String status = amcRenewalJobActivityService.getStatusOfCurrentService(jobId);
+        return ResponseEntity.ok(status);
+    }
+    
+    
     
 }

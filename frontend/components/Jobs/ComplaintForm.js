@@ -58,7 +58,9 @@ export default function ComplaintForm({
         emailId: '',
         signatureBase64: null, // <<<< NEW: Holds the signature image data as Base64 string
     });
-    const [empActivityType, setEmpActivityType] = useState('service'); 
+    const [empActivityType, setEmpActivityType] = useState(); 
+
+    
     const [breakdownTodos, setBreakdownTodos] = useState([]);
     const [selectedTodoId, setSelectedTodoId] = useState(''); 
     const [todosLoading, setTodosLoading] = useState(false);
@@ -81,6 +83,11 @@ export default function ComplaintForm({
         // The backend expects the raw Base64 string to map to byte[], strip the prefix here.
         return base64String.replace(/^data:image\/(png|jpeg|svg\+xml);base64,/, "");
     };
+
+    useEffect(() => {
+  setEmpActivityType('Service');
+}, [empData]); // runs only once, on component mount
+
 
     // --- Data Fetching Effects (Unchanged) ---
     useEffect(() => {
@@ -312,7 +319,15 @@ export default function ComplaintForm({
         };
 
         try {
-            await axiosInstance.post('/api/amc/complaint-form/create-breakdown-todo', payload);
+
+            let apiEndPoint = '/api/amc/complaint-form/create-breakdown-todo';
+
+            if(isRenewal){
+                apiEndPoint = '/api/amc/complaint-form/create-renewal-breakdown-todo';
+            }
+
+
+            await axiosInstance.post(apiEndPoint, payload);
             
             setSubmitStatus('success');
             setFormData(prev => ({ ...prev, yourName: '', yourNumber: '', complaintFeedback: '' }));
@@ -494,8 +509,14 @@ export default function ComplaintForm({
         useEffect(() => {
         if (empActivityType === 'service' && userType === 'employee') {
             // Check if jobId is available before making the API call
-            if (jobId) {
-                const apiPath = `/api/amc/complaint-form/current-service-status/${jobId}`;
+            if (jobId || renewalId) {
+                //const apiPath = `/api/amc/complaint-form/current-service-status/${jobId}`;
+
+                 // Determine API Endpoint
+        const apiPath = cleanRenewalId
+            ? `/api/amc/complaint-form/get-renewal-current-service-status/${renewalId}`
+            : `/api/amc/complaint-form/current-service-status/${jobId}`
+
                 
                 axiosInstance.get(apiPath)
                     .then(response => {
@@ -533,15 +554,23 @@ export default function ComplaintForm({
     const [serviceName, setServiceName] = useState('');
     
 const fetchLiftsForService = async () => {
-    alert('Fetching lifts for service activity...');
+   // alert('Fetching lifts for service activity...');
     setLoading(true);
     setError(null);
     try {
-        const endpoint = `/api/amc/complaint-form/getAddServiceActivityData/${activeJobId}`;
+
+          const endpoint = cleanRenewalId
+            ? `/api/amc/complaint-form/getRenewalAddServiceActivityData/${activeJobId}`
+            : `/api/amc/complaint-form/getAddServiceActivityData/${activeJobId}`;
+
+
+       // const endpoint = `/api/amc/complaint-form/getAddServiceActivityData/${activeJobId}`;
+
+        
 
         const response = await axiosInstance.get(endpoint);
 
-        alert('Fetched lifts for service activity.');
+       // alert('Fetched lifts for service activity.');
         setServiceName(response.data.serviceName || '');
         setBreakdownLifts(response.data.serviceLifsDatas || []);
         

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
 import com.aibi.neerp.amc.common.repository.JobActivityTypeRepository;
@@ -77,7 +78,7 @@ public class BreakdownTodoRenewalJobsService {
     private AmcJobsService amcJobsService;
     
    
-
+    @Transactional
     public String createBreakdownTodo(BreakdownTodoRequestDto dto) {
         log.info("Creating BreakdownTodo for siteId={}, userId={}, jobId={}",
                  dto.getUserId(), dto.getJobId());
@@ -86,7 +87,7 @@ public class BreakdownTodoRenewalJobsService {
 //                .orElseThrow(() -> new RuntimeException("Site not found"));
 
         Employee employee = employeeRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new RuntimeException("Employee not found"));
+                .orElse(null);
 
 //        AmcJob job = amcJobRepository.findById(dto.getJobId())
 //                .orElseThrow(() -> new RuntimeException("AMC Job not found"));
@@ -135,6 +136,7 @@ public class BreakdownTodoRenewalJobsService {
         return "Breakdown Todo created successfully!";
     }
     
+    @Transactional
     public List<BreakdownTodoResponseDto> getByRenewalJobId(Integer renewalJobId) {
         List<BreakdownTodo> todos = breakdownTodoRepository.findByRenewalJob_RenewalJobId(renewalJobId);
 
@@ -153,11 +155,13 @@ public class BreakdownTodoRenewalJobsService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public List<LiftData> getLiftDatasByBreakdownId(Integer breakdownId) {
         
     	return getUncompletedBreakDownActivityLifts(breakdownId);
     }
 
+    @Transactional
 	public List<LiftData> getUncompletedBreakDownActivityLifts(Integer breakdownTodoId) {
 
 	    if (breakdownTodoId == null) {

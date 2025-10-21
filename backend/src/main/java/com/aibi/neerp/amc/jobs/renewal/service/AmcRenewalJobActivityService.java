@@ -127,7 +127,7 @@ public class AmcRenewalJobActivityService {
 	    	updateBreakdownTodoStatus(dto.getBreakdownTodoId());
 	    }
 	}
-	
+	@Transactional
 	public void updateAmcJobAfterAddingActivity(Integer jobId , AmcRenewalJob amcJob , List<Integer> liftIds , LocalDate date) {
 		
 		Integer count = amcJob.getNoOfLiftsCurrentServiceCompletedCount();
@@ -151,7 +151,7 @@ public class AmcRenewalJobActivityService {
 		
 		amcJobRepository.save(amcJob);
 	}
-	
+	@Transactional
 	public void updateBreakdownTodoStatus(Integer brekdownTodoId) {
 		
 		BreakdownTodo breakdownTodo = breakdownTodoRepository.findById(brekdownTodoId)
@@ -195,6 +195,7 @@ public class AmcRenewalJobActivityService {
 	   
 	}
 
+	@Transactional
 	 public JobDetailPageResponseDto getJobDetailPage(Integer jobId) {
         AmcRenewalJob job = amcJobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
@@ -296,6 +297,7 @@ public class AmcRenewalJobActivityService {
         return new JobDetailPageResponseDto(jobDetailDto, activityDtos , liftDatas , employeeDtos);
     }
 
+	    @Transactional
 		public String getStatusOfCurrentService(Integer jobId) {
 		    AmcRenewalJob amcJob = amcJobRepository.findById(jobId)
 		            .orElseThrow(() -> new RuntimeException("AmcRenewalJob not found with id " + jobId));
@@ -372,7 +374,7 @@ public class AmcRenewalJobActivityService {
 
 
 	    
-	    
+	    @Transactional
 	    public AddServiceActivityGetData getAddServiceActivityGetData(Integer jobId) {
 
 	        AmcRenewalJob amcJob = amcJobRepository.findById(jobId)
