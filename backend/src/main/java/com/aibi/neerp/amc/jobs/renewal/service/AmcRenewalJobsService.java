@@ -459,6 +459,20 @@ public class AmcRenewalJobsService {
 
 	        return results.map(this::convertToDto);
 	    }
+	    
+	    public List<AmcRenewalJobResponseDto> getAllRenewalJobsForExport() {
+	        log.info("Fetching all AMC Renewal Jobs for export");
+	        
+	        // Step 1: Fetch all jobs (with related entities pre-fetched)
+	        List<AmcRenewalJob> jobs = amcRenewalJobRepository.findAllForExport();
+
+	        // Step 2: Convert to DTOs
+	        List<AmcRenewalJobResponseDto> responseList = jobs.stream()
+	                .map(this::convertToDto) // Assuming 'this::convertToDto' exists and is correct
+	                .toList();
+
+	        return responseList;
+	    }
 
 
 	    private AmcRenewalJobResponseDto convertToDto(AmcRenewalJob job) {

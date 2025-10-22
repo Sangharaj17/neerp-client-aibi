@@ -92,6 +92,21 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    @Param("dateSearch") String dateSearch,
 		    Pageable pageable
 		);
+	
+	
+	@Query("""
+		    SELECT DISTINCT j
+		    FROM AmcJob j
+		    LEFT JOIN FETCH j.customer c
+		    LEFT JOIN FETCH j.site s
+		    LEFT JOIN FETCH j.route r
+		    LEFT JOIN FETCH r.employees e
+		    LEFT JOIN FETCH j.amcQuotation q
+		    LEFT JOIN FETCH q.lead l
+		    LEFT JOIN FETCH l.area a
+		""")
+		List<AmcJob> findAllForExport();
+
 
 
 

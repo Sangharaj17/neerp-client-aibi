@@ -596,6 +596,20 @@ public class AmcJobsService {
 
         return results.map(this::convertToDto);
     }
+    
+    public List<AmcJobResponseDto> getAllJobsForExport() {
+        // Step 1: Fetch all jobs (with related entities pre-fetched)
+        List<AmcJob> jobs = amcJobRepository.findAllForExport();
+
+        // Step 2: Convert to DTOs
+        List<AmcJobResponseDto> responseList = jobs.stream()
+                .map(this::convertToDto)
+                .toList();
+
+        return responseList;
+    }
+    
+    
 
 
     private AmcJobResponseDto convertToDto(AmcJob job) {

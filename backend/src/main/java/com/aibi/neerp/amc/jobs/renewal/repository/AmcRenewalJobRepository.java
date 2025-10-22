@@ -46,6 +46,23 @@ public interface AmcRenewalJobRepository extends JpaRepository<AmcRenewalJob, In
 		);
 	
 	
+	// New query for export
+	// In AmcRenewalJobRepository.java
+
+	@Query("""
+	    SELECT DISTINCT j
+	    FROM AmcRenewalJob j
+	    LEFT JOIN FETCH j.customer c
+	    LEFT JOIN FETCH j.site s
+	    LEFT JOIN j.route r         
+	    LEFT JOIN r.employees e     
+	    LEFT JOIN FETCH j.amcRenewalQuotation q
+	    LEFT JOIN FETCH q.lead l
+	    LEFT JOIN FETCH l.area a
+	""")
+	List<AmcRenewalJob> findAllForExport();
+	
+	
 	@Query("""
 		    SELECT j
 		    FROM AmcRenewalJob j

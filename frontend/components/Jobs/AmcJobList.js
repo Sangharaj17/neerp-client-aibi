@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
+import { exportAmcJobsToExcel } from './exportAmcJobsToExcel';
+import { exportAmcRenewalJobsToExcel } from './exportAmcRenewalJobsToExcel';
 
 // Base API endpoints
 const AMC_JOBS_API = '/api/amc-jobs/getAllJobs';
@@ -230,6 +232,7 @@ export default function AmcJobList({isAmcJobRenewal}) {
         {/* Employee Job Task Details Button (Treated as a secondary filter/action) */}
         <button
             onClick={() => {
+              setLoadingBtn('Employee Job Task Details');
               router.push('/dashboard/jobs/amc-jobs-activity-emp-report');
             }}
             className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
@@ -239,15 +242,35 @@ export default function AmcJobList({isAmcJobRenewal}) {
             }`}
         >
             Employee Job Task Details
+            {loadingBtn === 'Employee Job Task Details' && <Loader2 className="w-4 h-4 inline-block ml-2 animate-spin text-white" />}
         </button>
 
         {/* Export to Excel Button (Key action, using a common 'Success/Export' green color) */}
-        <button
-            onClick={() => handleTabChange('exportToExcel')} // You'll need to define this function
-            className="px-3 py-1 text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow"
-        >
-            Export to Excel
-        </button>
+
+<button
+    onClick={async () => {
+        // 1. Set loading state before starting the export
+        setLoadingBtn('Export to Excel');
+        
+        try {
+            if(activeTab === 'amcRenewalJobs'){
+                await exportAmcRenewalJobsToExcel(); // Use await here
+            } else {
+                await exportAmcJobsToExcel(); // Use await here
+            }
+        } catch (error) {
+            // Handle any unexpected errors that the export function didn't catch
+            console.error("Export operation failed:", error);
+        } finally {
+            // 2. Clear loading state after export finishes (success or failure)
+            setLoadingBtn(''); 
+        }
+    }}
+    className="px-3 py-1 text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow"
+>
+    Export to Excel
+    {loadingBtn === 'Export to Excel' && <Loader2 className="w-4 h-4 inline-block ml-2 animate-spin text-white" />}
+</button>
     </div>
 </div>
 {/* End Tabs */}

@@ -81,6 +81,17 @@ public class AmcJobsController {
         return amcJobsService.getAllJobs(search, dateSearch, page, size, sortBy, direction);
     }
     
+    @GetMapping("/export")
+    public ResponseEntity<List<AmcJobResponseDto>> exportAllJobs() {
+        List<AmcJobResponseDto> jobs = amcJobsService.getAllJobsForExport();
+
+        if (jobs.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(jobs);
+    }
+    
     @GetMapping("/getAllActiveJobs")
     public List<JobDropdownResponse> getAllActiveJobs() {
         log.info("API Call: Get all active jobs with customer + site names");

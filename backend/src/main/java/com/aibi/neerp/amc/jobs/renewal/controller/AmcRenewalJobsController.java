@@ -75,6 +75,18 @@ public class AmcRenewalJobsController {
         return amcRenewalJobsService.getAllRenewalJobs(search, dateSearch, page, size, sortBy, direction);
     }
     
+    @GetMapping("/exportRenewal") // New endpoint for export
+    public ResponseEntity<List<AmcRenewalJobResponseDto>> exportAllRenewalJobs() {
+        log.info("Request received to export all AMC Renewal Jobs");
+        List<AmcRenewalJobResponseDto> jobs = amcRenewalJobsService.getAllRenewalJobsForExport();
+
+        if (jobs.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(jobs);
+    }
+    
     @GetMapping("/getAllActiveRenewalJobs")
     public List<JobDropdownResponse> getAllActiveRenewalJobs() {
         log.info("API Call: Get all active renewal jobs with customer + site names");
