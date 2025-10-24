@@ -135,7 +135,7 @@ const AmcInvoices = () => {
   };
 
   return (
-    <div className="p-6 sm:p-8 bg-gray-50 min-h-screen">
+    <div className="p-6 sm:p-8 bg-gray-10 min-h-screen">
       <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
         AMC Invoice
       </h1>
