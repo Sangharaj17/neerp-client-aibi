@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.dto.AddJobDetailsData;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
@@ -58,6 +59,9 @@ public class AmcJobsService {
     private  EmployeeRepository employeeRepository;
 	@Autowired
     private  RoutesService routesService;
+	
+	@Autowired
+	private AmcInvoiceService amcInvoiceService;
 	
 	
 	 @Autowired
@@ -552,7 +556,7 @@ public class AmcJobsService {
         
         getStatusOfCurrentService(amcJob.getJobId());
 
-        
+        amcInvoiceService.createMultipleInvoices(amcJob.getJobId() , null);
        // updateAmcJobActivityStatus(amcJob);
         log.info("AMC Job saved successfully for leadId: {}", dto.getLeadId());
     }

@@ -216,10 +216,12 @@ public class AmcInvoiceService {
         LocalDate startDate;
 
         try {
-            // --- Primary Check: AmcJob using jobId ---
-            AmcJob amcJob = amcJobRepository.findById(jobId).orElse(null);
             
-            if (amcJob != null) {
+            if (jobId != null) {
+            	
+            	 // --- Primary Check: AmcJob using jobId ---
+                AmcJob amcJob = amcJobRepository.findById(jobId).orElse(null);
+               
                 jobAmount = amcJob.getJobAmount();
                 paymentTerm = amcJob.getPaymentTerm();
                 startDate = amcJob.getStartDate(); // Assuming AmcJob has a getStartDate()

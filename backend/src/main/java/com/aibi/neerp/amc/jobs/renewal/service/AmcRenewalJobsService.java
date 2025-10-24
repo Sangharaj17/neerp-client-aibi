@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobResponseDto;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcServiceAlertData;
@@ -70,6 +71,9 @@ public class AmcRenewalJobsService {
 	
 	@Autowired
 	private AmcRenewalJobActivityService amcRenewalJobActivityService;
+	
+	@Autowired
+	private AmcInvoiceService amcInvoiceService;
 	
 	
     public List<SelectDetailForRenewalJob> getPendingRenewalJobs() {
@@ -431,6 +435,7 @@ public class AmcRenewalJobsService {
 	        
 	        amcRenewalJobActivityService.getStatusOfCurrentService(amcJob.getRenewalJobId());
 
+	        amcInvoiceService.createMultipleInvoices(null , amcJob.getRenewalJobId());
 
 	        
 	       // updateAmcJobActivityStatus(amcJob);
