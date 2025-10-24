@@ -1,5 +1,6 @@
 package com.aibi.neerp.amc.invoice.service;
 
+import com.aibi.neerp.amc.invoice.dto.AmcInvoiceCountsDto;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
 import com.aibi.neerp.amc.invoice.entity.AmcInvoice;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -353,4 +355,39 @@ public class AmcInvoiceService {
         invoiceRepository.deleteById(id);
         log.info("Service Status: Invoice with ID: {} deleted successfully.", id);
     }
+    
+    
+    @Transactional(readOnly = true) // Use Transactional for read performance/consistency
+    public AmcInvoiceCountsDto getInvoiceSummaryCounts() {
+        log.info("Calculating AMC Invoice summary counts.");
+        
+        // 1. Total Invoices (All)
+        long totalInvoices = invoiceRepository.count();
+
+        // 2. Paid Invoices (isCleared = 1)
+        // Assuming '1' means cleared/paid based on your context.
+        long paidInvoices = invoiceRepository.countByIsCleared(1);
+
+        // 3. Pending Invoices (isCleared = 0)
+        // Assuming '0' means pending based on your context.
+        long pendingInvoices = invoiceRepository.countByIsCleared(0);
+
+        // 4. Total Amount Received (Sum of totalAmt where isCleared = 1)
+        Double totalAmountReceived = invoiceRepository.sumTotalAmountReceived();
+
+        // Build and return the DTO
+        return AmcInvoiceCountsDto.builder()
+                .totalInvoices(totalInvoices)
+                .paidInvoices(paidInvoices)
+                .pendingInvoices(pendingInvoices)
+                // Use a ternary operator to safely handle null result from SUM query
+                .totalAmountReceived(totalAmountReceived != null ? totalAmountReceived : 0.0)
+                .build();
+    }
+    
+    
+    
+    
+    
+    
 }

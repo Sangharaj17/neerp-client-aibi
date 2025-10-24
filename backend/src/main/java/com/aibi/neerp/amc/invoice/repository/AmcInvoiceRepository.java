@@ -100,5 +100,18 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
             Pageable pageable
         );
 	
+	
+	
+	// Simple JPA method to count invoices based on the isCleared status
+    long countByIsCleared(Integer isCleared);
+
+    /**
+     * Custom query to sum the total amounts of all PAID invoices (where isCleared = 1).
+     * Assuming 'totalAmt' is the field name for the amount in the AmcInvoice entity.
+     */
+    @Query("SELECT SUM(i.totalAmt) FROM AmcInvoice i WHERE i.isCleared = 1")
+    Double sumTotalAmountReceived();
+	
+	
     
 }

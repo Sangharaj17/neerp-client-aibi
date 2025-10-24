@@ -1,6 +1,7 @@
 package com.aibi.neerp.amc.invoice.controller;
 
 
+import com.aibi.neerp.amc.invoice.dto.AmcInvoiceCountsDto;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
@@ -40,6 +41,14 @@ public class AmcInvoiceController {
         
         // Call the refactored service method
         return invoiceService.getInvoicesPaged(search, dateSearch, page, size, sortBy, direction);
+    }
+    
+ // API 2: GET Invoice Summary Counts (New Method)
+    // Endpoint: GET /api/amc/invoices/counts
+    @GetMapping("/counts")
+    public AmcInvoiceCountsDto getInvoiceCounts() { // Use a specific DTO for clarity
+        log.info("Request received to fetch AMC Invoice summary counts.");
+        return invoiceService.getInvoiceSummaryCounts();
     }
 
     // API 2: GET Invoice by ID
