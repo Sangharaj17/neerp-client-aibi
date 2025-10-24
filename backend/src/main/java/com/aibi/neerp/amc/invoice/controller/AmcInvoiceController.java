@@ -7,10 +7,14 @@ import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -23,11 +27,19 @@ public class AmcInvoiceController {
 
     // API 1: GET All Invoices
     // Endpoint: GET /api/invoices
-    @GetMapping
-    public ResponseEntity<List<AmcInvoiceResponseDto>> getAllInvoices() {
-        log.info("API Call: GET all invoices.");
-        List<AmcInvoiceResponseDto> invoices = invoiceService.getAllInvoices();
-        return new ResponseEntity<>(invoices, HttpStatus.OK);
+    @GetMapping("/getAllInvoices") // Changed from the bare @GetMapping
+    public Page<AmcInvoiceResponseDto> getAllInvoices(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateSearch,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "invoiceDate") String sortBy, // Default sort by date
+            @RequestParam(defaultValue = "desc") String direction // Default descending
+    ) {
+        log.info("Request received to fetch AMC Invoices with search='{}', date='{}'", search, dateSearch);
+        
+        // Call the refactored service method
+        return invoiceService.getInvoicesPaged(search, dateSearch, page, size, sortBy, direction);
     }
 
     // API 2: GET Invoice by ID
@@ -56,6 +68,34 @@ public class AmcInvoiceController {
         } catch (Exception e) {
             log.error("API Error: Failed to create invoice.", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+ // Using a POST request as this method CREATES resources (invoices)
+    @PostMapping("/createMultiple")
+    public ResponseEntity<String> createMultipleInvoices(
+            // Use @RequestParam for required IDs passed in the URL query string
+            @RequestParam(required = false) Integer jobId, 
+            @RequestParam(required = false) Integer renewalJobId) {
+        
+        log.info("API Call: POST to create multiple invoices for Job ID: {} and Renewal Job ID: {}", 
+                 jobId, renewalJobId);
+        
+        // Input validation for the primary ID
+        if (jobId == null) {
+            return new ResponseEntity<>("Error: jobId must be provided.", HttpStatus.BAD_REQUEST);
+        }
+        
+        // Call the service method
+        String status = invoiceService.createMultipleInvoices(jobId, renewalJobId);
+        
+        // Return appropriate HTTP status based on the service result
+        if ("success".equalsIgnoreCase(status)) {
+            // 201 Created is often used for successful creation of resources
+            return new ResponseEntity<>("Invoices created successfully.", HttpStatus.CREATED);
+        } else {
+            // 400 Bad Request or 500 Internal Server Error for failure
+            return new ResponseEntity<>("Failed to create invoices. Reason: " + status, HttpStatus.BAD_REQUEST);
         }
     }
 

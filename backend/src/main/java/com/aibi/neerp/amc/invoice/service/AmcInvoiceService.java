@@ -15,11 +15,17 @@ import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoField;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -39,13 +45,21 @@ public class AmcInvoiceService {
 
     // Mock/Placeholder for fetching FK entities (Replace with actual repository calls)
     private AmcJob fetchAmcJob(Integer jobId) {
-        // Example: return amcJobRepository.findById(jobId).orElseThrow(...)
-        return (jobId != null) ? AmcJob.builder().jobId(jobId).build() : null; 
+        if (jobId == null) {
+            return null;
+        }
+        return amcJobRepository.findById(jobId)
+                .orElseThrow(() -> new RuntimeException("AMC Job not found with id: " + jobId));
     }
+
     private AmcRenewalJob fetchAmcRenewalJob(Integer renewalJobId) {
-        // Example: return amcRenewalJobRepository.findById(renewalJobId).orElseThrow(...)
-        return (renewalJobId != null) ? AmcRenewalJob.builder().renewalJobId(renewalJobId).build() : null;
+        if (renewalJobId == null) {
+            return null;
+        }
+        return amcRenewalJobRepository.findById(renewalJobId)
+                .orElseThrow(() -> new RuntimeException("AMC Renewal Job not found with id: " + renewalJobId));
     }
+
     
     // =================================================================
     // MAPPING LOGIC (Integrated)
@@ -55,6 +69,8 @@ public class AmcInvoiceService {
     private AmcInvoice toEntity(AmcInvoiceRequestDto dto) {
         AmcJob amcJob = fetchAmcJob(dto.getJobNo());
         AmcRenewalJob amcRenewalJob = fetchAmcRenewalJob(dto.getRenewlJobId());
+        
+        System.out.println("called toenityt ");
 
         return AmcInvoice.builder()
                 .invoiceNo(dto.getInvoiceNo())
@@ -100,7 +116,7 @@ public class AmcInvoiceService {
         	siteName = amcJob.getSite().getSiteName();
         	siteAddress = amcJob.getSite().getSiteAddress();
         	
-        }else {
+        }else if(entity.getAmcRenewalJob()!=null){
         	
         	AmcRenewalJob amcRenewalJob = entity.getAmcRenewalJob();
         	siteName = amcRenewalJob.getSite().getSiteName();
@@ -117,12 +133,46 @@ public class AmcInvoiceService {
     // CORRECTED CRUD OPERATIONS (Using DTOs)
     // =================================================================
 
-    // 1. Get all Invoices
-    public List<AmcInvoiceResponseDto> getAllInvoices() {
-        log.info("Service Call: Fetching all invoices.");
-        return invoiceRepository.findAll().stream()
-                .map(this::toResponseDto)
-                .collect(Collectors.toList());
+ // This replaces your original public List<AmcInvoiceResponseDto> getAllInvoices()
+    public Page<AmcInvoiceResponseDto> getInvoicesPaged(
+            String search, 
+            LocalDate dateSearch, 
+            int page, 
+            int size, 
+            String sortBy, 
+            String direction) {
+        
+        log.info("Fetching AMC Invoices (Pending/Current-Next Month) with search='{}', date='{}', page={}, size={}, sortBy={}, direction={}", 
+                 search, dateSearch, page, size, sortBy, direction);
+
+        // 1. Build Sort and Pageable
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2. Prepare search parameters (pass null if empty/blank for efficient query)
+        String finalSearch = (search == null || search.trim().isEmpty()) ? null : search; 
+
+        // 3. CRITICAL: Calculate Current and Next Month for the new query filter
+        LocalDate today = LocalDate.now();
+        int currentMonth = today.get(ChronoField.MONTH_OF_YEAR); 
+        int nextMonth = today.plusMonths(1).get(ChronoField.MONTH_OF_YEAR); 
+
+        // 4. Execute the complex search query with the new month filters
+        // The repository method MUST now accept currentMonth and nextMonth
+        Page<AmcInvoice> results = invoiceRepository.searchAllInvoices(
+                finalSearch,
+                dateSearch, 
+                currentMonth, // NEW parameter
+                nextMonth,    // NEW parameter
+                pageable
+        );
+
+        System.out.println("found results");
+        // 5. Convert the Page of Entities to a Page of DTOs
+        return results.map(this::toResponseDto);
     }
 
     // 2. Get Invoice by ID
@@ -141,6 +191,8 @@ public class AmcInvoiceService {
         log.info("Service Call: Saving new invoice.");
         
         AmcInvoice invoice = toEntity(dto);
+        
+        System.out.println("toenity successfully save");
         AmcInvoice savedInvoice = invoiceRepository.save(invoice);
         
         log.info("Service Status: Saved invoice with ID: {}", savedInvoice.getInvoiceId());
@@ -149,6 +201,8 @@ public class AmcInvoiceService {
     
     
     public String createMultipleInvoices(Integer jobId, Integer renewalJobId) {
+    	
+    	System.out.println("called createMultipleInvoices");
         
         // 1. Determine the source job details (AmcJob or AmcRenewalJob)
         BigDecimal jobAmount;
