@@ -1,135 +1,240 @@
-// components/AmcInvoices.js
-import React, { useState, useEffect } from 'react';
-import axiosInstance from '@/utils/axiosInstance'; // Adjust path as needed
-import { FaPrint, FaSpinner } from 'react-icons/fa'; // Import necessary icons
+"use client";
+
+import { useState, useEffect } from "react";
+import { FaPrint, FaSort, FaSortUp, FaSortDown, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import axiosInstance from "@/utils/axiosInstance"; // Adjust path if needed
+
+const getSortIcon = (column, sortBy, direction) => {
+  if (sortBy === column) {
+    return direction === "asc" ? <FaSortUp className="ml-1" /> : <FaSortDown className="ml-1" />;
+  }
+  return <FaSort className="ml-1 text-gray-400" />;
+};
 
 const AmcInvoices = () => {
-    const [invoices, setInvoices] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-    // --- Pagination and Sorting State ---
-    const [pagination, setPagination] = useState({
-        page: 0,
-        size: 20,
-        sortBy: 'totalAmt',
-        direction: 'asc',
-    });
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 10,
+    totalPages: 0,
+    totalElements: 0,
+  });
 
-    // --- Data Fetching Logic ---
-    useEffect(() => {
-        const fetchInvoices = async () => {
-            setLoading(true);
-            setError(null);
-            
-            // Construct the query string from the state
-            const params = {
-                page: pagination.page,
-                size: pagination.size,
-                sortBy: pagination.sortBy,
-                direction: pagination.direction,
-                // Assuming 'search' is not required for the default view
-                search: '', 
-            };
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("invoiceDate");
+  const [direction, setDirection] = useState("desc");
 
-            try {
-                const response = await axiosInstance.get('/api/amc/invoices/getAllInvoices', { params });
-                
-                // The API returns a Spring Page object; extract 'content'
-                setInvoices(response.data.content);
-                // Optionally update total pages/elements here if needed for full pagination UI
-                
-            } catch (err) {
-                console.error("Failed to fetch invoices:", err);
-                setError("Failed to load invoices. Please check the network.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchInvoices();
-    }, [pagination]); // Dependency array: Re-run on pagination/sort change
-
-    // --- Helper Function for 'Is Received' status ---
-    const getPaymentStatus = (isCleared) => {
-        // isCleared = 1 means Cleared (received), isCleared = 0 means Pending (not received)
-        const status = isCleared === 1 ? 'Received' : 'Pending';
-        const color = isCleared === 1 ? 'text-green-600' : 'text-red-600';
-
-        return <span className={`font-medium ${color}`}>{status}</span>;
-    };
-
-    // --- Placeholder for PDF generation ---
-    const handlePrintPdf = (invoiceId) => {
-        console.log(`PDF Print Icon clicked for Invoice ID: ${invoiceId}`);
-        alert(`Prepare to generate PDF for Invoice ID: ${invoiceId}`);
-        // TODO: Implement PDF generation logic here
-    };
-
-    // --- Rendering Logic ---
-
-    if (loading) {
-        return <div className="p-4 text-center text-blue-500"><FaSpinner className="animate-spin inline mr-2" />Loading Invoices...</div>;
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get("/api/amc/invoices/getAllInvoices", {
+        params: {
+          page: pagination.page,
+          size: pagination.size,
+          search: search || null, // Direct search without debounce
+          sortBy,
+          direction,
+        },
+      });
+      const data = response.data;
+      setInvoices(data.content);
+      setPagination((prev) => ({
+        ...prev,
+        page: data.number,
+        size: data.size,
+        totalPages: data.totalPages,
+        totalElements: data.totalElements,
+      }));
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (error) {
-        return <div className="p-4 text-center text-red-500">{error}</div>;
+  // Fetch invoices when relevant state changes
+  useEffect(() => {
+    fetchInvoices();
+  }, [pagination.page, pagination.size, search, sortBy, direction]);
+
+  const getPaymentStatus = (isCleared) => {
+    if (isCleared === 1) {
+      return <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">Paid</span>;
     }
-
-    if (invoices.length === 0) {
-        return <div className="p-4 text-center text-gray-500">No current/next month pending invoices found.</div>;
+    if (isCleared === 0) {
+      return <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Pending</span>;
     }
+    return <span className="text-gray-500">-</span>;
+  };
 
-    return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-6">Pending AMC Invoices (Current & Next Month)</h1>
-            
-            <table className="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-                <thead className="bg-gray-200">
-                    <tr>
-                        <th className="py-2 px-4 border-b">Sr No</th>
-                        <th className="py-2 px-4 border-b text-left">Invoice No</th>
-                        <th className="py-2 px-4 border-b text-left">Invoice For Site</th>
-                        <th className="py-2 px-4 border-b text-left">Site Address</th>
-                        <th className="py-2 px-4 border-b">Invoice Date</th>
-                        <th className="py-2 px-4 border-b text-right">Amount (Total)</th>
-                        <th className="py-2 px-4 border-b">Is Received</th>
-                        <th className="py-2 px-4 border-b">PDF</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {invoices.map((invoice, index) => (
-                        <tr key={invoice.invoiceId} className="hover:bg-gray-50">
-                            <td className="py-2 px-4 border-b text-center">{index + 1 + (pagination.page * pagination.size)}</td>
-                            <td className="py-2 px-4 border-b">{invoice.invoiceNo}</td>
-                            <td className="py-2 px-4 border-b">{invoice.siteName || 'N/A'}</td>
-                            {/* Display Site Address, handling null/empty string */}
-                            <td className="py-2 px-4 border-b text-sm text-gray-500">
-                                {invoice.siteAddress || 'No Address Provided'}
-                            </td>
-                            <td className="py-2 px-4 border-b text-center">{invoice.invoiceDate}</td>
-                            <td className="py-2 px-4 border-b text-right font-mono">
-                                {/* Format as currency string (simple fixed 2 decimal) */}
-                                {invoice.totalAmt ? `₹${invoice.totalAmt.toFixed(2)}` : 'N/A'}
-                            </td>
-                            <td className="py-2 px-4 border-b text-center">
-                                {/* Display status and color based on isCleared */}
-                                {getPaymentStatus(invoice.isCleared)}
-                            </td>
-                            <td className="py-2 px-4 border-b text-center">
-                                {/* PDF Print Icon */}
-                                <FaPrint 
-                                    className="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"
-                                    title={`Print Invoice ${invoice.invoiceNo}`}
-                                    onClick={() => handlePrintPdf(invoice.invoiceId)}
-                                />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+  const handlePrintPdf = (invoiceId) => {
+    console.log("Print PDF for invoice:", invoiceId);
+    alert(`Initiating PDF download for Invoice ID: ${invoiceId}`);
+  };
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setDirection(direction === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setDirection("asc");
+    }
+    setPagination(prev => ({ ...prev, page: 0 }));
+  };
+
+  const handleRowsChange = (e) => {
+    setPagination({ ...pagination, size: Number(e.target.value), page: 0 });
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      setPagination({ ...pagination, page: newPage });
+    }
+  };
+
+  return (
+    <div className="p-6 sm:p-8 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">AMC Invoice</h1>
+
+      <div className="bg-white shadow-xl rounded-lg overflow-hidden">
+        <div className="p-5 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Invoices List</h2>
         </div>
-    );
+
+        <div className="p-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search by invoice number or site name..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPagination(prev => ({ ...prev, page: 0 })); // Reset page on search
+            }}
+            className="flex-grow border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 px-4 py-2 rounded-lg transition duration-150 ease-in-out sm:w-1/3 w-full"
+          />
+          <div className="flex items-center space-x-2">
+            <span className="text-gray-600 text-sm">Rows per page:</span>
+            <select
+              value={pagination.size}
+              onChange={handleRowsChange}
+              className="border border-gray-300 px-3 py-2 rounded-lg appearance-none bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {[5, 10, 20, 50].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="text-center py-10 text-lg text-blue-600">
+              <div className="animate-spin inline-block w-6 h-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full" role="status">
+                <span className="hidden">Loading...</span>
+              </div>
+              <p className="mt-2">Loading Invoices...</p>
+            </div>
+          ) : (
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  {[{ key: "#", sortable: false, align: "center" },
+                    { key: "invoiceNo", label: "Invoice No", sortable: true, align: "left" },
+                    { key: "siteName", label: "Site Name", sortable: true, align: "left" },
+                    { key: "siteAddress", label: "Site Address", sortable: false, align: "left" },
+                    { key: "invoiceDate", label: "Invoice Date", sortable: true, align: "center" },
+                    { key: "totalAmt", label: "Total Amount", sortable: false, align: "right" },
+                    { key: "isCleared", label: "Status", sortable: false, align: "center" },
+                    { key: "action", label: "Action", sortable: false, align: "center" }].map(col => (
+                    <th
+                      key={col.key}
+                      onClick={() => col.sortable && handleSort(col.key)}
+                      className={`px-6 py-2 text-${col.align} text-xs font-medium text-gray-500 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-gray-100 transition duration-150' : ''}`}
+                    >
+                      <div className={`flex items-center ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : ''}`}>
+                        {col.label}
+                        {col.sortable && getSortIcon(col.key, sortBy, direction)}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {invoices.length > 0 ? (
+                  invoices.map((invoice, i) => (
+                    <tr key={invoice.invoiceId} className="hover:bg-blue-50 transition duration-100 ease-in-out even:bg-gray-50">
+                      <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900 text-center">{i + 1 + pagination.page * pagination.size}</td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-800 font-semibold">{invoice.invoiceNo}</td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-700">{invoice.siteName || "N/A"}</td>
+                      <td className="px-6 py-2 text-xs text-gray-500 max-w-xs truncate">{invoice.siteAddress || "-"}</td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-500 text-center">{invoice.invoiceDate}</td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 font-mono text-right"><span className="font-bold">₹{invoice.totalAmt?.toFixed(2) || '0.00'}</span></td>
+                      <td className="px-6 py-2 whitespace-nowrap text-center">{getPaymentStatus(invoice.isCleared)}</td>
+                      <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
+                        <button onClick={() => handlePrintPdf(invoice.invoiceId)} className="text-blue-600 hover:text-blue-900 transition duration-150 p-1 rounded-full hover:bg-blue-100" title="Print Invoice PDF">
+                          <FaPrint className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="text-center py-10 text-gray-500 text-lg">No invoices found matching your criteria.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {pagination.totalPages > 0 && (
+          <div className="p-5 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center text-sm">
+            <div className="text-gray-600 mb-2 sm:mb-0">
+              Showing{" "}
+              <span className="font-medium">{Math.min(pagination.page * pagination.size + 1, pagination.totalElements)}</span>{" "}
+              to{" "}
+              <span className="font-medium">{Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)}</span>{" "}
+              of <span className="font-medium">{pagination.totalElements}</span> results
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <button
+                disabled={pagination.page === 0}
+                onClick={() => handlePageChange(pagination.page - 1)}
+                className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+              >
+                <FaChevronLeft className="w-4 h-4" />
+              </button>
+
+              {Array.from({ length: pagination.totalPages }, (_, idx) => idx)
+                .filter(idx => idx === 0 || idx === pagination.totalPages - 1 || (idx >= pagination.page - 1 && idx <= pagination.page + 1))
+                .map((idx, index, array) => (
+                  <span key={idx}>
+                    {(index > 0 && array[index - 1] < idx - 1) && <span className="px-1 text-gray-500">...</span>}
+                    <button
+                      onClick={() => handlePageChange(idx)}
+                      className={`px-4 py-2 rounded-lg font-medium transition duration-150 ${idx === pagination.page ? "bg-blue-600 text-white shadow-md hover:bg-blue-700" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"}`}
+                    >
+                      {idx + 1}
+                    </button>
+                  </span>
+                ))}
+
+              <button
+                disabled={pagination.page === pagination.totalPages - 1}
+                onClick={() => handlePageChange(pagination.page + 1)}
+                className="p-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+              >
+                <FaChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default AmcInvoices;

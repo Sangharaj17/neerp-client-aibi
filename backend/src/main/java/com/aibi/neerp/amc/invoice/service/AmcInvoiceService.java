@@ -136,14 +136,14 @@ public class AmcInvoiceService {
  // This replaces your original public List<AmcInvoiceResponseDto> getAllInvoices()
     public Page<AmcInvoiceResponseDto> getInvoicesPaged(
             String search, 
-            LocalDate dateSearch, 
+            LocalDate date, 
             int page, 
             int size, 
             String sortBy, 
             String direction) {
         
         log.info("Fetching AMC Invoices (Pending/Current-Next Month) with search='{}', date='{}', page={}, size={}, sortBy={}, direction={}", 
-                 search, dateSearch, page, size, sortBy, direction);
+                 search, date, page, size, sortBy, direction);
 
         // 1. Build Sort and Pageable
         Sort sort = direction.equalsIgnoreCase("desc")
@@ -159,11 +159,15 @@ public class AmcInvoiceService {
         LocalDate today = LocalDate.now();
         int currentMonth = today.get(ChronoField.MONTH_OF_YEAR); 
         int nextMonth = today.plusMonths(1).get(ChronoField.MONTH_OF_YEAR); 
+        
+     // Convert LocalDate to String for repository query
+        String dateSearch = date != null ? date.toString() : null;
+
 
         // 4. Execute the complex search query with the new month filters
         // The repository method MUST now accept currentMonth and nextMonth
         Page<AmcInvoice> results = invoiceRepository.searchAllInvoices(
-                finalSearch,
+                finalSearch == null ? "" : finalSearch,
                 dateSearch, 
                 currentMonth, // NEW parameter
                 nextMonth,    // NEW parameter

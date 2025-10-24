@@ -52,8 +52,7 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
 //            Pageable pageable
 //        );
 	
-	
-    @Query("""
+	@Query("""
             SELECT DISTINCT i
             FROM AmcInvoice i
            
@@ -83,7 +82,7 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
                 LOWER(rc.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
             ))
            
-            AND (:dateSearch IS NULL OR i.invoiceDate = :dateSearch)
+            AND (:dateSearch IS NULL OR :dateSearch = '' OR i.invoiceDate = CAST(:dateSearch AS date))
             
           
             AND (i.isCleared = 0)
@@ -95,11 +94,11 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
         """)
         Page<AmcInvoice> searchAllInvoices(
             @Param("search") String search,
-            @Param("dateSearch") LocalDate dateSearch, 
-            @Param("currentMonth") int currentMonth, // New: Current Month number (1-12)
-            @Param("nextMonth") int nextMonth,       // New: Next Month number (1-12)
+            @Param("dateSearch") String dateSearch, // Must remain String to match query logic
+            @Param("currentMonth") int currentMonth, 
+            @Param("nextMonth") int nextMonth,       
             Pageable pageable
-        );   
+        );
 	
     
 }
