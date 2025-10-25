@@ -1,6 +1,7 @@
 package com.aibi.neerp.amc.invoice.repository;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.aibi.neerp.amc.invoice.entity.AmcInvoice;
+import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 
 @Repository
 public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer> {
@@ -111,7 +114,11 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
      */
     @Query("SELECT SUM(i.totalAmt) FROM AmcInvoice i WHERE i.isCleared = 1")
     Double sumTotalAmountReceived();
+
+
+    List<AmcInvoice> findByAmcJob(AmcJob amcJob);
 	
+    List<AmcInvoice> findByAmcRenewalJob(AmcRenewalJob amcRenewalJob);
 	
     
 }

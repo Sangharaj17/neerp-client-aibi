@@ -251,6 +251,8 @@ const NavigationAccordion = () => {
       hasSubmenu: true,
       submenu: [
         { title: 'Add New Job Detail', href: `/dashboard/jobs/add-new-job-detail` },
+                { title: 'Add Payment', href: `/dashboard/jobs/add-payment` },
+
         { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list/false` },
         { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call`},
          { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },

@@ -27,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -388,7 +390,79 @@ public class AmcInvoiceService {
     }
     
     
+    public List<AmcInvoiceResponseDto> getAmcInvoiceResponseDtosByJobId(Integer jobId) {
+        List<AmcInvoiceResponseDto> amcInvoiceResponseDtos = new ArrayList<>();
+
+        AmcJob amcJob = amcJobRepository.findById(jobId).orElse(null);
+        if (amcJob == null) {
+            log.warn("AMC Job not found for ID: {}", jobId);
+            return amcInvoiceResponseDtos;
+        }
+
+        List<AmcInvoice> amcInvoices = invoiceRepository.findByAmcJob(amcJob);
+        if (amcInvoices.isEmpty()) {
+            return amcInvoiceResponseDtos;
+        }
+
+        LocalDate currentDate = LocalDate.now();
+
+        List<AmcInvoice> filteredInvoices = amcInvoices.stream()
+            .filter(invoice -> {
+                LocalDate invoiceDate = invoice.getInvoiceDate();
+                if (invoiceDate == null) return false;
+
+                boolean isUpcomingWithinNextMonth = !invoiceDate.isBefore(currentDate)
+                        && invoiceDate.isBefore(currentDate.plusMonths(2)); // next 2 months range
+
+                boolean isUnclearedPastDue = invoice.getIsCleared() != null && invoice.getIsCleared() == 0
+                        && invoiceDate.isBefore(currentDate);
+
+                return isUpcomingWithinNextMonth || isUnclearedPastDue;
+            })
+            .collect(Collectors.toList());
+
+        return filteredInvoices.stream()
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
+    }
     
+    public List<AmcInvoiceResponseDto> getAmcInvoiceResponseDtosByRenewalJobId(Integer renewalJobId) {
+        List<AmcInvoiceResponseDto> amcInvoiceResponseDtos = new ArrayList<>();
+
+        AmcRenewalJob renewalJob = amcRenewalJobRepository.findById(renewalJobId).orElse(null);
+        if (renewalJob == null) {
+            log.warn("AMC Renewal Job not found for ID: {}", renewalJobId);
+            return amcInvoiceResponseDtos;
+        }
+
+        List<AmcInvoice> amcInvoices = invoiceRepository.findByAmcRenewalJob(renewalJob);
+        if (amcInvoices.isEmpty()) {
+            return amcInvoiceResponseDtos;
+        }
+
+        LocalDate currentDate = LocalDate.now();
+
+        List<AmcInvoice> filteredInvoices = amcInvoices.stream()
+            .filter(invoice -> {
+                LocalDate invoiceDate = invoice.getInvoiceDate();
+                if (invoiceDate == null) return false;
+
+                boolean isUpcomingWithinNextMonth = !invoiceDate.isBefore(currentDate)
+                        && invoiceDate.isBefore(currentDate.plusMonths(2)); // current & next month range
+
+                boolean isUnclearedPastDue = invoice.getIsCleared() != null && invoice.getIsCleared() == 0
+                        && invoiceDate.isBefore(currentDate);
+
+                return isUpcomingWithinNextMonth || isUnclearedPastDue;
+            })
+            .collect(Collectors.toList());
+
+        return filteredInvoices.stream()
+            .map(this::toResponseDto)
+            .collect(Collectors.toList());
+    }
+
+
     
     
     
