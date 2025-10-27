@@ -24,6 +24,9 @@ public class AmcJobPaymentResponseDto {
     private String branchName;
     private BigDecimal amountPaid;
     private String paymentCleared;
+    
+    private String customerName;
+    private String siteName;
 
     // Simplified foreign key references
     private Integer jobId;

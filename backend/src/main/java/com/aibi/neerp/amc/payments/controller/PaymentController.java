@@ -1,10 +1,13 @@
 package com.aibi.neerp.amc.payments.controller;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
@@ -21,6 +25,7 @@ import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.renewal.service.AmcRenewalJobsService;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
+import com.aibi.neerp.amc.payments.dto.PaymentSummaryDto;
 import com.aibi.neerp.amc.payments.service.AmcJobPaymentService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -153,12 +158,20 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // ✅ Get All Payments
-    @GetMapping("/getAllPayments")
-    public ResponseEntity<List<AmcJobPaymentResponseDto>> getAllPayments() {
-        log.info("Fetching all AMC payments");
-        List<AmcJobPaymentResponseDto> payments = paymentService.getAllPayments();
-        return ResponseEntity.ok(payments);
+ // ✅ Refactored API Controller Method
+    @GetMapping("/getAllPaymentsPaged") // Changed the endpoint name for clarity
+    public Page<AmcJobPaymentResponseDto> getAllPaymentsPaged(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateSearch,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "paymentDate") String sortBy, 
+            @RequestParam(defaultValue = "desc") String direction 
+    ) {
+        log.info("Request received to fetch AMC Payments with search='{}', date='{}'", search, dateSearch);
+        
+        // Call the new refactored service method
+        return paymentService.getPaymentsPaged(search, dateSearch, page, size, sortBy, direction);
     }
 
     // ✅ Get Payment by ID
@@ -178,7 +191,14 @@ public class PaymentController {
     }
     
     
-    
+    @GetMapping("/summary")
+    public ResponseEntity<PaymentSummaryDto> getPaymentSummary() {
+        // 1. Call the service layer to get the aggregated data
+        PaymentSummaryDto summary = paymentService.getPaymentSummary();
+        
+        // 2. Return the DTO in a successful HTTP response
+        return ResponseEntity.ok(summary);
+    }
     
     
 }

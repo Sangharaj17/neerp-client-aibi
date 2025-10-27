@@ -257,6 +257,8 @@ const NavigationAccordion = () => {
         { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call`},
          { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
       { title: 'Amc Invoices', href: `/dashboard/jobs/amc-invoices`},
+            { title: 'Amc Payment Invoices', href: `/dashboard/jobs/amc-payments`},
+
 
       ]
     },

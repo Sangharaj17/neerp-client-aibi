@@ -8,13 +8,23 @@ import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
+import com.aibi.neerp.amc.payments.dto.PaymentSummaryDto;
+import com.aibi.neerp.amc.payments.dto.PaymentTypeCount;
 import com.aibi.neerp.amc.payments.entity.AmcJobPayment;
 import com.aibi.neerp.amc.payments.repository.AmcJobPaymentRepository;
+import com.aibi.neerp.customer.entity.Customer;
+import com.aibi.neerp.customer.entity.Site;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -114,12 +124,39 @@ public class AmcJobPaymentService {
     	
     }
 
-    // ✅ Get all payments
-    public List<AmcJobPaymentResponseDto> getAllPayments() {
-        return paymentRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+ // ✅ Refactored Service Layer Method
+    public Page<AmcJobPaymentResponseDto> getPaymentsPaged(
+            String search, 
+            LocalDate date, 
+            int page, 
+            int size, 
+            String sortBy, 
+            String direction) {
+        
+       // log.info("Fetching AMC Payments with search='{}', date='{}', page={}, size={}, sortBy={}, direction={}", 
+         //        search, date, page, size, sortBy, direction);
+
+        // 1. Build Sort and Pageable
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2. Prepare search parameters
+        String finalSearch = (search == null || search.trim().isEmpty()) ? "" : search; 
+        String dateSearchString = date != null ? date.toString() : null;
+
+
+        // 3. Execute the search query
+        Page<AmcJobPayment> results = paymentRepository.searchAllPayments(
+                finalSearch,
+                dateSearchString, 
+                pageable
+        );
+
+        // 4. Convert the Page of Entities to a Page of DTOs
+        return results.map(this::mapToResponse);
     }
 
     // ✅ Get payment by ID
@@ -136,12 +173,50 @@ public class AmcJobPaymentService {
 
     // ✅ Convert Entity → Response DTO
     private AmcJobPaymentResponseDto mapToResponse(AmcJobPayment entity) {
+    	
+    	AmcJob amcJob = null;
+        AmcRenewalJob amcRenewalJob = null;
+        
+        String customerName = "";
+        String siteName = "";
+        
+        Customer customer = null;
+        Site site = null;
+        		
+        if(entity.getAmcJob()!=null) {
+        	
+        	amcJob = entity.getAmcJob();
+        	customer = amcJob.getCustomer();
+        	site = amcJob.getSite();
+        	
+        	if(customer!=null) {
+        		customerName = customer.getCustomerName();
+        	}
+        	if(site!=null) {
+        		siteName = site.getSiteName();
+        	}
+        	
+        }else if(entity.getAmcRenewalJob()!=null){
+        	amcRenewalJob = entity.getAmcRenewalJob();
+        	customer = amcRenewalJob.getCustomer();
+        	site = amcRenewalJob.getSite();
+        	
+        	if(customer!=null) {
+        		customerName = customer.getCustomerName();
+        	}
+        	if(site!=null) {
+        		siteName = site.getSiteName();
+        	}
+        }
+    	
         return AmcJobPaymentResponseDto.builder()
                 .paymentId(entity.getPaymentId())
                 .paymentDate(entity.getPaymentDate())
                 .invoiceNo(entity.getInvoiceNo())
                 .payFor(entity.getPayFor())
                 .paymentType(entity.getPaymentType())
+                .customerName(customerName)
+                .siteName(siteName)
                 .chequeNo(entity.getChequeNo())
                 .bankName(entity.getBankName())
                 .branchName(entity.getBranchName())
@@ -152,4 +227,43 @@ public class AmcJobPaymentService {
                 .invoiceId(entity.getAmcInvoice() != null ? entity.getAmcInvoice().getInvoiceId() : null)
                 .build();
     }
+    
+    
+    
+    public PaymentSummaryDto getPaymentSummary() {
+
+        // ✅ Fetch main stats list (1 row only)
+        List<Object[]> resultList = paymentRepository.getPaymentMainSummaryStatistics();
+        Object[] stats = resultList.isEmpty() ? new Object[4] : resultList.get(0);
+
+        long totalPaymentsCount = stats[0] != null ? ((Number) stats[0]).longValue() : 0L;
+        long clearedPaymentsCount = stats[1] != null ? ((Number) stats[1]).longValue() : 0L;
+        long unclearedPaymentsCount = stats[2] != null ? ((Number) stats[2]).longValue() : 0L;
+        BigDecimal totalClearedAmount = stats[3] != null ? (BigDecimal) stats[3] : BigDecimal.ZERO;
+
+        // ✅ Fetch payment type breakdown
+        List<Object[]> breakdownList = paymentRepository.getPaymentTypeBreakdown();
+
+        List<PaymentTypeCount> typeCounts = breakdownList.stream()
+                .map(row -> new PaymentTypeCount(
+                        (String) row[0],
+                        ((Number) row[1]).longValue(),
+                        row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO
+                ))
+                .collect(Collectors.toList());
+
+        // ✅ Assemble DTO
+        return PaymentSummaryDto.builder()
+                .totalPaymentsCount(totalPaymentsCount)
+                .clearedPaymentsCount(clearedPaymentsCount)
+                .unclearedPaymentsCount(unclearedPaymentsCount)
+                .totalClearedAmount(totalClearedAmount)
+                .paymentTypeCounts(typeCounts)
+                .build();
+    }
+
+    
+    
+    
+    
 }
