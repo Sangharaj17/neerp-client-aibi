@@ -119,6 +119,10 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
     List<AmcInvoice> findByAmcJob(AmcJob amcJob);
 	
     List<AmcInvoice> findByAmcRenewalJob(AmcRenewalJob amcRenewalJob);
+
+
+    @Query("SELECT COALESCE(MAX(i.invoiceId), 0) FROM AmcInvoice i")
+    Integer findMaxInvoiceId();
 	
     
 }

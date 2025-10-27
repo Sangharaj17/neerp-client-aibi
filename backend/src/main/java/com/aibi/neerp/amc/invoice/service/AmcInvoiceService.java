@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Month;
+import java.time.Year;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
@@ -290,7 +291,13 @@ public class AmcInvoiceService {
             amcInvoiceRequestDto.setInvoiceDate(currentInvoiceDate);
 
             // Generate Formatted Invoice Number
-            String formattedInvoiceNo = String.format("%s-%03d", nextInvoiceNoPrefix, i);
+         //   String formattedInvoiceNo = String.format("%s-%03d", nextInvoiceNoPrefix, i);
+            
+            Integer nextInvoiceId = invoiceRepository.findMaxInvoiceId() + 1;
+            String currentYear = String.valueOf(Year.now().getValue());
+            String formattedInvoiceNo = String.format("INV-%s-%04d", currentYear, nextInvoiceId);
+
+         
             amcInvoiceRequestDto.setInvoiceNo(formattedInvoiceNo);
 
             amcInvoiceRequestDto.setTotalAmt(eachTermJobAmount);
