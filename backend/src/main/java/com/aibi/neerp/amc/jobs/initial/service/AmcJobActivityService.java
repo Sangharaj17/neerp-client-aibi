@@ -63,11 +63,17 @@ public class AmcJobActivityService {
 	    JobActivityType jobActivityType = jobActivityTypeRepository.findById(dto.getJobActivityTypeId())
 	            .orElseThrow(() -> new RuntimeException("JobActivityType not found with id " + dto.getJobActivityTypeId()));
 
-	    Employee employee = employeeRepository.findById(dto.getJobActivityById())
-	            .orElseThrow(() -> new RuntimeException("Employee not found with id " + dto.getJobActivityById()));
-	    
-	    Employee executive = employeeRepository.findById(dto.getExecutiveId())
-	            .orElseThrow(() -> new RuntimeException("Employee not found with id " + dto.getExecutiveId()));
+	    Employee employee = null;
+	    if (dto.getJobActivityById() != null) {
+	        employee = employeeRepository.findById(dto.getJobActivityById())
+	                .orElse(null); // Returns null if not found
+	    }
+
+	    Employee executive = null;
+	    if (dto.getExecutiveId() != null) {
+	        executive = employeeRepository.findById(dto.getExecutiveId())
+	                .orElse(null); // Returns null if not found
+	    }
 
 	    BreakdownTodo breakdownTodo = null;
 	    if (dto.getBreakdownTodoId() != null) {
@@ -108,8 +114,11 @@ public class AmcJobActivityService {
 	        amcJobActivityRepository.save(activity);
 	    }
 	    
+	    
+	    
 	    if(jobActivityType.getActivityName().equalsIgnoreCase("service")){
 	    	updateAmcJobAfterAddingActivity(dto.getJobId() , job ,  dto.getLiftIds() , dto.getActivityDate());
+	    	getStatusOfCurrentService(job.getJobId());
 	    }
 	    
 	    if (dto.getBreakdownTodoId() != null) {
@@ -183,7 +192,7 @@ public class AmcJobActivityService {
 		}
 	   
 	}
-	
+	@Transactional
 	public List<LiftData> getUncompletedBreakDownActivityLifts(Integer breakdownTodoId) {
 
 	    if (breakdownTodoId == null) {
@@ -241,7 +250,7 @@ public class AmcJobActivityService {
 	
 	
 	
-	
+	@Transactional
 	public String getStatusOfCurrentService(Integer jobId) {
 	    AmcJob amcJob = amcJobRepository.findById(jobId)
 	            .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));
@@ -268,7 +277,8 @@ public class AmcJobActivityService {
 
 	                if (lastMonth == currentMonth) {
 	                    currentServiceStatus = "Completed";
-	                  //  pendingServices = totalServices - currentServiceNumber;
+	                    amcJob.setPreviousServicingDate(lastActivityDate);
+	                    //  pendingServices = totalServices - currentServiceNumber;
 	                } else {
 	                    currentServiceStatus = "Pending";
 	                    completedCount = 0;
@@ -317,7 +327,7 @@ public class AmcJobActivityService {
 
 
     
-    
+	@Transactional
     public AddServiceActivityGetData getAddServiceActivityGetData(Integer jobId) {
 
         AmcJob amcJob = amcJobRepository.findById(jobId)
@@ -359,7 +369,7 @@ public class AmcJobActivityService {
     }
 
 	
-	
+	@Transactional
     public JobDetailPageResponseDto getJobDetailPage(Integer jobId) {
         AmcJob job = amcJobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("AmcJob not found with id " + jobId));

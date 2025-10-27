@@ -53,7 +53,7 @@ export default function LoginForm({ tenant }) {
 
         //console.log("➡️ Redirecting to dashboard...");
         // Redirect to clean path; middleware rewrites internally to /<tenant>/dashboard
-        router.push(`/dashboard`);
+        router.push(`/dashboard/dashboard-data`);
 
       } else {
         const errorMessage = res.data?.error || "Login failed";

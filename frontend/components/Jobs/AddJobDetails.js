@@ -123,22 +123,49 @@ export default function AddJobForm() {
 
   },[jobTypes])
 
-   useEffect(() => {
-    async function fetchJobs() {
-      try {
-        const res = await axiosInstance.get("/api/amc-jobs/pending");
-        const data = res.data;
+  //  useEffect(() => {
+  //   async function fetchJobs() {
+  //     try {
+  //       const res = await axiosInstance.get("/api/amc-jobs/pending");
+  //       const data = res.data;
 
-        // Optional: Map for better display (if needed)
-        setJobDetails(data);
-        setFilteredJobs(data);
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-      }
+  //       // Optional: Map for better display (if needed)
+  //       setJobDetails(data);
+  //       setFilteredJobs(data);
+  //     } catch (error) {
+  //       console.error("Error fetching jobs:", error);
+  //     }
+  //   }
+
+  //   fetchJobs();
+  // }, []);
+
+  useEffect(() => {
+  async function fetchJobs() {
+    try {
+      // Run both API calls in parallel
+      const [amcJobsRes, renewalJobsRes] = await Promise.all([
+        axiosInstance.get("/api/amc-jobs/pending"),
+        axiosInstance.get("/api/amc-renewal-jobs/pendingRenewalJobs")
+      ]);
+
+      const amcJobs = amcJobsRes.data;
+      const renewalJobs = renewalJobsRes.data;
+
+      // Combine both results (customize as needed)
+      const combinedJobs = [...amcJobs, ...renewalJobs];
+
+      // Store combined data in your states
+      setJobDetails(combinedJobs);
+      setFilteredJobs(combinedJobs);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
     }
+  }
 
-    fetchJobs();
-  }, []);
+  fetchJobs();
+}, []);
+
 
    // ✅ Handle search filtering
   const handleJobSearch = (value) => {
@@ -151,10 +178,7 @@ export default function AddJobForm() {
 
 const [jobDetailsData, setJobDetailsData] = useState(null);
 
- useEffect(() => {
-    if (!selectedJob) return; // Do nothing if no job is selected
-
-    const fetchJobDetails = async () => {
+ const fetchJobDetails = async () => {
       //setLoading(true);
       //setError(null);
       try {
@@ -181,7 +205,43 @@ const [jobDetailsData, setJobDetailsData] = useState(null);
       }
     };
 
+     const fetchRenewalJobDetails = async () => {
+      //setLoading(true);
+      //setError(null);
+      try {
+        const response = await axiosInstance.post(
+          "/api/amc-renewal-jobs/get-add-renewal-job-details",
+          {
+            selectDetailForJob: selectedJob.selectDetailForJob,
+            amcRenewalQuatationId: selectedJob.amcRenewalQuatationId,
+            revisedRenewalQuatationId: selectedJob.revisedRenewalQuatationId,
+          }
+        );
+        setJobDetailsData(response.data);
+        setFilteredEngineers(response.data.employeeDtos || []);
+      
+        setRoutes(response.data.routesDtos || []);
+        setFilteredRoutes(response.data.routesDtos || []);
+        setEngineers(response.data.employeeDtos || []);
+
+      } catch (err) {
+        console.error("Error fetching job details:", err);
+        setError("Failed to fetch job details");
+      } finally {
+        //setLoading(false);
+      }
+    };
+
+
+
+ useEffect(() => {
+    if (!selectedJob) return; // Do nothing if no job is selected
+
+    if(selectedJob.thisJobIsRenewal === true){
+      fetchRenewalJobDetails();
+    }else
     fetchJobDetails();
+
   }, [selectedJob]);
 
     const [jobStatus, setJobStatus] = useState("");
@@ -241,7 +301,74 @@ const [jobDetailsData, setJobDetailsData] = useState(null);
       toast.success("AMC Job saved successfully!");
       // `/${tenant}/dashboard/jobs/amc_job_list`
         router.push(
-              `/${localStorage.getItem("tenant")}/dashboard/jobs/amc_job_list`
+              `/dashboard/jobs/amc_job_list/false`
+            );
+    } else {
+      toast.error("Something went wrong while saving!");
+    }
+  } catch (error) {
+    toast.dismiss();
+    console.error("Error saving AMC job:", error);
+    toast.error("Failed to save AMC job");
+  }
+};
+
+const handleSubmitRenewalJob = async () => {
+
+    let selectedEmployeesIds = null;
+    if(selectedRoute == null && selectionMode === "manual"){
+       selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
+    }
+
+  try {
+    const requestDto = {
+     // leadId: lead_id_state,
+      amcRenewalQuatationId: selectedJob.amcRenewalQuatationId || null,
+      revisedRenewalQuatationId: selectedJob.revisedRenewalQuatationId || null,
+
+     // serviceEngineerId: selectedEngineer,
+      salesExecutiveId: selectedSalesPerson,
+      routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
+      listOfEmployees: selectedEmployeesIds,
+      //renewlStatus: 0,
+      contractType: "",
+      makeOfElevator: "",
+      noOfElevator: 0,
+      jobNo: 0,
+      customerGstNo: gstNumber,
+      jobType: "AMC",
+      startDate: jobDetailsData ? jobDetailsData.startDate : "",
+      endDate: "",
+      noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
+      jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
+      amountWithGst: 0,
+      amountWithoutGst: 0,
+      paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
+      gstPercentage: 0,
+      dealDate: "",
+      jobLiftDetail: "",
+      jobStatus: jobStatus,
+      status: 1,
+      renewalRemark: "",
+      isNew: 1,
+      currentServiceNumber: 0,
+    };
+
+    toast.loading("Saving Renewal job...");
+
+    const response = await axiosInstance.post("/api/amc-renewal-jobs/create-amc-renewal-job", requestDto);
+
+    toast.dismiss(); // remove loading toast
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Job saved successfully!");
+      // `/${tenant}/dashboard/jobs/amc_job_list`
+      let isRenewal = false;
+      if(selectedJob.thisJobIsRenewal === true){
+        isRenewal = true;
+      }
+        router.push(
+              `/dashboard/jobs/amc_job_list/${isRenewal}`
             );
     } else {
       toast.error("Something went wrong while saving!");
@@ -695,7 +822,15 @@ const [jobDetailsData, setJobDetailsData] = useState(null);
 
           {/* Submit Button */}
           <div className="mt-6">
-            <button onClick={handleSubmit} className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700">
+            <button onClick={()=>{
+
+              if(selectedJob.thisJobIsRenewal === true){
+                handleSubmitRenewalJob();
+              }else{
+                handleSubmit();
+              }
+
+            }} className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700">
               Submit
             </button>
           </div>

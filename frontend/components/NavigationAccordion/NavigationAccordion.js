@@ -149,7 +149,7 @@ const NavigationAccordion = () => {
       title: 'Dashboard',
       icon: BarChart3,
       hasSubmenu: false,
-      href: '/dashboard'
+      href: '/dashboard/dashboard-data'
     },
     {
       id: 'user-resource',
@@ -216,13 +216,14 @@ const NavigationAccordion = () => {
 
       ]
     },
-    {
+     {
       id: 'customers',
       title: 'Customers',
       icon: UserCheck,
       hasSubmenu: true,
       submenu: [
-        { title: 'Customer List', href: '/customers' },
+        { title: 'Customer List', href: '/dashboard/customer/customer-list' },
+        { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list` },
         { title: 'Customer Groups', href: '/customer-groups' },
         { title: 'Customer History', href: '/customer-history' },
         { title: 'Feedback', href: '/feedback' }
@@ -238,7 +239,9 @@ const NavigationAccordion = () => {
         { title: 'AMC Quotation List', href: `/dashboard/quotations/amc_quatation_list` },
         { title: 'Material Repair Quotation List', href: `/dashboard/quotations/templates` },
         { title: 'Oncall Quotation List', href: `/dashboard/quotations/approved` },
-        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/approved` }
+        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/amc-renewal-quatation-list` },
+      { title: 'AMC Quatation Setup', href: `/dashboard/quotations/amc_quatation_setup` }
+
       ]
     },
     {
@@ -248,9 +251,15 @@ const NavigationAccordion = () => {
       hasSubmenu: true,
       submenu: [
         { title: 'Add New Job Detail', href: `/dashboard/jobs/add-new-job-detail` },
-        { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list` },
+                { title: 'Add Payment', href: `/dashboard/jobs/add-payment` },
+
+        { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list/false` },
         { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call`},
-        // { title: 'Add Job Activity', href: `/dashboard/jobs/add-job-activity/` }
+         { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
+      { title: 'Amc Invoices', href: `/dashboard/jobs/amc-invoices`},
+            { title: 'Amc Payment Invoices', href: `/dashboard/jobs/amc-payments`},
+
+
       ]
     },
     {

@@ -375,7 +375,7 @@ const enquiryDate = form.enquiryDate;
  // ✅ Use Next.js router to redirect
     setIsFinalSubmitLoading(false);
     router.push(
-      `/${tenant}/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer1Name)}&site=${encodeURIComponent(siteName)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
+      `/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer1Name)}&site=${encodeURIComponent(siteName)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
     );
 
   } catch (err) {

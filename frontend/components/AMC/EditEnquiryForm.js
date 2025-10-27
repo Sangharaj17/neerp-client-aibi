@@ -354,7 +354,7 @@ console.log(options);
       const response = await axiosInstance.put(apiUrl + query, transformedLifts);
       toast.success("Enquiry updated successfully.");
       router.push(
-        `/${tenant}/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
+        `/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
       );
     } catch (err) {
       console.error(err);

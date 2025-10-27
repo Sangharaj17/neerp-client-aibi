@@ -437,7 +437,7 @@ const handleCreateAmcQuotation = async () => {
         toast.success('AMC Quotation created successfully!');
       
             router.push(
-              `/${tenant}/dashboard/quotations/amc_quatation_list`
+              `/dashboard/quotations/amc_quatation_list`
             );
     }
   } catch (error) {

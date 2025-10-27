@@ -6,7 +6,12 @@ import toast from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
 
 
-export default function AmcQuotationEditForm({quotationId , qid , revise , revision}) {
+export default function AmcQuotationEditForm({quotationId , qid , revise , revision , amcJobId,
+  isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal , 
+  renewalEdit , renewalRevise , renewalRevision , renewalRenewal , renJobId
+}) {
+
+
 
       const router = useRouter();
 const {  tenant } = useParams();
@@ -49,6 +54,10 @@ const {  tenant } = useParams();
 
   const [formData, setFormData] = useState({
     amcquatationId: 10,
+    amcRenewQuatationId: null,
+    revisedRenewQuatationId: null,
+    preJobId : 0,
+    renewalJobId: null,
     quatationDate: today,
     leadId: null,
     combinedEnquiryId: null,
@@ -89,6 +98,17 @@ const {  tenant } = useParams();
     combinedQuotations: [],
   });
 
+  const [pjobid, setPjobid] = useState(0);
+  const[renewalJobId, setRenewalJobId] = useState(0);
+
+  useEffect(() => {
+  if (amcJobId) {
+   setPjobid(amcJobId);
+    setRenewalJobId(renJobId);
+    //alert(amcJobId);
+  }
+}, []);
+
  
 
    const handleUpdateAmcQuotation = async () => {
@@ -119,7 +139,43 @@ const {  tenant } = useParams();
       toast.success("AMC Quotation updated successfully!");
 
       // ✅ Redirect back to the list after successful update
-      router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
+      router.push(`/dashboard/quotations/amc_quatation_list`);
+    }
+  } catch (error) {
+    console.error("Error updating AMC Quotation:", error);
+    toast.error("Failed to update AMC Quotation. Please try again.");
+  }
+};
+
+ const handleUpdateRenewAmcQuotation = async () => {
+  try {
+    // ✅ Validate typeContract before submit
+    if (!formData.typeContract || formData.typeContract.trim() === "") {
+      toast.error("Please select at least one contract type before submitting.");
+      return; // stop form submission
+    }
+
+    // Build payload from formData
+    const payload = {
+      ...formData,
+      combinedQuotations: formData.combinedQuotations.length
+        ? formData.combinedQuotations
+        : [combinedQuotationBase], // fallback if empty
+    };
+
+    console.log("Sending Payload to Backend for Update:", payload);
+
+    // ✅ Use PUT instead of POST for update
+    const response = await axiosInstance.put(
+      "/api/amc/quotation/renewal", // ✅ your update API endpoint
+      payload
+    );
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Quotation updated successfully!");
+
+      // ✅ Redirect back to the list after successful update
+      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
     }
   } catch (error) {
     console.error("Error updating AMC Quotation:", error);
@@ -135,7 +191,7 @@ const {  tenant } = useParams();
        id = qid;
     }
 
-    router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${id}`);
+    router.push(`/dashboard/quotations/amc_quatation_list/revise_quatation_list/${id}`);
   };
 
 const handleCreateAmcRevisedQuotation = async () => {
@@ -178,6 +234,119 @@ const handleCreateAmcRevisedQuotation = async () => {
   }
 };
 
+useEffect(()=>{
+
+  if(formData.preJobId != null && formData.preJobId != undefined && formData.preJobId != 0){
+
+    if(formData.renewalJobId == null || formData.renewalJobId == undefined || formData.renewalJobId == 0)
+       handleCallAmcRenewQuotation();
+  }
+
+},[formData.preJobId]);
+
+useEffect(()=>{
+
+  if(formData.renewalJobId != null && formData.renewalJobId != undefined && formData.renewalJobId != 0){
+
+    handleCallAmcRenewQuotation();
+  }
+
+},[formData.renewalJobId]);
+
+const handleCreateAmcRenewQuotation = async () => {
+  // ✅ Update formData with pjobid
+    setFormData(prevData => ({
+      ...prevData,
+      preJobId: pjobid,
+      renewalJobId: renJobId
+    }));
+};
+
+
+const handleCallAmcRenewQuotation = async () => {
+
+  try {
+
+   // alert(formData.preJobId);
+
+    // ✅ Validate required field before submission
+    if (!formData.typeContract || formData.typeContract.trim() === "") {
+      toast.error("Please select at least one contract type before submitting.");
+      return; // stop form submission
+    }
+
+    // ✅ Prepare payload (similar to revised quotation)
+    const payload = {
+      ...formData,
+      combinedQuotations: formData.combinedQuotations?.length
+        ? formData.combinedQuotations
+        : [combinedQuotationBase], // fallback if empty
+    };
+
+    console.log("Sending AMC Renewal Payload to Backend:", payload);
+
+    // ✅ API call to backend
+    const response = await axiosInstance.post(
+      "/api/amc/quotation/renewal",
+      payload
+    );
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Quotation created successfully!");
+      
+      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+    
+    }
+  } catch (error) {
+    console.error("Error creating AMC Renewal Quotation:", error);
+    toast.error("Failed to create AMC Renewal Quotation. Please try again.");
+  }
+};
+
+
+
+const handleCreateAmcRenewReviseQuotation = async () => {
+
+  try {
+
+   // alert(formData.preJobId);
+
+    // ✅ Validate required field before submission
+    if (!formData.typeContract || formData.typeContract.trim() === "") {
+      toast.error("Please select at least one contract type before submitting.");
+      return; // stop form submission
+    }
+
+    // ✅ Prepare payload (similar to revised quotation)
+    const payload = {
+      ...formData,
+      combinedQuotations: formData.combinedQuotations?.length
+        ? formData.combinedQuotations
+        : [combinedQuotationBase], // fallback if empty
+    };
+
+    console.log("Sending AMC Renewal Revise Payload to Backend:", payload);
+
+    // ✅ API call to backend
+    const response = await axiosInstance.post(
+      "/api/amc/quotation/renewal/revise",
+      payload
+    );
+
+    if (response.status === 200) {
+      toast.success("AMC Renewal Revise Quotation created successfully!");
+      
+      if(renewalRevision === true)
+    router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`);
+     else
+      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+    
+    }
+  } catch (error) {
+    console.error("Error creating AMC Renewal Revise Quotation:", error);
+    toast.error("Failed to create AMC Renewal Revise Quotation. Please try again.");
+  }
+};
 
 
 
@@ -186,8 +355,34 @@ const handleCreateAmcRevisedQuotation = async () => {
     try {
       let url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
 
+      if(renewalRenewal === true){
+         if(isQuatationIdPresent === true){
+           url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
+          }else{
+            url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
+          }
+      }
+
+      if(renewalRevision === true){
+          url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
+      }
+
       if (revision === true) {
         url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
+      }
+
+  // isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal
+
+      if(renewal === true){
+        if(isQuatationIdPresent === true){
+           url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
+        }else{
+           url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
+        }
+      }
+
+      if(renewalEdit === true || renewalRevise === true){
+         url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
       }
 
 
@@ -198,6 +393,8 @@ const handleCreateAmcRevisedQuotation = async () => {
           quatationDate: data.quatationDate ?? today,
           leadId: data.leadId ?? null,
           amcquatationId:data.amcQuatationId ?? null,
+          amcRenewQuatationId: data.amcRenewQuatationId ?? null,
+          revisedRenewQuatationId: data.revisedRenewQuatationId ?? null,
           combinedEnquiryId: data.combinedEnquiryId ?? null,
           enquiryId: data.enquiryId ?? null,
           makeOfElevatorId: data.makeOfElevatorId ?? null,
@@ -547,7 +744,7 @@ const handleCreateAmcQuotation = async () => {
         toast.success('AMC Quotation created successfully!');
       
             router.push(
-              `/${tenant}/dashboard/quotations/amc_quatation_list`
+              `/dashboard/quotations/amc_quatation_list`
             );
     }
   } catch (error) {
@@ -647,22 +844,69 @@ useEffect(() => {
       <div className="max-w-7xl mx-auto">
         <form onSubmit={(e) => { 
             e.preventDefault();
-            if(!revise)
-             handleUpdateAmcQuotation(); 
-            else{
-                handleCreateAmcRevisedQuotation();
+
+             if(renewalRenewal === true){
+                handleCreateAmcRenewQuotation();
+             }else{
+                if(renewalRevise === true || renewalRevision === true){
+                  handleCreateAmcRenewReviseQuotation();
+                }else{
+                    if(renewalEdit === true){
+                      handleUpdateRenewAmcQuotation();
+                    }else{
+                      if(renewal === true){
+                        handleCreateAmcRenewQuotation();
+                      }else{
+                          if(!revise)
+                          handleUpdateAmcQuotation(); 
+                          else{
+                              handleCreateAmcRevisedQuotation();
+                          }
+                      }
+                    }
+                }
             }
+
         }}>
 
         {/* Page Header */}
         <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-700">AMC Quotation Edit</h1>
+          <h1 className="text-2xl font-bold text-gray-700">
+            {
+              renewal === true ? "AMC Quotation Renewal" : revise === true ? "AMC Quotation Revision" :
+               renewalEdit ? "AMC Quotation Edit" : "AMC Quotation Revise"
+           }
+            </h1>
           <button   type="button"  onClick={()=>{
-            if(revision == true){
-                  router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
-            }else{
-                  router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
-            }
+
+           let url ="";
+
+           if(renewalRevision === true){
+              url = `/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`;
+           }else{
+
+              if(qid!= null && qid != undefined && qid != "")
+                url = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`;
+              
+                if(qid == null || qid == undefined || qid == ""){
+                  url = `/dashboard/quotations/amc_quatation_list`;
+                }
+
+                if(renewal === true){
+                  url = `/dashboard/dashboard-data/amc_renewals_list`
+                }
+
+                if(renewalEdit === true || renewalRevise === true){
+                  url = `/dashboard/quotations/amc-renewal-quatation-list`
+                }
+              }
+
+            router.push(url);
+            // if(revision == true){
+            //       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
+            // }else{
+            //       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
+            // }
 
           }} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
             back to List

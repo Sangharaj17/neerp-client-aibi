@@ -46,5 +46,10 @@ public interface AmcQuotationRepository extends JpaRepository<AmcQuotation, Inte
             "JOIN FETCH a.site s " +
             "WHERE a.isFinal = 1 AND a.jobStatus = 0")
      List<AmcQuotation> findFinalPendingAmcQuotations();
+
+
+
+
+
     
 }

@@ -55,7 +55,8 @@ public class GlobalCorsConfig {
                 "http://localhost:3000",
                 "http://localhost:3001",
                 "http://localhost:3002",
-                "http://localhost:3003"
+                "http://localhost:3003",
+                "https://ringcarnival.com"
         ));
         config.setAllowCredentials(true); // ✅ to allow cookies
         config.addAllowedHeader("*");

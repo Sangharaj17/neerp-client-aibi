@@ -3,7 +3,9 @@ package com.aibi.neerp.amc.jobs.initial.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
 import com.aibi.neerp.customer.entity.Customer;
@@ -99,7 +101,7 @@ public class AmcJob {
     private Integer noOfServices;
 
     @Column(name = "job_amount", nullable = false)
-    private String jobAmount;
+    private BigDecimal jobAmount;
 
     @Column(name = "amount_with_GST", nullable = false)
     private String amountWithGst;
@@ -152,6 +154,17 @@ public class AmcJob {
 
     @Column(name = "pending_service_count")
     private Integer pendingServiceCount;
+    
+    @Column(name = "previous_servicing_date")
+    private LocalDate previousServicingDate;
+    
+    @Column(name = "is_renewal_quatation_created")
+    private Boolean isRenewalQuatationCreated = false;
+    
+    
+    
+//    @OneToMany(mappedBy = "preJobId", fetch = FetchType.LAZY)
+//    private List<AmcRenewalJob> renewalJobs;
     
 }
 

@@ -1,6 +1,7 @@
 package com.aibi.neerp.amc.jobs.initial.repository;
 
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -91,6 +92,21 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    @Param("dateSearch") String dateSearch,
 		    Pageable pageable
 		);
+	
+	
+	@Query("""
+		    SELECT DISTINCT j
+		    FROM AmcJob j
+		    LEFT JOIN FETCH j.customer c
+		    LEFT JOIN FETCH j.site s
+		    LEFT JOIN FETCH j.route r
+		    LEFT JOIN FETCH r.employees e
+		    LEFT JOIN FETCH j.amcQuotation q
+		    LEFT JOIN FETCH q.lead l
+		    LEFT JOIN FETCH l.area a
+		""")
+		List<AmcJob> findAllForExport();
+
 
 
 
@@ -103,6 +119,90 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		    WHERE j.status = true
 		""")
 		List<AmcJob> findAllActiveJobs();
+	
+	@Query("""
+			SELECT j FROM AmcJob j
+			WHERE j.status = true
+			  AND (LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+			    OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+			    OR LOWER(j.currentServiceStatus) LIKE LOWER(CONCAT('%', :search, '%')))
+			""")
+			Page<AmcJob> findByStatusTrue(@Param("search") String search, Pageable pageable);
+
+
+
+
+	//Integer countByRenewlStatusAndEndDateBefore(int i, LocalDate currentDate);
+
+	@Query("""
+		    SELECT COUNT(j)
+		    FROM AmcJob j
+		    WHERE j.renewlStatus = :renewlStatus
+		      AND j.lead.leadStatus.statusName = 'Active'
+		       AND j.isRenewalQuatationCreated =false
+		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
+		""")
+		Integer countByRenewlStatusAndEndDateDiffLessThan30(
+		    @Param("renewlStatus") Integer renewlStatus,
+		    @Param("currentDate") LocalDate currentDate
+		);
+	
+//	 @Query("""
+//		        SELECT j
+//		        FROM AmcJob j
+//		        WHERE j.renewlStatus = :renewlStatus
+//		          AND j.lead.leadStatus.statusName = 'Active'
+//		          AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) <= 30
+//		          AND (:search IS NULL OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+//		              OR LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%')))
+//		    """)
+//		    Page<AmcJob> searchAmcRenewals(
+//		            @Param("renewlStatus") Integer renewlStatus,
+//		            @Param("currentDate") LocalDate currentDate,
+//		            @Param("search") String search,
+//		            Pageable pageable
+//		    );
+	
+	@Query("""
+		    SELECT j
+		    FROM AmcJob j
+		    WHERE j.renewlStatus = :renewlStatus
+		      AND j.lead.leadStatus.statusName = 'Active'
+		      AND j.isRenewalQuatationCreated =false
+		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) >= -30
+		      AND (
+		            :search IS NULL
+		            OR LOWER(j.customer.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+		            OR LOWER(j.site.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+		            OR CAST(j.jobId AS string) LIKE CONCAT('%', :search, '%')
+		            OR CAST(j.jobAmount AS string) LIKE CONCAT('%', :search, '%')
+		          )
+		    """)
+		Page<AmcJob> searchAmcRenewals(
+		        @Param("renewlStatus") Integer renewlStatus,
+		        @Param("currentDate") LocalDate currentDate,
+		        @Param("search") String search,
+		        Pageable pageable
+		);
+
+	
+	@Query("""
+		    SELECT COUNT(j)
+		    FROM AmcJob j
+		    WHERE j.renewlStatus = :renewlStatus
+		      AND j.lead.leadStatus.statusName = 'Active'
+		      AND FUNCTION('TIMESTAMPDIFF', DAY, j.endDate, :currentDate) >= -30
+		""")
+		Integer countAmcRenewalsDueWithin30Days(
+		        @Param("renewlStatus") Integer renewlStatus,
+		        @Param("currentDate") LocalDate currentDate
+		);
+
+
+
+	
+
+
 
 
 }

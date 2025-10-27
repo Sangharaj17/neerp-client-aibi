@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.jobs.initial.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,7 +22,7 @@ public class AmcJobResponseDto {
     private String place;
     private List<String> serviceEngineers; // we send only names
     private String model;
-    private String jobAmount;
+    private BigDecimal jobAmount;
     private String paymentTerm;
     private LocalDate startDate;
     private LocalDate endDate;

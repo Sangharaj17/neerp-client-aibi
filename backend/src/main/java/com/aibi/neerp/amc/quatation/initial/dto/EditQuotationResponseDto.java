@@ -14,6 +14,8 @@ public class EditQuotationResponseDto {
 
     private Integer amcQuatationId;
     private Integer revisedQuatationId;
+    private Integer amcRenewQuatationId;
+    private Integer revisedRenewQuatationId;
     private LocalDate quatationDate;
     private Integer leadId;
     private Integer combinedEnquiryId;

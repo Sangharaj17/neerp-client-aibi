@@ -1,5 +1,6 @@
 package com.aibi.neerp.amc.jobs.initial.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class AmcJobRequestDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private Integer noOfServices;
-    private String jobAmount;
+    private BigDecimal jobAmount;
     private String amountWithGst;
     private String amountWithoutGst;
     private String paymentTerm;

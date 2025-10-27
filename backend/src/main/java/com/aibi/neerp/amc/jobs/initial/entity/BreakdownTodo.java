@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 
@@ -39,8 +41,8 @@ public class BreakdownTodo {
     private LocalDate todoDate; // Changed to String
 
     @Column(name = "time", nullable = false)
-    private String time;
-
+    private LocalTime time; 
+    
     @Column(name = "venue", nullable = false)
     private String venue;
 
@@ -60,6 +62,10 @@ public class BreakdownTodo {
     @ManyToOne
     @JoinColumn(name = "job_id", referencedColumnName = "job_id")
     private AmcJob job; // New FK
+    
+    @ManyToOne
+    @JoinColumn(name = "job_renewl_id", referencedColumnName = "job_renewl_id")
+    private AmcRenewalJob renewalJob; // New FK
 
     @OneToMany(mappedBy = "breakdownTodo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BreakdownTodoLiftMapping> lifts;

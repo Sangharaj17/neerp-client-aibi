@@ -176,17 +176,17 @@ const fetchQuotations = async () => {
 
   const handleEdit = (quotationId) => {
     let tenant = localStorage.getItem('tenant');
-    router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/amc_quatation_edit/${quotationId}`);
+    router.push(`/dashboard/quotations/amc_quatation_list/amc_quatation_edit/${quotationId}`);
   };
 
   const handleRevise = (quotationId) => {
     let tenant = localStorage.getItem('tenant');
-    router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise/${quotationId}`);
+    router.push(`/dashboard/quotations/amc_quatation_list/revise/${quotationId}`);
   };
 
   const handleClickRevision = (quotationId) => {
     let tenant = localStorage.getItem('tenant');
-    router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${quotationId}`);
+    router.push(`/dashboard/quotations/amc_quatation_list/revise_quatation_list/${quotationId}`);
   };
 
   const confirmDelete = (id) => {

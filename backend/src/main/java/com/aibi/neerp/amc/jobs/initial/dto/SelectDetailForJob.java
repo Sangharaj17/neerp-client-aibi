@@ -11,4 +11,7 @@ public class SelectDetailForJob {
     private String selectDetailForJob;
     private Integer amcQuatationId;
     private Integer revisedQuatationId;
+    
+    private boolean isThisJobIsRenewal ;
+
 }

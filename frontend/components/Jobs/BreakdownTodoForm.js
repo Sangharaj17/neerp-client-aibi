@@ -1,16 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import axiosInstance from "@/utils/axiosInstance";
 
-export default function BreakdownTodoForm() {
-  let prefilledJobId = "";
-  if (typeof window !== 'undefined') {
-    const params = new URLSearchParams(window.location.search);
-    prefilledJobId = params.get("jobId") || "";
-  }
+export default function BreakdownTodoForm({ onClose }) {
+  const searchParams = useSearchParams();
+  const prefilledJobId = searchParams.get("jobId");
 
   const [formData, setFormData] = useState({
-    userId: "", // new field
+    userId: "",
     purpose: "",
     todoDate: "",
     time: "",
@@ -19,7 +17,9 @@ export default function BreakdownTodoForm() {
     status: 0,
     complaintName: "",
     complaintMob: "",
-    jobId: prefilledJobId || "",
+    // Initialize both with prefilled ID for now, will be resolved by logic
+    jobId: prefilledJobId || "", 
+    renewalJobId: prefilledJobId || "", 
     liftIds: [],
   });
 
@@ -35,31 +35,94 @@ export default function BreakdownTodoForm() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [userSearch, setUserSearch] = useState("");
 
-  // Fetch all sites & jobs
-  useEffect(() => {
-    const fetchSites = async () => {
-      try {
-        const res = await axiosInstance.get("/api/amc-jobs/getAllActiveJobs");
-        setSites(res.data);
-      } catch (error) {
-        console.error("Failed to fetch sites:", error);
-      }
-    };
-    fetchSites();
-  }, []);
+  // --- Utility to determine if a job is a Renewal Job ---
+  const isRenewalJob = (job) => job.renewal === "renewal";
+  const getJobIdentifier = (job) => isRenewalJob(job) ? job.renewalJobId : job.jobId;
 
-  // Fetch lifts when jobId changes
+
+  // Fetch all sites & jobs
+ useEffect(() => {
+  const fetchJobs = async () => {
+    try {
+      const [amcJobsRes, renewalJobsRes] = await Promise.all([
+        axiosInstance.get("/api/amc-jobs/getAllActiveJobs"),
+        axiosInstance.get("/api/amc-renewal-jobs/getAllActiveRenewalJobs"),
+      ]);
+
+      // Combine as-is without adding extra fields
+      const combinedJobs = [
+        ...(amcJobsRes.data || []),
+        ...(renewalJobsRes.data || [])
+      ];
+
+      setSites(combinedJobs);
+    } catch (error) {
+      console.error("Failed to fetch job data:", error);
+    }
+  };
+
+  fetchJobs();
+}, []);
+
+
+  // Fetch lifts when jobId OR renewalJobId changes
   useEffect(() => {
     const fetchLifts = async () => {
-      if (!formData.jobId) return;
+      const jobIdToFetch = formData.jobId || formData.renewalJobId;
+      if (!jobIdToFetch) {
+        setLifts([]); 
+        setFormData((prev) => ({ ...prev, liftIds: [] }));
+        return; 
+      }
+
+
+       const selectedJob = sites.find((site)=>{
+
+        if(formData.jobId){
+          if(site.renewal === ""){
+            if(site.jobId === jobIdToFetch){
+              return site;
+            }
+          }
+        }else{
+           if(site.renewal === "renewal"){
+            if( site.renewalJobId === jobIdToFetch){
+              return site;
+            }
+          }
+        }
+      })
+
+      
+      if (selectedJob) {
+        setFormData((prev) => ({
+          ...prev,
+          jobId: isRenewalJob(selectedJob) ? "" : selectedJob.jobId,
+          renewalJobId: isRenewalJob(selectedJob) ? selectedJob.renewalJobId : "",
+        }));
+      }
+
       setLoadingLifts(true);
       setSelectAllLifts(false);
+
       try {
-        const res = await axiosInstance.get(
-          `/api/amc-jobs/getAllLiftsForAddBreakDownTodo`,
-          { params: { jobId: formData.jobId } }
-        );
-        setLifts(res.data);
+        let res;
+
+        if (formData.jobId && !formData.renewalJobId) {
+          // AMC job
+          res = await axiosInstance.get(
+            `/api/amc-jobs/getAllLiftsForAddBreakDownTodo`,
+            { params: { jobId: formData.jobId } }
+          );
+        } else if (formData.renewalJobId && !formData.jobId) {
+          // Renewal job
+          res = await axiosInstance.get(
+            `/api/amc-renewal-jobs/getAllRenewalLiftsForAddBreakDownTodo`,
+            { params: { jobId: formData.renewalJobId } }
+          );
+        }
+
+        setLifts(res?.data || []);
         setFormData((prev) => ({ ...prev, liftIds: [] }));
       } catch (error) {
         console.error("Failed to fetch lifts:", error);
@@ -67,8 +130,10 @@ export default function BreakdownTodoForm() {
         setLoadingLifts(false);
       }
     };
+
     fetchLifts();
-  }, [formData.jobId]);
+  }, [formData.jobId, formData.renewalJobId, sites]);
+
 
   // Fetch users (executives)
   useEffect(() => {
@@ -85,17 +150,22 @@ export default function BreakdownTodoForm() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
     if (name === "liftIds") {
       const updatedLiftIds = checked
         ? [...formData.liftIds, Number(value)]
         : formData.liftIds.filter((id) => id !== Number(value));
       setFormData({ ...formData, liftIds: updatedLiftIds });
     } else if (type === "checkbox") {
-      setFormData({ ...formData, [name]: checked });
+      setFormData({ ...formData, [name]: checked ? 1 : 0 }); 
+    } else if (name === "time") {
+      const formattedTime = value.length === 5 ? value + ":00" : value;
+      setFormData({ ...formData, [name]: formattedTime });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
+
 
   const handleSelectAll = (e) => {
     const checked = e.target.checked;
@@ -106,11 +176,43 @@ export default function BreakdownTodoForm() {
     });
   };
 
+  // 🚀 MAJOR CHANGE: Conditionally call the correct API endpoint
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Basic validation check
+    if (!formData.jobId && !formData.renewalJobId) {
+        alert("Please select a job.");
+        return;
+    }
+    if (!formData.userId) {
+        alert("Please select a user.");
+        return;
+    }
+    if (lifts.length > 0 && formData.liftIds.length === 0) {
+        alert("Please select at least one lift.");
+        return;
+    }
+
     try {
-      await axiosInstance.post("/api/breakdown-todo", formData);
-      alert("✅ Breakdown Todo added successfully!");
+      let apiEndpoint;
+      
+      // Determine the correct API endpoint based on the selected job ID
+      if (formData.renewalJobId) {
+        // Use the new API for Renewal Jobs
+        apiEndpoint = "/api/renewal/breakdown-todo"; 
+      } else if (formData.jobId) {
+        // Use the existing API for AMC Jobs
+        apiEndpoint = "/api/breakdown-todo"; 
+      } else {
+        // This should not happen if validation passes, but good practice
+        alert("Error: No job type determined for submission.");
+        return;
+      }
+
+      await axiosInstance.post(apiEndpoint, formData);
+      
+      // Clear specific form fields after successful submission
       setFormData((prev) => ({
         ...prev,
         purpose: "",
@@ -119,25 +221,29 @@ export default function BreakdownTodoForm() {
         venue: "",
         complaintName: "",
         complaintMob: "",
-        liftIds: [],
         userId: "",
       }));
       setSelectAllLifts(false);
-      setJobSearch("");
-      setUserSearch("");
+      
+      // Optional: Add a success alert
+       alert("✅ Breakdown Todo added successfully!");
+      //onClose(); // Close the modal after successful submission
+
     } catch (error) {
       console.error("Failed to add Breakdown Todo:", error);
       alert("❌ Failed to add Breakdown Todo.");
     }
   };
 
-  const selectedJobLabel = formData.jobId
-    ? sites.find((s) => s.jobId === formData.jobId)?.customerName +
-      " - " +
-      sites.find((s) => s.jobId === formData.jobId)?.siteName
+  const selectedJob = sites.find(
+    (s) => s.jobId === formData.jobId || s.renewalJobId === formData.renewalJobId
+  );
+
+  const selectedJobLabel = selectedJob
+    ? `${selectedJob.customerName} - ${selectedJob.siteName} (${isRenewalJob(selectedJob) ? 'Renewal' : 'AMC'} Job #${getJobIdentifier(selectedJob)})`
     : "";
 
-  // ✅ Fix: use employeeId instead of id
+
   const selectedUserLabel = formData.userId
     ? users.find((u) => u.employeeId === formData.userId)?.employeeName || ""
     : "";
@@ -159,8 +265,10 @@ export default function BreakdownTodoForm() {
               setDropdownOpen(true);
             }}
             onFocus={() => setDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setDropdownOpen(false), 200)}
             placeholder="Search Job..."
             className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-400"
+            required
           />
           {dropdownOpen && (
             <div className="absolute z-10 w-full max-h-60 overflow-y-auto bg-white border border-gray-300 rounded-xl mt-1 shadow-lg">
@@ -168,30 +276,45 @@ export default function BreakdownTodoForm() {
                 .filter(
                   (site) =>
                     site.customerName.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                    site.siteName.toLowerCase().includes(jobSearch.toLowerCase())
+                    site.siteName.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                    String(getJobIdentifier(site)).includes(jobSearch)
                 )
-                .map((site) => (
-                  <div
-                    key={site.jobId}
-                    onClick={() => {
-                      setFormData({ ...formData, jobId: site.jobId });
-                      setDropdownOpen(false);
-                      setJobSearch("");
-                    }}
-                    className="cursor-pointer px-3 py-2 hover:bg-blue-100"
-                  >
-                    {site.customerName} - {site.siteName} (Job #{site.jobId})
-                  </div>
-                ))}
+                .map((site) => {
+                  const isRenewal = isRenewalJob(site);
+                  const id = getJobIdentifier(site);
+                  const typeLabel = isRenewal ? "Amc Renewal" : "AMC";
+
+                  return (
+                    <div
+                      key={`${typeLabel}-${id}`}
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          jobId: isRenewal ? "" : id,
+                          renewalJobId: isRenewal ? id : "",
+                          liftIds: [],
+                        }));
+                        setDropdownOpen(false);
+                        setJobSearch("");
+                      }}
+                      className="cursor-pointer px-3 py-2 hover:bg-blue-100"
+                    >
+                      {site.customerName} - {site.siteName} (Job #{id}, {typeLabel})
+                    </div>
+                  );
+                })}
+
               {sites.filter(
                 (site) =>
                   site.customerName.toLowerCase().includes(jobSearch.toLowerCase()) ||
-                  site.siteName.toLowerCase().includes(jobSearch.toLowerCase())
+                  site.siteName.toLowerCase().includes(jobSearch.toLowerCase()) ||
+                  String(getJobIdentifier(site)).includes(jobSearch)
               ).length === 0 && (
-                <div className="px-3 py-2 text-gray-500">No jobs found</div>
-              )}
+                  <div className="px-3 py-2 text-gray-500">No jobs found</div>
+                )}
             </div>
           )}
+
         </div>
 
         {/* User Selection */}
@@ -205,8 +328,10 @@ export default function BreakdownTodoForm() {
               setUserDropdownOpen(true);
             }}
             onFocus={() => setUserDropdownOpen(true)}
+            onBlur={() => setTimeout(() => setUserDropdownOpen(false), 200)}
             placeholder="Search User..."
             className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-400"
+            required
           />
           {userDropdownOpen && (
             <div className="absolute z-10 w-full max-h-60 overflow-y-auto bg-white border border-gray-300 rounded-xl mt-1 shadow-lg">
@@ -220,7 +345,7 @@ export default function BreakdownTodoForm() {
                     onClick={() => {
                       setFormData({ ...formData, userId: user.employeeId });
                       setUserDropdownOpen(false);
-                      setUserSearch(""); // reset search after selection
+                      setUserSearch("");
                     }}
                     className="cursor-pointer px-3 py-2 hover:bg-blue-100"
                   >
@@ -230,14 +355,14 @@ export default function BreakdownTodoForm() {
               {users.filter((user) =>
                 user.employeeName.toLowerCase().includes(userSearch.toLowerCase())
               ).length === 0 && (
-                <div className="px-3 py-2 text-gray-500">No users found</div>
-              )}
+                  <div className="px-3 py-2 text-gray-500">No users found</div>
+                )}
             </div>
           )}
         </div>
 
         {/* Lift Selection */}
-        {formData.jobId && (
+        {(formData.jobId || formData.renewalJobId) && (
           <div>
             <label className="block text-sm font-semibold mb-2">Select Lifts*</label>
             {loadingLifts ? (
@@ -282,7 +407,7 @@ export default function BreakdownTodoForm() {
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">No lifts found for this job.</p>
+              <p className="text-gray-500 text-sm">No lifts found for the selected job.</p>
             )}
           </div>
         )}
@@ -312,16 +437,17 @@ export default function BreakdownTodoForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2">Time</label>
+            <label className="block text-sm font-semibold mb-2">Time*</label>
             <input
-              type="text"
+              type="time"
               name="time"
               value={formData.time}
               onChange={handleChange}
-              placeholder="HH:MM"
               className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-blue-400"
+              required
             />
           </div>
+
           <div>
             <label className="block text-sm font-semibold mb-2">Venue</label>
             <input
@@ -363,7 +489,7 @@ export default function BreakdownTodoForm() {
           <input
             type="checkbox"
             name="status"
-            checked={formData.status}
+            checked={formData.status === 1} 
             onChange={handleChange}
             className="w-4 h-4 accent-blue-600"
           />

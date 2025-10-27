@@ -451,7 +451,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       toast.success('Enquiry added successfully!');
 
       router.push(
-        `/${tenant}/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(typeName)}`
+        `/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(typeName)}`
       );
 
     } catch (err) {

@@ -1,14 +1,14 @@
 "use client";
 import React from "react";
 
-import AmcJobList from "@/components/Jobs/AmcJobList";
+import CustomerList from "@/components/Customer/CustomerList";
 
-export default function AddNewJobsPage() {
+export default function CustomerSiteTodoListPage() {
 
   return (
     <div className="w-full h-screen">
       {/* Pass id as prop */}
-      <AmcJobList  />
+      <CustomerList  />
     </div>
   );
 }

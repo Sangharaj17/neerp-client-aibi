@@ -49,6 +49,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -567,6 +568,9 @@ public class AmcQuotationService {
             
             amcQuotation.setCustomer(customer);
             repository.save(amcQuotation);
+         }else {
+        	 amcQuotation.setCustomer(customer);
+             repository.save(amcQuotation);
          }
         
         String siteName= "";
@@ -581,6 +585,8 @@ public class AmcQuotationService {
                 customer.getCustomerId(),
                 siteName
         );
+        
+        
 
         if (!siteExists) {
             Site newSite = Site.builder()
@@ -594,6 +600,17 @@ public class AmcQuotationService {
            
            amcQuotation.setSite(savesite);
            repository.save(amcQuotation);
+        }else {
+        	
+        	Optional<Site> siteOptional = siteRepository.findByCustomer_CustomerIdAndSiteNameIgnoreCase(
+        	        customer.getCustomerId(),
+        	        siteName
+        	);
+
+        	amcQuotation.setSite(siteOptional.get());
+
+        	
+            repository.save(amcQuotation);
         }
 
         return "Success";

@@ -14,6 +14,7 @@ import java.util.List;
 public class AmcJobActivityRequestDto {
 
     private Integer jobId;
+    private Integer renewalJobId;
     private Long jobActivityTypeId;
     private LocalDate activityDate;
     private String activityTime;
