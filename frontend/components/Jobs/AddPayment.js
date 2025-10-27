@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
-import { Search, ChevronDown, CheckCircle, XCircle, DollarSign, Calendar, CreditCard, Loader2, Info } from 'lucide-react'; // Added Info icon
+import { Search, ChevronDown, CheckCircle, XCircle, DollarSign, Calendar, CreditCard, Loader2, Info, FileText } from 'lucide-react'; // Added FileText icon
+
+import toast from "react-hot-toast";
+// Helper function to get the current date in YYYY-MM-DD format
+const getCurrentDate = () => new Date().toISOString().split("T")[0];
 
 export default function AddPayment() {
   const [jobType, setJobType] = useState(""); // "amc" or "new"
@@ -17,12 +21,17 @@ export default function AddPayment() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // Payment fields
-  const [paymentDate, setPaymentDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [paymentDate, setPaymentDate] = useState(getCurrentDate());
   const [paymentType, setPaymentType] = useState("Cash");
   const [isCleared, setIsCleared] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false); // New state for payment submission
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success' or 'error'
+
+  // --- NEW STATES FOR CHEQUE/DD/NEFT DETAILS ---
+  const [instrumentNo, setInstrumentNo] = useState(""); // Cheque/DD/Transaction No.
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  // ---------------------------------------------
 
   // --- Utility Functions (Keeping existing logic) ---
 
@@ -109,11 +118,13 @@ export default function AddPayment() {
       }
 
       if (res?.data && Array.isArray(res.data)) {
-        setInvoices(res.data);
+        // Filter for invoices that are not fully cleared (you might want a stricter filter based on your backend logic)
+        const unclearedInvoices = res.data.filter(inv => inv.isCleared !== 1); 
+        setInvoices(unclearedInvoices);
 
-        // Auto-select if only one invoice
-        if (res.data.length === 1) {
-          setSelectedInvoice(res.data[0]);
+        // Auto-select if only one uncleared invoice
+        if (unclearedInvoices.length === 1) {
+          setSelectedInvoice(unclearedInvoices[0]);
         }
       } else {
         setInvoices([]);
@@ -126,32 +137,133 @@ export default function AddPayment() {
     }
   };
 
-  const handleSubmitPayment = (e) => {
+  // Function to handle payment type change and reset extra fields for 'Cash'
+  const handlePaymentTypeChange = (type) => {
+    setPaymentType(type);
+    if (type === "Cash") {
+      setInstrumentNo("");
+      setBankName("");
+      setBranchName("");
+    }
+  };
+
+  const resetForm = () => {
+    setJobType("");
+    setJobs([]);
+    setFilteredJobs([]);
+    setJobSearch("");
+    setSelectedJob(null);
+    setInvoices([]);
+    setSelectedInvoice(null);
+    setPaymentDate(getCurrentDate());
+    setPaymentType("Cash");
+    setIsCleared(true);
+    setInstrumentNo("");
+    setBankName("");
+    setBranchName("");
+  };
+
+
+  /**
+   * IMPORTANT: UPDATED FUNCTION FOR API CALL
+   */
+  const handleSubmitPayment = async (e) => {
     e.preventDefault();
+    setSubmitStatus(null);
+
     if (!selectedInvoice) {
       alert("Please select an invoice.");
       return;
     }
-    // Logic to submit the payment
-    setIsSubmitting(true);
-    console.log("Submitting Payment:", {
-      invoiceId: selectedInvoice.invoiceId,
-      jobId: selectedJob.id,
-      jobType: selectedJob.type,
-      paymentDate,
-      paymentType,
-      isCleared,
-      amount: selectedInvoice.totalAmt,
-    });
 
-    // Simulate API call delay
-    setTimeout(() => {
+    const requiresInstrumentDetails = ["Cheque", "DD", "NEFT"].includes(paymentType);
+
+    // Frontend validation check
+    if (requiresInstrumentDetails && (!instrumentNo || !bankName || !branchName)) {
+        alert("Please fill in all required payment instrument details.");
+        return;
+    }
+
+    // Determine payFor based on job type
+    let payForValue = "New Installation Payment";
+    if (selectedJob.type === "renewal") {
+        payForValue = "AMC Renewal Payment";
+    } else if (selectedJob.type === "job" && jobType === "amc") {
+        payForValue = "AMC Job Payment";
+    } else if (selectedJob.type === "job" && jobType === "new") {
+        payForValue = "New Installation Payment";
+    }
+
+
+    const paymentPayload = {
+      // Data Transfer Object (DTO) fields
+      paymentDate: paymentDate,
+      invoiceNo: selectedInvoice.invoiceNo,
+      payFor: payForValue, // Set dynamically based on job type
+      paymentType: paymentType,
+      chequeNo: paymentType === "Cheque" ? instrumentNo : null, // Use chequeNo for "Cheque"
+      bankName: requiresInstrumentDetails ? bankName : null,
+      branchName: requiresInstrumentDetails ? branchName : null,
+      amountPaid: selectedInvoice.totalAmt, // Send the full invoice amount
+      paymentCleared: isCleared ? "Yes" : "No", // Convert boolean to "Yes" / "No"
+
+      // Foreign key references (IDs only)
+      jobId: selectedJob.type === "job" ? selectedJob.id : null,
+      renewalJobId: selectedJob.type === "renewal" ? selectedJob.id : null,
+      invoiceId: selectedInvoice.invoiceId,
+    };
+
+
+    // The API uses 'chequeNo' for Cheque, but the DTO only has chequeNo, bankName, branchName
+    // We will use instrumentNo for chequeNo and null for others, as the DTO doesn't support generic transaction IDs easily.
+    // NOTE: For DD/NEFT, your backend DTO should likely have fields like 'transactionNo' for better mapping. 
+    // For this update, we will map 'instrumentNo' to 'chequeNo' for Cheque, and leave instrument details as is for DD/NEFT, 
+    // relying on the backend to correctly process based on paymentType.
+    if (paymentType === "Cheque") {
+        paymentPayload.chequeNo = instrumentNo;
+    } else if (["DD", "NEFT"].includes(paymentType)) {
+        // Since AmcJobPaymentRequestDto only has chequeNo, we'll map all to chequeNo for simplicity,
+        // but a proper DTO would use a generic field like 'instrumentNo' or 'transactionRef'
+        // For now, we'll use a temporary field or rely on the backend to handle the generic instrument details
+        // Since DTO has only 'chequeNo', 'bankName', 'branchName', we map the DD/NEFT details to them for the API.
+        paymentPayload.chequeNo = instrumentNo; // Use chequeNo as generic instrument/transaction no.
+    } else {
+        // For Cash, clear instrument-related fields
+        paymentPayload.chequeNo = null;
+        paymentPayload.bankName = null;
+        paymentPayload.branchName = null;
+    }
+
+    console.log("Submitting Payment Payload:", paymentPayload);
+
+    setIsSubmitting(true);
+
+    try {
+        const response = await axiosInstance.post(
+            "/api/payments/createPayment",
+            paymentPayload
+        );
+
+        console.log("API Response:", response.data);
+        setSubmitStatus('success');
+      //  alert(`Success! Payment recorded for Invoice ${selectedInvoice.invoiceNo}.`);
+        toast.success(`Payment recorded for Invoice ${selectedInvoice.invoiceNo}.`);
+
+        // Clear the form after successful submission
+        resetForm();
+
+    } catch (error) {
+        console.error("Error submitting payment:", error.response ? error.response.data : error.message);
+        setSubmitStatus('error');
+        alert(`Error: Failed to record payment. ${error.response?.data?.message || error.message}`);
+    } finally {
         setIsSubmitting(false);
-        alert(`Payment of ₹${selectedInvoice.totalAmt} submitted for Invoice ${selectedInvoice.invoiceNo}`);
-        // Optionally reset form here
-    }, 2000);
+    }
   };
   // --- End Utility Functions ---
+
+  // Determine if extra details fields should be shown
+  const showInstrumentDetails = ["Cheque", "DD", "NEFT"].includes(paymentType);
 
   return (
     <div className="p-6 md:p-10 bg-gray-10 min-h-screen">
@@ -159,16 +271,16 @@ export default function AddPayment() {
         <DollarSign className="w-7 h-7 mr-3 text-blue-600" />
         Record New Customer Payment
       </h2>
-      
+
       <form onSubmit={handleSubmitPayment}>
         {/* Main 2-Column Layout for Job/Invoice Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            
+
           {/* COLUMN 1: Job Type Selection & Search Card (Always visible) */}
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-fit">
             <h3 className="text-xl font-semibold mb-5 text-gray-700 flex items-center">
-                <Info className="w-5 h-5 mr-2 text-blue-500"/>
-                1. Select Job Type and Search
+              <Info className="w-5 h-5 mr-2 text-blue-500"/>
+              1. Select Job Type and Search
             </h3>
 
             {/* Job Type Selection */}
@@ -226,7 +338,7 @@ export default function AddPayment() {
                   />
                   <ChevronDown className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 transition-transform duration-200 ${jobDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                 </div>
-                
+
                 {jobDropdownOpen && (
                   <ul className="absolute z-20 bg-white border border-gray-300 rounded-lg shadow-xl w-full mt-1 max-h-60 overflow-y-auto divide-y divide-gray-100">
                     {filteredJobs.length > 0 ? (
@@ -287,10 +399,10 @@ export default function AddPayment() {
                       key={idx}
                       onClick={() => setSelectedInvoice(inv)}
                       className={`border rounded-xl p-4 shadow-sm cursor-pointer transition-all duration-200 relative ${
-                        selectedInvoice?.invoiceId === inv.invoiceId
-                          ? "border-blue-600 ring-4 ring-blue-100 bg-blue-50"
-                          : "border-gray-300 hover:shadow-md hover:border-blue-400 bg-white"
-                      }`}
+                          selectedInvoice?.invoiceId === inv.invoiceId
+                            ? "border-blue-600 ring-4 ring-blue-100 bg-blue-50"
+                            : "border-gray-300 hover:shadow-md hover:border-blue-400 bg-white"
+                        }`}
                     >
                       <p className="font-extrabold text-lg text-gray-900 mb-1 leading-tight">
                         {inv.invoiceNo || "INV-N/A"}
@@ -303,8 +415,8 @@ export default function AddPayment() {
                       </p>
                       <div
                         className={`text-xs font-medium mt-2 p-1 rounded inline-flex items-center ${
-                          inv.isCleared === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-                        }`}
+                            inv.isCleared === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                          }`}
                       >
                         {inv.isCleared === 1 ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
                         {inv.isCleared === 1 ? "Cleared" : "Pending"}
@@ -322,7 +434,7 @@ export default function AddPayment() {
               {/* No Invoices Found */}
               {!loadingInvoices && invoices.length === 0 && (
                 <div className="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 rounded text-center font-medium">
-                  <span className="font-bold">Heads up!</span> No invoices found for this job.
+                  <span className="font-bold">Heads up!</span> No **uncleared** invoices found for this job.
                 </div>
               )}
             </div>
@@ -336,6 +448,20 @@ export default function AddPayment() {
                 <DollarSign className="w-5 h-5 mr-2 text-blue-500"/>
                 3. Enter Payment Information
             </h3>
+
+            {/* Success/Error Message */}
+            {submitStatus === 'success' && (
+                <div className="p-3 mb-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Payment recorded successfully!
+                </div>
+            )}
+            {submitStatus === 'error' && (
+                <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center">
+                    <XCircle className="w-5 h-5 mr-2" />
+                    Failed to record payment. Please check the console for details.
+                </div>
+            )}
 
             <div className="grid md:grid-cols-4 gap-6">
               {/* Payment Date */}
@@ -394,50 +520,102 @@ export default function AddPayment() {
                       className="text-red-500 focus:ring-red-500"
                     />
                     <span className="text-gray-700 font-medium">No</span>
-                  </label>
+                    </label>
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-8">
-                <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
-                    <CreditCard className="w-4 h-4 mr-1" /> Select Payment Type*
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {["Cash", "Cheque", "DD", "NEFT"].map((type) => (
-                        <div
-                            key={type}
-                            onClick={() => setPaymentType(type)}
-                            className={`border rounded-lg p-3 text-center cursor-pointer transition-all duration-200 font-medium ${
-                                paymentType === type
-                                    ? "bg-blue-600 text-white shadow-md border-blue-600"
-                                    : "hover:bg-blue-50 hover:text-blue-700 border-gray-300 text-gray-700"
+              <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                  <CreditCard className="w-4 h-4 mr-1" /> Select Payment Type*
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {["Cash", "Cheque", "DD", "NEFT"].map((type) => (
+                      <div
+                          key={type}
+                          onClick={() => handlePaymentTypeChange(type)} // Use the new handler
+                          className={`border rounded-lg p-3 text-center cursor-pointer transition-all duration-200 font-medium ${
+                              paymentType === type
+                                  ? "bg-blue-600 text-white shadow-md border-blue-600"
+                                  : "hover:bg-blue-50 hover:text-blue-700 border-gray-300 text-gray-700"
                             }`}
-                        >
-                            {type}
-                        </div>
-                    ))}
-                </div>
+                      >
+                          {type}
+                      </div>
+                  ))}
+              </div>
             </div>
+
+            {/* --- NEW CONDITIONAL FIELDS --- */}
+            {showInstrumentDetails && (
+                <div className="mt-8 grid md:grid-cols-3 gap-6 border-t pt-6 border-gray-200">
+                    {/* Instrument/Transaction No. */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                            <FileText className="w-4 h-4 mr-1" /> {paymentType} No. / Transaction No.*
+                        </label>
+                        <input
+                            type="text"
+                            value={instrumentNo}
+                            onChange={(e) => setInstrumentNo(e.target.value)}
+                            placeholder={`Enter ${paymentType} No. or Transaction ID`}
+                            required={showInstrumentDetails}
+                            className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+
+                    {/* Bank Name */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                            <Info className="w-4 h-4 mr-1" /> Bank Name*
+                        </label>
+                        <input
+                            type="text"
+                            value={bankName}
+                            onChange={(e) => setBankName(e.target.value)}
+                            placeholder="e.g., State Bank of India"
+                            required={showInstrumentDetails}
+                            className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+
+                    {/* Branch Name */}
+                    <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                            <Info className="w-4 h-4 mr-1" /> Branch Name*
+                        </label>
+                        <input
+                            type="text"
+                            value={branchName}
+                            onChange={(e) => setBranchName(e.target.value)}
+                            placeholder="e.g., Mumbai Fort Branch"
+                            required={showInstrumentDetails}
+                            className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                </div>
+            )}
+            {/* --- END CONDITIONAL FIELDS --- */}
+
 
             {/* Submit Button */}
             <div className="mt-10 pt-6 border-t border-gray-200">
-                <button
-                    type="submit"
-                    disabled={isSubmitting || !selectedInvoice}
-                    className={`w-full py-3 px-4 rounded-lg text-white font-semibold flex items-center justify-center transition duration-200 ${
-                        isSubmitting || !selectedInvoice
-                            ? 'bg-blue-400 cursor-not-allowed'
-                            : 'bg-blue-600 hover:bg-blue-700 shadow-md'
-                    }`}
-                >
-                    {isSubmitting ? (
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    ) : (
-                        <DollarSign className="w-5 h-5 mr-2" />
-                    )}
-                    {isSubmitting ? 'Processing Payment...' : 'Record Payment'}
-                </button>
+              <button
+                  type="submit"
+                  disabled={isSubmitting || !selectedInvoice || (showInstrumentDetails && (!instrumentNo || !bankName || !branchName))}
+                  className={`w-full py-3 px-4 rounded-lg text-white font-semibold flex items-center justify-center transition duration-200 ${
+                      isSubmitting || !selectedInvoice || (showInstrumentDetails && (!instrumentNo || !bankName || !branchName))
+                          ? 'bg-blue-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700 shadow-md'
+                  }`}
+              >
+                  {isSubmitting ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                      <DollarSign className="w-5 h-5 mr-2" />
+                  )}
+                  {isSubmitting ? 'Processing Payment...' : 'Record Payment'}
+              </button>
             </div>
           </div>
         )}

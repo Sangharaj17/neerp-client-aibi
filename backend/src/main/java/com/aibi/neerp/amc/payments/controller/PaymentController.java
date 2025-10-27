@@ -7,8 +7,11 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,6 +19,9 @@ import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.renewal.service.AmcRenewalJobsService;
+import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
+import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
+import com.aibi.neerp.amc.payments.service.AmcJobPaymentService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,6 +38,9 @@ public class PaymentController {
     
     @Autowired
     private AmcInvoiceService amcInvoiceService;
+    
+    @Autowired
+    private AmcJobPaymentService paymentService;
 
     /**
      * Get all active AMC Jobs (New Installation Jobs)
@@ -136,7 +145,37 @@ public class PaymentController {
     }
 
     
-    
+    // ✅ Create Payment
+    @PostMapping("/createPayment")
+    public ResponseEntity<AmcJobPaymentResponseDto> createPayment(@RequestBody AmcJobPaymentRequestDto dto) {
+        log.info("Creating AMC Payment for invoice: {}", dto.getInvoiceNo());
+        AmcJobPaymentResponseDto response = paymentService.createPayment(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // ✅ Get All Payments
+    @GetMapping("/getAllPayments")
+    public ResponseEntity<List<AmcJobPaymentResponseDto>> getAllPayments() {
+        log.info("Fetching all AMC payments");
+        List<AmcJobPaymentResponseDto> payments = paymentService.getAllPayments();
+        return ResponseEntity.ok(payments);
+    }
+
+    // ✅ Get Payment by ID
+    @GetMapping("/getPaymentById/{id}")
+    public ResponseEntity<AmcJobPaymentResponseDto> getPaymentById(@PathVariable Integer id) {
+        log.info("Fetching AMC payment by ID: {}", id);
+        AmcJobPaymentResponseDto payment = paymentService.getPaymentById(id);
+        return ResponseEntity.ok(payment);
+    }
+
+    // ✅ Delete Payment
+    @DeleteMapping("/deletePayment/{id}")
+    public ResponseEntity<String> deletePayment(@PathVariable Integer id) {
+        paymentService.deletePayment(id);
+        log.info("Deleted AMC payment with ID: {}", id);
+        return ResponseEntity.ok("Payment with ID " + id + " deleted successfully.");
+    }
     
     
     
