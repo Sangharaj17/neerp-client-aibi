@@ -1,7 +1,7 @@
 // components/Common/ActionModal.js
 'use client';
 
-export default function ActionModal({ isOpen, title, children, onCancel }) {
+export default function ActionModal({ isOpen, children, onCancel }) {
   if (!isOpen) return null;
 
   return (
@@ -10,10 +10,10 @@ export default function ActionModal({ isOpen, title, children, onCancel }) {
       onClick={onCancel}
     >
       <div
-        className="bg-white w-full max-w-3xl sm:max-w-2xl md:max-w-3xl lg:max-w-4xl rounded-xl shadow-lg p-6 animate-fadeIn overflow-auto max-h-[90vh]"
+        // FIX: Increased max-w to 5xl and 6xl to allow the invoice to occupy more screen width.
+        className="bg-white w-full max-w-5xl lg:max-w-6xl rounded-xl shadow-lg p-6 animate-fadeIn overflow-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* {title && <h2 className="text-xl font-semibold text-gray-800 mb-3">{title}</h2>} */}
         <div className="text-sm text-gray-600 mb-6">{children}</div>
         <div className="flex justify-end space-x-3">
           {/* Cancel and Confirm buttons intentionally removed */}
