@@ -1,4 +1,4 @@
-// components/AMCInvoicePrint.js (Final Code for Print Margins and Page Break)
+// components/AMCInvoicePrint.js (Final Layout Correction for Amount in Words Placement)
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -50,25 +50,22 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
 
   return (
     <>
-      {/* 1. AGGRESSIVE PRINT STYLES TO REMOVE MARGINS AND BROWSER HEADERS/FOOTERS */}
+      {/* AGGRESSIVE PRINT STYLES TO REMOVE MARGINS AND BROWSER HEADERS/FOOTERS (Kept for one-page fix) */}
       <style jsx global>{`
         @media print {
-          /* Force zero page margins for PDF/print */
           @page {
-            size: A4; /* Standard paper size */
+            size: A4;
             margin: 0 !important; 
             padding: 0 !important;
           }
-          /* Ensure the body and HTML start at the edge */
           body, html {
             margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden; /* Prevent scrollbar artifacts in print */
+            overflow: hidden; 
           }
         }
       `}</style>
 
-      {/* 2. Main content wrapper: print:p-0 and print:shadow-none removes container padding */}
       <div className="w-full mx-auto p-4 bg-white shadow-2xl font-sans text-gray-800 print:p-0 print:shadow-none print:bg-transparent">
         
         {/* Header (Print Controls) */}
@@ -86,7 +83,7 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
           </button>
         </div>
         
-        {/* Main Title - Reduced margin */}
+        {/* Main Title */}
         <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-4">PAYMENT INVOICE</h1>
 
         {/* --- INVOICE TABLE --- */}
@@ -103,7 +100,7 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
           </thead>
           
           <tbody>
-            {/* Company Details (Seller) and Invoice Details - BREAK AVOID */}
+            {/* Company Details (Seller) and Invoice Details */}
             <tr className="bg-gray-50 break-inside-avoid">
               <td className="border border-gray-400 py-2 px-3 align-top whitespace-normal" colSpan="3">
                 <p className="font-bold text-lg text-blue-700 mb-1">{data.companyName}</p>
@@ -127,7 +124,7 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
               </td>
             </tr>
 
-            {/* GSTIN and Site Details (Buyer) - BREAK AVOID */}
+            {/* GSTIN and Site Details (Buyer) */}
             <tr className="break-inside-avoid">
               <td className="border border-gray-400 py-2 px-3 align-top bg-white whitespace-normal" colSpan="3">
                 <p>**GSTIN/UIN**: <span className="font-bold text-gray-900">{data.gstin_UIN}</span></p>
@@ -142,7 +139,7 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
               </td>
             </tr>
 
-            {/* Particulars Table Header (6 Columns) - BREAK AVOID */}
+            {/* Particulars Table Header (6 Columns) */}
             <tr className="bg-blue-50 font-extrabold text-center text-gray-700 break-inside-avoid">
               <td className={`border border-gray-400 p-2 ${colWidths.particulars}`}>Particulars</td>
               <td className={`border border-gray-400 p-2 ${colWidths.hsn}`}>HSN/SAC</td>
@@ -152,7 +149,7 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
               <td className={`border border-gray-400 p-2 ${colWidths.amount}`}>Amount</td>
             </tr>
 
-            {/* Particulars Row - BREAK AVOID */}
+            {/* Particulars Row */}
             <tr className="break-inside-avoid">
               <td className="border border-gray-400 p-2 align-top">
                 {data.particulars.split('\n').map((item, index) => (
@@ -166,12 +163,11 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
               <td className="border border-gray-400 p-2 text-right align-top font-bold text-gray-800">{formatCurrency(data.amount)}</td>
             </tr>
 
-            {/* Sub Total Row - BREAK AVOID */}
+            {/* Sub Total Row - FIX 1: Left side is now a blank spacer cell */}
             <tr className="break-inside-avoid">
-              {/* Spans 4 columns (Particulars, HSN, Qty, Rate) */}
-              <td className="border border-gray-400 py-1 px-2 align-top text-xs text-gray-500" colSpan="4">
-                <p className="font-bold text-gray-700">Amount Chargeable (in words):</p>
-                <p className="italic text-base font-semibold whitespace-normal">{data.amountChargeableInWords}</p>
+              {/* Spans 4 columns (Particulars, HSN, Qty, Rate) - Blank Filler */}
+              <td className="border border-gray-400 py-1 px-2 align-top text-xs text-gray-500 bg-white" colSpan="4">
+                {/* Content removed to move to Grand Total row */}
               </td>
               {/* Spans 1 column (Per) */}
               <td className="border border-gray-400 py-1 px-2 align-top font-bold text-right bg-gray-50" colSpan="1">Sub Total</td>
@@ -179,7 +175,7 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
               <td className="border border-gray-400 py-1 px-2 align-top text-right font-bold bg-gray-50 text-gray-800">{formatCurrency(data.subTotal)}</td>
             </tr>
 
-            {/* Tax Breakdown - BREAK AVOID */}
+            {/* Tax Breakdown */}
             <tr className="break-inside-avoid">
               {/* RowSpan 3 columns for Bank Details, spanning 4 columns wide */}
               <td className="border border-gray-400 py-1 px-2 align-top" rowSpan="3" colSpan="4">
@@ -204,19 +200,24 @@ const AMCInvoicePrint = ({ invoiceId = 1 }) => {
               <td className="border border-gray-400 p-1 text-right text-xs font-semibold bg-gray-50">{formatCurrency(data.roundOffValue)}</td>
             </tr>
 
-            {/* Grand Total - BREAK AVOID */}
+            {/* Grand Total - FIX 2: Restructured to include Amount in Words on the left side (cols 1-4) */}
             <tr className="bg-blue-100 font-extrabold text-lg text-gray-900 border-t-2 border-blue-500 break-inside-avoid">
-              {/* Spans 4 columns (Particulars, HSN, Qty, Rate) */}
-              <td className="border border-gray-400 p-2 text-right" colSpan="4">GRAND TOTAL</td>
-              
-              {/* Spans 1 column (Per) - E. & O. E. */}
-              <td className="border border-gray-400 p-2 text-center text-xs font-normal" colSpan="1">E. & O. E.</td>
-              
-              {/* The Grand Total AMOUNT in the final column (Amount) */}
-              <td className="border border-gray-400 p-2 text-right">{formatCurrency(data.grandTotal)}</td>
+                {/* Cell 1: Amount in Words (ColSpans 4 columns) - White background to contrast */}
+                <td className="border border-gray-400 py-1 px-2 align-top text-xs text-gray-500 bg-white" colSpan="4">
+                    <p className="font-bold text-gray-700">Amount Chargeable (in words):</p>
+                    <p className="italic text-base font-semibold whitespace-normal">{data.amountChargeableInWords}</p>
+                </td>
+                
+                {/* Cell 2: GRAND TOTAL label (ColSpans 1 column) - Blue background */}
+                <td className="border border-gray-400 p-2 text-right" colSpan="1">GRAND TOTAL</td>
+                
+                {/* Cell 3: Grand Total Amount (ColSpans 1 column, final column) - Blue background */}
+                <td className="border border-gray-400 p-2 text-right">
+                    {formatCurrency(data.grandTotal)}
+                </td>
             </tr>
 
-            {/* Declaration and Signature - BREAK AVOID */}
+            {/* Declaration and Signature */}
             <tr className="break-inside-avoid">
               {/* Declaration spanning 3 columns */}
               <td className="border border-gray-400 py-2 px-3 align-top whitespace-normal" colSpan="3">
