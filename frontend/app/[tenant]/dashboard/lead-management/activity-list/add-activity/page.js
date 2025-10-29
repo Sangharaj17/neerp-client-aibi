@@ -48,7 +48,7 @@
 //     try {
 //       setLoading(true);
 //       const res = await axios.get(
-//         "http://localhost:8080/api/leadmanagement/lead-activity/addLeadActivityGetData",
+//         "https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-activity/addLeadActivityGetData",
 //         { params: { leadId: Number(lId), todoId: Number(tId) } }
 //       );
 //       const d = res.data || {};
@@ -86,7 +86,7 @@
 
 //   const fetchTodoOptions = async () => {
 //     try {
-//       const res = await axios.get("http://localhost:8080/api/leadmanagement/lead-todos", {
+//       const res = await axios.get("https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-todos", {
 //         params: { search: "", page: 0, size: 1000 },
 //       });
 //       setTodoOptions(res.data?.data || []);
@@ -138,7 +138,7 @@
 
 //     try {
 //       setLoading(true);
-//       await axios.post("http://localhost:8080/api/leadmanagement/lead-activity", payload);
+//       await axios.post("https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-activity", payload);
 //       toast.success("Activity created successfully.");
 //       router.push(`/${tenant}/dashboard/lead-management/activity-list`);
 //     } catch (err) {

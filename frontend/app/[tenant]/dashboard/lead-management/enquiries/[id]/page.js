@@ -37,7 +37,7 @@ export default function ViewEnquiryClientPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // const res = await fetch(`http://localhost:8080/api/combined-enquiry/group-by-type?leadId=${leadId}`);
+        // const res = await fetch(`https://neerp-client-aibi-backend.scrollconnect.com/api/combined-enquiry/group-by-type?leadId=${leadId}`);
         // const data = await res.json();
         // setGroupedData(data);
         const response = await axiosInstance.get("/api/combined-enquiry/group-by-type", {

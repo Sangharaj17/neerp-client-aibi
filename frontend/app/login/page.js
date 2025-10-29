@@ -8,26 +8,14 @@ export default async function LoginPage() {
   const hdrs = headers();
   const tenant = getServerTenant(hdrs);
 
+  // If no tenant detected, show a generic login form
   if (!tenant || tenant === 'login') {
-    // On localhost, assume full host (with port) as tenant
-    const hostHeader = hdrs.get('host') || '';
-    const [hostName, hostPort] = hostHeader.split(':');
-    if (hostName?.includes('localhost')) {
-      const assumed = hostPort ? `localhost:${hostPort}` : 'localhost';
-      try {
-        await axiosAdmin.get(`/api/clients/domain/${assumed}/with-subscription-check`, {
-          headers: { "X-Tenant": assumed },
-        });
-        return <LoginForm tenant={assumed} />;
-      } catch (err) {
-        // fall through to error rendering below
-      }
-    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="p-6 bg-white rounded-lg shadow-md max-w-sm text-center">
-          <h1 className="text-xl font-bold text-gray-800 mb-2">Invalid Client URL</h1>
-          <p className="text-gray-600">Please open with a valid client domain or add ?tenant=your-client in dev.</p>
+          <h1 className="text-xl font-bold text-gray-800 mb-2">Welcome</h1>
+          <p className="text-gray-600 mb-4">Please access this application through your assigned domain.</p>
+          <p className="text-sm text-gray-500">If you're a developer, use ?tenant=your-client in the URL.</p>
         </div>
       </div>
     );
