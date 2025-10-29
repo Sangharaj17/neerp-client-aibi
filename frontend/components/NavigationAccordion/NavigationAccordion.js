@@ -273,6 +273,15 @@ const NavigationAccordion = () => {
         { title: 'Reports', href: '/accounts/reports' },
         { title: 'Settings', href: '/accounts/settings' }
       ]
+    },
+     {
+      id: 'settings',
+      title: 'settings',
+      icon: Settings,
+      hasSubmenu: true,
+      submenu: [
+        { title: 'Company Setting', href: '/dashboard/settings' },
+      ]
     }
   ];
 
