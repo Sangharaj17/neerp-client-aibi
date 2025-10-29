@@ -12,6 +12,9 @@ import {
 } from "react-icons/fa";
 import axiosInstance from "@/utils/axiosInstance";
 
+import AMCInvoicePrint from "./AMCInvoicePrint";
+import ActionModal from "../AMC/ActionModal";
+
 const getSortIcon = (column, sortBy, direction) => {
   if (sortBy === column) {
     return direction === "asc" ? (
@@ -110,9 +113,7 @@ const AmcInvoices = () => {
     return <span className="text-gray-500">-</span>;
   };
 
-  const handlePrintPdf = (invoiceId) => {
-    alert(`Initiating PDF download for Invoice ID: ${invoiceId}`);
-  };
+  
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -132,6 +133,25 @@ const AmcInvoices = () => {
     if (newPage >= 0 && newPage < pagination.totalPages) {
       setPagination({ ...pagination, page: newPage });
     }
+  };
+
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
+
+  /**
+   * Opens the modal and sets the ID of the invoice to be printed.
+   * @param {number} invoiceId - The ID of the invoice to fetch and print.
+   */
+  const handlePrintPdf = (invoiceId) => {
+    setSelectedInvoiceId(invoiceId);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    // Optionally reset the selected ID when closing the modal
+    setSelectedInvoiceId(null); 
   };
 
   return (
@@ -291,15 +311,15 @@ const AmcInvoices = () => {
                       <td className="px-6 py-2 whitespace-nowrap text-center">
                         {getPaymentStatus(invoice.isCleared)}
                       </td>
-                      <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
-                        <button
-                          onClick={() => handlePrintPdf(invoice.invoiceId)}
-                          className="text-blue-600 hover:text-blue-900 transition duration-150 p-1 rounded-full hover:bg-blue-100"
-                          title="Print Invoice PDF"
-                        >
-                          <FaPrint className="w-4 h-4" />
-                        </button>
-                      </td>
+                     <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
+                  <button
+                    onClick={() => handlePrintPdf(invoice.invoiceId)} // Calls the handler with the invoice ID
+                    className="text-blue-600 hover:text-blue-900 transition duration-150 p-1 rounded-full hover:bg-blue-100"
+                    title="Print Invoice PDF"
+                  >
+                    <FaPrint className="w-4 h-4" />
+                  </button>
+                </td>
                     </tr>
                   ))
                 ) : (
@@ -384,6 +404,26 @@ const AmcInvoices = () => {
           </div>
         )}
       </div>
+
+      <ActionModal 
+        isOpen={isModalOpen} 
+        onCancel={closeModal} // Closes the modal when clicking outside
+      >
+        {/* Pass the AMCInvoicePrint component as children */}
+        {selectedInvoiceId !== null && (
+          <AMCInvoicePrint invoiceId={selectedInvoiceId} />
+        )}
+        
+        {/* Add a close button inside the modal content for better UX (optional) */}
+        <div className="flex justify-end pt-4 print:hidden">
+            <button
+                onClick={closeModal}
+                className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+                Close Preview
+            </button>
+        </div>
+      </ActionModal>
     </div>
   );
 };

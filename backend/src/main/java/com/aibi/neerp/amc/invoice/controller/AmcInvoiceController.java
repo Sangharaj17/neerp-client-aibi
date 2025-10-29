@@ -2,6 +2,7 @@ package com.aibi.neerp.amc.invoice.controller;
 
 
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceCountsDto;
+import com.aibi.neerp.amc.invoice.dto.AmcInvoicePdfData;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
@@ -142,7 +143,20 @@ public class AmcInvoiceController {
         }
     }
     
-    
+    @GetMapping("/amc-pdf-data/{invoiceId}") // Maps GET requests to this URL
+    public ResponseEntity<AmcInvoicePdfData> getAmcInvoicePdfData(@PathVariable Integer invoiceId) {
+
+        // 1. Call the service method
+        AmcInvoicePdfData data = invoiceService.amcInvoicePdfData(invoiceId);
+
+        // 2. Return the data with an appropriate HTTP status (200 OK)
+        if (data != null) {
+            return ResponseEntity.ok(data);
+        } else {
+            // Optional: Return 404 Not Found if the data is null/not found
+            return ResponseEntity.notFound().build();
+        }
+    }
     
     
     
