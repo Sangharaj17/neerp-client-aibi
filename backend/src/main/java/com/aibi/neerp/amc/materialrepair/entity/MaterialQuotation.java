@@ -48,6 +48,10 @@ public class MaterialQuotation {
     private LocalDate quotFinalDate;
     
     private Integer isFinal;
+    
+    private Double subTotal;
+    private Double gstAmt;
+    private Double grandTotal;
 
     @OneToMany(mappedBy = "materialQuotation", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude

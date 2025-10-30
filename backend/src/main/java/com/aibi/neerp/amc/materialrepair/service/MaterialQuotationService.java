@@ -69,6 +69,10 @@ public class MaterialQuotationService {
         quotation.setNote(dto.getNote());
         quotation.setGst(dto.getGst());
         
+        quotation.setSubTotal(dto.getSubTotal());
+        quotation.setGstAmt(dto.getGstAmt());
+        quotation.setGrandTotal(dto.getGrandTotal());
+        
         WorkPeriod workPeriod = null;
         
         if(dto.getWorkPeriodId()!=null) {

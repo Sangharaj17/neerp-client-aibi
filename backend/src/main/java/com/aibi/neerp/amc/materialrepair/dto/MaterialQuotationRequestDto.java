@@ -18,6 +18,10 @@ public class MaterialQuotationRequestDto {
     private Long workPeriodId;
     private Boolean isFinal;
     private LocalDate quotFinalDate;
+    
+    private Double subTotal;
+    private Double gstAmt;
+    private Double GrandTotal;
 
     private List<QuotationDetailRequestDto> details;
 }
