@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import axiosInstance from "@/utils/axiosInstance";
 import ActionModal from "../AMC/ActionModal"; // Assuming this path is correct
 import QrCodeGenerator from "./QrCodeGenerator"; // Correctly using your QrCodeGenerator component
+import MaterialQuotationForm from "./MaterialQuotationForm";
 
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -25,6 +26,16 @@ const JobDetailPage = ({ jobId }) => {
   const [isQrModalOpen, setIsQrModalOpen] = useState(false); // <--- New State
 
   const [employeeDtos, setEmployeeDtos] = useState([]);
+
+   const [repairModelOpen, setRepairModelOpen] = useState(false);
+
+  const handleOpenRepairModel = () => {
+    setRepairModelOpen(true);
+  }
+
+  const handleCloseRepairModel = () => {
+    setRepairModelOpen(false);
+  }
 
   useEffect(() => {
     const fetchJobDetail = async () => {
@@ -140,6 +151,8 @@ const JobDetailPage = ({ jobId }) => {
   const handleGenerateQrCode = () => {
     setIsQrModalOpen(true);
   };
+
+ 
   
   // Data for the QrCodeGenerator component
   // Use jobDetails.jobNo for the non-renewal job ID as requested.
@@ -177,7 +190,8 @@ const JobDetailPage = ({ jobId }) => {
                 ? exportActivityDetailsToPDF
                 : label === "Generate QR Code" // <--- Trigger the Modal
                 ? handleGenerateQrCode
-                : null
+                : label === "Add Quotation for Repair"
+                ?handleOpenRepairModel : null
             }
             className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded"
           >
@@ -471,6 +485,16 @@ const JobDetailPage = ({ jobId }) => {
             </p>
           )}
         </div>
+      </ActionModal>
+
+       <ActionModal isOpen={repairModelOpen} onCancel={handleCloseRepairModel}>
+        <MaterialQuotationForm
+          customerName={jobDetails.customerName}
+          siteName={jobDetails.siteName}
+          jobId={jobId}
+          jobRenewalId={0}
+          onClose={handleCloseRepairModel}
+        />
       </ActionModal>
     </div>
   );
