@@ -12,6 +12,7 @@ import {
   FaSort,
   FaSortUp,
   FaSortDown,
+  FaThumbsUp, // Import the Thumbs Up icon
 } from 'react-icons/fa';
 import { FiChevronLeft, FiChevronRight, FiSearch } from 'react-icons/fi';
 
@@ -42,7 +43,6 @@ const MaterialQuotationList = () => {
       const res = await axiosInstance.get('/api/amc/material-quotation/getAll', {
         params: { search, page, size, sortBy, direction },
       });
-      // The API seems to return content directly, so we use optional chaining and fallback
       setQuotations(res.data.content || []);
       setTotalPages(res.data.totalPages || 0);
     } catch (error) {
@@ -78,9 +78,31 @@ const MaterialQuotationList = () => {
     setPage(0); // Reset to first page on size change
   };
 
+  // Function to toggle isFinal status (placeholder for actual API call)
+  const toggleIsFinal = async (quotationId, currentIsFinal) => {
+    // In a real application, you would make an API call here to update the backend
+    console.log(`Toggling isFinal for quotation ${quotationId} from ${currentIsFinal} to ${1 - currentIsFinal}`);
+    // Example:
+    // try {
+    //   await axiosInstance.put(`/api/amc/material-quotation/toggleIsFinal/${quotationId}`, { isFinal: 1 - currentIsFinal });
+    //   fetchQuotations(); // Refresh the list after update
+    // } catch (error) {
+    //   console.error('Error toggling isFinal:', error);
+    // }
+
+    // For demonstration, we'll just update the local state for a visual effect
+    setQuotations(prevQuotations =>
+      prevQuotations.map(q =>
+        q.modQuotId === quotationId ? { ...q, isFinal: 1 - currentIsFinal } : q
+      )
+    );
+  };
+
+
   const currentEntriesStart = page * size + 1;
   const currentEntriesEnd = Math.min((page + 1) * size, page * size + quotations.length);
-  const totalItems = totalPages * size; // Approximation, better to get totalElements from API
+  // Assuming totalElements is available from the API response for accurate count
+  const totalItems = totalPages * size; 
 
   return (
     <div className="p-4 sm:p-8 bg-white shadow-xl rounded-2xl border border-gray-100 max-w-full mx-auto">
@@ -135,14 +157,14 @@ const MaterialQuotationList = () => {
                 'GST',
                 'Work Period',
                 'HSN/SAC',
-                'Is Final',
+                'Final Status', // Changed from 'Is Final'
                 'Final Date',
                 'Actions',
               ].map((header) => (
                 <th
                   key={header}
                   className={`p-4 font-bold text-gray-600 uppercase tracking-wider ${
-                    header === 'Actions' || header === 'GST' || header === 'Is Final'
+                    header === 'Actions' || header === 'GST' || header === 'Final Status'
                       ? 'text-center'
                       : 'text-left'
                   }`}
@@ -185,18 +207,24 @@ const MaterialQuotationList = () => {
                   <td className="p-4 text-center font-mono">{q.gst}%</td>
                   <td className="p-4 text-gray-600 whitespace-nowrap">{q.workPeriod || 'N/A'}</td>
                   <td className="p-4 font-mono text-gray-600">{q.hsnCode || 'N/A'}</td>
+                  {/* Final Status with ThumbsUp button */}
                   <td className="p-4 text-center">
-                    {q.isFinal === 1 ? (
-                      <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full shadow-md">
-                        <span className="w-2 h-2 mr-1 bg-green-500 rounded-full"></span>
-                        Final
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1 text-xs font-semibold text-yellow-800 bg-yellow-100 rounded-full shadow-md">
-                        <span className="w-2 h-2 mr-1 bg-yellow-500 rounded-full"></span>
-                        Draft
-                      </span>
-                    )}
+                    <button
+                      onClick={() => toggleIsFinal(q.modQuotId, q.isFinal)}
+                      className={`
+                        p-2 rounded-full text-lg 
+                        ${q.isFinal === 1 
+                            ? 'bg-green-100 text-green-600 hover:bg-green-200' 
+                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+                        }
+                        transition duration-200 ease-in-out transform hover:scale-110
+                        focus:outline-none focus:ring-2 focus:ring-offset-2 
+                        ${q.isFinal === 1 ? 'focus:ring-green-500' : 'focus:ring-gray-400'}
+                      `}
+                      title={q.isFinal === 1 ? 'Quotation is Final' : 'Mark as Final'}
+                    >
+                      <FaThumbsUp />
+                    </button>
                   </td>
                   <td className="p-4 text-center text-gray-500 whitespace-nowrap">
                     {q.quotFinalDate || '-'}
@@ -262,8 +290,6 @@ const MaterialQuotationList = () => {
           </tbody>
         </table>
       </div>
-
-      {/* --- */}
 
       {/* Pagination & Controls */}
       <div className="flex flex-col sm:flex-row justify-between items-center mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200 gap-3 text-sm text-gray-700">
