@@ -15,6 +15,8 @@ import {
   FaThumbsUp, // Import the Thumbs Up icon
 } from 'react-icons/fa';
 import { FiChevronLeft, FiChevronRight, FiSearch } from 'react-icons/fi';
+import ActionModal from '../AMC/ActionModal';
+import MaterialQuotationPrint from '../Jobs/MaterialQuotationPrint';
 
 // Helper function to render the correct sort icon
 const getSortIcon = (field, currentSortBy, currentDirection) => {
@@ -77,6 +79,20 @@ const MaterialQuotationList = () => {
     setSize(parseInt(e.target.value));
     setPage(0); // Reset to first page on size change
   };
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
+
+
+    const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedInvoiceId(null);
+    };
+
+  const handleGeneratePdf = (quotationId) => {
+    setSelectedInvoiceId(quotationId);
+    setIsModalOpen(true);
+    };
 
   // Function to toggle isFinal status (placeholder for actual API call)
   const toggleIsFinal = async (quotationId, currentIsFinal) => {
@@ -255,7 +271,7 @@ const MaterialQuotationList = () => {
                       <button
                         className="p-1 rounded-full text-orange-500 hover:bg-orange-100 transition duration-150"
                         title="Generate PDF"
-                        // onClick={() => handleGeneratePdf(q.modQuotId)}
+                         onClick={() => handleGeneratePdf(q.modQuotId)}
                       >
                         <FaFilePdf />
                       </button>
@@ -337,6 +353,25 @@ const MaterialQuotationList = () => {
           </div>
         </div>
       </div>
+       <ActionModal 
+              isOpen={isModalOpen} 
+              onCancel={closeModal} // Closes the modal when clicking outside
+            >
+              {/* Pass the AMCInvoicePrint component as children */}
+              {selectedInvoiceId !== null && (
+                <MaterialQuotationPrint quotationId={selectedInvoiceId} />
+              )}
+              
+              {/* Add a close button inside the modal content for better UX (optional) */}
+              <div className="flex justify-end pt-4 print:hidden">
+                  <button
+                      onClick={closeModal}
+                      className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                      Close Preview
+                  </button>
+              </div>
+            </ActionModal>
     </div>
   );
 };

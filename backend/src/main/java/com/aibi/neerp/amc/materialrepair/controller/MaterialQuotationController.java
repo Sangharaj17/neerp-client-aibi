@@ -61,5 +61,24 @@ public class MaterialQuotationController {
                 search, dateSearch, page, size, sortBy, direction
         );
     }
+    
+    
+    @GetMapping("/getMaterialRepairQuatationPdfData/{material_q_id}")
+    public ResponseEntity<MaterialRepairQuatationPdfData> 
+                 getMaterialRepairQuatationPdfData(@PathVariable Integer material_q_id) {
+    	
+    	MaterialRepairQuatationPdfData materialRepairQuatationPdfData =
+    			materialQuotationService.getMaterialRepairQuatationPdfData(material_q_id);
+    	
+    	return ResponseEntity.ok(materialRepairQuatationPdfData);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
 }
 
