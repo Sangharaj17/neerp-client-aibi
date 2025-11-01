@@ -28,6 +28,13 @@ public class CompanySettingService {
         CompanySetting savedEntity = repository.save(entity);
         return convertToDTO(savedEntity);
     }
+    
+    public CompanySetting getCompanySetting() {
+    	
+    	CompanySetting companySetting = repository.findAll().get(0);
+    	
+    	return companySetting;
+    }
 
     // --- Mapper Methods ---
     

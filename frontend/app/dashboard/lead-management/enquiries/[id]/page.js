@@ -208,6 +208,7 @@ export default function ViewEnquiryClientPage() {
         group.enquiries.map((combined) => ({
           combinedId: combined.id,
           enquiryTitle: combined.projectName,
+          leadId: combined.leadId,
           createdDate: combined.enquiryDate, // 👈 Add this line
            customerName: combined.customerName,
            customerSite: combined.customerSite,
@@ -489,7 +490,15 @@ export default function ViewEnquiryClientPage() {
                         );
                      }else if(selectedCategory == "New Installation"){
                         handleNavigateToQuotation(group.combinedId)
-                     }else{
+                     }else if(selectedCategory == "Moderization"){
+                       router.push(
+  `/dashboard/lead-management/enquiries/${id}/add-modernization/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
+    searchParams.get('customer')
+  )}&site=${encodeURIComponent(searchParams.get('site'))}`
+);
+
+                     }
+                     else{
 
                         router.push(
                           `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
