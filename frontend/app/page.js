@@ -7,17 +7,8 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get tenant from current hostname
-    const hostname = window.location.hostname;
-    const tenant = hostname.replace(/^www\./i, '');
-
-    // If we have a valid tenant (not localhost), redirect to tenant-specific login
-    if (tenant && !tenant.includes('localhost')) {
-      router.push(`/${tenant}/login`);
-    } else {
-      // For localhost or no tenant, redirect to general login
-      router.push('/login');
-    }
+    // Always redirect to /login - the login page will handle tenant detection from hostname
+    router.push('/login');
   }, [router]);
 
   // Show loading while redirecting
