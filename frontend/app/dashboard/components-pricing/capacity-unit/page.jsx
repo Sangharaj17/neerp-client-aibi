@@ -3,7 +3,6 @@
 import toast from "react-hot-toast";
 import React, { useState, useEffect } from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { getTenantHeaders } from "@/app/[tenant]/utils/tenantHeaders";
 import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 

@@ -18,7 +18,7 @@ import {
   Loader2, // ✅ Import Loader2 from lucide-react
   Search,
 } from 'lucide-react';
-import Input from '@/components/ui/Input';
+import Input from '@/components/UI/Input';
 
 const NavigationAccordion = () => {
   const [openSections, setOpenSections] = useState({});
