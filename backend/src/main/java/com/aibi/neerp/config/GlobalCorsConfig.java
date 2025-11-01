@@ -56,7 +56,8 @@ public class GlobalCorsConfig {
                 "http://localhost:3001",
                 "http://localhost:3002",
                 "http://localhost:3003",
-                "https://ringcarnival.com"
+                "https://ringcarnival.com",
+                "https://neerp-client-testing.nexademos.co.in"
         ));
         config.setAllowCredentials(true); // ✅ to allow cookies
         config.addAllowedHeader("*");
