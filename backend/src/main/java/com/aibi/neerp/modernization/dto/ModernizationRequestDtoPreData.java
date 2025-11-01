@@ -15,6 +15,7 @@ public class ModernizationRequestDtoPreData {
 	private List<WorkPeriod> workPeriods;
 	private String hsn_sac_code;
 	
+	
 	private List<LiftData> liftDatas;
 	
 
