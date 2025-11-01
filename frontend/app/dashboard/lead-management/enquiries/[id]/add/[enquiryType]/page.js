@@ -1,9 +1,10 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import AddAmcEnquiryForm from "@/components/AMC/AddAmcEnquiryForm";
 
-export default function AddEnquiryTypePage() {
+function AddEnquiryTypePageContent() {
   const { enqType } = useParams(); // From folder name [enqType]
   const searchParams = useSearchParams();
 
@@ -27,5 +28,13 @@ export default function AddEnquiryTypePage() {
         leadId={id}
       />
     </div>
+  );
+}
+
+export default function AddEnquiryTypePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <AddEnquiryTypePageContent />
+    </Suspense>
   );
 }

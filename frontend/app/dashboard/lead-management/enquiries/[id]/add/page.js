@@ -1,10 +1,10 @@
 'use client';
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import toast from 'react-hot-toast';
 
-export default function AddLiftRequirementForm() {
+function AddLiftRequirementFormContent() {
   const { id, tenant } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -251,3 +251,11 @@ const SectionTitle = ({ title }) => (<div className="bg-gray-100 px-3 py-1 round
 const Input = ({ label, tooltip, ...props }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><input {...props} title={tooltip} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed" /></div>);
 const Select = ({ label, children, ...props }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><select {...props} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed">{children}</select></div>);
 const RadioGroup = ({ label, name, options, selected, onChange }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><div className="flex gap-4">{options.map((opt) => (<label key={opt} className="text-gray-700 text-sm flex items-center gap-1"><input type="radio" name={name} value={opt} checked={selected === opt} onChange={onChange} className="text-blue-500" />{opt}</label>))}</div></div>);
+
+export default function AddLiftRequirementForm() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <AddLiftRequirementFormContent />
+    </Suspense>
+  );
+}

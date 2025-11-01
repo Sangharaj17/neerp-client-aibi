@@ -1,9 +1,10 @@
 'use client';
 
 import { useParams, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import EditEnquiryForm from "@/components/AMC/EditEnquiryForm";
 
-export default function EditEnquiryTypePage() {
+function EditEnquiryTypePageContent() {
   const { enquiryType } = useParams(); // From folder segment: [enquiryType]
   const searchParams = useSearchParams();
 
@@ -27,5 +28,13 @@ export default function EditEnquiryTypePage() {
         action={action}
       />
     </div>
+  );
+}
+
+export default function EditEnquiryTypePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <EditEnquiryTypePageContent />
+    </Suspense>
   );
 }

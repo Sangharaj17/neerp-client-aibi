@@ -3,12 +3,12 @@
 import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { Eye, Trash2, Pencil, FilePlus, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 //import jwtEncode from "jwt-encode";
 
-export default function ViewEnquiryClientPage() {
+function ViewEnquiryClientPageContent() {
   const { id, tenant } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -547,5 +547,13 @@ export default function ViewEnquiryClientPage() {
       </div>
 
     </>
+  );
+}
+
+export default function ViewEnquiryClientPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <ViewEnquiryClientPageContent />
+    </Suspense>
   );
 }

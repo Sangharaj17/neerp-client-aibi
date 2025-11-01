@@ -1,15 +1,15 @@
 "use client";
 
 import { useParams, useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import LiftModal from "@/app/[tenant]/dashboard/lead-management/enquiries/[id]/quotation/add/LiftModal";
-import PreviewModal from "@/app/[tenant]/dashboard/lead-management/enquiries/[id]/quotation/add/PreviewModal";
-import PreviewAllModal from "@/app/[tenant]/dashboard/lead-management/enquiries/[id]/quotation/add/PreviewAllModal";
+import { useEffect, useState, Suspense } from "react";
+import LiftModal from "@/app/dashboard/lead-management/enquiries/[id]/quotation/add/LiftModal";
+import PreviewModal from "@/app/dashboard/lead-management/enquiries/[id]/quotation/add/PreviewModal";
+import PreviewAllModal from "@/app/dashboard/lead-management/enquiries/[id]/quotation/add/PreviewAllModal";
 import { toast } from "react-hot-toast";
 //import { jwtDecode } from "jwt-decode";
 import { getFilteredLeads, getLeadById, getEnquiryByLeadAndEnquiry } from "@/services/leadsApi";
 
-export default function QuotationAddPage() {
+function QuotationAddPageContent() {
   const { id, tenant } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -590,5 +590,13 @@ export default function QuotationAddPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function QuotationAddPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <QuotationAddPageContent />
+    </Suspense>
   );
 }
