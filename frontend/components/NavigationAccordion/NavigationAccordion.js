@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { getTenant } from '@/utils/tenant';
@@ -15,7 +16,9 @@ import {
   DollarSign,
   ChevronRight,
   Loader2, // ✅ Import Loader2 from lucide-react
+  Search,
 } from 'lucide-react';
+import Input from '@/components/ui/Input';
 
 const NavigationAccordion = () => {
   const [openSections, setOpenSections] = useState({});
@@ -24,6 +27,7 @@ const NavigationAccordion = () => {
   const { tenant: tenantFromParams } = useParams();
   const tenant = tenantFromParams || getTenant();
   const [clientname, setClientname] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!tenant) return;
@@ -157,10 +161,20 @@ const NavigationAccordion = () => {
       icon: Users,
       hasSubmenu: true,
       submenu: [
-        { title: 'Users', href: '/users' },
-        { title: 'Roles', href: '/roles' },
-        { title: 'Permissions', href: '/permissions' },
-        { title: 'Resources', href: '/resources' }
+        // User management
+        { title: 'Employee List', href: '/dashboard/user-resource/employee-list' },
+        { title: 'Add User Role', href: '/dashboard/user-resource/add-user-role' },
+        { title: 'Assign Role', href: '/dashboard/user-resource/assign-role' },
+        { title: 'Change Password', href: '/dashboard/user-resource/change-password' },
+        // Configuration
+        { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
+        { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
+        // Attendance & time
+        { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
+        { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
+        { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry' },
+        { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list' },
+        { title: 'Attendance', href: '/dashboard/user-resource/attendance' }
       ]
     },
     {
@@ -285,16 +299,42 @@ const NavigationAccordion = () => {
     }
   ];
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredSections = useMemo(() => {
+    if (!normalizedQuery) return menuSections;
+    return menuSections
+      .map(section => {
+        if (!section.hasSubmenu) {
+          return section.title.toLowerCase().includes(normalizedQuery) ? section : null;
+        }
+        const sub = (section.submenu || []).filter(i => i.title.toLowerCase().includes(normalizedQuery));
+        return sub.length ? { ...section, submenu: sub } : null;
+      })
+      .filter(Boolean);
+  }, [normalizedQuery]);
+
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-screen overflow-y-auto">
+    <div className="w-64 sticky top-0 z-20 bg-white border-r border-gray-200 h-screen overflow-y-auto">
       <div className="p-4 border-b border-gray-200 h-16">
         <h2 className="text-lg font-semibold text-gray-800">{clientname}</h2>
       </div>
 
-      <nav className="p-2">
-        {menuSections.map((section) => {
+      <div className="p-2">
+        <div className="relative">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Input
+            placeholder="Search menu..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
+      <nav className="p-2 pt-0">
+        {(normalizedQuery ? filteredSections : menuSections).map((section) => {
           const isActive = isSectionActive(section);
-          const isOpen = openSections[section.id];
+          const isOpen = normalizedQuery ? true : openSections[section.id];
 
           return (
             <div key={section.id} className="mb-1">

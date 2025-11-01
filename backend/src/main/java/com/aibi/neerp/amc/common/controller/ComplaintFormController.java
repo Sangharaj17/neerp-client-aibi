@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Lazy;
 
 import com.aibi.neerp.amc.common.dto.ComplaintFormEmpData;
 import com.aibi.neerp.amc.common.service.ComplaintFormService;
@@ -31,22 +32,22 @@ public class ComplaintFormController {
     @Autowired
     private ComplaintFormService complaintFormService;
 
-    @Autowired
+    @Autowired @Lazy
     private AmcJobsService amcJobsService;
 
-    @Autowired
+    @Autowired @Lazy
     private AmcRenewalJobsService amcRenewalJobsService;
 
-    @Autowired
+    @Autowired @Lazy
     private BreakdownTodoService breakdownTodoService;
     
-    @Autowired
+    @Autowired @Lazy
     private BreakdownTodoRenewalJobsService breakdownTodoRenewalService;
     
-    @Autowired
+    @Autowired @Lazy
     private AmcJobActivityService amcJobActivityService;
     
-    @Autowired
+    @Autowired @Lazy
     private AmcRenewalJobActivityService amcRenewalJobActivityService;
 
     // ---------------------------------------------------------------

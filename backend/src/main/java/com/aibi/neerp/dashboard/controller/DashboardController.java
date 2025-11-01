@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Lazy;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -32,10 +33,10 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
     private final CustomerSiteTodoService todoService;
-    private final AmcJobsService amcJobsService;
-    private final BreakdownTodoService breakdownTodoService;
+    @Lazy private final AmcJobsService amcJobsService;
+    @Lazy private final BreakdownTodoService breakdownTodoService;
     private final OfficeActivityService officeActivityService;
-    private final AmcRenewalJobsService amcRenewalJobsService;
+    @Lazy private final AmcRenewalJobsService amcRenewalJobsService;
 
     @GetMapping("/leadsTodoList")
     public Page<DashboardTodoDto> getTodos(

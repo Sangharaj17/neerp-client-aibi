@@ -7,11 +7,11 @@ import Topbar from "@/components/Topbar/Topbar";
 export default function DClientLayout({ children }) {
   return (
     <div className="min-h-screen">
-      <main className="w-full flex">
-        <aside className="w-64">
+      <main className="w-full flex h-screen">
+        <aside className="w-64 sticky top-0 self-start">
           <NavigationAccordion />
         </aside>
-        <section className="flex-1">
+        <section className="flex-1 h-screen overflow-y-auto">
           <Topbar />
 
           {/* ✅ Top-Center Toasts */}

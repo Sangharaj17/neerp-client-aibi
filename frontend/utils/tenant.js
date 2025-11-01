@@ -23,8 +23,8 @@ export function getTenant() {
 
 export function getServerTenant(headers) {
   // For server components: read from cookie header or host
-  const cookie = headers.get?.('cookie') || '';
-  const hostHeader = headers.get?.('host') || '';
+  const cookie = headers.get('cookie') || '';
+  const hostHeader = headers.get('host') || '';
   const cookieMatch = cookie.match(/(?:^|; )tenant=([^;]+)/);
   if (cookieMatch) {
     const c = decodeURIComponent(cookieMatch[1]);

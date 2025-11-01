@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
+import org.springframework.context.annotation.Lazy;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.renewal.service.AmcRenewalJobsService;
@@ -35,10 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PaymentController {
 
-    @Autowired
+    @Autowired @Lazy
     private AmcJobsService amcJobsService;
 
-    @Autowired
+    @Autowired @Lazy
     private AmcRenewalJobsService amcRenewalJobsService;
     
     @Autowired

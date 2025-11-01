@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { getServerTenant } from '@/utils/tenant';
 
 export default async function LoginPage() {
-  const hdrs = headers();
+  const hdrs = await headers();
   const tenant = getServerTenant(hdrs);
 
   // If no tenant detected, show a generic login form

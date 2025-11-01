@@ -144,7 +144,7 @@ public class AmcRenewalJob {
     @Column(name = "lastActivityDate")
     private LocalDate lastActivityDate;
     
-    @Column(name = "currentServiceStatus")
+    @Column(name = "currentservicestatus")
     private String currentServiceStatus;
     
     

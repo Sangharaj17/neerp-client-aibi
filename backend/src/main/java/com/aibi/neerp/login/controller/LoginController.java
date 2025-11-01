@@ -1,20 +1,19 @@
 package com.aibi.neerp.login.controller;
 
 import com.aibi.neerp.client.service.ClientService;
+import com.aibi.neerp.exception.CustomSubscriptionException;
 import com.aibi.neerp.config.DataSourceConfig;
 import com.aibi.neerp.config.TenantContext;
 import com.aibi.neerp.employeemanagement.entity.Employee;
-import com.aibi.neerp.exception.CustomSubscriptionException;
 import com.aibi.neerp.client.dto.ClientWithModulesResponse;
 import com.aibi.neerp.login.dto.LoginRequest;
 import com.aibi.neerp.client.dto.Client;
 import com.aibi.neerp.user.service.UserService;
 import com.aibi.neerp.util.JwtUtil;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.aibi.neerp.config.TenantSchemaInitializer;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -24,9 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.fasterxml.jackson.core.type.TypeReference;
 
-@Slf4j
 // @CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RestController
 @RequestMapping("/api")
@@ -41,6 +38,9 @@ public class LoginController {
 
     @Autowired
     JwtUtil jwtUtil;
+
+    @Autowired
+    private TenantSchemaInitializer tenantSchemaInitializer;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest,
@@ -65,49 +65,42 @@ public class LoginController {
         // ));
         // }
 
-        System.out.println("======domainNm to get modules by domain=====>" + domainNm);
-        ClientWithModulesResponse clientResp;
+        // For login we only need DB credentials; call the simple domain endpoint
+        System.out.println("======domainNm to get client by domain=====>" + domainNm);
+        Client client;
         try {
-            clientResp = clientService.getClientWithModulesByDomain(domainNm);
-            System.out.println("======domainNm to get modules by domain=====>" + clientResp);
-        } catch (CustomSubscriptionException ex) {
-            // Parse the message back to Map
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                Map<String, Object> errorMap = mapper.readValue(ex.getMessage(), new TypeReference<>() {
-                });
-                return ResponseEntity.status(ex.getStatusCode()).body(errorMap);
-            } catch (Exception parsingError) {
-                return ResponseEntity.status(ex.getStatusCode()).body(Map.of(
-                        "error", "Subscription error",
-                        "status", ex.getStatusCode()));
-            }
+            client = clientService.getClientByDomain(domainNm);
         } catch (Exception ex) {
             return ResponseEntity.status(500).body(Map.of(
-                    "error", "Internal server error while validating tenant",
+                    "error", "Internal server error while fetching tenant",
                     "details", ex.getMessage()));
         }
 
-        if (clientResp == null || clientResp.getClient() == null) {
+        if (client == null) {
             return ResponseEntity.status(401).body(Map.of(
                     "error", "Tenant not found in database",
                     "status", 401));
         }
 
-        if (!Boolean.TRUE.equals(clientResp.getClient().getIsActive())) {
+        if (!Boolean.TRUE.equals(client.getIsActive())) {
             return ResponseEntity.status(401).body(Map.of(
                     "error", "Tenant is inactive. Please contact support.",
                     "status", 401));
         }
 
-        Client client = clientResp.getClient();
-        List<String> allowedModules = clientResp.getModules();
-        System.out.println("allowedModules=============>" + allowedModules);
-
         // ✅ Step 3: Set context and register tenant datasource
         TenantContext.setTenantId(domainNm);
         dataSourceConfig.removeDataSource(domainNm);
         dataSourceConfig.addDataSource(domainNm, client);
+
+        // ✅ If schema not ready, trigger initialization and tell client to wait
+        if (!tenantSchemaInitializer.isInitialized()) {
+            tenantSchemaInitializer.initializeIfRequired(domainNm);
+            return ResponseEntity.accepted().body(Map.of(
+                    "requiresInitialization", true,
+                    "message", "Initializing tenant database. Please wait..."
+            ));
+        }
 
         // ✅ Step 4: Validate user
         // Optional<User> userOpt = userService.validateUser(request.getEmail(),
@@ -123,10 +116,9 @@ public class LoginController {
         // User user = userOpt.get();
         Employee user = userOpt.get();
 
-        // ✅ Set loginFlag = true and save
-        userService.updateLoginFlag(Long.valueOf(user.getEmployeeId()), true);
+        // ✅ No users table; skip updating login flag
 
-        log.info("User {} logged in for tenant {}", user.getEmailId(), domainNm);
+        System.out.println("User " + user.getEmailId() + " logged in for tenant " + domainNm);
 
         // ✅ Step 5: Generate token
         String token = jwtUtil.generateToken(Long.valueOf(user.getEmployeeId()), user.getUsername(), domainNm);
@@ -165,6 +157,17 @@ public class LoginController {
                         "token", token));
     }
 
+    @GetMapping("/tenants/init-status")
+    public ResponseEntity<?> initStatus(HttpServletRequest httpRequest) {
+        String domainNm = httpRequest.getHeader("X-Tenant");
+        if (domainNm == null || domainNm.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing X-Tenant header"));
+        }
+        TenantContext.setTenantId(domainNm);
+        boolean ok = tenantSchemaInitializer.isInitialized();
+        return ResponseEntity.ok(Map.of("initialized", ok));
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response,
             @CookieValue(value = "token", required = false) String token) {
@@ -186,8 +189,7 @@ public class LoginController {
                         dataSourceConfig.addDataSource(domainNm, client);
                     }
 
-                    // ✅ Set loginFlag = false
-                    userService.updateLoginFlag(userId, false);
+                    // ✅ No users table; skip updating login flag on logout
 
                     // ✅ Clean up tenant DB
                     dataSourceConfig.removeDataSource(domainNm);

@@ -1,41 +1,37 @@
 package com.aibi.neerp.rolebackmanagement.service;
 
-import java.util.List;
-
+import com.aibi.neerp.rolebackmanagement.entity.Role;
+import com.aibi.neerp.rolebackmanagement.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.aibi.neerp.exception.ResourceNotFoundException;
-import com.aibi.neerp.rolebackmanagement.entity.Role;
-import com.aibi.neerp.rolebackmanagement.repository.RoleRepository;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RoleService {
-
-	@Autowired
-    private  RoleRepository roleRepository;
+    @Autowired
+    private RoleRepository roleRepository;
 
     public Role createRole(Role role) {
         return roleRepository.save(role);
     }
-
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
-
     public Role getRoleById(Integer id) {
+        Optional<Role> r = roleRepository.findById(id);
+        return r.orElse(null);
+    }
+    public Role updateRole(Integer id, Role updated) {
         return roleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + id));
+                .map(existing -> {
+                    existing.setRole(updated.getRole());
+                    return roleRepository.save(existing);
+                })
+                .orElse(null);
     }
-
     public void deleteRole(Integer id) {
-        Role role = getRoleById(id);
-        roleRepository.delete(role);
-    }
-
-    public Role updateRole(Integer id, Role updatedRole) {
-        Role existing = getRoleById(id);
-        existing.setRole(updatedRole.getRole());
-        return roleRepository.save(existing);
+        roleRepository.deleteById(id);
     }
 }

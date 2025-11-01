@@ -10,6 +10,7 @@ export default function LoginForm({ tenant }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,6 +30,27 @@ export default function LoginForm({ tenant }) {
       );
 
      // console.log("✅ Received response from backend:");
+
+      // First-time initialization flow
+      if (res.status === 202 || res.data?.requiresInitialization) {
+        setInitializing(true);
+        // Poll init status until ready or timeout
+        const start = Date.now();
+        while (Date.now() - start < 120000) { // 2 minutes
+          await new Promise(r => setTimeout(r, 2000));
+          try {
+            const st = await axiosInstance.get('/api/tenants/init-status', { headers: { 'X-Tenant': tenant } });
+            if (st.data?.initialized) {
+              setInitializing(false);
+              // retry login once
+              return handleLogin(e);
+            }
+          } catch (_) {}
+        }
+        setInitializing(false);
+        alert('Initialization is taking longer than expected. Please try again.');
+        return;
+      }
 
       if (res.data) {
         //console.log("✅ Login successful, storing data locally...");
@@ -79,6 +101,12 @@ export default function LoginForm({ tenant }) {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded shadow-md max-w-md">
         <h1 className="text-2xl font-semibold mb-4 text-center">Login - Client: {tenant}</h1>
+        {initializing && (
+          <div className="mb-4 text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-sm text-gray-600 mt-2">Setting up your database, please wait...</p>
+          </div>
+        )}
         <form onSubmit={handleLogin} className="flex flex-col gap-4">
           <input
             type="text"

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
 import com.aibi.neerp.amc.common.repository.JobActivityTypeRepository;
@@ -36,6 +37,7 @@ import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
 
 @Slf4j
 @Service
+@Lazy
 public class BreakdownTodoService {
 
     @Autowired

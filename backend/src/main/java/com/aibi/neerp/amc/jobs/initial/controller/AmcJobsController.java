@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -26,7 +27,7 @@ public class AmcJobsController {
 
     private final AmcJobsService amcJobsService;
 
-    public AmcJobsController(AmcJobsService amcJobsService) {
+    public AmcJobsController(@Lazy AmcJobsService amcJobsService) {
         this.amcJobsService = amcJobsService;
     }
 

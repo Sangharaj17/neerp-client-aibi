@@ -13,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Lazy;
 
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.dto.AmcJobRequestDto;
@@ -49,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@Lazy
 public class AmcRenewalJobsService {
 	
 	@Autowired

@@ -142,7 +142,7 @@ public class AmcJob {
     @Column(name = "lastActivityDate")
     private LocalDate lastActivityDate;
     
-    @Column(name = "currentServiceStatus")
+    @Column(name = "currentservicestatus")
     private String currentServiceStatus;
     
     

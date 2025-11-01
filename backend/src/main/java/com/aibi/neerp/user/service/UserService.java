@@ -130,10 +130,7 @@ public class UserService {
 //        }
     }
 
-    @Transactional
-    public void updateLoginFlag(Long userId, boolean flag) {
-        userRepository.updateLoginFlag(userId, flag);
-    }
+    // Removed updateLoginFlag; employee login does not update users table
 
 
 }
