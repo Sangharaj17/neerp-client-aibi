@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 export default function CompanySettings() {
   const [formData, setFormData] = useState({
-    refName: 'SMASH',
+    refName: 'COMPANY_SETTINGS_1',
     companyOwnerName: '',
     companyName: '',
     ownerNumber: '',
@@ -44,8 +44,9 @@ export default function CompanySettings() {
           setFormData(response.data);
         }
       } catch (err) {
-        console.error('Error fetching settings:', err);
-        toast.error('Failed to load settings.');
+       // console.error('Error fetching settings:', err);
+        const message =  'Plz Filled Empty Fields.';
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -53,6 +54,7 @@ export default function CompanySettings() {
 
     fetchSettings();
   }, []);
+
 
   // Handle input change
   const handleChange = (e) => {
