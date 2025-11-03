@@ -1,8 +1,14 @@
 package com.aibi.neerp.modernization.service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,12 +164,100 @@ public class ModernizationService {
     }
     
     
-    
-    
-    
-    
-    
-    
+    public Page<ModernizationResponseDto> getAllModernizationQuotations(
+            String search,
+            LocalDate dateSearch,
+            int page,
+            int size,
+            String sortBy,
+            String direction
+    ) {
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        String dateSearchStr = dateSearch != null ? dateSearch.toString() : null;
+
+        Page<Modernization> results = modernizationRepository.searchAll(
+                search == null ? "" : search,
+                dateSearchStr,
+                pageable
+        );
+
+        return results.map(this::convertToResponseDto);
+    }
+
+    private ModernizationResponseDto convertToResponseDto(Modernization entity) {
+
+        // --- Build main Modernization DTO ---
+        ModernizationDto modernizationDto = ModernizationDto.builder()
+                .id(entity.getId())
+                .quotationNo(entity.getQuotationNo())
+                .quotationDate(entity.getQuotationDate())
+                .leadId(entity.getLead() != null ? entity.getLead().getLeadId() : null)
+                .enquiryId(entity.getEnquiry() != null ? entity.getEnquiry().getEnquiryId() : null)
+                .combinedEnquiryId(entity.getCombinedEnquiry() != null ? entity.getCombinedEnquiry().getId() : null)
+                .workPeriodId(entity.getWorkPeriodEntity() != null ? entity.getWorkPeriodEntity().getWorkPeriodId() : null)
+                .jobId(entity.getJobId())
+                .note(entity.getNote())
+                .gst(entity.getGst())
+                .warranty(entity.getWarranty())
+                .amount(entity.getAmount())
+                .amountWithGst(entity.getAmountWithGst())
+                .isFinal(entity.getIsFinal())
+                .quotationFinalDate(entity.getQuotationFinalDate())
+                .gstApplicable(entity.getGstApplicable())
+                .gstPercentage(entity.getGstPercentage())
+                .subtotal(entity.getSubtotal())
+                .gstAmount(entity.getGstAmount())
+                .customerName(entity.getLead() != null ? entity.getLead().getCustomerName() : null)
+                .siteName(entity.getLead() != null ? entity.getLead().getSiteName() : null)
+                .build();
+
+        // --- Convert all details to DTOs (if present) ---
+        List<ModernizationDetailDto> detailDtos = null;
+        if (entity.getDetails() != null && !entity.getDetails().isEmpty()) {
+            detailDtos = entity.getDetails().stream()
+                    .map(detail -> ModernizationDetailDto.builder()
+                            .id(detail.getId())
+                            .materialName(detail.getMaterialName())
+                            .hsn(detail.getHsn())
+                            .quantity(detail.getQuantity())
+                            .uom(detail.getUom())
+                            .rate(detail.getRate())
+                            .amount(detail.getAmount())
+                            .guarantee(detail.getGuarantee())
+                            .build())
+                    .toList();
+        }
+
+        // --- Build the final response DTO ---
+        return ModernizationResponseDto.builder()
+                .modernization(modernizationDto)
+                .details(detailDtos)
+                .build();
+    }
+
+    public ModernizationResponseDto getModernizationQuotationById(Integer id) {
+        Modernization modernization = modernizationRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new RuntimeException("Modernization quotation not found with ID: " + id));
+
+        return convertToResponseDto(modernization);
+    }
+
+    @Transactional
+    public boolean updateIsFinalStatus(Integer id, Boolean isFinal) {
+        Optional<Modernization> optional = modernizationRepository.findById(id);
+        if (optional.isPresent()) {
+            Modernization modernization = optional.get();
+            modernization.setIsFinal(isFinal);
+            modernizationRepository.save(modernization);
+            return true;
+        }
+        return false;
+    }
+
     
     
     

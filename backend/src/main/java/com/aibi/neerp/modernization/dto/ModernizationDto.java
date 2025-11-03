@@ -29,4 +29,7 @@ public class ModernizationDto {
     private BigDecimal gstPercentage;
     private BigDecimal subtotal;
     private BigDecimal gstAmount;
+    
+    private String customerName;
+    private String siteName;
 }

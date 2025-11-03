@@ -5,7 +5,12 @@ import axiosInstance from '@/utils/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { FaPlus, FaTrashAlt, FaCode } from 'react-icons/fa'; // Added FaCode icon
 
+import { useRouter, useParams } from "next/navigation";
+
 const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
+
+     const router = useRouter();
+
   const [workPeriods, setWorkPeriods] = useState([]);
   const [liftDatas, setLiftDatas] = useState([]);
   
@@ -180,6 +185,7 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
     try {
       await axiosInstance.post('/api/modernization/create', payload);
       toast.success('Modernization quotation created successfully!');
+      router.push('/dashboard/quotations/ModernizationList');
     } catch (error) {
       console.error('Submission Error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to save modernization quotation';

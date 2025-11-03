@@ -4,6 +4,7 @@ package com.aibi.neerp.modernization.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
@@ -85,5 +86,9 @@ public class Modernization {
 
     @Column(name = "gst_amount", precision = 10, scale = 2)
     private BigDecimal gstAmount;
+    
+    // ✅ Add this block
+    @OneToMany(mappedBy = "modernization", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<ModernizationDetail> details;
 }
 

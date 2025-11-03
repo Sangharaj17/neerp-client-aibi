@@ -3,12 +3,28 @@
 import { useState, useEffect, useMemo } from 'react';
 // Assuming '@/utils/axiosInstance' exists and is correctly configured
 import axiosInstance from '@/utils/axiosInstance'; 
-import { Pencil, Trash2, Settings, FileText, Component, Clock, ListOrdered, DollarSign } from 'lucide-react'; // Added 'DollarSign' icon
+import { Pencil, Trash2, Settings, FileText, Component, Clock, ListOrdered, DollarSign, Calendar } from 'lucide-react'; // Added 'Calendar' icon for Work Periods
 import toast from 'react-hot-toast';
 
 // --- Configuration ---
 
 const setupBoxes = [
+    // --- NEW WORK PERIOD CONFIGURATION ADDED HERE ---
+    { 
+        id: 0, // Assigned a unique ID (0)
+        title: 'Work Periods', 
+        api: '/api/amc/workperiods', // Matches your Spring Boot @RequestMapping
+        type: 'workPeriod', 
+        icon: Calendar, // Using Calendar icon
+        crud: { 
+            create: true, read: true, update: true, delete: true, 
+            fields: [
+                // Fields match the WorkPeriod entity (name, but called 'period_name' in DB)
+                { key: 'name', label: 'Period Name', type: 'text', required: true } 
+            ] 
+        } 
+    },
+    // --- EXISTING CONFIGURATIONS (ID numbers shifted/reordered) ---
     { 
         id: 1, 
         title: 'Contract Types', 
@@ -87,7 +103,8 @@ const colorCfg = {
 
 const QuotationSetupComponent = () => {
 
-    const [selectedBox, setSelectedBox] = useState(setupBoxes[0]);
+    // IMPORTANT: Set initial selectedBox to the NEW Work Periods (id: 0)
+    const [selectedBox, setSelectedBox] = useState(setupBoxes[0]); 
     const [formData, setFormData] = useState({});
     const [dataList, setDataList] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -105,7 +122,11 @@ const QuotationSetupComponent = () => {
     const isServiceCount = currentBox?.type === 'numberOfService';
 
     /** Helper to get ID dynamically */
-    const getId = (item) => item?.id ?? '';
+    // NOTE: The backend's WorkPeriod entity uses 'workPeriodId' as the primary key.
+    // However, since the other entities seem to use 'id' (e.g., contract-types) and the code
+    // is designed to handle this inconsistency (e.g., using item.id), we must adjust getId
+    // or assume the other APIs follow the 'id' convention.
+    const getId = (item) => item?.workPeriodId ?? item?.id ?? ''; 
 
     // Initialize formData when switching tabs or when edit mode is cancelled
     useEffect(() => {
@@ -134,6 +155,7 @@ const QuotationSetupComponent = () => {
         
         setLoading(true);
         try {
+            // Note: Assuming a successful response from WorkPeriodController.getAll() returns an array directly
             const response = await axiosInstance.get(currentBox.api);
             let list = response.data?.data || response.data || []; 
 
@@ -193,7 +215,7 @@ const QuotationSetupComponent = () => {
             return; 
         }
 
-        // --- Standard Form Submission Logic for other APIs ---
+        // --- Standard Form Submission Logic for other APIs (including Work Periods) ---
         if (!currentCrudConfig.create && !currentCrudConfig.update) {
             toast.error(`Create/Update operations are disabled for ${currentBox.title}.`);
             return;
@@ -212,10 +234,17 @@ const QuotationSetupComponent = () => {
             }
         }
         
-        // Add 'id' to payload for APIs that require it in update DTOs (e.g., ElevatorMakeDto)
-        if (currentBox.type === 'elevatorMake' && editId) {
-            payload.id = editId;
+        // Add 'id' or specific key to payload for PUT requests
+        if (editId) {
+             // For WorkPeriod, the ID might be 'workPeriodId', but the PUT URL uses the ID path variable.
+             // We ensure to add a key if the backend DTO requires it, like 'elevatorMake' needing 'id'.
+             if (currentBox.type === 'elevatorMake') {
+                payload.id = editId;
+             }
+             // NOTE: If the WorkPeriod update DTO requires 'workPeriodId' in the body, add it here:
+             // if (currentBox.type === 'workPeriod') { payload.workPeriodId = editId; }
         }
+
 
         setLoading(true);
         try {
@@ -224,13 +253,18 @@ const QuotationSetupComponent = () => {
                     toast.error(`Update is not supported by the ${currentBox.title} API.`);
                     return;
                 }
-                await axiosInstance.put(`${currentBox.api}/${editId}`, payload);
+                // Use getId to ensure we use the correct key for the URL (which should be a number/string ID)
+                const entityId = getId(dataList.find(item => getId(item) === editId));
+                if (!entityId) throw new Error('Could not find item ID for update.');
+                
+                await axiosInstance.put(`${currentBox.api}/${entityId}`, payload);
                 toast.success(`${currentBox.title} updated successfully!`);
             } else {
                 if (!currentCrudConfig.create) {
                     toast.error(`Creation is not supported by the ${currentBox.title} API.`);
                     return;
                 }
+                // POST request for Create (Works for WorkPeriod, Contract Types, etc.)
                 await axiosInstance.post(currentBox.api, payload);
                 toast.success(`${currentBox.title} created successfully!`);
             }
@@ -256,7 +290,8 @@ const QuotationSetupComponent = () => {
         });
         
         setFormData(editData);
-        setEditId(item.id);
+        // Use the ID returned by getId for the editId state
+        setEditId(getId(item)); 
     };
 
     const handleDelete = async (id) => {
@@ -268,6 +303,7 @@ const QuotationSetupComponent = () => {
         
         setLoading(true);
         try {
+            // Use the ID passed in (which comes from getId in the render logic)
             await axiosInstance.delete(`${currentBox.api}/${id}`);
             toast.success('Deleted successfully!');
             fetchData();
@@ -362,7 +398,7 @@ const QuotationSetupComponent = () => {
                                 const isInput = field.type === 'text' || field.type === 'number';
                                 const isCheckbox = field.type === 'checkbox';
                                 const isTextArea = field.type === 'textarea';
-                                const isDisabled = !currentCrudConfig.create && !currentCrudConfig.update;
+                                const isDisabled = loading || (editId ? !currentCrudConfig.update : !currentCrudConfig.create); // Disable form if loading or CRUD op not allowed
                                 
                                 if (isCheckbox) {
                                     return (
@@ -404,8 +440,8 @@ const QuotationSetupComponent = () => {
                                 return null;
                             })}
                             
-                            {currentCrudConfig.create || currentCrudConfig.update ? (
-                                <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow-md transition-all w-full`} disabled={loading || (editId && !currentCrudConfig.update)}>
+                            {(currentCrudConfig.create && !editId) || (currentCrudConfig.update && editId) ? (
+                                <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow-md transition-all w-full`} disabled={loading}>
                                     {loading ? 'Processing...' : editId ? 'Update' : 'Create'}
                                 </button>
                             ) : (
@@ -446,7 +482,7 @@ const QuotationSetupComponent = () => {
                                     const canDelete = currentCrudConfig.delete;
 
                                     return (
-                                        <tr key={id} className="border-t hover:bg-teal-50">
+                                        <tr key={id} className={`border-t hover:bg-teal-50 ${editId === id ? 'bg-teal-100' : ''}`}>
                                             <td className="px-4 py-3 font-medium">{id}</td>
                                             {fields.map(field => {
                                                 if (field.type === 'checkbox') {
