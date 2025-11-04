@@ -10,11 +10,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.aibi.neerp.amc.materialrepair.dto.MaterialRepairQuatationPdfData;
+import com.aibi.neerp.exception.ResourceNotFoundException;
+import com.aibi.neerp.modernization.dto.ModernizationQuotationInvoiceData;
 import com.aibi.neerp.modernization.dto.ModernizationRequestDto;
 import com.aibi.neerp.modernization.dto.ModernizationRequestDtoPreData;
 import com.aibi.neerp.modernization.dto.ModernizationResponseDto;
@@ -110,6 +114,42 @@ public class ModernizationController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+    
+    
+    /**
+     * Endpoint: PUT /api/modernization/update/{id}
+     * Handles updating the main quotation and its details in a single transaction.
+     */
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateModernization(
+        @PathVariable Integer id, 
+        @RequestBody ModernizationRequestDto requestDto) 
+    {
+        try {
+            // Call the service layer to execute the update logic
+            ModernizationResponseDto updatedResponse = modernizationService.updateModernization(id, requestDto);
+            
+            // Return 200 OK with the updated data
+            return ResponseEntity.ok(updatedResponse);
+
+        } catch (ResourceNotFoundException e) {
+            // Return 404 Not Found if the quotation ID does not exist
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                               .body(e.getMessage());
+            
+        } catch (Exception e) {
+            // Return 500 Internal Server Error for any other failure (e.g., database error)
+            // It's good practice to log the full exception here on the server side
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                               .body("Failed to update modernization quotation: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/getModernizationInvoiceData/{id}")
+    public ResponseEntity<ModernizationQuotationInvoiceData> getModernizationInvoiceData(@PathVariable Integer id) {
+        ModernizationQuotationInvoiceData data = modernizationService.getModernizationQuotationInvoiceData(id);
+        return ResponseEntity.ok(data);
     }
 
     

@@ -1,5 +1,11 @@
 package com.aibi.neerp.modernization.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
+import java.util.stream.Collectors;
+
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +52,7 @@ public class ModernizationService {
     private final WorkPeriodRepository workPeriodRepository;
     
     private final CompanySettingService companySettingService;
+    private final CompanySettingRepository companySettingRepository;
     private final AmcJobsService amcJobsService;
 
     // --- CREATE Modernization with Details ---
@@ -257,7 +264,209 @@ public class ModernizationService {
         }
         return false;
     }
+    
+    
+    
+    // --- UPDATE Modernization with Details ---
+    @Transactional
+    public ModernizationResponseDto updateModernization(Integer id, ModernizationRequestDto requestDto) {
 
+        ModernizationDto dto = requestDto.getModernization();
+        List<ModernizationDetailDto> detailDtos = requestDto.getDetails();
+
+        // 1. Fetch the existing entity by ID
+        Modernization existingModernization = modernizationRepository.findById(id).get();
+            
+        // 2. Update fields from DTO to Entity (No 'isFinal' or 'quotationFinalDate')
+        existingModernization.setQuotationNo(dto.getQuotationNo());
+        existingModernization.setQuotationDate(dto.getQuotationDate());
+        existingModernization.setJobId(dto.getJobId());
+        existingModernization.setNote(dto.getNote());
+        existingModernization.setGst(dto.getGst());
+        existingModernization.setWarranty(dto.getWarranty());
+        existingModernization.setAmount(dto.getAmount());
+        existingModernization.setAmountWithGst(dto.getAmountWithGst());
+        
+        // --- REMOVED FIELDS: isFinal and quotationFinalDate are NOT set ---
+        // existingModernization.setIsFinal(dto.getIsFinal());
+        // existingModernization.setQuotationFinalDate(dto.getQuotationFinalDate());
+        
+        existingModernization.setGstApplicable(dto.getGstApplicable());
+        existingModernization.setGstPercentage(dto.getGstPercentage());
+        existingModernization.setSubtotal(dto.getSubtotal());
+        existingModernization.setGstAmount(dto.getGstAmount());
+
+
+        // 3. Update Foreign Key references (similar to create)
+        // Note: For updates, you may only want to update keys that are intended to change, 
+        // but this mirrors your existing create logic.
+        if (dto.getLeadId() != null)
+            existingModernization.setLead(newLeadsRepository.findById(dto.getLeadId()).orElse(null));
+
+        if (dto.getEnquiryId() != null)
+            existingModernization.setEnquiry(enquiryRepository.findById(dto.getEnquiryId()).orElse(null));
+
+        if (dto.getCombinedEnquiryId() != null)
+            existingModernization.setCombinedEnquiry(combinedEnquiryRepository.findById(dto.getCombinedEnquiryId()).orElse(null));
+
+        if (dto.getWorkPeriodId() != null)
+            existingModernization.setWorkPeriodEntity(workPeriodRepository.findById(dto.getWorkPeriodId()).orElse(null));
+
+
+        // 4. Save the updated parent entity
+        Modernization savedModernization = modernizationRepository.save(existingModernization);
+
+
+        // 5. Update Details: Delete and Re-insert (Atomic Transaction)
+        
+        // A. Delete all existing details linked to this quotation ID
+        modernizationDetailRepository.deleteByModernizationId(id); // Assuming you have this method in your detail repository
+
+        // B. Prepare and save the new/updated details
+        List<ModernizationDetail> savedDetails = null;
+        if (detailDtos != null && !detailDtos.isEmpty()) {
+            savedDetails = detailDtos.stream()
+                    .map(d -> ModernizationDetail.builder()
+                            // Link to the newly saved parent
+                            .modernization(savedModernization) 
+                            .materialName(d.getMaterialName())
+                            .hsn(d.getHsn())
+                            .quantity(d.getQuantity())
+                            .uom(d.getUom())
+                            .rate(d.getRate())
+                            .amount(d.getAmount())
+                            .guarantee(d.getGuarantee())
+                            .build())
+                    .collect(Collectors.toList());
+            modernizationDetailRepository.saveAll(savedDetails);
+        }
+
+        // 6. Build response DTO
+        ModernizationResponseDto response = ModernizationResponseDto.builder()
+                .modernization(dto)
+                .details(detailDtos)
+                .build();
+
+        return response;
+    }
+    
+    
+
+    public ModernizationQuotationInvoiceData getModernizationQuotationInvoiceData(Integer modernizationId) {
+
+        // --- Fetch Modernization Quotation ---
+        Modernization modernization = modernizationRepository.findById(modernizationId)
+                .orElseThrow(() -> new RuntimeException("Modernization Quotation not found with ID: " + modernizationId));
+
+        // --- Fetch Company Settings ---
+        CompanySetting companySetting = companySettingRepository.findAll()
+                .stream()
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Company settings not configured"));
+
+        // --- Get Customer / Site info from NewLeads ---
+        NewLeads lead = modernization.getLead();
+        if (lead == null) {
+            throw new RuntimeException("Lead not found for Modernization ID: " + modernizationId);
+        }
+        
+
+        // --- GST Calculations ---
+        BigDecimal subTotal = modernization.getSubtotal() != null ? modernization.getSubtotal() : BigDecimal.ZERO;
+        BigDecimal gstPercentage = modernization.getGstPercentage() != null ? modernization.getGstPercentage() : BigDecimal.ZERO;
+        BigDecimal gstHalf = gstPercentage.divide(BigDecimal.valueOf(2), 2, RoundingMode.HALF_UP);
+
+        BigDecimal CGST_Amount = calculateTaxAmount(subTotal, gstHalf);
+        BigDecimal SGST_Amount = calculateTaxAmount(subTotal, gstHalf);
+
+        BigDecimal totalWithTax = subTotal.add(CGST_Amount).add(SGST_Amount);
+        Map<String, BigDecimal> roundData = calculateRoundOff(totalWithTax);
+
+        BigDecimal roundedGrandTotal = roundData.get("roundedTotal");
+        BigDecimal roundOffValue = roundData.get("roundOffValue");
+
+        // --- Amount in Words ---
+        String amountInWords = convertAmountToWords(roundedGrandTotal);
+
+        // --- Build DTO ---
+        return ModernizationQuotationInvoiceData.builder()
+                .companyName(companySetting.getCompanyName())
+                .officeAddress(companySetting.getOfficeAddressLine1())
+                .GSTIN_UIN(companySetting.getCompanyGst())
+                .contactNo(companySetting.getOfficeNumber())
+                .email(companySetting.getCompanyMail())
+
+                .invoiceNo(modernization.getQuotationNo())
+                .dated(modernization.getQuotationDate())
+                .purchaseOrderNo("")
+                .purchaseOrderNoDated(null)
+                .deliveryChallanNo("")
+                .deliveryChallanNoDated(null)
+
+                // --- Buyer / Site info ---
+                .buyerAddress(lead.getAddress())
+                .gstin("")
+                .buyerContactNo(lead.getContactNo())
+                .siteName(lead.getSiteName())
+                .siteAddress(lead.getSiteAddress())
+
+                // --- Material Details (using your style) ---
+                .materialDetails(
+                        modernization.getDetails().stream()
+                                .map(detail -> ModernizationQuotationInvoiceData.MaterialDetails.builder()
+                                        .particulars(detail.getMaterialName())
+                                        .hsnSac(detail.getHsn())
+                                        .quantity(detail.getQuantity())
+                                        .rate(detail.getRate())
+                                        .per("Nos") // adjust if needed based on your DB field
+                                        .amount(detail.getAmount())
+                                        .build()
+                                )
+                                .toList()
+                )
+
+                // --- Totals ---
+                .subTotal(subTotal)
+                .cgstStr("CGST " + gstHalf + "%")
+                .sgstStr("SGST " + gstHalf + "%")
+                .cgstAmount(CGST_Amount)
+                .sgstAmount(SGST_Amount)
+                .roundOffValue(roundOffValue)
+                .grandTotal(roundedGrandTotal)
+                .amountChargeableInWords(amountInWords)
+
+                // --- Bank details ---
+                .name(companySetting.getBankName())
+                .accountNumber(companySetting.getAccountNumber())
+                .branch(companySetting.getBranchName())
+                .ifscCode(companySetting.getIfscCode())
+                .forCompany(companySetting.getCompanyName())
+
+                .build();
+    }
+
+    // --- Helper: Tax calculation ---
+    private BigDecimal calculateTaxAmount(BigDecimal base, BigDecimal percent) {
+        return base.multiply(percent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+    }
+
+    // --- Helper: Round off ---
+    private Map<String, BigDecimal> calculateRoundOff(BigDecimal total) {
+        BigDecimal rounded = total.setScale(0, RoundingMode.HALF_UP);
+        BigDecimal roundOff = rounded.subtract(total).setScale(2, RoundingMode.HALF_UP);
+
+        Map<String, BigDecimal> result = new HashMap<>();
+        result.put("roundedTotal", rounded);
+        result.put("roundOffValue", roundOff);
+        return result;
+    }
+
+    // --- Helper: Convert number to words ---
+    private String convertAmountToWords(BigDecimal amount) {
+        if (amount == null) return "";
+        long rupees = amount.longValue();
+        return rupees + " Rupees Only"; // simple version; you can enhance later
+    }
     
     
     

@@ -11,6 +11,9 @@ import {
 // Assuming you have saved ActionModal.js in a relevant path
 import ActionModal from '@/components/AMC/ActionModal'; 
 
+import ModernizationEdit from '@/components/Modernization/ModernizationEdit';
+import ModernizationInvoicePrint from '@/components/Modernization/ModernizationInvoicePrint';
+
 export default function ModernizationList() {
   const [records, setRecords] = useState([]);
   const [page, setPage] = useState(0);
@@ -26,8 +29,13 @@ export default function ModernizationList() {
   
   // State for View Modal (Unchanged)
   const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   const [viewData, setViewData] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+
+  const[selectedIdForInvoice , setSelectedIdForInvoice] = useState(null);
+  const [isInvoiceModalOpen , setIsInvoiceModalOpen] = useState(false);
   
   // ✅ Fetch List API (Unchanged)
   const fetchModernizations = useCallback(async () => {
@@ -142,13 +150,21 @@ export default function ModernizationList() {
   };
   // ------------------------------------------
 
+  const [selectedIdForEdit , setSelectedIdForEdit] = useState(null);
   // --- Combined Action Handler (Updated) ---
   const handleAction = (action, id, isFinal, type = '') => {
       if (action === 'View') {
           handleViewDetails(id);
       } else if (action === 'Toggle Final') {
           handleToggleFinal(id, isFinal); // Pass ID and current isFinal status
-      } else {
+      } else if(action === 'Edit'){
+        setSelectedIdForEdit(id);
+          setIsEditModalOpen(true);
+      }else if(action === 'Invoice'){
+        setSelectedIdForInvoice(id);
+        setIsInvoiceModalOpen(true);
+      }
+      else {
           toast.success(`Action: ${action} on ID: ${id} ${type ? `(${type})` : ''}`);
       }
   };
@@ -301,7 +317,7 @@ export default function ModernizationList() {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
       
-      <div className="max-w-7xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
+      <div className="max-w-9xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden border border-gray-200">
 
         {/* 🔸 Header & Search Bar (Unchanged) */}
         <div className="p-5 bg-white border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -536,6 +552,28 @@ export default function ModernizationList() {
         <ViewDetailsModalContent />
       </ActionModal>
       {/* --------------------------- */}
+
+      <ActionModal
+        isOpen={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        title="Edit Modernization Quotation"
+      >
+        <ModernizationEdit id={selectedIdForEdit}/>
+      </ActionModal>
+      {/* --------------------------- */}
+      <ActionModal
+        isOpen={isInvoiceModalOpen}
+        onCancel={() => setIsInvoiceModalOpen(false)}
+        title="Invoice Modernization Quotation"
+      >
+        <ModernizationInvoicePrint invoiceId={selectedIdForInvoice}/>
+      </ActionModal>
+      {/* --------------------------- */}
+
+
+
+
+
     </div>
   );
 }

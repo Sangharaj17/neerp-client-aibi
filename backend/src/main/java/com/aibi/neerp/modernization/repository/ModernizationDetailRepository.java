@@ -10,4 +10,6 @@ public interface ModernizationDetailRepository extends JpaRepository<Modernizati
 
     // ✅ Fetch all details for a specific quotation
     List<ModernizationDetail> findByModernization_Id(Integer modernizationId);
+
+	void deleteByModernizationId(Integer id);
 }
