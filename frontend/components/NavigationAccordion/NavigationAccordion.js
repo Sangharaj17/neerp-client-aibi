@@ -254,7 +254,7 @@ const NavigationAccordion = () => {
         { title: 'Material Repair Quotation List', href: `/dashboard/quotations/material_repair_quatation_list` },
         { title: 'Modernization Quotation List', href: `/dashboard/quotations/ModernizationList` },
 
-        { title: 'Oncall Quotation List', href: `/dashboard/quotations/approved` },
+        { title: 'Oncall Quotation List', href: `/dashboard/quotations/oncall-quotation-list` },
         { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/amc-renewal-quatation-list` },
       { title: 'AMC Quatation Setup', href: `/dashboard/quotations/amc_quatation_setup` }
 

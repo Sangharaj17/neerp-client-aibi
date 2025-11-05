@@ -498,6 +498,14 @@ function ViewEnquiryClientPageContent() {
 );
 
                      }
+                     else if(selectedCategory == "On Call"){
+                       router.push(
+  `/dashboard/lead-management/enquiries/${id}/add-oncall/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
+    searchParams.get('customer')
+  )}&site=${encodeURIComponent(searchParams.get('site'))}`
+);
+
+                     }
                      else{
 
                         router.push(
