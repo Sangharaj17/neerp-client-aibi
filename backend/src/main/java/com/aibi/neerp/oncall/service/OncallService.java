@@ -3,6 +3,7 @@ package com.aibi.neerp.oncall.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -10,11 +11,15 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
+import com.aibi.neerp.amc.invoice.repository.AmcInvoiceRepository;
+import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
 import com.aibi.neerp.amc.materialrepair.repository.WorkPeriodRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
+import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.leadmanagement.repository.CombinedEnquiryRepository;
 import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
@@ -43,6 +48,8 @@ public class OncallService {
     private final CompanySettingService companySettingService;
     private final CompanySettingRepository companySettingRepository;
     private final AmcJobsService amcJobsService;
+    private final AmcInvoiceRepository invoiceRepository;
+    private final AmcInvoiceService amcInvoiceService;
 
     // --- CREATE OnCall Quotation with Details ---
     @Transactional
@@ -219,9 +226,46 @@ public class OncallService {
             OnCallQuotation quotation = optional.get();
             quotation.setIsFinal(isFinal);
             onCallQuotationRepository.save(quotation);
+            
+            createOncallInvoice(id);
             return true;
         }
         return false;
+    }
+    
+    public void createOncallInvoice(Integer onCallQuotationId) {
+    	
+    	AmcInvoiceRequestDto amcInvoiceRequestDto = buildAmcInvoiceDto(onCallQuotationId);
+        
+    	amcInvoiceService.saveInvoice(amcInvoiceRequestDto);
+    }
+    
+    public AmcInvoiceRequestDto buildAmcInvoiceDto(Integer onCallQuotationId) {
+    	
+    	AmcInvoiceRequestDto amcInvoiceRequestDto = 
+    			new AmcInvoiceRequestDto();
+    	
+    	OnCallQuotation onCallQuotation = onCallQuotationRepository.findById(onCallQuotationId).get();
+    	EnquiryType enquiryType = onCallQuotation.getCombinedEnquiry().getEnquiryType();
+    	
+    	amcInvoiceRequestDto.setTotalAmt(onCallQuotation.getAmountWithGst());
+    	amcInvoiceRequestDto.setEnquiryType(enquiryType);
+    	amcInvoiceRequestDto.setOnCallQuotation(onCallQuotation);
+    	amcInvoiceRequestDto.setIsCleared(0);
+    	
+    	LocalDate invoiceDate = LocalDate.now();
+    	
+    	amcInvoiceRequestDto.setInvoiceDate(invoiceDate);
+    	
+    	Integer nextInvoiceId = invoiceRepository.findMaxInvoiceId() + 1;
+        String currentYear = String.valueOf(Year.now().getValue());
+        String formattedInvoiceNo = String.format("INV-%s-%04d", currentYear, nextInvoiceId);
+
+       
+        amcInvoiceRequestDto.setInvoiceNo(formattedInvoiceNo);
+        
+        return amcInvoiceRequestDto;
+
     }
 
  // --- Update OnCall Quotation ---

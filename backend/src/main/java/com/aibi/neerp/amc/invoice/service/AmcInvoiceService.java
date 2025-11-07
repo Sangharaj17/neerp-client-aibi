@@ -13,8 +13,16 @@ import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 // Example: import com.aibi.neerp.amc.jobs.repository.AmcJobRepository;
 import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
+import com.aibi.neerp.amc.materialrepair.entity.MaterialQuotation;
+import com.aibi.neerp.amc.materialrepair.repository.MaterialQuotationRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.leadmanagement.entity.EnquiryType;
+import com.aibi.neerp.leadmanagement.repository.EnquiryTypeRepository;
+import com.aibi.neerp.modernization.entity.Modernization;
+import com.aibi.neerp.modernization.repository.ModernizationRepository;
+import com.aibi.neerp.oncall.entity.OnCallQuotation;
+import com.aibi.neerp.oncall.repository.OnCallQuotationRepository;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 
@@ -52,6 +60,11 @@ public class AmcInvoiceService {
     private final AmcJobRepository amcJobRepository;
     private final AmcRenewalJobRepository amcRenewalJobRepository;
     private final CompanySettingRepository companySettingRepository;
+    private final EnquiryTypeRepository enquiryTypeRepository;
+    
+    private final MaterialQuotationRepository materialQuotationRepository;
+    private final OnCallQuotationRepository onCallQuotationRepository;
+    private final ModernizationRepository modernizationRepository;
     
     // NOTE: In a real app, you would inject the repositories needed to fetch the FK entities.
     // private final AmcJobRepository amcJobRepository; 
@@ -84,11 +97,19 @@ public class AmcInvoiceService {
         AmcRenewalJob amcRenewalJob = fetchAmcRenewalJob(dto.getRenewlJobId());
         
         System.out.println("called toenityt ");
+        
+       EnquiryType enquiryType = dto.getEnquiryType();
+   
+       MaterialQuotation materialQuotation = dto.getMaterialQuotation();
+       OnCallQuotation onCallQuotation = dto.getOnCallQuotation();
+       Modernization modernization = dto.getModernization();
 
+       
         return AmcInvoice.builder()
                 .invoiceNo(dto.getInvoiceNo())
                 .invoiceDate(dto.getInvoiceDate())
                 .descOfService(dto.getDescOfService())
+                .enquiryType(enquiryType)
                 .sacCode(dto.getSacCode())
                 .baseAmt(dto.getBaseAmt())
                 .cgstAmt(dto.getCgstAmt())
@@ -98,6 +119,9 @@ public class AmcInvoiceService {
                 .isCleared(dto.getIsCleared())
                 .amcJob(amcJob)
                 .amcRenewalJob(amcRenewalJob)
+                .materialQuotation(materialQuotation)
+                .onCallQuotation(onCallQuotation)
+                .modernization(modernization)
                 .build();
     }
 
@@ -225,7 +249,14 @@ public class AmcInvoiceService {
         BigDecimal jobAmount;
         String paymentTerm;
         LocalDate startDate;
+        
+        EnquiryType enquiryType = enquiryTypeRepository.findAll().stream()
+        	    .filter(enq -> enq.getEnquiryTypeName().equalsIgnoreCase("amc"))
+        	    .findFirst()
+        	    .orElse(null);
 
+        
+        
         try {
             
             if (jobId != null) {
@@ -236,6 +267,9 @@ public class AmcInvoiceService {
                 jobAmount = amcJob.getJobAmount();
                 paymentTerm = amcJob.getPaymentTerm();
                 startDate = amcJob.getStartDate(); // Assuming AmcJob has a getStartDate()
+                
+                
+                
             } else if (renewalJobId != null) {
                 // --- Fallback Check: AmcRenewalJob using renewalJobId ---
                 AmcRenewalJob renewalJob = amcRenewalJobRepository.findById(renewalJobId)
@@ -316,6 +350,9 @@ public class AmcInvoiceService {
             amcInvoiceRequestDto.setJobNo(jobId); 
             amcInvoiceRequestDto.setRenewlJobId(renewalJobId);
             
+            amcInvoiceRequestDto.setEnquiryType(enquiryType);
+            
+         
             saveInvoice(amcInvoiceRequestDto);
         }
         

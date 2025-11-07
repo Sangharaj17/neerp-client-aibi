@@ -8,6 +8,10 @@ import java.time.LocalDate;
 
 import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
+import com.aibi.neerp.amc.materialrepair.entity.MaterialQuotation;
+import com.aibi.neerp.leadmanagement.entity.EnquiryType;
+import com.aibi.neerp.modernization.entity.Modernization;
+import com.aibi.neerp.oncall.entity.OnCallQuotation;
 
 @Entity
 @Table(name = "tbl_amc_invoice") 
@@ -38,6 +42,23 @@ public class AmcInvoice {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "renewl_job_id", referencedColumnName = "job_renewl_id")
     private AmcRenewalJob amcRenewalJob;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "enquiry_type_id", referencedColumnName = "enquiry_type_id")
+    private EnquiryType enquiryType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "material_quotation_id")
+    private MaterialQuotation materialQuotation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "on_call_quotation_id")
+    private OnCallQuotation onCallQuotation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "modernization_id")
+    private Modernization modernization;
+
 
     @Lob 
     @Column(name = "desc_of_service") // nullable = false removed
