@@ -1,16 +1,14 @@
 package com.aibi.neerp.login.controller;
 
 import com.aibi.neerp.client.service.ClientService;
-import com.aibi.neerp.exception.CustomSubscriptionException;
 import com.aibi.neerp.config.DataSourceConfig;
 import com.aibi.neerp.config.TenantContext;
-import com.aibi.neerp.employeemanagement.entity.Employee;
-import com.aibi.neerp.client.dto.ClientWithModulesResponse;
-import com.aibi.neerp.login.dto.LoginRequest;
+import com.aibi.neerp.config.TenantSchemaInitializer;
 import com.aibi.neerp.client.dto.Client;
+import com.aibi.neerp.employeemanagement.entity.Employee;
+import com.aibi.neerp.login.dto.LoginRequest;
 import com.aibi.neerp.user.service.UserService;
 import com.aibi.neerp.util.JwtUtil;
-import com.aibi.neerp.config.TenantSchemaInitializer;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +18,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,17 +38,35 @@ public class LoginController {
 
     @Autowired
     private TenantSchemaInitializer tenantSchemaInitializer;
+    
+    @Autowired
+    private com.aibi.neerp.config.InitializationStatusTracker statusTracker;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest,
             HttpServletResponse response) {
-        System.out.println("client------//////------->" + httpRequest);
+        System.out.println("Login request received");
+        System.out.println("Email: " + request.getEmail());
+        System.out.println("Password: " + (request.getPassword() != null ? "***" : "null"));
 
         // ✅ Step 1: Get tenant from header
         String domainNm = httpRequest.getHeader("X-Tenant");
         if (domainNm == null || domainNm.isBlank()) {
+            System.out.println("Missing X-Tenant header");
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Missing X-Tenant header"));
+        }
+
+        // Validate request fields
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            System.out.println("Email is missing or blank");
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Email is required"));
+        }
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            System.out.println("Password is missing or blank");
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Password is required"));
         }
 
         // System.out.println("client----domainNm--------->" + domainNm);
@@ -93,13 +108,37 @@ public class LoginController {
         dataSourceConfig.removeDataSource(domainNm);
         dataSourceConfig.addDataSource(domainNm, client);
 
-        // ✅ If schema not ready, trigger initialization and tell client to wait
-        if (!tenantSchemaInitializer.isInitialized()) {
-            tenantSchemaInitializer.initializeIfRequired(domainNm);
+        // ✅ Check if schema initialization is needed
+        // This will handle both first-time setup and incremental updates
+        boolean needsFullInit = !tenantSchemaInitializer.isInitialized();
+        
+        if (needsFullInit) {
+            // First-time setup: Run initialization in a separate thread to avoid blocking
+            final String tenantIdForThread = domainNm; // Capture for thread
+            new Thread(() -> {
+                try {
+                    TenantContext.setTenantId(tenantIdForThread);
+                    tenantSchemaInitializer.initializeIfRequired(tenantIdForThread);
+                } catch (Exception e) {
+                    System.err.println("Error during async initialization: " + e.getMessage());
+                    e.printStackTrace();
+                } finally {
+                    TenantContext.clear();
+                }
+            }).start();
             return ResponseEntity.accepted().body(Map.of(
                     "requiresInitialization", true,
                     "message", "Initializing tenant database. Please wait..."
             ));
+        } else {
+            // Schema exists: Run lightweight data initialization synchronously (fast, idempotent)
+            // This ensures any new default data is added without blocking login
+            try {
+                tenantSchemaInitializer.initializeIfRequired(domainNm);
+            } catch (Exception e) {
+                // Log but don't block login - data init is idempotent and optional
+                System.err.println("Warning: Error during data initialization check: " + e.getMessage());
+            }
         }
 
         // ✅ Step 4: Validate user
@@ -165,6 +204,18 @@ public class LoginController {
         }
         TenantContext.setTenantId(domainNm);
         boolean ok = tenantSchemaInitializer.isInitialized();
+        
+        // Get detailed status if available
+        com.aibi.neerp.config.InitializationStatusTracker.StatusInfo status = statusTracker.getStatus(domainNm);
+        if (status != null) {
+            return ResponseEntity.ok(Map.of(
+                "initialized", ok && status.isCompleted(),
+                "currentStep", status.getCurrentStep(),
+                "progress", status.getProgress(),
+                "message", status.getMessage()
+            ));
+        }
+        
         return ResponseEntity.ok(Map.of("initialized", ok));
     }
 

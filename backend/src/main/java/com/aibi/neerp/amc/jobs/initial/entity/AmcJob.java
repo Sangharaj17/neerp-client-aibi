@@ -100,7 +100,7 @@ public class AmcJob {
     @Column(name = "no_of_services", nullable = false)
     private Integer noOfServices;
 
-    @Column(name = "job_amount", nullable = false)
+    @Column(name = "job_amount", nullable = false, precision = 38, scale = 2)
     private BigDecimal jobAmount;
 
     @Column(name = "amount_with_GST", nullable = false)
@@ -139,7 +139,7 @@ public class AmcJob {
     @Column(name = "noOfLiftsCurrentServiceCompletedCount")
     private Integer noOfLiftsCurrentServiceCompletedCount;
     
-    @Column(name = "lastActivityDate")
+    @Column(name = "lastactivitydate")
     private LocalDate lastActivityDate;
     
     @Column(name = "currentservicestatus")

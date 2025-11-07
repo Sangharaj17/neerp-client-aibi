@@ -40,7 +40,7 @@ public class BreakdownTodo {
     @Column(name = "todo_date", nullable = false)
     private LocalDate todoDate; // Changed to String
 
-    @Column(name = "time", nullable = false)
+    @Column(name = "time", nullable = false, columnDefinition = "TIME")
     private LocalTime time; 
     
     @Column(name = "venue", nullable = false)
