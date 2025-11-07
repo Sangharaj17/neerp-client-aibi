@@ -18,6 +18,7 @@ import com.aibi.neerp.amc.materialrepair.repository.MaterialQuotationRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
+import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.leadmanagement.repository.EnquiryTypeRepository;
 import com.aibi.neerp.modernization.entity.Modernization;
 import com.aibi.neerp.modernization.repository.ModernizationRepository;
@@ -137,13 +138,30 @@ public class AmcInvoiceService {
         dto.setCgstAmt(entity.getCgstAmt());
         dto.setSgstAmt(entity.getSgstAmt());
         dto.setTotalAmt(entity.getTotalAmt());
-        dto.setPayFor(entity.getPayFor());
+        dto.setInvoiceFor(entity.getEnquiryType() != null ? entity.getEnquiryType().getEnquiryTypeName() : null);
+
         dto.setIsCleared(entity.getIsCleared());
         
         // Extract FK IDs from Entity objects
         dto.setJobNo(Optional.ofNullable(entity.getAmcJob()).map(AmcJob::getJobId).orElse(null));
         dto.setRenewlJobId(Optional.ofNullable(entity.getAmcRenewalJob()).map(AmcRenewalJob::getRenewalJobId).orElse(null));
         
+        MaterialQuotation materialQuotation = entity.getMaterialQuotation();
+        OnCallQuotation onCallQuotation = entity.getOnCallQuotation();
+        Modernization modernization = entity.getModernization();
+        
+        if(materialQuotation!=null) {
+        	dto.setMaterialRepairQuotationId(materialQuotation.getModQuotId());;
+        }
+        if(onCallQuotation!=null) {
+        	dto.setOncallQuotationId(onCallQuotation.getId());
+        	
+        }
+        if(modernization!=null) {
+        	dto.setModernizationId(modernization.getId());
+        }
+        
+      
         String siteName = "";
         String siteAddress  = "";
         
@@ -159,6 +177,34 @@ public class AmcInvoiceService {
         	siteName = amcRenewalJob.getSite().getSiteName();
         	siteAddress = amcRenewalJob.getSite().getSiteAddress();
         }
+        else {
+        	
+        	NewLeads lead = null;
+        	
+        	if(entity.getMaterialQuotation()!=null) {
+        		
+        		AmcJob amcJob = entity.getMaterialQuotation().getAmcJob();
+        		AmcRenewalJob amcRenewalJob = entity.getMaterialQuotation().getAmcRenewalJob();
+        		
+        		if(amcJob!=null)
+        			lead = amcJob.getLead();
+        		else 
+        			lead = amcRenewalJob.getLead();			
+        	
+        	}else if(entity.getOnCallQuotation()!=null) {
+        		
+        		lead = entity.getOnCallQuotation().getLead();
+        		
+        	}else {
+        		
+        		lead = entity.getModernization().getLead();
+        	}
+        	
+        	siteName = lead.getSiteName();
+        	siteAddress = lead.getSiteAddress();
+        
+        }
+
         
         dto.setSiteName(siteName);
         dto.setSiteAddress(siteAddress);
@@ -531,6 +577,12 @@ public class AmcInvoiceService {
         // --- Customer & Site handling (prefer renewal if available) ---
         Customer customer = null;
         Site site = null;
+        
+        String buyerAddress = "";
+        String siteName = "";
+        String siteAddress = "";
+        String buyerContactNumber = "";
+        
 
         if (amcInvoice.getAmcRenewalJob() != null) {
             customer = amcInvoice.getAmcRenewalJob().getCustomer();
@@ -539,10 +591,44 @@ public class AmcInvoiceService {
             customer = amcInvoice.getAmcJob().getCustomer();
             site = amcInvoice.getAmcJob().getSite();
         }
-
-        if (customer == null || site == null) {
-            throw new RuntimeException("Customer or Site not found for Invoice ID: " + invoiceId);
+        
+        if(customer!=null && site!=null) {
+        	buyerAddress = site.getSiteAddress();
+        	siteName = site.getSiteName();
+        	siteAddress = site.getSiteAddress();
+        	buyerContactNumber  = customer.getContactNumber();
+        	
+        }else {
+        	
+        	NewLeads lead = null;
+        	
+        	if(amcInvoice.getMaterialQuotation()!=null) {
+        		
+        		AmcJob amcJob = amcInvoice.getMaterialQuotation().getAmcJob();
+        		AmcRenewalJob amcRenewalJob = amcInvoice.getMaterialQuotation().getAmcRenewalJob();
+        		
+        		if(amcJob!=null)
+        			lead = amcJob.getLead();
+        		else 
+        			lead = amcRenewalJob.getLead();			
+        	
+        	}else if(amcInvoice.getOnCallQuotation()!=null) {
+        		
+        		lead = amcInvoice.getOnCallQuotation().getLead();
+        		
+        	}else {
+        		
+        		lead = amcInvoice.getModernization().getLead();
+        	}
+        	
+        	buyerAddress = lead.getSiteAddress();
+        	siteName = lead.getSiteName();
+        	siteAddress = lead.getSiteAddress();
+        	buyerContactNumber  = lead.getContactNo();
+        
         }
+
+     
 
         // --- GST Calculations ---
         BigDecimal baseAmount = amcInvoice.getTotalAmt();
@@ -577,12 +663,12 @@ public class AmcInvoiceService {
                 .DeliveryChallanNo("")
                 .DeliveryChallanNoDated(null)
 
-                .BuyerAddress(site.getSiteAddress())
+                .BuyerAddress(buyerAddress)
                 .GSTIN("") 
-                .BuyerContactNo(customer.getContactNumber())
+                .BuyerContactNo(buyerContactNumber)
 
-                .sitename(site.getSiteName())
-                .siteaddress(site.getSiteAddress())
+                .sitename(siteName)
+                .siteaddress(siteAddress)
                 .Particulars("Maintenance & Repairs Service Of Elevators AMC Charges")
                 .HSN_SAC(companySetting.getSacCodeAmc())
                 .Quantity(1)

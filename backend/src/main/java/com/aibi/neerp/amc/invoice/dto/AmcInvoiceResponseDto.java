@@ -18,6 +18,10 @@ public class AmcInvoiceResponseDto {
     // Foreign Keys (IDs)
     private Integer jobNo;
     private Integer renewlJobId;
+    
+    private Integer materialRepairQuotationId;
+    private Integer oncallQuotationId;
+    private Integer modernizationId;
 
     // Invoice Details
     private String invoiceNo;
@@ -31,6 +35,6 @@ public class AmcInvoiceResponseDto {
     private BigDecimal sgstAmt;
     private BigDecimal totalAmt;
 
-    private String payFor;
+    private String invoiceFor;
     private Integer isCleared; // Using Integer as requested
 }

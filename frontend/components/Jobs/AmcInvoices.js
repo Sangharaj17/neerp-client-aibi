@@ -14,6 +14,8 @@ import axiosInstance from "@/utils/axiosInstance";
 
 import AMCInvoicePrint from "./AMCInvoicePrint";
 import ActionModal from "../AMC/ActionModal";
+import OncallInvoicePrint from "../Oncall/OncallInvoicePrint";
+import ModernizationInvoicePrint from "../Modernization/ModernizationInvoicePrint";
 
 const getSortIcon = (column, sortBy, direction) => {
   if (sortBy === column) {
@@ -143,9 +145,35 @@ const AmcInvoices = () => {
    * Opens the modal and sets the ID of the invoice to be printed.
    * @param {number} invoiceId - The ID of the invoice to fetch and print.
    */
-  const handlePrintPdf = (invoiceId) => {
-    setSelectedInvoiceId(invoiceId);
-    setIsModalOpen(true);
+  const handlePrintPdf = (invoice) => {
+
+    const invoiceId = invoice.invoiceId;
+     setSelectedInvoiceId(invoiceId);
+
+       // Foreign Keys (IDs)
+    const jobNo = invoice.jobNo;
+    const renewlJobId = invoice.renewlJobId;
+    
+    const materialRepairQuotationId = invoice.materialRepairQuotationId;
+    const oncallQuotationId = invoice.oncallQuotationId;
+    const modernizationId = invoice.modernizationId;
+
+     if(jobNo !== null || renewlJobId !== null)
+      setIsModalOpen(true);
+     else{
+        if(materialRepairQuotationId !== null){
+          setSelectedMaterialQuotationId(materialRepairQuotationId);
+          setIsMaterialInvoiceModalOpen(true);
+        }
+        else if(oncallQuotationId !== null){
+          setSelectedOncallQuotationId(oncallQuotationId);
+          setIsOncallInvoiceModalOpen(true);
+        }
+        else if(modernizationId !== null){
+          setSelectedModernizationQuotationId(modernizationId);
+          setIsModernizationInvoiceModalOpen(true);
+        }
+     }
   };
 
   const closeModal = () => {
@@ -154,10 +182,36 @@ const AmcInvoices = () => {
     setSelectedInvoiceId(null); 
   };
 
+
+   const [isMaterialInvoiceModalOpen, setIsMaterialInvoiceModalOpen] = useState(false);
+   const [isOncallInvoiceModalOpen, setIsOncallInvoiceModalOpen] = useState(false);
+   const [isModernizationInvoiceModalOpen, setIsModernizationInvoiceModalOpen] = useState(false);
+  const [selectedMaterialQuotationId, setSelectedMaterialQuotationId] = useState(null);
+  const [selectedOncallQuotationId, setSelectedOncallQuotationId] = useState(null);
+  const [selectedModernizationQuotationId, setSelectedModernizationQuotationId] = useState(null);
+
+  const closeMaterialInvoiceModal = () => {
+    setIsMaterialInvoiceModalOpen(false);
+    setSelectedMaterialQuotationId(null);
+  };
+
+  const closeOncallInvoiceModal = () => {
+    setIsOncallInvoiceModalOpen(false);
+    setSelectedOncallQuotationId(null);
+  };
+
+  const closeModernizationInvoiceModal = () => {
+    setIsModernizationInvoiceModalOpen(false);
+    setSelectedModernizationQuotationId(null);
+  };
+
+
+
+
   return (
     <div className="p-6 sm:p-8 bg-gray-10 min-h-screen">
       <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
-        AMC Invoice
+         Invoice
       </h1>
 
       {/* ✅ Summary Section */}
@@ -253,6 +307,7 @@ const AmcInvoices = () => {
                     { key: "siteAddress", label: "Site Address", sortable: false, align: "left" },
                     { key: "invoiceDate", label: "Invoice Date", sortable: true, align: "center" },
                     { key: "totalAmt", label: "Total Amount", sortable: false, align: "right" },
+                    { key: "invoiceFor", label: "Invoice For", sortable: false, align: "center" },
                     { key: "isCleared", label: "Status", sortable: false, align: "center" },
                     { key: "action", label: "Action", sortable: false, align: "center" },
                   ].map((col) => (
@@ -308,18 +363,23 @@ const AmcInvoices = () => {
                           ₹{invoice.totalAmt?.toFixed(2) || "0.00"}
                         </span>
                       </td>
+                      <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 font-mono text-right">
+                        <span className="font-bold">
+                          {invoice.invoiceFor }
+                        </span>
+                      </td>
                       <td className="px-6 py-2 whitespace-nowrap text-center">
                         {getPaymentStatus(invoice.isCleared)}
                       </td>
                      <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
-                  <button
-                    onClick={() => handlePrintPdf(invoice.invoiceId)} // Calls the handler with the invoice ID
-                    className="text-blue-600 hover:text-blue-900 transition duration-150 p-1 rounded-full hover:bg-blue-100"
-                    title="Print Invoice PDF"
-                  >
-                    <FaPrint className="w-4 h-4" />
-                  </button>
-                </td>
+                        <button
+                          onClick={() => handlePrintPdf(invoice)} // Calls the handler with the invoice ID
+                          className="text-blue-600 hover:text-blue-900 transition duration-150 p-1 rounded-full hover:bg-blue-100"
+                          title="Print Invoice PDF"
+                        >
+                          <FaPrint className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -424,6 +484,44 @@ const AmcInvoices = () => {
             </button>
         </div>
       </ActionModal>
+
+       <ActionModal 
+              isOpen={isMaterialInvoiceModalOpen} 
+              onCancel={closeMaterialInvoiceModal} // Closes the modal when clicking outside
+            >
+              {/* Pass the AMCInvoicePrint component as children */}
+              {selectedMaterialQuotationId !== null && (
+                <MaterialQuotationPrint quotationId={selectedMaterialQuotationId}  
+                onCancel={closeMaterialInvoiceModal}/>
+              )}
+            
+       </ActionModal>
+
+        <ActionModal
+              isOpen={isOncallInvoiceModalOpen}
+              onCancel={closeOncallInvoiceModal} // Closes the modal when clicking outside
+            >
+              {/* Pass the AMCInvoicePrint component as children */}
+              {selectedOncallQuotationId !== null && (
+                
+                <OncallInvoicePrint invoiceId={selectedOncallQuotationId}
+                  onCancel={closeOncallInvoiceModal} />
+              )}
+        </ActionModal>
+
+        <ActionModal
+              isOpen={isModernizationInvoiceModalOpen}
+              onCancel={closeModernizationInvoiceModal} // Closes the modal when clicking outside
+            >
+              {/* Pass the AMCInvoicePrint component as children */}
+              {selectedModernizationQuotationId !== null && (
+                <ModernizationInvoicePrint invoiceId={selectedModernizationQuotationId}
+                  onCancel={closeModernizationInvoiceModal} />
+              )}
+        </ActionModal>
+        
+      
+
     </div>
   );
 };

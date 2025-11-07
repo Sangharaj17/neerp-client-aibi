@@ -54,11 +54,13 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
 //            @Param("dateSearch") LocalDate dateSearch, // CRITICAL: Use LocalDate
 //            Pageable pageable
 //        );
+	// enquiryType
 	
 	@Query("""
             SELECT DISTINCT i
             FROM AmcInvoice i
            
+            LEFT JOIN i.enquiryType e
             LEFT JOIN i.amcJob j 
             LEFT JOIN j.site js 
             LEFT JOIN j.customer jc 
@@ -69,6 +71,8 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
             
             WHERE (:search IS NULL OR (
             
+                LOWER(e.enquiryTypeName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
                 LOWER(i.invoiceNo) LIKE LOWER(CONCAT('%', :search, '%')) OR
                 LOWER(i.payFor) LIKE LOWER(CONCAT('%', :search, '%')) OR
                 CAST(i.totalAmt AS string) LIKE CONCAT('%', :search, '%') OR

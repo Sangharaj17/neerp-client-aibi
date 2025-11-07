@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,17 +22,22 @@ import org.springframework.transaction.annotation.Transactional;
 import com.aibi.neerp.modernization.dto.*;
 import com.aibi.neerp.modernization.entity.*;
 import com.aibi.neerp.modernization.repository.*;
+import com.aibi.neerp.oncall.entity.OnCallQuotation;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 import com.aibi.neerp.settings.service.CompanySettingService;
 
 import jakarta.persistence.EntityNotFoundException;
 
+import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
+import com.aibi.neerp.amc.invoice.repository.AmcInvoiceRepository;
+import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
 import com.aibi.neerp.amc.materialrepair.repository.WorkPeriodRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
+import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.leadmanagement.repository.CombinedEnquiryRepository;
 import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
@@ -54,6 +60,10 @@ public class ModernizationService {
     private final CompanySettingService companySettingService;
     private final CompanySettingRepository companySettingRepository;
     private final AmcJobsService amcJobsService;
+    
+    private final AmcInvoiceRepository invoiceRepository;
+    
+    private final AmcInvoiceService amcInvoiceService;
 
     // --- CREATE Modernization with Details ---
     @Transactional
@@ -260,10 +270,49 @@ public class ModernizationService {
             Modernization modernization = optional.get();
             modernization.setIsFinal(isFinal);
             modernizationRepository.save(modernization);
+            
+            createModernizationInvoice(id);
+            
             return true;
         }
         return false;
     }
+    
+    public void createModernizationInvoice(Integer modernizationQuotationId) {
+    	
+    	AmcInvoiceRequestDto amcInvoiceRequestDto = buildAmcInvoiceDto(modernizationQuotationId);
+        
+    	amcInvoiceService.saveInvoice(amcInvoiceRequestDto);
+    }
+    
+    public AmcInvoiceRequestDto buildAmcInvoiceDto(Integer modernizationQuotationId) {
+    	
+    	AmcInvoiceRequestDto amcInvoiceRequestDto = 
+    			new AmcInvoiceRequestDto();
+    	
+    	Modernization modernization = modernizationRepository.findById(modernizationQuotationId).get();
+    	EnquiryType enquiryType = modernization.getCombinedEnquiry().getEnquiryType();
+    	
+    	amcInvoiceRequestDto.setTotalAmt(modernization.getAmountWithGst());
+    	amcInvoiceRequestDto.setEnquiryType(enquiryType);
+    	amcInvoiceRequestDto.setModernization(modernization);
+    	amcInvoiceRequestDto.setIsCleared(0);
+    	
+    	LocalDate invoiceDate = LocalDate.now();
+    	
+    	amcInvoiceRequestDto.setInvoiceDate(invoiceDate);
+    	
+    	Integer nextInvoiceId = invoiceRepository.findMaxInvoiceId() + 1;
+        String currentYear = String.valueOf(Year.now().getValue());
+        String formattedInvoiceNo = String.format("INV-%s-%04d", currentYear, nextInvoiceId);
+
+       
+        amcInvoiceRequestDto.setInvoiceNo(formattedInvoiceNo);
+        
+        return amcInvoiceRequestDto;
+
+    }
+
     
     
     

@@ -4,14 +4,24 @@ import com.aibi.neerp.amc.materialrepair.dto.*;
 import com.aibi.neerp.amc.materialrepair.entity.*;
 import com.aibi.neerp.amc.materialrepair.repository.MaterialQuotationRepository;
 import com.aibi.neerp.amc.materialrepair.repository.WorkPeriodRepository;
+import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
+import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
+import com.aibi.neerp.leadmanagement.entity.EnquiryType;
+import com.aibi.neerp.modernization.entity.Modernization;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 import com.aibi.neerp.settings.service.CompanySettingService;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoicePdfData;
+import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
 import com.aibi.neerp.amc.invoice.entity.AmcInvoice;
+import com.aibi.neerp.amc.invoice.repository.AmcInvoiceRepository;
+import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
+import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,13 +30,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +54,9 @@ public class MaterialQuotationService {
     private final WorkPeriodService workPeriodService;
     private final CompanySettingService companySettingService;
     private final CompanySettingRepository companySettingRepository;
+    
+    private final AmcInvoiceRepository invoiceRepository;
+    private final AmcInvoiceService amcInvoiceService;
 
     // 🔹 GET ALL with Pagination, Sorting & Search
     public Page<MaterialQuotationResponseDto> getAllMaterialQuotations(
@@ -399,7 +415,82 @@ public class MaterialQuotationService {
     }
 
 
-	
+    public void createMaterialRepairInvoice(Integer materialRepairQuotationId) {
+    	
+    	AmcInvoiceRequestDto amcInvoiceRequestDto = buildAmcInvoiceDto(materialRepairQuotationId);
+        
+    	amcInvoiceService.saveInvoice(amcInvoiceRequestDto);
+    }
+    
+    public AmcInvoiceRequestDto buildAmcInvoiceDto(Integer materialRepairQuotationId) {
+    	
+    	AmcInvoiceRequestDto amcInvoiceRequestDto = 
+    			new AmcInvoiceRequestDto();
+    	
+    	MaterialQuotation materialQuotation = materialQuotationRepository.findById(materialRepairQuotationId).get();
+    	
+    	
+    	EnquiryType enquiryType = null;
+    			
+        AmcJob amcJob = materialQuotation.getAmcJob();
+    	
+    	AmcRenewalJob amcRenewalJob = materialQuotation.getAmcRenewalJob();
+    	
+    	CombinedEnquiry combinedEnquiry = null;
+    	
+    	if(amcJob == null) {
+    		amcJob = amcRenewalJob.getPreJobId();
+
+    	}
+    	
+    	if(amcJob!=null) {
+    		
+    		AmcQuotation amcQuotation = amcJob.getAmcQuotation();
+    		RevisedAmcQuotation revisedAmcQuotation = amcJob.getRevisedAmcQuotation();
+    				
+    		if(amcQuotation!=null)    			
+    			combinedEnquiry = amcQuotation.getCombinedEnquiry();
+    		else 
+    			combinedEnquiry = revisedAmcQuotation.getCombinedEnquiry();
+  				
+    	}
+    	
+    	enquiryType = combinedEnquiry.getEnquiryType();
+    	
+    	amcInvoiceRequestDto.setTotalAmt(BigDecimal.valueOf(materialQuotation.getGrandTotal()));
+    	amcInvoiceRequestDto.setEnquiryType(enquiryType);
+    	amcInvoiceRequestDto.setMaterialQuotation(materialQuotation);
+    	amcInvoiceRequestDto.setIsCleared(0);
+    	
+    	LocalDate invoiceDate = LocalDate.now();
+    	
+    	amcInvoiceRequestDto.setInvoiceDate(invoiceDate);
+    	
+    	Integer nextInvoiceId = invoiceRepository.findMaxInvoiceId() + 1;
+        String currentYear = String.valueOf(Year.now().getValue());
+        String formattedInvoiceNo = String.format("INV-%s-%04d", currentYear, nextInvoiceId);
+
+       
+        amcInvoiceRequestDto.setInvoiceNo(formattedInvoiceNo);
+        
+        return amcInvoiceRequestDto;
+
+    }
+
+	  @Transactional
+    public boolean updateIsFinalStatus(Integer id, Boolean isFinal) {
+        Optional<MaterialQuotation> optional = materialQuotationRepository.findById(id);
+        if (optional.isPresent()) {
+        	MaterialQuotation materialQuotation = optional.get();
+        	materialQuotation.setIsFinal(1);
+        	materialQuotationRepository.save(materialQuotation);
+            
+            createMaterialRepairInvoice(id);
+            
+            return true;
+        }
+        return false;
+    }
 	
 	
 	

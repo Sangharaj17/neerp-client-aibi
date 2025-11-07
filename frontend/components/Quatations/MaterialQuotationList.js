@@ -359,18 +359,18 @@ const MaterialQuotationList = () => {
             >
               {/* Pass the AMCInvoicePrint component as children */}
               {selectedInvoiceId !== null && (
-                <MaterialQuotationPrint quotationId={selectedInvoiceId} />
+                <MaterialQuotationPrint quotationId={selectedInvoiceId}  onCancel={closeModal}/>
               )}
               
               {/* Add a close button inside the modal content for better UX (optional) */}
-              <div className="flex justify-end pt-4 print:hidden">
+              {/* <div className="flex justify-end pt-4 print:hidden">
                   <button
                       onClick={closeModal}
                       className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
                   >
                       Close Preview
                   </button>
-              </div>
+              </div> */}
             </ActionModal>
     </div>
   );

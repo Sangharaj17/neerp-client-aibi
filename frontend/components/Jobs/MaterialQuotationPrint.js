@@ -9,7 +9,7 @@ const formatCurrency = (amount) => {
   return parseFloat(amount).toFixed(2);
 };
 
-const MaterialQuotationPrint = ({ quotationId = 1 }) => { // Changed prop name to quotationId
+const MaterialQuotationPrint = ({ quotationId = 1  , onCancel}) => { // Changed prop name to quotationId
   const [quotationData, setQuotationData] = useState(null); // Changed state name
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -263,6 +263,7 @@ const MaterialQuotationPrint = ({ quotationId = 1 }) => { // Changed prop name t
         {/* Close button for the modal preview (outside the table) */}
         <div className="flex justify-end pt-4 print:hidden">
           <button
+            onClick={onCancel}
             className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Close Preview

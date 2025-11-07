@@ -75,7 +75,19 @@ public class MaterialQuotationController {
     
     
     
-    
+    @PatchMapping("/updateIsFinal/{id}")
+    public ResponseEntity<String> updateIsFinalStatus(
+            @PathVariable Integer id,
+            @RequestParam Boolean isFinal) {
+
+        boolean updated = materialQuotationService.updateIsFinalStatus(id, isFinal);
+
+        if (updated) {
+            return ResponseEntity.ok("Material quotation status updated successfully.");
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
     
     
     
