@@ -133,9 +133,6 @@ export default function AirManagement() {
     try {
       //const res = await axiosInstance.get("/api/air-type", {
       const res = await axiosInstance.get(API_ENDPOINTS.AIR_TYPE, {
-        headers: {
-          "X-Tenant": localStorage.getItem("tenant"),
-        },
       });
 
       if (res.data.success) {
@@ -151,9 +148,6 @@ export default function AirManagement() {
     try {
       // const res = await axiosInstance.get("/api/air-system", {
       const res = await axiosInstance.get(API_ENDPOINTS.AIR_SYSTEM, {
-        headers: {
-          "X-Tenant": localStorage.getItem("tenant"),
-        },
       });
 
       if (res.data.success) {
@@ -170,13 +164,10 @@ export default function AirManagement() {
 
       const [capRes, personRes, weightRes] = await Promise.all([
         axiosInstance.get(API_CAPACITY_URL, {
-          headers: { "X-Tenant": tenant },
         }),
         axiosInstance.get(API_PERSON_CAPACITY_URL, {
-          headers: { "X-Tenant": tenant },
         }),
         axiosInstance.get(API_WEIGHTS_URL, {
-          headers: { "X-Tenant": tenant },
         }),
       ]);
 
@@ -240,9 +231,6 @@ export default function AirManagement() {
     const httpMethod = method.toLowerCase();
 
     const res = await axiosInstance[httpMethod](url, airTypeForm, {
-      headers: {
-        "X-Tenant": tenant,
-      },
     });
 
     if (res.data.success) {
@@ -343,13 +331,7 @@ export default function AirManagement() {
         ? `${API_ENDPOINTS.AIR_SYSTEM}/${editAirSystemId}`
         : API_ENDPOINTS.AIR_SYSTEM;
 
-      const tenant = localStorage.getItem("tenant");
-
-      const res = await axiosInstance[method](url, newAirSystem, {
-        headers: {
-          "X-Tenant": tenant,
-        },
-      });
+      const res = await axiosInstance[method](url, newAirSystem);
 
       const result = res.data;
 
@@ -435,9 +417,6 @@ export default function AirManagement() {
             : `${API_ENDPOINTS.AIR_SYSTEM}/${id}`;
 
           const res = await axiosInstance.delete(url, {
-            headers: {
-              "X-Tenant": localStorage.getItem("tenant"),
-            },
           });
 
           const result = res.data;

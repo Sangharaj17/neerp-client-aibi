@@ -46,7 +46,6 @@ export default function LandingDoorTypeAndSubType() {
   });
 
   const fetchAll = async () => {
-    const tenant = localStorage.getItem("tenant");
     try {
       setLoading(true);
 
@@ -57,24 +56,33 @@ export default function LandingDoorTypeAndSubType() {
           axiosInstance.get(API_SUBTYPE_URL),
         ]);
 
+      // Handle ApiResponse format (wrapped in data property) or direct array
       const operatorList = Array.isArray(operatorRes.data?.data)
         ? operatorRes.data.data
+        : Array.isArray(operatorRes.data)
+        ? operatorRes.data
         : [];
 
       const doorTypeList = Array.isArray(landingDoorTypeRes.data?.data)
         ? landingDoorTypeRes.data.data
-        : landingDoorTypeRes.data?.landingDoorTypes || [];
+        : Array.isArray(landingDoorTypeRes.data)
+        ? landingDoorTypeRes.data
+        : [];
 
       const doorSubTypeList = Array.isArray(landingDoorSubTypeRes.data?.data)
         ? landingDoorSubTypeRes.data.data
-        : landingDoorSubTypeRes.data?.landingDoorSubTypes || [];
+        : Array.isArray(landingDoorSubTypeRes.data)
+        ? landingDoorSubTypeRes.data
+        : [];
 
       setOperatorTypes(operatorList);
       setLandingDoorTypes(doorTypeList);
       setLandingDoorSubTypes(doorSubTypeList);
     } catch (err) {
-      toast.error("Failed to fetch operator or door data.");
-      console.error(err);
+      console.error("Error fetching landing door data:", err);
+      console.error("Response:", err.response?.data);
+      console.error("URLs:", { operator: API_OPERATOR_URL, type: API_URL, subtype: API_SUBTYPE_URL });
+      toast.error(err.response?.data?.message || "Failed to fetch operator or door data.");
     } finally {
       setLoading(false);
     }
@@ -198,7 +206,9 @@ export default function LandingDoorTypeAndSubType() {
 
         // Refresh the list
         const { data } = await axiosInstance.get(API_URL);
-        setLandingDoorTypes(Array.isArray(data?.data) ? data.data : []);
+        setLandingDoorTypes(
+          Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+        );
       } catch (err) {
         console.error(err);
         toast.error(err.message || "Error deleting Landing Door Type");
@@ -301,7 +311,9 @@ export default function LandingDoorTypeAndSubType() {
 
       // Refresh subtype list
       const { data } = await axiosInstance.get(API_SUBTYPE_URL);
-      setLandingDoorSubTypes(Array.isArray(data?.data) ? data.data : []);
+      setLandingDoorSubTypes(
+        Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : []
+      );
     } catch (err) {
       console.error(err);
       toast.error(

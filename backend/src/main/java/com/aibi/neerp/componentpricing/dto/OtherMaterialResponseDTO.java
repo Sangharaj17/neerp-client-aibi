@@ -1,5 +1,6 @@
 package com.aibi.neerp.componentpricing.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 
@@ -7,7 +8,15 @@ import lombok.Data;
 @Builder
 public class OtherMaterialResponseDTO {
     private Integer id;
-    private String materialType;
+
+    private String otherMaterialName;
+
+    private Long otherMaterialMainId;
+    private String otherMaterialMainName;
+
+    private Boolean otherMaterialMainActive;
+    private String otherMaterialMainRule;
+    private Boolean otherMaterialMainIsSystemDefined;
 
     private Integer operatorTypeId;
     private String operatorTypeName;
@@ -24,6 +33,7 @@ public class OtherMaterialResponseDTO {
     private Integer weightId;
     private String weightName;
 
+    private Integer floors;
     private String floorsLabel;
     private String quantity;
     private Integer price;

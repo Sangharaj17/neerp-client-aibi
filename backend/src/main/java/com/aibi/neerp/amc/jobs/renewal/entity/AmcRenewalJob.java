@@ -135,10 +135,10 @@ public class AmcRenewalJob {
     @Column(name = "current_service_number")
     private Integer currentServiceNumber;
     
-    @Column(name = "noOfLifsServiceNeedToCompleteCount")
+    @Column(name = "no_of_lifs_service_need_to_complete_count")
     private Integer noOfLifsServiceNeedToCompleteCount;
     
-    @Column(name = "noOfLiftsCurrentServiceCompletedCount")
+    @Column(name = "no_of_lifts_current_service_completed_count")
     private Integer noOfLiftsCurrentServiceCompletedCount;
     
     @Column(name = "lastactivitydate")

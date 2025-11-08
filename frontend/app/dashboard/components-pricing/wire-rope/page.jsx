@@ -327,7 +327,10 @@ export default function WireRope() {
 
   const handleEdit = (wireRopeObj) => {
     const numericId = Number(wireRopeObj.id);
+    // console.log(numericId,"-----wireRopes--------",wireRopeObj);
     const found = wireRopes.find((l) => l.id === numericId);
+
+    const wireRopeTypeId = wireRopeTypes.find((ct) => ct.id === wireRopeObj.wireRopeTypeId);
 
     const floor = floors.find((ct) => ct.floorName === wireRopeObj.floorName);
 
@@ -341,7 +344,7 @@ export default function WireRope() {
     }
 
     setForm({
-      wireRopeType: numericId,
+      wireRopeType: wireRopeTypeId ? wireRopeTypeId.id:"",
       operatorTypeId: operatorType ? operatorType.id : "",
       floor: floor ? floor.id : "",
       wireRopeQty: found.wireRopeQty,

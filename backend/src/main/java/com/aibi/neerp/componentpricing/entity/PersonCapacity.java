@@ -20,7 +20,7 @@ public class PersonCapacity {
     @Column(name = "label", nullable = false)
     private String label;
 
-    @Column(name = "individualWeight", nullable = false)
+    @Column(nullable = false)
     private Integer individualWeight;
 
     @ManyToOne(fetch = FetchType.LAZY)

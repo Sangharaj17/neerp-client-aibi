@@ -57,11 +57,20 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
       if (res.status === 202 || res.data?.requiresInitialization) {
         // Initialization needed - poll silently in background
         const start = Date.now();
-        while (Date.now() - start < 120000) {
+        const maxWaitTime = 120000; // 2 minutes
+        let lastStatus = null;
+        
+        while (Date.now() - start < maxWaitTime) {
           await new Promise(r => setTimeout(r, 2000));
           try {
-            const st = await axiosInstance.get('/api/tenants/init-status', { headers: { 'X-Tenant': tenant } });
-            if (st.data?.initialized) {
+            const st = await axiosInstance.get('/api/tenants/init-status', { 
+              headers: { 'X-Tenant': tenant },
+              withCredentials: true
+            });
+            lastStatus = st.data;
+            console.log('Initialization status:', st.data);
+            
+            if (st.data?.initialized === true) {
               // Retry login automatically after initialization
               try {
                 const loginRes = await axiosInstance.post(
@@ -92,15 +101,22 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
                 }
               } catch (retryErr) {
                 console.error("Retry login error:", retryErr);
-                setFormError("Setup complete! Please try logging in again.");
+                setFormError(retryErr.response?.data?.error || retryErr.response?.data?.message || "Setup complete! Please try logging in again.");
                 setLoading(false);
                 return;
               }
             }
-          } catch (_) { /* swallow polling errors */ }
+          } catch (pollErr) {
+            console.warn("Polling error (will retry):", pollErr.response?.data || pollErr.message);
+            // Continue polling unless it's a critical error
+          }
         }
         setLoading(false);
-        throw new Error('Initialization is taking longer than expected. Please try again.');
+        const timeoutError = new Error(
+          lastStatus?.message || 
+          'Initialization is taking longer than expected. Please try again in a few moments.'
+        );
+        throw timeoutError;
       }
 
       if (res.data) {
@@ -124,13 +140,12 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
       }
     } catch (err) {
       console.error("❌ Network or Backend Error:", err);
-      console.error("❌ Error details:", err.response?.data);
+      console.error("❌ Error details:", err.response?.data || err.message);
       const errorMessage = err.response?.data?.error || 
                           err.response?.data?.message || 
                           err.message ||
                           "Could not connect to server. Please ensure backend is running.";
       setFormError(errorMessage);
-    } finally {
       setLoading(false);
     }
   };

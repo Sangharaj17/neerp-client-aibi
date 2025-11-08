@@ -37,6 +37,7 @@ public class TenantSchemaInitializer {
     private final DataSource dataSource; // DynamicRoutingDataSource
     private final TenantDefaultDataInitializer tenantDefaultDataInitializer;
     private final InitializationStatusTracker statusTracker;
+    private final DatabaseColumnNamingFixer columnNamingFixer;
 
     // Cache to avoid running initializer repeatedly per tenant in the same session
     // Note: This is in-memory and resets on server restart, but isInitialized() check is persistent
@@ -46,11 +47,13 @@ public class TenantSchemaInitializer {
     public TenantSchemaInitializer(JdbcTemplate jdbcTemplate,
                                    javax.sql.DataSource dataSource,
                                    TenantDefaultDataInitializer tenantDefaultDataInitializer,
-                                   InitializationStatusTracker statusTracker) {
+                                   InitializationStatusTracker statusTracker,
+                                   DatabaseColumnNamingFixer columnNamingFixer) {
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.tenantDefaultDataInitializer = tenantDefaultDataInitializer;
         this.statusTracker = statusTracker;
+        this.columnNamingFixer = columnNamingFixer;
     }
 
     public boolean isInitialized() {
@@ -79,33 +82,41 @@ public class TenantSchemaInitializer {
         // Check if schema is already initialized (persistent check, not just in-memory cache)
         boolean schemaExists = isInitialized();
         
-        if (schemaExists && initializedTenants.contains(tenantId)) {
-            // Schema exists and we've already processed this tenant in this session
-            // Just ensure default data is up-to-date (idempotent operation)
-            System.out.println("[TenantInit] Schema already initialized for tenant: " + tenantId + ", ensuring default data...");
-            try {
-                tenantDefaultDataInitializer.initializeDefaults();
-            } catch (Exception e) {
-                System.err.println("[TenantInit] Error ensuring default data: " + e.getMessage());
-                // Don't throw - schema exists, data init is optional
-            }
-            return;
-        }
-        
         if (schemaExists) {
-            // Schema exists but this is first check in this session
-            // Run lightweight data initialization (idempotent)
-            System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", initializing default data...");
-            statusTracker.updateStatus(tenantId, "initializing_data", 50, "Initializing default data...");
+            // Schema exists - validate and fix column naming issues first, then ensure default data is initialized
+            System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", validating column names and ensuring default data is initialized...");
+            long startTime = System.currentTimeMillis();
             try {
+                // Validate and fix column naming issues before data initialization
+                System.out.println("[TenantInit] Validating column naming for tenant: " + tenantId);
+                try {
+                    columnNamingFixer.validateAndFixColumnNames();
+                } catch (Exception e) {
+                    System.err.println("[TenantInit] ⚠️ Warning - Column naming validation failed: " + e.getMessage());
+                    // Continue - explicit @Column annotations should handle mismatches
+                }
+                
+                System.out.println("[TenantInit] Calling initializeDefaults() for tenant: " + tenantId);
                 tenantDefaultDataInitializer.initializeDefaults();
-                statusTracker.setCompleted(tenantId);
+                long duration = System.currentTimeMillis() - startTime;
+                System.out.println("[TenantInit] ✅ Default data initialization completed for tenant: " + tenantId + " in " + duration + "ms");
+                // Mark as completed if status was set
+                if (statusTracker.getStatus(tenantId) != null) {
+                    statusTracker.setCompleted(tenantId);
+                }
                 initializedTenants.add(tenantId);
-                System.out.println("[TenantInit] Default data initialization completed for tenant: " + tenantId);
+                System.out.println("[TenantInit] Data initialization finished for tenant: " + tenantId);
             } catch (Exception e) {
-                System.err.println("[TenantInit] Error during data initialization: " + e.getMessage());
-                statusTracker.setCompleted(tenantId);
+                long duration = System.currentTimeMillis() - startTime;
+                System.err.println("[TenantInit] ❌ Error during data initialization for tenant: " + tenantId + " after " + duration + "ms");
+                System.err.println("[TenantInit] Error message: " + e.getMessage());
+                e.printStackTrace(); // Print full stack trace for debugging
+                // Mark as completed even on error - don't block login
+                if (statusTracker.getStatus(tenantId) != null) {
+                    statusTracker.setCompleted(tenantId);
+                }
                 initializedTenants.add(tenantId);
+                System.out.println("[TenantInit] Data initialization finished (with errors) for tenant: " + tenantId);
                 // Don't throw - allow login to proceed even if data init has issues
             }
             return;
@@ -135,6 +146,15 @@ public class TenantSchemaInitializer {
             emfBean.afterPropertiesSet(); // build
             // Touch the metamodel to force initialization
             emfBean.getObject().getMetamodel().getEntities();
+            
+            // After schema creation, validate and fix any column naming issues
+            statusTracker.updateStatus(tenantId, "validating_schema", 50, "Validating schema column names...");
+            try {
+                columnNamingFixer.validateAndFixColumnNames();
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ⚠️ Warning - Column naming validation failed after schema creation: " + e.getMessage());
+                // Continue - this is not critical for new schemas
+            }
             
             statusTracker.updateStatus(tenantId, "initializing_data", 60, "Initializing default data...");
             tenantDefaultDataInitializer.initializeDefaults();

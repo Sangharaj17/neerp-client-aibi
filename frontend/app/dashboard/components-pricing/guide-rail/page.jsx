@@ -78,7 +78,7 @@ export default function GuideRailPage() {
       render: renderDecoded("counterWeightTypeName"),
     },
     {
-      key: "floorName",
+      key: "floorId",
       label: "Floor",
       sortable: true,
       editable: false,
@@ -489,7 +489,8 @@ export default function GuideRailPage() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.floorName}
+                {/* {type.floorName} */}
+                {type.id}
               </option>
             ))}
           </FormSelect>

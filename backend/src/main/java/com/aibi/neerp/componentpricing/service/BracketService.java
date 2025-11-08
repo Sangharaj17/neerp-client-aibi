@@ -129,4 +129,25 @@ public class BracketService {
                 .floorId(bracket.getFloor().getId())
                 .build();
     }
+
+    public List<BracketResponseDTO> getBracketsByFloor(Long floorId) {
+        log.info("Fetching Brackets for Floor ID {}", floorId);
+
+        Floor floor = floorRepository.findById(floorId)
+                .orElseThrow(() -> {
+                    log.error("Floor not found with ID {}", floorId);
+                    return new ResourceNotFoundException("Floor not found");
+                });
+
+        List<Bracket> brackets = bracketRepository.findByFloor(floor);
+
+        if (brackets.isEmpty()) {
+            log.warn("No brackets found for floor ID {}", floorId);
+        }
+
+        return brackets.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
 }

@@ -13,7 +13,7 @@ public class Unit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "unit_name", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String unitName;
 
     private String description;

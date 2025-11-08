@@ -59,9 +59,6 @@ export const API_ENDPOINTS = {
 
   COP_TYPE: `${API_BASE}/cops`,
 
-  LANDING_DOOR_TYPE: `${API_BASE}/landing-door-type`,
-  LANDING_DOOR_SUBTYPE: `${API_BASE}/landing-door-subType`,
-
   OTHER_MATERIAL: `${API_BASE}/other-material`,  
   ARD_DEVICE: `${API_BASE}/ardDevice`,
 
@@ -73,4 +70,7 @@ export const API_ENDPOINTS = {
   CAPACITY_DIMENSIONS : `${API_BASE}/capacity-dimensions`,
 
   FASTENERS : `${API_BASE}/fasteners`,
+  
+  INSTALLATION_RULES : `${API_BASE}/installation-rules`,
+  LOAD : `${API_BASE}/load`,
 };

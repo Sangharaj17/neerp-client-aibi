@@ -16,6 +16,8 @@ import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.repository.EnquiryTypeRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Component
 public class TenantDefaultDataInitializer {
@@ -27,13 +29,19 @@ public class TenantDefaultDataInitializer {
     private final PaymentTermRepository paymentTermRepository;
     private final ElevatorMakeRepository elevatorMakeRepository;
     private final NumberOfServiceRepository numberOfServiceRepository;
+    private final DatabaseColumnNamingFixer columnNamingFixer;
+    
+    @Autowired(required = false)
+    private EntityManager entityManager;
+    
     public TenantDefaultDataInitializer(UnitRepository unitRepository,
                                         CapacityTypeRepository capacityTypeRepository,
                                         ContractTypeRepository contractTypeRepository,
                                         EnquiryTypeRepository enquiryTypeRepository,
                                         PaymentTermRepository paymentTermRepository,
                                         ElevatorMakeRepository elevatorMakeRepository,
-                                        NumberOfServiceRepository numberOfServiceRepository) {
+                                        NumberOfServiceRepository numberOfServiceRepository,
+                                        DatabaseColumnNamingFixer columnNamingFixer) {
         this.unitRepository = unitRepository;
         this.capacityTypeRepository = capacityTypeRepository;
         this.contractTypeRepository = contractTypeRepository;
@@ -41,22 +49,69 @@ public class TenantDefaultDataInitializer {
         this.paymentTermRepository = paymentTermRepository;
         this.elevatorMakeRepository = elevatorMakeRepository;
         this.numberOfServiceRepository = numberOfServiceRepository;
+        this.columnNamingFixer = columnNamingFixer;
     }
 
     @Transactional
     public void initializeDefaults() {
-        System.out.println("[DataInit] Starting default data initialization...");
+        long startTime = System.currentTimeMillis();
+        System.out.println("[DataInit] ===== Starting default data initialization at " + new java.util.Date() + " =====");
         try {
+            // Step 0: Validate and fix column naming issues globally
+            System.out.println("[DataInit] Step 0/8: Validating and fixing column naming issues...");
+            try {
+                columnNamingFixer.validateAndFixColumnNames();
+                System.out.println("[DataInit] Step 0/8: ✅ Completed");
+            } catch (Exception e) {
+                System.err.println("[DataInit] Step 0/8: ⚠️ Warning - Column naming validation failed: " + e.getMessage());
+                // Don't throw - continue with data initialization
+                // The explicit @Column annotations should handle the mismatches
+            }
+            
+            System.out.println("[DataInit] Step 1/8: Inserting CapacityTypes...");
             insertDefaultCapacityTypes();
+            System.out.println("[DataInit] Step 1/8: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 2/8: Inserting Unit...");
             insertDefaultUnit();
+            System.out.println("[DataInit] Step 2/8: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 3/8: Inserting ContractTypes...");
             insertDefaultContractTypes();
+            System.out.println("[DataInit] Step 3/8: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 4/8: Inserting EnquiryTypes...");
             insertDefaultEnquiryTypes();
+            System.out.println("[DataInit] Step 4/8: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 5/8: Inserting PaymentTerms...");
             insertDefaultPaymentTerms();
+            System.out.println("[DataInit] Step 5/8: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 6/8: Inserting ElevatorMakes...");
             insertDefaultElevatorMakes();
+            System.out.println("[DataInit] Step 6/8: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 7/8: Inserting NumberOfServices...");
             insertDefaultNumberOfServices();
-            System.out.println("[DataInit] Default data initialization completed successfully");
+            System.out.println("[DataInit] Step 7/8: ✅ Completed");
+            
+            // Explicitly flush to ensure data is saved
+            if (entityManager != null) {
+                entityManager.flush();
+                System.out.println("[DataInit] ✅ Flushed EntityManager to ensure data is persisted");
+            }
+            
+            long duration = System.currentTimeMillis() - startTime;
+            System.out.println("[DataInit] ===== Default data initialization completed successfully in " + duration + "ms =====");
+            
+            // Verify data was inserted
+            verifyDataInserted();
         } catch (Exception e) {
-            System.err.println("[DataInit] Error during data initialization: " + e.getMessage());
+            long duration = System.currentTimeMillis() - startTime;
+            System.err.println("[DataInit] ===== ERROR during data initialization after " + duration + "ms =====");
+            System.err.println("[DataInit] Error message: " + e.getMessage());
+            System.err.println("[DataInit] Error class: " + e.getClass().getName());
             e.printStackTrace();
             throw e;
         }
@@ -195,6 +250,41 @@ public class TenantDefaultDataInitializer {
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting NumberOfServices: " + e.getMessage());
             throw e;
+        }
+    }
+    
+    private void verifyDataInserted() {
+        try {
+            System.out.println("[DataInit] ===== Verifying data insertion =====");
+            System.out.println("[DataInit] Tenant Context: " + com.aibi.neerp.config.TenantContext.getTenantId());
+            long capacityTypeCount = capacityTypeRepository.count();
+            long unitCount = unitRepository.count();
+            long contractTypeCount = contractTypeRepository.count();
+            long enquiryTypeCount = enquiryTypeRepository.count();
+            long paymentTermCount = paymentTermRepository.count();
+            long elevatorMakeCount = elevatorMakeRepository.count();
+            long numberOfServiceCount = numberOfServiceRepository.count();
+            
+            System.out.println("[DataInit] CapacityTypes: " + capacityTypeCount + " (expected: >= 2)");
+            System.out.println("[DataInit] Units: " + unitCount + " (expected: >= 1)");
+            System.out.println("[DataInit] ContractTypes: " + contractTypeCount + " (expected: >= 3)");
+            System.out.println("[DataInit] EnquiryTypes: " + enquiryTypeCount + " (expected: >= 4)");
+            System.out.println("[DataInit] PaymentTerms: " + paymentTermCount + " (expected: >= 3)");
+            System.out.println("[DataInit] ElevatorMakes: " + elevatorMakeCount + " (expected: >= 12)");
+            System.out.println("[DataInit] NumberOfServices: " + numberOfServiceCount + " (expected: >= 12)");
+            
+            if (capacityTypeCount == 0 && unitCount == 0 && contractTypeCount == 0) {
+                System.err.println("[DataInit] ⚠️ WARNING: No data found! This might indicate:");
+                System.err.println("[DataInit]   1. Data was not inserted");
+                System.err.println("[DataInit]   2. Wrong database/schema is being queried");
+                System.err.println("[DataInit]   3. Transaction was rolled back");
+            } else {
+                System.out.println("[DataInit] ✅ Data verification passed");
+            }
+            System.out.println("[DataInit] ===== Verification complete =====");
+        } catch (Exception e) {
+            System.err.println("[DataInit] ⚠️ Error during verification: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

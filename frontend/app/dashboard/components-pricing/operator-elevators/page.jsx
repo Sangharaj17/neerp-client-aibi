@@ -23,9 +23,6 @@ export default function ElevatorOperation() {
     try {
       setLoading(true);
       const res = await axiosInstance.get(API_ENDPOINTS.OPERATOR, {
-        headers: {
-          "X-Tenant": localStorage.getItem("tenant"),
-        },
         withCredentials: true,
       });
       setLiftTypes(res.data?.data || []);
@@ -67,9 +64,6 @@ export default function ElevatorOperation() {
         url,
         { name },
         {
-          headers: {
-            "X-Tenant": localStorage.getItem("tenant"),
-          },
           withCredentials: true,
         }
       );
@@ -107,9 +101,6 @@ export default function ElevatorOperation() {
     confirmDeleteWithToast("this lift type", async () => {
       try {
         const response = await axiosInstance.delete(`/api/operator-elevator/${id}`, {
-        headers: {
-          "X-Tenant": localStorage.getItem("tenant"),
-        },
         withCredentials: true,
         });
 

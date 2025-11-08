@@ -70,14 +70,29 @@ public class UserService {
 
 
     public Optional<Employee> validateUser(String email, String password) {
-        //JdbcTemplate jdbcTemplate = new JdbcTemplate(dsManager.getCurrentDataSource());
-        System.out.println("------------manually connection----------->");
+        System.out.println("[UserService] ===== Starting user validation =====");
+        System.out.println("[UserService] Email: " + email);
+        System.out.println("[UserService] Password: " + (password != null ? "***" : "null"));
+        
         try {
+            // Check database connection
             String dbName = jdbcTemplate.queryForObject("SELECT current_database()", String.class);
-            System.out.println("✅ Connected to database: " + dbName);
-
-            Employee employee = jdbcTemplate.queryForObject(
-                    "SELECT * FROM tbl_employee WHERE email_id = ? AND password = ?",
+            System.out.println("[UserService] ✅ Connected to database: " + dbName);
+            
+            // Check if employee table exists
+            try {
+                Integer tableExists = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'tbl_employee'",
+                    Integer.class
+                );
+                System.out.println("[UserService] Employee table exists: " + (tableExists != null && tableExists > 0));
+            } catch (Exception e) {
+                System.err.println("[UserService] ⚠️ Could not check if employee table exists: " + e.getMessage());
+            }
+            
+            // Try to find employee - use query instead of queryForObject to handle no results
+            List<Employee> employees = jdbcTemplate.query(
+                    "SELECT * FROM tbl_employee WHERE email_id = ? AND password = ? AND active = true",
                     (rs, rowNum) -> {
                         Employee e = new Employee();
                         e.setEmployeeId(rs.getInt("employee_id"));
@@ -85,52 +100,53 @@ public class UserService {
                         e.setContactNumber(rs.getString("contact_number"));
                         e.setEmailId(rs.getString("email_id"));
                         e.setAddress(rs.getString("address"));
-                        e.setDob(rs.getDate("dob").toLocalDate());
-                        e.setJoiningDate(rs.getDate("joining_date").toLocalDate());
+                        if (rs.getDate("dob") != null) {
+                            e.setDob(rs.getDate("dob").toLocalDate());
+                        }
+                        if (rs.getDate("joining_date") != null) {
+                            e.setJoiningDate(rs.getDate("joining_date").toLocalDate());
+                        }
                         e.setUsername(rs.getString("username"));
                         e.setPassword(rs.getString("password"));
                         e.setEmpPhoto(rs.getString("emp_photo"));
                         e.setActive(rs.getBoolean("active"));
                         e.setEmployeeCode(rs.getString("employee_code"));
                         e.setEmployeeSign(rs.getString("employee_sign"));
-                        e.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                        if (rs.getTimestamp("created_at") != null) {
+                            e.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                        }
                         return e;
                     },
                     email, password
             );
 
-            return Optional.ofNullable(employee);
+            if (employees.isEmpty()) {
+                System.out.println("[UserService] ❌ No employee found with email: " + email + " and provided password");
+                // Check if email exists at all
+                Integer emailCount = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM tbl_employee WHERE email_id = ?",
+                    Integer.class,
+                    email
+                );
+                System.out.println("[UserService] Employees with this email: " + emailCount);
+                return Optional.empty();
+            }
+            
+            Employee employee = employees.get(0);
+            System.out.println("[UserService] ✅ Employee found: " + employee.getUsername() + " (ID: " + employee.getEmployeeId() + ")");
+            return Optional.of(employee);
+            
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            System.err.println("[UserService] ❌ No employee found (EmptyResultDataAccessException): " + e.getMessage());
+            return Optional.empty();
         } catch (Exception e) {
-            System.err.println("❌ Error during validateEmployee: " + e.getMessage());
+            System.err.println("[UserService] ❌ Error during validateEmployee: " + e.getMessage());
+            System.err.println("[UserService] Error class: " + e.getClass().getName());
+            e.printStackTrace();
             return Optional.empty();
         }
-
-//        try {
-//            String dbName = jdbcTemplate.queryForObject("SELECT current_database()", String.class);
-//            System.out.println("✅ Connected to database: " + dbName);
-//
-//            User user = jdbcTemplate.queryForObject(
-//                    "SELECT * FROM users WHERE email = ? AND password = ?",
-//                    (rs, rowNum) -> {
-//                        User u = new User();
-//                        u.setId(rs.getLong("id"));
-//                        u.setEmail(rs.getString("email"));
-//                        u.setUsername(rs.getString("username"));
-//                        u.setLoginFlag(rs.getBoolean("login_flag"));
-//                        return u;
-//                    },
-//                    email, password // ✅ varargs instead of Object[]
-//            );
-//
-//            return Optional.ofNullable(user);
-//        } catch (Exception e) {
-//            System.err.println("❌ Error during validateUser: " + e.getMessage());
-//
-//            return Optional.empty();
-//        }
     }
 
     // Removed updateLoginFlag; employee login does not update users table
-
 
 }
