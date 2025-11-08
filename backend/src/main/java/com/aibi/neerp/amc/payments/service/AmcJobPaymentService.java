@@ -71,7 +71,8 @@ public class AmcJobPaymentService {
 
         AmcJobPayment saved = paymentRepository.save(payment);
         
-        updateInvoice(dto.getAmountPaid(), amcJob, amcRenewalJob, amcInvoice, dto.getPaymentCleared());
+        
+          updateInvoice(dto.getAmountPaid(), amcJob, amcRenewalJob, amcInvoice, dto.getPaymentCleared());
         
         return mapToResponse(saved);
     }
@@ -115,6 +116,7 @@ public class AmcJobPaymentService {
     	
     	if(paymentCleared.equalsIgnoreCase("yes")) {
     		amcInvoice.setIsCleared(1);
+    		if(amcJob!=null || amcRenewalJob!=null)
     		updateJobAmount(deducedAmount, amcJob, amcRenewalJob);
     	}else {
     		amcInvoice.setIsCleared(0);

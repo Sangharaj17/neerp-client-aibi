@@ -24,10 +24,14 @@ import org.springframework.context.annotation.Lazy;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.jobs.renewal.service.AmcRenewalJobsService;
+import com.aibi.neerp.amc.materialrepair.dto.JobDropdownForAddPayment;
+import com.aibi.neerp.amc.materialrepair.service.MaterialQuotationService;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
 import com.aibi.neerp.amc.payments.dto.PaymentSummaryDto;
 import com.aibi.neerp.amc.payments.service.AmcJobPaymentService;
+import com.aibi.neerp.modernization.service.ModernizationService;
+import com.aibi.neerp.oncall.service.OncallService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,6 +51,15 @@ public class PaymentController {
     
     @Autowired
     private AmcJobPaymentService paymentService;
+    
+    @Autowired
+    private MaterialQuotationService materialQuotationService;
+    
+    @Autowired
+    private OncallService oncallService;
+    
+    @Autowired
+    private ModernizationService modernizationService;
 
     /**
      * Get all active AMC Jobs (New Installation Jobs)
@@ -88,6 +101,40 @@ public class PaymentController {
                 ))
                 .collect(Collectors.toList());
     }
+    
+    @GetMapping("/materialRepairQuotationsDropdownForAddPayments")
+    public ResponseEntity<List<JobDropdownForAddPayment>> materialQuotationDropdownForAddPayments() {
+        List<JobDropdownForAddPayment> dropdownList = materialQuotationService.getDropdownForAddPayments();
+        
+        if (dropdownList == null || dropdownList.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content if empty
+        }
+        
+        return ResponseEntity.ok(dropdownList); // 200 OK with data
+    }
+    
+    @GetMapping("/oncallQuotationsDropdownForAddPayments")
+    public ResponseEntity<List<com.aibi.neerp.oncall.dto.JobDropdownForAddPayment>> oncallQuotationsDropdownForAddPayments() {
+        List<com.aibi.neerp.oncall.dto.JobDropdownForAddPayment> dropdownList = oncallService.getDropdownForAddPayments();
+        
+        if (dropdownList == null || dropdownList.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content if empty
+        }
+        
+        return ResponseEntity.ok(dropdownList); // 200 OK with data
+    }
+    
+    @GetMapping("/modernizationQuotationsDropdownForAddPayments")
+    public ResponseEntity<List<com.aibi.neerp.modernization.dto.JobDropdownForAddPayment>> modernizationQuotationsDropdownForAddPayments() {
+        List<com.aibi.neerp.modernization.dto.JobDropdownForAddPayment> dropdownList = modernizationService.getDropdownForAddPayments();
+        
+        if (dropdownList == null || dropdownList.isEmpty()) {
+            return ResponseEntity.noContent().build(); // 204 No Content if empty
+        }
+        
+        return ResponseEntity.ok(dropdownList); // 200 OK with data
+    }
+
 
     /**
      * DTO for Normal AMC Jobs
@@ -131,6 +178,7 @@ public class PaymentController {
         }
     }
     
+    
     @GetMapping("/invoices/by-renewal-job/{renewalJobId}")
     public ResponseEntity<List<AmcInvoiceResponseDto>> getInvoicesByRenewalJobId(@PathVariable Integer renewalJobId) {
         log.info("Request received to fetch AMC Invoices for renewalJobId: {}", renewalJobId);
@@ -145,6 +193,66 @@ public class PaymentController {
             return ResponseEntity.ok(responseDtos); // 200
         } catch (Exception e) {
             log.error("Error while fetching AMC Invoices for renewalJobId {}: {}", renewalJobId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
+    
+    @GetMapping("/invoices/by-materialQid/{materialQuotationId}")
+    public ResponseEntity<List<AmcInvoiceResponseDto>> getInvoicesByMaterialQuotationId(@PathVariable Integer materialQuotationId) {
+        log.info("Request received to fetch AMC Invoices for materialQuotationId: {}", materialQuotationId);
+        try {
+            List<AmcInvoiceResponseDto> responseDtos = amcInvoiceService.getAmcInvoiceResponseDtosByMaterialQuotationId(materialQuotationId);
+
+            if (responseDtos == null || responseDtos.isEmpty()) {
+                log.info("No invoices found for jobId: {}", materialQuotationId);
+                return ResponseEntity.noContent().build(); // HTTP 204
+            }
+
+            return ResponseEntity.ok(responseDtos); // HTTP 200
+        } catch (Exception e) {
+            log.error("Error while fetching AMC Invoices for jobId {}: {}", materialQuotationId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
+    
+    @GetMapping("/invoices/by-oncallQid/{onCallQuotationId}")
+    public ResponseEntity<List<AmcInvoiceResponseDto>> getInvoicesByOnCallQuotationId(@PathVariable Integer onCallQuotationId) {
+        log.info("Request received to fetch AMC Invoices for onCallQuotationId: {}", onCallQuotationId);
+        try {
+            List<AmcInvoiceResponseDto> responseDtos = amcInvoiceService.getAmcInvoiceResponseDtosByOnCallQuotationId(onCallQuotationId);
+
+            if (responseDtos == null || responseDtos.isEmpty()) {
+                log.info("No invoices found for onCallQuotationId: {}", onCallQuotationId);
+                return ResponseEntity.noContent().build(); // HTTP 204
+            }
+
+            return ResponseEntity.ok(responseDtos); // HTTP 200
+        } catch (Exception e) {
+            log.error("Error while fetching AMC Invoices for onCallQuotationId {}: {}", onCallQuotationId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
+
+    /**
+     * Endpoint to fetch uncleared AMC Invoices based on the Modernization ID.
+     */
+    @GetMapping("/invoices/by-modernizationQid/{modernizationId}")
+    public ResponseEntity<List<AmcInvoiceResponseDto>> getInvoicesByModernizationId(@PathVariable Integer modernizationId) {
+        log.info("Request received to fetch AMC Invoices for modernizationId: {}", modernizationId);
+        try {
+            List<AmcInvoiceResponseDto> responseDtos = amcInvoiceService.getAmcInvoiceResponseDtosByModernizationId(modernizationId);
+
+            if (responseDtos == null || responseDtos.isEmpty()) {
+                log.info("No invoices found for modernizationId: {}", modernizationId);
+                return ResponseEntity.noContent().build(); // HTTP 204
+            }
+
+            return ResponseEntity.ok(responseDtos); // HTTP 200
+        } catch (Exception e) {
+            log.error("Error while fetching AMC Invoices for modernizationId {}: {}", modernizationId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.emptyList());
         }

@@ -518,5 +518,39 @@ public class ModernizationService {
     }
     
     
+    public List<JobDropdownForAddPayment> getDropdownForAddPayments() {
+
+        // Fetch all finalized Modernization quotations
+        List<Modernization> modernizationQuotations = modernizationRepository.findAll()
+            .stream()
+            .filter(Modernization::getIsFinal)
+            .collect(Collectors.toList());
+
+        // Map each Modernization quotation to JobDropdownForAddPayment DTO
+        return modernizationQuotations.stream().map(q -> {
+            JobDropdownForAddPayment dto = new JobDropdownForAddPayment();
+
+            // Set Modernization Quotation ID
+            dto.setModernizationQid(q.getId());
+
+            // Extract lead info (with null safety)
+            if (q.getLead() != null) {
+                dto.setCustomerName(q.getLead().getCustomerName());
+                dto.setSiteName(q.getLead().getSiteName());
+                dto.setMailId(q.getLead().getEmailId());
+            } else {
+                dto.setCustomerName("");
+                dto.setSiteName("");
+                dto.setMailId("");
+            }
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+
+   
+    
+    
     
 }

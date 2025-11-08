@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
-import { Search, ChevronDown, CheckCircle, XCircle, DollarSign, Calendar, CreditCard, Loader2, Info, FileText } from 'lucide-react'; // Added FileText icon
+import { Search, ChevronDown, CheckCircle, XCircle, IndianRupee, Calendar, CreditCard, Loader2, Info, FileText } from 'lucide-react'; // Added FileText icon
 
 import toast from "react-hot-toast";
 // Helper function to get the current date in YYYY-MM-DD format
@@ -34,59 +34,104 @@ export default function AddPayment() {
   // ---------------------------------------------
 
   // --- Utility Functions (Keeping existing logic) ---
+const handleJobTypeChange = async (e) => {
+  const selected = e.target.value;
+  // Reset states
+  setJobType(selected);
+  setJobSearch("");
+  setSelectedJob(null);
+  setInvoices([]);
+  setSelectedInvoice(null);
+  setJobs([]);
+  setFilteredJobs([]);
+  setLoading(true);
 
-  const handleJobTypeChange = async (e) => {
-    const selected = e.target.value;
-    setJobType(selected);
-    setJobSearch("");
-    setSelectedJob(null);
-    setInvoices([]);
-    setSelectedInvoice(null);
-    setJobs([]);
-    setFilteredJobs([]);
-    setLoading(true);
+  try {
+    if (selected === "amc") {
+      // Logic for AMC / Renewal
+      const [activeJobsRes, renewalJobsRes] = await Promise.all([
+        axiosInstance.get("/api/payments/getAllActiveJobs"),
+        axiosInstance.get("/api/payments/getAllActiveRenewalJobs"),
+      ]);
 
-    try {
-      if (selected === "amc") {
-        const [activeJobsRes, renewalJobsRes] = await Promise.all([
-          axiosInstance.get("/api/payments/getAllActiveJobs"),
-          axiosInstance.get("/api/payments/getAllActiveRenewalJobs"),
-        ]);
-
-        const mergedData = [
-          ...activeJobsRes.data.map((j) => ({
-            id: j.jobId,
-            selectDetailForJob: `${j.customerName} - ${j.siteName} (Job)`,
-            type: "job",
-            mailId: j.mailId,
-          })),
-          ...renewalJobsRes.data.map((j) => ({
-            id: j.renewalJobId,
-            selectDetailForJob: `${j.customerName} - ${j.siteName} (Renewal)`,
-            type: "renewal",
-            mailId: j.mailId,
-          })),
-        ];
-
-        setJobs(mergedData);
-        setFilteredJobs(mergedData);
-      } else if (selected === "new") {
-        const res = await axiosInstance.get("/api/payments/getAllActiveJobs");
-        const jobsList = res.data.map((j) => ({
+      const mergedData = [
+        ...activeJobsRes.data.map((j) => ({
           id: j.jobId,
           selectDetailForJob: `${j.customerName} - ${j.siteName} (Job)`,
           type: "job",
           mailId: j.mailId,
-        }));
-        setJobs(jobsList);
-        setFilteredJobs(jobsList);
-      }
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-    } finally {
-      setLoading(false);
+        })),
+        ...renewalJobsRes.data.map((j) => ({
+          id: j.renewalJobId,
+          selectDetailForJob: `${j.customerName} - ${j.siteName} (Renewal)`,
+          type: "renewal",
+          mailId: j.mailId,
+        })),
+      ];
+
+      setJobs(mergedData);
+      setFilteredJobs(mergedData);
+
+    } else if (selected === "new") {
+      // Logic for New Installation
+      const res = await axiosInstance.get("/api/payments/getAllActiveJobs");
+      const jobsList = res.data.map((j) => ({
+        id: j.jobId,
+        selectDetailForJob: `${j.customerName} - ${j.siteName} (Job)`,
+        type: "job",
+        mailId: j.mailId,
+      }));
+      setJobs(jobsList);
+      setFilteredJobs(jobsList);
+
+    } else if (selected === "materialRepair") {
+      // Logic for Material Repair
+      const res = await axiosInstance.get(
+        "/api/payments/materialRepairQuotationsDropdownForAddPayments"
+      );
+      const jobsList = res.data.map((j) => ({
+        id: j.materialRepairQid, // Use materialRepairQid as the ID
+        selectDetailForJob: `${j.customerName} - ${j.siteName} (Material Repair)`,
+        type: "materialRepair",
+        mailId: j.mailId,
+      }));
+      setJobs(jobsList);
+      setFilteredJobs(jobsList);
+
+    } else if (selected === "onCall") {
+      // Logic for On Call
+      const res = await axiosInstance.get(
+        "/api/payments/oncallQuotationsDropdownForAddPayments"
+      );
+      const jobsList = res.data.map((j) => ({
+        id: j.oncallQid, // Use oncallQid as the ID
+        selectDetailForJob: `${j.customerName} - ${j.siteName} (On Call)`,
+        type: "onCall",
+        mailId: j.mailId,
+      }));
+      setJobs(jobsList);
+      setFilteredJobs(jobsList);
+
+    } else if (selected === "modernization") {
+      // Logic for Modernization
+      const res = await axiosInstance.get(
+        "/api/payments/modernizationQuotationsDropdownForAddPayments"
+      );
+      const jobsList = res.data.map((j) => ({
+        id: j.modernizationQid, // Use modernizationQid as the ID
+        selectDetailForJob: `${j.customerName} - ${j.siteName} (Modernization)`,
+        type: "modernization",
+        mailId: j.mailId,
+      }));
+      setJobs(jobsList);
+      setFilteredJobs(jobsList);
     }
-  };
+  } catch (error) {
+    console.error(`Error fetching jobs for ${selected}:`, error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleJobSearch = (value) => {
     setJobSearch(value);
@@ -98,6 +143,7 @@ export default function AddPayment() {
   };
 
   const handleJobSelect = async (job) => {
+    // Reset states
     setSelectedJob(job);
     setJobSearch(job.selectDetailForJob);
     setJobDropdownOpen(false);
@@ -106,36 +152,57 @@ export default function AddPayment() {
     setLoadingInvoices(true);
 
     try {
-      let res;
-      if (job.type === "renewal") {
-        res = await axiosInstance.get(
-          `/api/payments/invoices/by-renewal-job/${job.id}`
-        );
-      } else {
-        res = await axiosInstance.get(
-          `/api/payments/invoices/by-job/${job.id}`
-        );
-      }
-
-      if (res?.data && Array.isArray(res.data)) {
-        // Filter for invoices that are not fully cleared (you might want a stricter filter based on your backend logic)
-        const unclearedInvoices = res.data.filter(inv => inv.isCleared !== 1); 
-        setInvoices(unclearedInvoices);
-
-        // Auto-select if only one uncleared invoice
-        if (unclearedInvoices.length === 1) {
-          setSelectedInvoice(unclearedInvoices[0]);
+        let apiUrl = '';
+        
+        // Determine the correct API endpoint based on job.type
+        switch (job.type) {
+            case "renewal":
+                apiUrl = `/api/payments/invoices/by-renewal-job/${job.id}`;
+                break;
+            case "job": // This covers "new" and "amc" jobs that aren't renewals
+                apiUrl = `/api/payments/invoices/by-job/${job.id}`;
+                break;
+            case "materialRepair":
+                // Corresponds to the backend API: /api/payments/invoices/by-materialQid/{materialQuotationId}
+                apiUrl = `/api/payments/invoices/by-materialQid/${job.id}`;
+                break;
+            case "onCall":
+                // Corresponds to the backend API: /api/payments/invoices/by-oncallQid/{onCallQuotationId}
+                apiUrl = `/api/payments/invoices/by-oncallQid/${job.id}`;
+                break;
+            case "modernization":
+                // Corresponds to the backend API: /api/payments/invoices/by-modernizationQid/{modernizationId}
+                apiUrl = `/api/payments/invoices/by-modernizationQid/${job.id}`;
+                break;
+            default:
+                console.error("Unknown job type:", job.type);
+                setInvoices([]);
+                setLoadingInvoices(false);
+                return; // Exit the function if type is unknown
         }
-      } else {
-        setInvoices([]);
-      }
+
+        const res = await axiosInstance.get(apiUrl);
+
+        if (res?.data && Array.isArray(res.data)) {
+            // Your backend is designed to return UNCLEARED invoices already,
+            // but we'll keep the frontend filter for robustness (inv.isCleared !== 1)
+            const unclearedInvoices = res.data.filter(inv => inv.isCleared !== 1);
+            setInvoices(unclearedInvoices);
+
+            // Auto-select if only one uncleared invoice
+            if (unclearedInvoices.length === 1) {
+                setSelectedInvoice(unclearedInvoices[0]);
+            }
+        } else {
+            setInvoices([]);
+        }
     } catch (error) {
-      console.error("Error fetching invoices:", error);
-      setInvoices([]);
+        console.error("Error fetching invoices:", error);
+        setInvoices([]);
     } finally {
-      setLoadingInvoices(false);
+        setLoadingInvoices(false);
     }
-  };
+};
 
   // Function to handle payment type change and reset extra fields for 'Cash'
   const handlePaymentTypeChange = (type) => {
@@ -185,14 +252,30 @@ export default function AddPayment() {
     }
 
     // Determine payFor based on job type
-    let payForValue = "New Installation Payment";
-    if (selectedJob.type === "renewal") {
-        payForValue = "AMC Renewal Payment";
-    } else if (selectedJob.type === "job" && jobType === "amc") {
-        payForValue = "AMC Job Payment";
-    } else if (selectedJob.type === "job" && jobType === "new") {
-        payForValue = "New Installation Payment";
-    }
+let payForValue = "";
+
+if (selectedJob.type === "renewal") {
+    // This handles renewal jobs selected under the "AMC / Renewal" category
+    payForValue = "AMC Renewal Payment";
+} else if (selectedJob.type === "job" && jobType === "amc") {
+    // This handles AMC jobs selected under the "AMC / Renewal" category
+    payForValue = "AMC Job Payment";
+} else if (selectedJob.type === "job" && jobType === "new") {
+    // This handles New Installation jobs selected under the "New Installation" category
+    payForValue = "New Installation Payment";
+} else if (selectedJob.type === "materialRepair") {
+    // Handle Material Repair
+    payForValue = "Material Repair Payment";
+} else if (selectedJob.type === "onCall") {
+    // Handle On Call
+    payForValue = "On Call Payment";
+} else if (selectedJob.type === "modernization") {
+    // Handle Modernization
+    payForValue = "Modernization Payment";
+} else {
+    // Optional: Default or error case if type is unknown
+    payForValue = "Unspecified Payment"; 
+}
 
 
     const paymentPayload = {
@@ -268,7 +351,7 @@ export default function AddPayment() {
   return (
     <div className="p-6 md:p-10 bg-gray-10 min-h-screen">
       <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
-        <DollarSign className="w-7 h-7 mr-3 text-blue-600" />
+          <IndianRupee className="w-7 h-7 mr-3 text-blue-600" />
         Record New Customer Payment
       </h2>
 
@@ -283,9 +366,11 @@ export default function AddPayment() {
               1. Select Job Type and Search
             </h3>
 
-            {/* Job Type Selection */}
+                      {/* Job Type Selection */}
             <div className="mb-6 flex flex-wrap gap-4 items-center">
               <p className="text-md font-medium text-gray-600">Category:</p>
+              
+              {/* AMC / Renewal */}
               <label className="flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -297,6 +382,8 @@ export default function AddPayment() {
                 />
                 <span className="text-gray-700 font-medium">AMC / Renewal</span>
               </label>
+              
+              {/* New Installation */}
               <label className="flex items-center cursor-pointer">
                 <input
                   type="radio"
@@ -308,8 +395,46 @@ export default function AddPayment() {
                 />
                 <span className="text-gray-700 font-medium">New Installation</span>
               </label>
+              
+              {/* Material Repair */}
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="jobType"
+                  value="materialRepair" // Changed value for consistency
+                  checked={jobType === "materialRepair"}
+                  onChange={handleJobTypeChange}
+                  className="mr-2 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                />
+                <span className="text-gray-700 font-medium">Material Repair</span>
+              </label>
+              
+              {/* On Call */}
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="jobType"
+                  value="onCall" // Changed value for consistency
+                  checked={jobType === "onCall"}
+                  onChange={handleJobTypeChange}
+                  className="mr-2 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                />
+                <span className="text-gray-700 font-medium">On Call</span>
+              </label>
+              
+              {/* Modernization */}
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="jobType"
+                  value="modernization" // Changed value for consistency
+                  checked={jobType === "modernization"}
+                  onChange={handleJobTypeChange}
+                  className="mr-2 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                />
+                <span className="text-gray-700 font-medium">Modernization</span>
+              </label>
             </div>
-
             {/* Loading indicator */}
             {loading && (
               <div className="text-blue-600 mb-4 flex items-center">
@@ -445,7 +570,7 @@ export default function AddPayment() {
         {selectedInvoice && (
           <div className="bg-white border rounded-xl shadow-lg p-6 border-gray-200">
             <h3 className="text-xl font-semibold mb-6 text-gray-700 flex items-center">
-                <DollarSign className="w-5 h-5 mr-2 text-blue-500"/>
+                <IndianRupee className="w-5 h-5 mr-2 text-blue-500"/>
                 3. Enter Payment Information
             </h3>
 
@@ -480,7 +605,7 @@ export default function AddPayment() {
               {/* Payment Amount (Read-only) */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
-                  <DollarSign className="w-4 h-4 mr-1" /> Payment Amount
+                  <IndianRupee className="w-4 h-4 mr-1" /> Payment Amount
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 font-bold">₹</span>
@@ -612,7 +737,7 @@ export default function AddPayment() {
                   {isSubmitting ? (
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   ) : (
-                      <DollarSign className="w-5 h-5 mr-2" />
+                      <IndianRupee className="w-5 h-5 mr-2" />
                   )}
                   {isSubmitting ? 'Processing Payment...' : 'Record Payment'}
               </button>

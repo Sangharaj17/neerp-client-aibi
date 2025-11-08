@@ -784,6 +784,52 @@ public class AmcInvoiceService {
         return words.toString().trim();
     }
 
+	public List<AmcInvoiceResponseDto> getAmcInvoiceResponseDtosByMaterialQuotationId(Integer materialQuotationId) {
+		// TODO Auto-generated method stub
+		
+		
+		// Call the custom repository method directly
+	    List<AmcInvoice> filteredInvoices = invoiceRepository
+	        .findByMaterialQuotation_ModQuotIdAndIsCleared(materialQuotationId, 0);
+		
+		return filteredInvoices.stream()
+	            .map(this::toResponseDto)
+	            .collect(Collectors.toList());
+	}
+
+	
+	// In AmcInvoiceService.java
+
+	// Assuming 'invoiceRepository' is AmcInvoiceRepository
+	// and 'this::toResponseDto' is a helper method available in this service
+
+	/**
+	 * Retrieves uncleared AMC Invoices associated with a specific On Call Quotation ID.
+	 */
+	public List<AmcInvoiceResponseDto> getAmcInvoiceResponseDtosByOnCallQuotationId(Integer onCallQuotationId) {
+	    // 1. Fetch filtered invoices using the repository method
+	    List<AmcInvoice> filteredInvoices = invoiceRepository
+	        .findByOnCallQuotation_IdAndIsCleared(onCallQuotationId, 0); // Using 'Id' property
+	    
+	    // 2. Map the entities to Response DTOs
+	    return filteredInvoices.stream()
+	        .map(this::toResponseDto)
+	        .collect(Collectors.toList());
+	}
+
+	/**
+	 * Retrieves uncleared AMC Invoices associated with a specific Modernization ID.
+	 */
+	public List<AmcInvoiceResponseDto> getAmcInvoiceResponseDtosByModernizationId(Integer modernizationId) {
+	    // 1. Fetch filtered invoices using the repository method
+	    List<AmcInvoice> filteredInvoices = invoiceRepository
+	        .findByModernization_IdAndIsCleared(modernizationId, 0); // Using 'Id' property
+	    
+	    // 2. Map the entities to Response DTOs
+	    return filteredInvoices.stream()
+	        .map(this::toResponseDto)
+	        .collect(Collectors.toList());
+	}
 
 
     

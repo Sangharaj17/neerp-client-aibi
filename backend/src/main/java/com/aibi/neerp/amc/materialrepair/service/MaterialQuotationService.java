@@ -24,6 +24,7 @@ import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -492,11 +493,75 @@ public class MaterialQuotationService {
         return false;
     }
 	
+//	  @Data
+//	  public class JobDropdownForAddPayment {
+//	  	
+//	  	 Integer jobId ;
+//	       String customerName;
+//	       String siteName;
+//	       String mailId;
+//
+//	  }
+//	
 	
-	
-	
-	
-	
+      public List<JobDropdownForAddPayment> getDropdownForAddPayments(){
+		  
+		  List<MaterialQuotation> materialQuotations = materialQuotationRepository.findAll().stream().filter((q)->{
+			  
+			  if(q.getIsFinal()==1) {
+				  return true;
+			  }
+			  return false;
+		  }).collect(Collectors.toList());
+		  
+		 List<JobDropdownForAddPayment> dropdownForAddPayments = materialQuotations.stream().map((q)->{
+			 
+			 JobDropdownForAddPayment dropdownForAddPayment = new JobDropdownForAddPayment();
+			 
+			 dropdownForAddPayment.setMaterialRepairQid(q.getModQuotId());
+			 
+			 String customerName = "";
+			 String siteName = "";
+			 String mailId = "";
+			 Integer materialQId = q.getModQuotId();
+			 
+			 AmcJob amcJob = q.getAmcJob();
+			 AmcRenewalJob amcRenewalJob = q.getAmcRenewalJob();
+			 
+			 Customer customer = null;
+			 Site site = null;
+			 
+			 if(amcJob!=null) {
+				 
+				 customer = amcJob.getCustomer();
+				 site = amcJob.getSite();
+				 mailId = amcJob.getLead().getEmailId();
+				 
+			 }else {
+				 customer = amcRenewalJob.getCustomer();
+				 site = amcRenewalJob.getSite();
+				 
+				 mailId = amcRenewalJob.getLead().getEmailId();
+				 
+			 }
+			 
+			 customerName = customer.getCustomerName();
+			 siteName = site.getSiteName();
+			 
+			 
+			 dropdownForAddPayment.setCustomerName(customerName);
+			 dropdownForAddPayment.setSiteName(siteName);
+			 dropdownForAddPayment.setMaterialRepairQid(materialQId);
+			 dropdownForAddPayment.setMailId(mailId);	 
+			 
+			 
+			 return dropdownForAddPayment;
+			 
+		 }).collect(Collectors.toList());	
+		 
+		 return dropdownForAddPayments;
+
+      }
 	
 	
     

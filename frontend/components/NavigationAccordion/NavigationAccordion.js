@@ -316,7 +316,7 @@ const NavigationAccordion = () => {
   }, [normalizedQuery]);
 
   return (
-    <div className="w-64 sticky top-0 z-20 bg-white border-r border-gray-200 h-screen overflow-y-auto">
+    <div className="w-64 sticky top-0 z-20 bg-white border-r border-gray-200 h-screen ">
       <div className="p-4 border-b border-gray-200 h-16">
         <h2 className="text-lg font-semibold text-gray-800">{clientname}</h2>
       </div>

@@ -15,9 +15,14 @@ import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
 import com.aibi.neerp.amc.invoice.repository.AmcInvoiceRepository;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
+import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
+import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
+import com.aibi.neerp.amc.materialrepair.entity.MaterialQuotation;
 import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
 import com.aibi.neerp.amc.materialrepair.repository.WorkPeriodRepository;
+import com.aibi.neerp.customer.entity.Customer;
+import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
@@ -428,4 +433,41 @@ public class OncallService {
         long rupees = amount.longValue();
         return rupees + " Rupees Only";
     }
+    
+    
+    
+    
+    
+    public List<JobDropdownForAddPayment> getDropdownForAddPayments() {
+
+        // Fetch all finalized OnCall Quotations
+        List<OnCallQuotation> oncallQuotations = onCallQuotationRepository.findAll()
+            .stream()
+            .filter(OnCallQuotation::getIsFinal)
+            .collect(Collectors.toList());
+
+        // Map each OnCallQuotation to JobDropdownForAddPayment DTO
+        return oncallQuotations.stream().map(q -> {
+            JobDropdownForAddPayment dto = new JobDropdownForAddPayment();
+
+            // Set OnCall Quotation ID
+            dto.setOncallQid(q.getId());
+            dto.setCustomerName(q.getLead().getCustomerName());
+            dto.setSiteName(q.getLead().getSiteName());
+            dto.setMailId(q.getLead().getEmailId());
+            
+            return dto;
+            
+        }).collect(Collectors.toList());
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
