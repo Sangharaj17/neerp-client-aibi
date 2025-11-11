@@ -2,8 +2,10 @@
 
 package com.aibi.neerp.settings.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +18,11 @@ public class CompanySetting {
 
     @Id 
     private String refName;
+    
+    // ✅ Store Base64 Logo as TEXT (instead of bytes)
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String logo;
 
     private String companyOwnerName;
     private String companyName;

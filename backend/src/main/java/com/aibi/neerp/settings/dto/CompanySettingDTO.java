@@ -26,6 +26,8 @@ public class CompanySettingDTO {
     private String officeNumber;
     private String tollFreeNumber;
     
+ // logo: accept full data URL (data:image/png;base64,...) or raw base64 string
+    private String logo;  
     // --- GST Classification Codes (Required for Invoicing) ---
     private String sacCodeAmc; 
     private String sacCodeNewInstallation;

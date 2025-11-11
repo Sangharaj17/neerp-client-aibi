@@ -19,6 +19,7 @@ import {
   Search,
 } from 'lucide-react';
 import Input from '@/components/UI/Input';
+import CompanyLogo from './CompanyLogo';
 
 const NavigationAccordion = () => {
   const [openSections, setOpenSections] = useState({});
@@ -272,8 +273,8 @@ const NavigationAccordion = () => {
         { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list/false` },
         { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call`},
          { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
-      { title: 'Amc Invoices', href: `/dashboard/jobs/amc-invoices`},
-            { title: 'Amc Payment Invoices', href: `/dashboard/jobs/amc-payments`},
+      { title: 'Invoices', href: `/dashboard/jobs/amc-invoices`},
+            { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments`},
 
 
       ]
@@ -317,8 +318,9 @@ const NavigationAccordion = () => {
 
   return (
     <div className="w-64 sticky top-0 z-20 bg-white border-r border-gray-200 h-screen ">
-      <div className="p-4 border-b border-gray-200 h-16">
-        <h2 className="text-lg font-semibold text-gray-800">{clientname}</h2>
+      <div className="p-1 border-b border-gray-200 h-16">
+        {/* <h2 className="text-lg font-semibold text-gray-800">{clientname}</h2> */}
+        <CompanyLogo/>
       </div>
 
       <div className="p-2">

@@ -6,7 +6,11 @@ import com.aibi.neerp.settings.dto.CompanySettingDTO;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.Optional;
 
 @Service
@@ -18,17 +22,43 @@ public class CompanySettingService {
         this.repository = repository;
     }
 
+    @Transactional
     public Optional<CompanySettingDTO> getCompanySettings(String refName) {
         return repository.findByRefName(refName)
                 .map(this::convertToDTO);
     }
 
-    public CompanySettingDTO saveInitialSettings(CompanySettingDTO settingsDTO) {
-        CompanySetting entity = convertToEntity(settingsDTO);
-        CompanySetting savedEntity = repository.save(entity);
-        return convertToDTO(savedEntity);
+    @Transactional
+    public CompanySettingDTO saveInitialSettings(CompanySettingDTO dto) throws IOException {
+        CompanySetting entity = convertToEntity(dto);
+
+        String incomingLogo = dto.getLogo();
+        if (incomingLogo != null && !incomingLogo.isBlank()) {
+            String normalized = normalizeLogoDataUrl(incomingLogo);
+            entity.setLogo(normalized);
+        } // else keep existing value
+
+
+        CompanySetting saved = repository.save(entity);
+        return convertToDTO(saved);
     }
     
+    public String getCompanyLogo(String refName) {
+        return repository.findById(refName)
+                .map(CompanySetting::getLogo)
+                .orElse(null);
+    }
+    
+    private String normalizeLogoDataUrl(String logo) {
+        // if it already contains "data:", return as-is
+        if (logo.startsWith("data:")) return logo.trim();
+
+        // if it's raw base64, add data URL prefix with default PNG mime
+        // (frontend may also send the mime type; if you want to detect from content, implement detection)
+        return "data:image/png;base64," + logo.trim();
+    }
+    
+    @Transactional
     public CompanySetting getCompanySetting() {
     	
     	CompanySetting companySetting = repository.findAll().get(0);
@@ -77,6 +107,9 @@ public class CompanySettingService {
         dto.setGstRateAmcTotalPercentage(entity.getGstRateAmcTotalPercentage());
         dto.setGstRateNewInstallationTotalPercentage(entity.getGstRateNewInstallationTotalPercentage());
         dto.setGstRateRepairTotalPercentage(entity.getGstRateRepairTotalPercentage());
+        
+        dto.setLogo(entity.getLogo()); // already stored as data URL (or normalized)
+
         
         return dto;
     }
