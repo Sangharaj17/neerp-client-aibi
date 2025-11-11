@@ -13,7 +13,9 @@ public class Unit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
+    // Note: Temporarily using explicit column name for production compatibility
+    // Once DatabaseColumnNamingFixer renames unitname → unit_name in production, this can be removed
+    @Column(name = "unitname", nullable = false, unique = true)
     private String unitName;
 
     private String description;
