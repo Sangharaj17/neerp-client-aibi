@@ -52,4 +52,12 @@ public class BracketController {
         bracketService.deleteBracket(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Bracket deleted successfully", null));
     }
+
+    @GetMapping("/floor/{floorId}")
+    public ResponseEntity<ApiResponse<List<BracketResponseDTO>>> getBracketsByFloor(@PathVariable Long floorId) {
+        log.info("Fetching brackets for floor ID {}", floorId);
+        List<BracketResponseDTO> brackets = bracketService.getBracketsByFloor(floorId);
+        return ResponseEntity.ok(new ApiResponse<>(true, "Fetched brackets for floor successfully", brackets));
+    }
+
 }

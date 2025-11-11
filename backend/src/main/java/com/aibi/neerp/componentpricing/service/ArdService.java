@@ -147,14 +147,28 @@ public class ArdService {
         log.info("Finding ARDs by operatorId={}, capacityTypeId={}, capacityValueId={}", operatorId, capacityTypeId, capacityValueId);
 
         List<Ard> results;
-
-        if (capacityTypeId == 1) { // Person
-            results = ardRepository.findByOperatorElevator_IdAndCapacityType_IdAndPersonCapacity_Id(operatorId, capacityTypeId, capacityValueId);
-        } else if (capacityTypeId == 2) { // Weight
-            results = ardRepository.findByOperatorElevator_IdAndCapacityType_IdAndWeight_Id(operatorId, capacityTypeId, capacityValueId);
-        } else {
-            log.warn("Invalid capacityTypeId={}", capacityTypeId);
-            return new ApiResponse<>(false, "Invalid capacity type", List.of());
+        if (operatorId == 1 || operatorId == 2) {
+            if (capacityTypeId == 1) { // Person
+                results = ardRepository.findByOperatorElevator_IdAndCapacityType_IdAndPersonCapacity_Id(operatorId, capacityTypeId, capacityValueId);
+            } else if (capacityTypeId == 2) { // Weight
+                results = ardRepository.findByOperatorElevator_IdAndCapacityType_IdAndWeight_Id(operatorId, capacityTypeId, capacityValueId);
+            } else {
+                log.warn("Invalid capacityTypeId={}", capacityTypeId);
+                return new ApiResponse<>(false, "Invalid capacity type", List.of());
+            }
+        }
+        else if (operatorId == 3) {
+            // ✅ New logic: for operator 3, find by typeOfLift
+//            if (typeOfLiftId == null) {
+//                return new ApiResponse<>(false, "typeOfLiftId is required for operator 3", List.of());
+//            }
+//            results = ardRepository.findByOperatorElevator_IdAndTypeOfLift_Id(operatorId, typeOfLiftId);
+            log.warn("Invalid operatorId ={}", operatorId);
+            return new ApiResponse<>(false, "No data found for operator type", List.of());
+        }
+        else {
+            log.warn("Invalid operatorId={}", operatorId);
+            return new ApiResponse<>(false, "Invalid operator type", List.of());
         }
 
         if (results.isEmpty()) {

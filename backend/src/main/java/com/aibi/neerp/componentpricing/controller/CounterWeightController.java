@@ -46,4 +46,11 @@ public class CounterWeightController {
         log.info("API Request: Delete Counter Weight with ID {}", id);
         return ResponseEntity.ok(service.delete(id));
     }
+
+    @GetMapping("/floor/{floorId}")
+    public ResponseEntity<List<CounterWeightResponseDTO>> getByFloor(@PathVariable Long floorId) {
+        log.info("API Request: Get Counter Weights for Floor ID {}", floorId);
+        return ResponseEntity.ok(service.findByFloor(floorId));
+    }
+
 }

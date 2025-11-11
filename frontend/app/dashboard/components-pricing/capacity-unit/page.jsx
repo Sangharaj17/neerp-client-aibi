@@ -267,8 +267,8 @@ export default function UnitCapacityCrud() {
   // }, [personForm, personCaps]);
 
   return (
-    <div className="space-y-10 p-6 w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div className="space-y-10 p-6 w-full min-h-screen">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Units */}
         <Section title="Units" searchKey="unit" setSearch={setSearch}>
           <form
@@ -291,7 +291,10 @@ export default function UnitCapacityCrud() {
                 resetUnitForm
               );
             }}
-            className="flex gap-2"
+            // className="flex flex-wrap gap-3 items-center mb-4"
+            className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
+            unitForm.editId ? "bg-yellow-50" : "bg-gray-100"
+          }`}
           >
             <input
               value={unitForm.unit}
@@ -300,7 +303,7 @@ export default function UnitCapacityCrud() {
               }
               required
               placeholder="Unit Name"
-              className="border px-2 py-1 rounded-md"
+              className="border px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               value={unitForm.unitDesc}
@@ -309,20 +312,20 @@ export default function UnitCapacityCrud() {
               }
               required
               placeholder="Unit Description"
-              className="border px-2 py-1 rounded-md"
+              className="border px-2 py-1 rounded-md rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {unitForm.editId ? (
               <>
                 <button
                   type="submit"
-                  className="bg-green-600 text-white px-4 py-1 rounded-md hover:bg-green-700"
+                  className="bg-green-600 text-white px-4 py-1 rounded-md hover:bg-green-700 transition"
                 >
                   Update
                 </button>
                 <button
                   type="button"
                   onClick={resetUnitForm}
-                  className="bg-gray-400 text-white px-4 py-1 rounded-md hover:bg-gray-500"
+                  className="bg-gray-400 text-white px-4 py-1 rounded-md hover:bg-gray-500 transition"
                 >
                   Cancel
                 </button>
@@ -330,7 +333,7 @@ export default function UnitCapacityCrud() {
             ) : (
               <button
                 type="submit"
-                className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition"
               >
                 Add
               </button>
@@ -496,8 +499,8 @@ export default function UnitCapacityCrud() {
               resetWeightForm
             );
           }}
-          className={`flex gap-2 flex-wrap ${
-            weightForm.editId ? "bg-yellow-50 p-2 rounded-md" : ""
+          className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
+            weightForm.editId ? "bg-yellow-50" : "bg-gray-100"
           }`}
         >
           <select
@@ -521,7 +524,7 @@ export default function UnitCapacityCrud() {
             }
             type="number"
             placeholder="Weight Value"
-            className="border px-2 py-1 rounded-md"
+            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {/* <select
             value={kgsForm.kgsCapType}
@@ -543,14 +546,14 @@ export default function UnitCapacityCrud() {
                 disabled={isDuplicate}
                 className={`${
                   isDuplicate ? "bg-gray-400" : "bg-green-600"
-                } text-white px-3 py-1 rounded`}
+                } text-white px-3 py-1 rounded-md hover:bg-green-700 transition`}
               >
                 Update
               </button>
               <button
                 type="button"
                 onClick={resetWeightForm}
-                className="bg-gray-400 text-white px-3 py-1 rounded"
+                className="bg-gray-400 text-white px-3 py-1 rounded-md hover:bg-gray-500 transition"
               >
                 Cancel
               </button>
@@ -560,7 +563,7 @@ export default function UnitCapacityCrud() {
               disabled={isDuplicate}
               className={`${
                 isDuplicate ? "bg-gray-400" : "bg-blue-600"
-              } text-white px-3 py-1 rounded`}
+              } text-white px-3 py-1 rounded-md hover:bg-blue-70 transition`}
             >
               Add
             </button>
@@ -649,8 +652,8 @@ export default function UnitCapacityCrud() {
               resetPersonForm
             );
           }}
-          className={`flex gap-2 flex-wrap ${
-            personForm.editId ? "bg-yellow-50 p-2 rounded-md" : ""
+          className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
+            personForm.editId ? "bg-yellow-50" : "bg-gray-100"
           }`}
         >
           <input
@@ -660,7 +663,7 @@ export default function UnitCapacityCrud() {
               setPersonForm({ ...personForm, personCount: e.target.value })
             }
             placeholder="Count"
-            className="border px-2 py-1 rounded-md"
+            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             value={personForm.personLabel ?? ""}
@@ -668,7 +671,7 @@ export default function UnitCapacityCrud() {
               setPersonForm({ ...personForm, personLabel: e.target.value })
             }
             placeholder="Name"
-            className="border px-2 py-1 rounded-md"
+            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <input
             type="number"
@@ -677,7 +680,7 @@ export default function UnitCapacityCrud() {
               setPersonForm({ ...personForm, personWeight: e.target.value })
             }
             placeholder="Number to calculate weight(68)"
-            className="border px-2 py-1 rounded-md"
+            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <select
             value={personForm.personUnit}
@@ -711,7 +714,7 @@ export default function UnitCapacityCrud() {
             <>
               <button
                 type="submit"
-                className={`bg-green-600" text-white px-3 py-1 rounded`}
+                className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition"
                 //disabled={isPersonDuplicate}
               >
                 Update
@@ -719,7 +722,7 @@ export default function UnitCapacityCrud() {
               <button
                 type="button"
                 onClick={resetPersonForm}
-                className="bg-gray-400 text-white px-3 py-1 rounded"
+                className="bg-gray-400 text-white px-3 py-1 rounded-md hover:bg-gray-500 transition"
               >
                 Cancel
               </button>
@@ -727,7 +730,7 @@ export default function UnitCapacityCrud() {
           ) : (
             <button
               type="submit"
-              className={`bg-blue-600 text-white px-3 py-1 rounded`}
+              className={`bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition`}
               // className={`${
               //   isPersonDuplicate ? "bg-gray-400" : "bg-blue-600"
               // } text-white px-3 py-1 rounded`}
@@ -803,16 +806,16 @@ export default function UnitCapacityCrud() {
 
 function Section({ title, children, searchKey, setSearch }) {
   return (
-    <div className="space-y-2 p-4 bg-white rounded shadow-lg border border-gray-200">
+    <div className="space-y-2 rounded-2xl p-4 bg-white rounded shadow-lg border border-gray-400">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">{title}</h2>
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-blue-700">{title}</h2>
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) =>
             setSearch((prev) => ({ ...prev, [searchKey]: e.target.value }))
           }
-          className="border px-2 py-1 text-sm w-48  rounded-md"
+          className="border px-2 py-1 text-sm w-48  rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       {children}
@@ -852,7 +855,13 @@ function Section({ title, children, searchKey, setSearch }) {
 export async function fetchDataArray(url) {
   try {
     const res = await axiosInstance.get(url);
-    return Array.isArray(res.data?.data) ? res.data.data : [];
+    // Handle both ApiResponse format (res.data.data) and direct array format (res.data)
+    if (Array.isArray(res.data?.data)) {
+      return res.data.data;
+    } else if (Array.isArray(res.data)) {
+      return res.data;
+    }
+    return [];
   } catch (error) {
     console.error(
       "Error fetching data:",
@@ -870,7 +879,7 @@ const Table = ({ headers, rows }) => {
           {headers.map((header, index) => (
             <th
               key={index}
-              className="sticky top-0 bg-white z-10 px-4 py-2 border-b border-gray-200"
+              className="sticky top-0 bg-blue-100 z-10 px-4 py-2 border-b border-gray-200"
             >
               {header}
             </th>

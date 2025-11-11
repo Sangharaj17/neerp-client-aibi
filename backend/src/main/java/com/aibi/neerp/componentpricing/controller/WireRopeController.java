@@ -46,4 +46,20 @@ public class WireRopeController {
         log.info("API Call: Delete WireRope ID {}", id);
         return ResponseEntity.ok(wireRopeService.delete(id));
     }
+
+    @GetMapping("/floor/{floorId}")
+    public ResponseEntity<List<WireRopeResponseDTO>> getWireRopesByFloor(@PathVariable Long floorId) {
+        log.info("API Call: Get WireRopes by Floor ID {}", floorId);
+        return ResponseEntity.ok(wireRopeService.findByFloorId(floorId));
+    }
+
+    @GetMapping("/floor/{floorId}/operator/{operatorTypeId}")
+    public ResponseEntity<List<WireRopeResponseDTO>> getWireRopesByFloorAndOperator(
+            @PathVariable Long floorId,
+            @PathVariable Long operatorTypeId) {
+        log.info("API Call: Get WireRopes by Floor ID {} and Operator Type ID {}", floorId, operatorTypeId);
+        return ResponseEntity.ok(wireRopeService.findByFloorAndOperator(floorId, operatorTypeId));
+    }
+
+
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { SlidersHorizontal, SquareStack } from "lucide-react";
+import { SlidersHorizontal, SquareStack, Settings } from "lucide-react";
 import ReusableTable from "@/components/UI/ReusableTable";
 import PageHeader from "@/components/UI/PageHeader";
 import { confirmDeleteWithToast } from "@/components/UI/toastUtils";
@@ -26,6 +26,7 @@ export default function SupportingData() {
   const API_WARRANTY = API_ENDPOINTS.WARRANTY;
   const API_FEATURES = API_ENDPOINTS.FEATURES;
   const API_OPERATION_TYPE = API_ENDPOINTS.OPERATION_TYPE;
+  const API_LOAD = API_ENDPOINTS.LOAD;
 
   const API_CAPACITY_TYPES = API_ENDPOINTS.CAPACITY_TYPES;
   const API_PERSON_CAPACITY = API_ENDPOINTS.PERSON_CAPACITY;
@@ -34,20 +35,239 @@ export default function SupportingData() {
 
   const [activeForm, setActiveForm] = useState("floors"); // "floors" | "addFloors" | "speeds"
 
+  const [loading, setLoading] = useState(false);
+
+  const sanitize = (value) => value.trim();
+
+  // ********************** Floors ***********************
+  const columns = [{ key: "floorName", label: "Floor Name" }];
   const [floors, setFloors] = useState([]);
   const [prefix, setPrefix] = useState("G+");
   const [totalFloors, setTotalFloors] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  // useEffect(() => {
+  //   fetchFloors();
+  // }, []);
 
+  const fetchFloors = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get(API_FLOORS);
+      if (res.data.success) {
+        setFloors(res.data.data);
+      } else {
+        toast.error(res.data.message || "Failed to fetch floors");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error fetching floors");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    confirmDeleteWithToast("/update floors", async () => {
+      try {
+        const res = await axiosInstance.post("/api/floors/generate", {
+          totalFloors,
+          prefix,
+        });
+        if (res.data.success) {
+          toast.success(res.data.message || "Floors generated successfully");
+          fetchFloors();
+        } else {
+          toast.error(res.data.message || "Failed to generate floors");
+        }
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Error generating floors");
+      }
+    });
+  };
+
+  const filteredList = floors.filter(
+    (floor) =>
+      floor.floorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(floor.id).includes(searchTerm)
+  );
+
+  // *********************** Additional Floors ************************
+  const columnsAddFloors = [
+    { key: "code", label: "Code", sortable: true, align: "text-left" },
+    { key: "label", label: "Label", sortable: true, align: "text-left" },
+  ];
   const [form, setForm] = useState({ code: "", label: "" });
   const [additionalFloors, setAdditionalFloors] = useState([]);
   const [editId, setEditId] = useState(null);
   const [search, setSearch] = useState("");
+  // useEffect(() => {
+  //   fetchAdditionalFloors();
+  // }, []);
 
+  const fetchAdditionalFloors = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get(API_ADDITIONAL_FLOORS);
+      const data = res.data;
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setAdditionalFloors(list);
+    } catch (err) {
+      setAdditionalFloors([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredListAddFloors = useMemo(() => {
+    return additionalFloors.filter(
+      (item) =>
+        item.code.toLowerCase().includes(search.toLowerCase()) ||
+        item.label.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [additionalFloors, search]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.code.trim() || !form.label.trim()) {
+      toast.error("Both Code and Label are required.");
+      return;
+    }
+    const duplicate = additionalFloors.some(
+      (f) => f.code === form.code && f.id !== editId
+    );
+    if (duplicate) {
+      toast.error("This Code already exists.");
+      return;
+    }
+    try {
+      const url = editId
+        ? `${API_ADDITIONAL_FLOORS}/${editId}`
+        : API_ADDITIONAL_FLOORS;
+      const method = editId ? "put" : "post";
+      const response = await axiosInstance[method](url, form);
+      toast.success(response.data.message || "Saved successfully");
+      fetchAdditionalFloors();
+      setEditId(null);
+      setForm({ code: "", label: "" });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Save failed");
+    }
+  };
+
+  const handleEdit = (item) => {
+    setForm({ code: item.code, label: item.label });
+    setEditId(item.id);
+  };
+
+  const handleDelete = (id) => {
+    const selected = additionalFloors.find((f) => f.id === id);
+    if (!selected) return;
+    confirmDeleteWithToast(selected.code, async () => {
+      try {
+        await axiosInstance.delete(`${API_ADDITIONAL_FLOORS}/${id}`);
+        toast.success(`${selected.code} deleted successfully`);
+        if (editId === id) {
+          setEditId(null);
+          setForm({ code: "", label: "" });
+        }
+        fetchAdditionalFloors();
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Delete failed");
+      }
+    });
+  };
+
+  // ********************* Speeds ****************************
+  const columnsSpeed = [
+    { key: "value", label: "Speed (m/s)", sortable: true, align: "text-left" },
+  ];
   const [formSpeed, setFormSpeed] = useState({ value: "" });
   const [speeds, setSpeeds] = useState([]);
   const [editIdSpeed, setEditIdSpeed] = useState(null);
   const [searchSpeed, setSearchSpeed] = useState("");
+  // useEffect(() => {
+  //   fetchSpeeds();
+  // }, []);
+
+  const fetchSpeeds = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get(API_SPEED);
+      setSpeeds(res.data || []);
+    } catch (err) {
+      setSpeeds([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredSpeeds = useMemo(
+    () =>
+      speeds.filter((s) =>
+        s.value.toString().toLowerCase().includes(searchSpeed.toLowerCase())
+      ),
+    [speeds, searchSpeed]
+  );
+
+  const handleSubmitSpeed = async (e) => {
+    e.preventDefault();
+    const val = parseFloat(formSpeed.value);
+    if (isNaN(val) || val <= 0) {
+      toast.error("Enter a valid speed (m/s).");
+      return;
+    }
+    const duplicate = speeds.some(
+      (s) => s.value === val && s.id !== editIdSpeed
+    );
+    if (duplicate) {
+      toast.error("Speed already exists.");
+      return;
+    }
+    try {
+      const url = editIdSpeed ? `${API_SPEED}/${editIdSpeed}` : API_SPEED;
+      const method = editIdSpeed ? "put" : "post";
+      await axiosInstance[method](
+        url,
+        { value: val },
+      );
+      toast.success("Speed saved successfully");
+      fetchSpeeds();
+      setFormSpeed({ value: "" });
+      setEditIdSpeed(null);
+    } catch {
+      toast.error("Failed to save speed.");
+    }
+  };
+
+  const handleEditSpeed = (item) => {
+    setFormSpeed({ value: item.value });
+    setEditIdSpeed(item.id);
+  };
+
+  const handleDeleteSpeed = (id) => {
+    const selected = speeds.find((s) => s.id === id);
+    if (!selected) return;
+    confirmDeleteWithToast(selected.value, async () => {
+      try {
+        await axiosInstance.delete(`${API_SPEED}/${id}`);
+        toast.success("Deleted successfully");
+        fetchSpeeds();
+      } catch {
+        toast.error("Failed to delete speed.");
+      }
+    });
+  };
+
+  // ********************** Manufacturers ************************
+  const columnsManu = [
+    {
+      key: "componentName",
+      label: "Component",
+      sortable: true,
+      align: "text-left",
+    },
+    { key: "name", label: "Manufacturer", sortable: true, align: "text-left" },
+  ];
 
   // Manufacturers
   const [manufacturers, setManufacturers] = useState([]);
@@ -66,82 +286,216 @@ export default function SupportingData() {
   const [editIdComponent, setEditIdComponent] = useState(null);
   const [searchComponent, setSearchComponent] = useState("");
 
-  // Warranty
-  const [Warranty, setWarranty] = useState([]);
-  const [formWarranty, setFormWarranty] = useState({
-    value: 0,
-  });
-  const [warrantyMessage, setWarrantyMessage] = useState("");
-  // const [editIdWarranty, setEditIdWarranty] = useState(null);
-  // const [searchWarranty, setSearchWarranty] = useState("");
-
-  // Features
-  const [features, setFeatures] = useState([]);
-  const [formFeatures, setFormFeatures] = useState({
-    value: "",
-  });
-  const [editIdFeatures, setEditIdFeatures] = useState(null);
-  const [searchFeatures, setSearchFeatures] = useState("");
-
-  // operationType
-  const [operationTypes, setOperationTypes] = useState([]);
-  const [formOperationType, setFormOperationType] = useState({
-    value: "",
-  });
-  const [editIdOperationType, setEditIdOperationType] = useState(null);
-  const [searchOperationType, setSearchOperationType] = useState("");
-
-  //capacity and dimensions
-
-  const [capDims, setCapDims] = useState([]);
-  const [capacityTypes, setCapacityTypes] = useState([]);
-  const [personCapacities, setPersonCapacities] = useState([]);
-  const [weightCapacities, setWeightCapacities] = useState([]);
-  const initDim = {
-    shaftsWidth: 0,
-    shaftsDepth: 0,
-    reqMachineWidth: 0,
-    reqMachineDepth: 0,
-    carInternalWidth: 0,
-    carInternalDepth: 0,
+  // ================= Fetch Functions =================
+  const fetchManufacturers = async () => {
+    try {
+      const res = await axiosInstance.get(API_MANUFACTURER);
+      const allManufacturers = Object.values(res.data.data || {}).flat();
+      setManufacturers(allManufacturers);
+    } catch (err) {
+      console.error("Error fetching manufacturers:", err);
+      setManufacturers([]);
+    }
   };
-  const [dimensions, setDimensions] = useState(initDim);
-  const initForm = {
-    capacityTypeId: 1,
-    capacityValueId: "",
-    shaftsWidth: "",
-    shaftsDepth: "",
-    reqMachineWidth: "",
-    reqMachineDepth: "",
-    carInternalWidth: "",
-    carInternalDepth: "",
+
+  const fetchComponents = async () => {
+    try {
+      const res = await axiosInstance.get(API_COMPONENT);
+      setComponents(res.data.data || []);
+    } catch (err) {
+      console.error("Error fetching components:", err);
+      setComponents([]);
+    }
   };
-  const [formCapDim, setFormCapDim] = useState(initForm);
-  const [editIdCapDim, setEditIdCapDim] = useState(null);
-  const [searchCapDim, setSearchCapDim] = useState("");
 
-  const [loading, setLoading] = useState(false);
+  const fetchWarranties = async () => {
+    try {
+      const res = await axiosInstance.get(API_WARRANTY);
+      const warrantyData = res.data || [];
+      setWarranty(warrantyData);
+      if (warrantyData.length > 0) {
+        const maxMonths = Math.max(...warrantyData.map((w) => w.warrantyMonth));
+        setWarrantyMessage(
+          `You have set warranties from 1 to ${maxMonths} months`
+        );
+      } else {
+        setWarrantyMessage("");
+      }
+    } catch (err) {
+      console.error("Error fetching warranties:", err);
+      setWarranty([]);
+      setWarrantyMessage("");
+    }
+  };
 
-  const columns = [{ key: "floorName", label: "Floor Name" }];
-  const columnsAddFloors = [
-    { key: "code", label: "Code", sortable: true, align: "text-left" },
-    { key: "label", label: "Label", sortable: true, align: "text-left" },
-  ];
-  const columnsSpeed = [
-    { key: "value", label: "Speed (m/s)", sortable: true, align: "text-left" },
-  ];
-  const columnsManu = [
-    {
-      key: "componentName",
-      label: "Component",
-      sortable: true,
-      align: "text-left",
-    },
-    { key: "name", label: "Manufacturer", sortable: true, align: "text-left" },
-  ];
+  const fetchFeatures = async () => {
+    try {
+      const res = await axiosInstance.get(API_FEATURES);
+      setFeatures(res.data || []);
+    } catch (err) {
+      console.error("Error fetching features:", err);
+      setFeatures([]);
+    }
+  };
+
+  const fetchOperationTypes = async () => {
+    try {
+      const res = await axiosInstance.get(API_OPERATION_TYPE);
+      setOperationTypes(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching operation types:", err);
+      console.error("Response:", err.response?.data);
+      setOperationTypes([]);
+    }
+  };
+
+  // ================= Filtered Lists =================
+  const filteredManufacturers = useMemo(
+    () =>
+      manufacturers.filter((m) => {
+        const search = searchManufacturer.toLowerCase();
+        return (
+          m.name.toLowerCase().includes(search) ||
+          m.componentName.toLowerCase().includes(search)
+        );
+      }),
+    [manufacturers, searchManufacturer]
+  );
+
+  const filteredComponents = useMemo(
+    () =>
+      components.filter((c) =>
+        c.name.toLowerCase().includes(searchComponent.toLowerCase())
+      ),
+    [components, searchComponent]
+  );
+
+  // ================= Manufacturer Handlers =================
+  const handleSubmitManufacturer = async (e) => {
+    e.preventDefault();
+    const name = sanitize(formManufacturer.value);
+    const componentId = formManufacturer.componentId;
+
+    if (!name || !componentId)
+      return toast.error("Manufacturer name and component are required");
+
+    const duplicate = manufacturers.some(
+      (m) =>
+        m.name.toUpperCase() === name.toUpperCase() &&
+        m.componentId === componentId &&
+        m.id !== editIdManufacturer
+    );
+    if (duplicate)
+      return toast.error(
+        "This manufacturer already exists for the selected component"
+      );
+
+    try {
+      const url = editIdManufacturer
+        ? `${API_MANUFACTURER}/${editIdManufacturer}`
+        : API_MANUFACTURER;
+      const method = editIdManufacturer ? "put" : "post";
+      const res = await axiosInstance[method](
+        url,
+        { name, componentId },
+      );
+      toast.success(res.data.message || "Saved successfully");
+      setEditIdManufacturer(null);
+      setFormManufacturer({ value: "", componentId: "" });
+      fetchManufacturers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Save failed");
+    }
+  };
+
+  const handleEditManufacturer = (m) => {
+    setFormManufacturer({ value: m.name, componentId: m.componentId });
+    setEditIdManufacturer(m.id);
+  };
+
+  const handleDeleteManufacturer = (id) => {
+    const selected = manufacturers.find((m) => m.id === id);
+    if (!selected) return;
+
+    confirmDeleteWithToast(selected.name, async () => {
+      try {
+        await axiosInstance.delete(`${API_MANUFACTURER}/${id}`);
+        toast.success(`${selected.name} deleted successfully`);
+        if (editIdManufacturer === id) setEditIdManufacturer(null);
+        setFormManufacturer({ value: "", componentId: "" });
+        fetchManufacturers();
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Delete failed");
+      }
+    });
+  };
+
+  // *********************** Component Handlers ******************
   const columnsComp = [
     { key: "name", label: "Component", sortable: true, align: "text-left" },
   ];
+
+  const handleSubmitComponent = async (e) => {
+    e.preventDefault();
+    const name = sanitize(formComponent.value);
+    if (!name) return toast.error("Component name is required");
+
+    const duplicate = components.some(
+      (c) =>
+        c.name.toUpperCase() === name.toUpperCase() && c.id !== editIdComponent
+    );
+    if (duplicate) return toast.error("This component already exists");
+
+    try {
+      const url = editIdComponent
+        ? `${API_COMPONENT}/${editIdComponent}`
+        : API_COMPONENT;
+      const method = editIdComponent ? "put" : "post";
+      const res = await axiosInstance[method](
+        url,
+        { name },
+      );
+      toast.success(res.data.message || "Saved successfully");
+      setEditIdComponent(null);
+      setFormComponent({ value: "" });
+      fetchComponents();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Save failed");
+    }
+  };
+
+  const handleEditComponent = (c) => {
+    setFormComponent({ value: c.name });
+    setEditIdComponent(c.id);
+  };
+
+  const handleDeleteComponent = (id) => {
+    const selected = components.find((c) => c.id === id);
+    if (!selected) return;
+
+    // 🔒 Check if this component is used in any manufacturer
+    const isUsed = manufacturers.some((m) => m.componentId === id);
+    if (isUsed) {
+      toast.error(
+        `Cannot delete "${selected.name}" as it is linked with manufacturers.`
+      );
+      return;
+    }
+
+    confirmDeleteWithToast(selected.name, async () => {
+      try {
+        await axiosInstance.delete(`${API_COMPONENT}/${id}`);
+        toast.success(`${selected.name} deleted successfully`);
+        if (editIdComponent === id) setEditIdComponent(null);
+        setFormComponent({ value: "" });
+        fetchComponents();
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Delete failed");
+      }
+    });
+  };
+
+  // *********************** Generate warranties ******************
   const columnsWarranty = [
     {
       key: "name",
@@ -150,7 +504,54 @@ export default function SupportingData() {
       align: "text-left",
     },
   ];
+  // Warranty
+  const [Warranty, setWarranty] = useState([]);
+  const [formWarranty, setFormWarranty] = useState({
+    value: 0,
+  });
+  const [warrantyMessage, setWarrantyMessage] = useState("");
+  // const [editIdWarranty, setEditIdWarranty] = useState(null);
+  // const [searchWarranty, setSearchWarranty] = useState("");
+  const handleGenerateWarranty = async (e) => {
+    e.preventDefault();
 
+    const totalMonths = parseInt(formWarranty.value, 10);
+
+    if (!totalMonths || totalMonths <= 0) {
+      toast.error("Please enter a valid number of months");
+      return;
+    }
+
+    confirmDeleteWithToast("existing warranties", async () => {
+      try {
+        const res = await axiosInstance.post(
+          `/api/warranties/generate/${totalMonths}`,
+          {},
+        );
+
+        if (res.data) {
+          toast.success(
+            `You have set warranties from 1 to ${totalMonths} months`
+          );
+          setWarrantyMessage(
+            `You have set warranties from 1 to ${totalMonths} months`
+          );
+
+          fetchWarranties();
+          setFormWarranty({ value: 0 });
+        } else {
+          toast.error(res.data?.message || "Failed to generate warranties");
+        }
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message || "Error generating warranties"
+        );
+      }
+    });
+  };
+
+  // ********************** FEATURES CRUD **********************
+  // Features
   const columnsFeatures = [
     {
       key: "name",
@@ -197,6 +598,114 @@ export default function SupportingData() {
     },
   ];
 
+  const [features, setFeatures] = useState([]);
+  const [formFeatures, setFormFeatures] = useState({
+    value: "",
+  });
+  const [editIdFeatures, setEditIdFeatures] = useState(null);
+  const [searchFeatures, setSearchFeatures] = useState("");
+  const handleSubmitFeature = async (e) => {
+    e.preventDefault();
+
+    const newValue = formFeatures.value.trim();
+
+    // ✅ Validation
+    if (!newValue) {
+      toast.error("Feature name is required!");
+      return;
+    }
+    if (/^\d+$/.test(newValue)) {
+      toast.error("Feature name cannot be only numbers!");
+      return;
+    }
+    if (
+      features.some(
+        (f) =>
+          f.name.toLowerCase() === newValue.toLowerCase() &&
+          f.id !== editIdFeatures
+      )
+    ) {
+      toast.error("Feature name must be unique!");
+      return;
+    }
+
+    try {
+      if (editIdFeatures) {
+        // ✅ Update feature
+        const res = await axiosInstance.put(
+          `${API_FEATURES}/${editIdFeatures}`,
+          { name: newValue, isActive: true }, // backend entity
+        );
+
+        setFeatures((prev) =>
+          prev.map((f) => (f.id === editIdFeatures ? res.data : f))
+        );
+        toast.success("Feature updated successfully!");
+        setEditIdFeatures(null);
+      } else {
+        // ✅ Add new feature
+        const res = await axiosInstance.post(
+          API_FEATURES,
+          { name: newValue, isActive: true },
+        );
+
+        setFeatures((prev) => [...prev, res.data]);
+        toast.success("Feature added successfully!");
+      }
+
+      // Reset form
+      setFormFeatures({ value: "" });
+    } catch (err) {
+      console.error("Error saving feature:", err);
+      toast.error(err.response?.data?.message || "Error while saving feature!");
+    }
+  };
+
+  const handleEditFeature = (feature) => {
+    setFormFeatures({ value: feature.name });
+    setEditIdFeatures(feature.id);
+  };
+
+  const handleDeleteFeature = async (id) => {
+    try {
+      await axiosInstance.delete(`${API_FEATURES}/${id}`);
+      setFeatures((prev) => prev.filter((f) => f.id !== id));
+      toast.success("Feature deleted successfully!");
+    } catch (err) {
+      toast.error("Error deleting feature!");
+    }
+  };
+
+  const filteredFeatures = features.filter(
+    (feature) =>
+      feature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(feature.id).includes(searchTerm)
+  );
+
+  // Add this new function to your parent component
+  const handleToggleStatus = async (feature) => {
+    try {
+      const newStatus = !feature.active; // Toggle the current status
+
+      // Make the API call to update the feature status
+      const res = await axiosInstance.put(
+        `${API_FEATURES}/${feature.id}`,
+        { name: feature.name, active: newStatus }, // Send the new status
+      );
+
+      // Update the local state with the new data from the API response
+      setFeatures((prevFeatures) =>
+        prevFeatures.map((f) => (f.id === feature.id ? res.data : f))
+      );
+
+      toast.success(`Feature status updated successfully!`);
+    } catch (err) {
+      toast.error("Failed to update feature status.");
+      console.error(err);
+    }
+  };
+
+  // *********************** Operation type CRUD ******************
   const columnsOperationType = [
     {
       key: "name",
@@ -242,6 +751,115 @@ export default function SupportingData() {
       ),
     },
   ];
+  // operationType
+  const [operationTypes, setOperationTypes] = useState([]);
+  const [formOperationType, setFormOperationType] = useState({
+    value: "",
+  });
+  const [editIdOperationType, setEditIdOperationType] = useState(null);
+  const [searchOperationType, setSearchOperationType] = useState("");
+  const handleSubmitOperationType = async (e) => {
+    e.preventDefault();
+
+    const newValue = formOperationType.value.trim();
+
+    // ✅ Validation
+    if (!newValue) {
+      toast.error("Operation Type is required!");
+      return;
+    }
+    if (/^\d+$/.test(newValue)) {
+      toast.error("Operation Type cannot be only numbers!");
+      return;
+    }
+    if (
+      operationTypes.some(
+        (f) =>
+          f.name.toLowerCase() === newValue.toLowerCase() &&
+          f.id !== editIdOperationType
+      )
+    ) {
+      toast.error("Operation Type must be unique!");
+      return;
+    }
+
+    try {
+      if (editIdOperationType) {
+        // ✅ Update feature
+        const res = await axiosInstance.put(
+          `${API_OPERATION_TYPE}/${editIdOperationType}`,
+          { name: newValue, isActive: true }, // backend entity
+        );
+
+        setOperationTypes((prev) =>
+          prev.map((f) => (f.id === editIdOperationType ? res.data : f))
+        );
+        toast.success("Operation type updated successfully!");
+        setEditIdOperationType(null);
+      } else {
+        // ✅ Add new feature
+        const res = await axiosInstance.post(
+          API_OPERATION_TYPE,
+          { name: newValue, isActive: true },
+        );
+
+        setOperationTypes((prev) => [...prev, res.data]);
+        toast.success("Operation Type added successfully!");
+      }
+
+      // Reset form
+      setFormOperationType({ value: "" });
+    } catch (err) {
+      toast.error("Error while saving operation type!");
+    }
+  };
+
+  const handleEditOperationType = (opTyp) => {
+    setFormOperationType({ value: opTyp.name });
+    setEditIdOperationType(opTyp.id);
+  };
+
+  const handleDeleteOperationType = async (id) => {
+    try {
+      await axiosInstance.delete(`${API_OPERATION_TYPE}/${id}`);
+      setOperationTypes((prev) => prev.filter((f) => f.id !== id));
+      toast.success("Operation Type deleted successfully!");
+    } catch (err) {
+      toast.error("Error deleting Operation Type!");
+    }
+  };
+
+  const filteredOperationType = operationTypes.filter(
+    (opType) =>
+      opType.name.toLowerCase().includes(searchOperationType.toLowerCase()) ||
+      String(opType.id).includes(searchOperationType)
+  );
+
+  // Add this new function to your parent component
+  const handleToggleStatusOp = async (opTy) => {
+    try {
+      const newStatus = !opTy.active; // Toggle the current status
+
+      // Make the API call to update the feature status
+      const res = await axiosInstance.put(
+        `${API_OPERATION_TYPE}/${opTy.id}`,
+        { name: opTy.name, active: newStatus }, // Send the new status
+      );
+
+      // Update the local state with the new data from the API response
+      setOperationTypes((prevOperationTypes) =>
+        prevOperationTypes.map((ot) => (ot.id === opTy.id ? res.data : ot))
+      );
+
+      toast.success(`Operation Type status updated successfully!`);
+    } catch (err) {
+      toast.error("Failed to update Operation Type status.");
+      console.error(err);
+    }
+  };
+
+  //*********************** capacity and dimensions ****************
+  //capacity and dimensions
 
   const columnsCapDim = [
     {
@@ -294,766 +912,35 @@ export default function SupportingData() {
     },
   ];
 
-  const sanitize = (value) => value.trim();
-
-  // ================= Floors =================
-  useEffect(() => {
-    fetchFloors();
-  }, []);
-
-  const fetchFloors = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(API_FLOORS);
-      if (res.data.success) {
-        setFloors(res.data.data);
-      } else {
-        toast.error(res.data.message || "Failed to fetch floors");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Error fetching floors");
-    } finally {
-      setLoading(false);
-    }
+  const [capDims, setCapDims] = useState([]);
+  const [capacityTypes, setCapacityTypes] = useState([]);
+  const [personCapacities, setPersonCapacities] = useState([]);
+  const [weightCapacities, setWeightCapacities] = useState([]);
+  const initDim = {
+    shaftsWidth: 0,
+    shaftsDepth: 0,
+    reqMachineWidth: 0,
+    reqMachineDepth: 0,
+    carInternalWidth: 0,
+    carInternalDepth: 0,
   };
-
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-    confirmDeleteWithToast("/update floors", async () => {
-      try {
-        const res = await axiosInstance.post("/api/floors/generate", {
-          totalFloors,
-          prefix,
-        });
-        if (res.data.success) {
-          toast.success(res.data.message || "Floors generated successfully");
-          fetchFloors();
-        } else {
-          toast.error(res.data.message || "Failed to generate floors");
-        }
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Error generating floors");
-      }
-    });
+  const [dimensions, setDimensions] = useState(initDim);
+  const initForm = {
+    capacityTypeId: 1,
+    capacityValueId: "",
+    shaftsWidth: "",
+    shaftsDepth: "",
+    reqMachineWidth: "",
+    reqMachineDepth: "",
+    carInternalWidth: "",
+    carInternalDepth: "",
   };
+  const [formCapDim, setFormCapDim] = useState(initForm);
+  const [editIdCapDim, setEditIdCapDim] = useState(null);
+  const [searchCapDim, setSearchCapDim] = useState("");
 
-  const filteredList = floors.filter(
-    (floor) =>
-      floor.floorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(floor.id).includes(searchTerm)
-  );
-
-  // ================= Additional Floors =================
-  useEffect(() => {
-    fetchAdditionalFloors();
-  }, []);
-
-  const fetchAdditionalFloors = async () => {
-    setLoading(true);
-    try {
-      const res = await axiosInstance.get(API_ADDITIONAL_FLOORS, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      const data = res.data;
-      const list = Array.isArray(data) ? data : data?.data || [];
-      setAdditionalFloors(list);
-    } catch (err) {
-      setAdditionalFloors([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredListAddFloors = useMemo(() => {
-    return additionalFloors.filter(
-      (item) =>
-        item.code.toLowerCase().includes(search.toLowerCase()) ||
-        item.label.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [additionalFloors, search]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.code.trim() || !form.label.trim()) {
-      toast.error("Both Code and Label are required.");
-      return;
-    }
-    const duplicate = additionalFloors.some(
-      (f) => f.code === form.code && f.id !== editId
-    );
-    if (duplicate) {
-      toast.error("This Code already exists.");
-      return;
-    }
-    try {
-      const url = editId
-        ? `${API_ADDITIONAL_FLOORS}/${editId}`
-        : API_ADDITIONAL_FLOORS;
-      const method = editId ? "put" : "post";
-      const response = await axiosInstance[method](url, form, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      toast.success(response.data.message || "Saved successfully");
-      fetchAdditionalFloors();
-      setEditId(null);
-      setForm({ code: "", label: "" });
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Save failed");
-    }
-  };
-
-  const handleEdit = (item) => {
-    setForm({ code: item.code, label: item.label });
-    setEditId(item.id);
-  };
-
-  const handleDelete = (id) => {
-    const selected = additionalFloors.find((f) => f.id === id);
-    if (!selected) return;
-    confirmDeleteWithToast(selected.code, async () => {
-      try {
-        await axiosInstance.delete(`${API_ADDITIONAL_FLOORS}/${id}`, {
-          headers: { "X-Tenant": localStorage.getItem("tenant") },
-        });
-        toast.success(`${selected.code} deleted successfully`);
-        if (editId === id) {
-          setEditId(null);
-          setForm({ code: "", label: "" });
-        }
-        fetchAdditionalFloors();
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Delete failed");
-      }
-    });
-  };
-
-  // ================= Speeds =================
-  useEffect(() => {
-    fetchSpeeds();
-  }, []);
-
-  const fetchSpeeds = async () => {
-    try {
-      setLoading(true);
-      const res = await axiosInstance.get(API_SPEED, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      setSpeeds(res.data || []);
-    } catch (err) {
-      setSpeeds([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredSpeeds = useMemo(
-    () =>
-      speeds.filter((s) =>
-        s.value.toString().toLowerCase().includes(searchSpeed.toLowerCase())
-      ),
-    [speeds, searchSpeed]
-  );
-
-  const handleSubmitSpeed = async (e) => {
-    e.preventDefault();
-    const val = parseFloat(formSpeed.value);
-    if (isNaN(val) || val <= 0) {
-      toast.error("Enter a valid speed (m/s).");
-      return;
-    }
-    const duplicate = speeds.some(
-      (s) => s.value === val && s.id !== editIdSpeed
-    );
-    if (duplicate) {
-      toast.error("Speed already exists.");
-      return;
-    }
-    try {
-      const url = editIdSpeed ? `${API_SPEED}/${editIdSpeed}` : API_SPEED;
-      const method = editIdSpeed ? "put" : "post";
-      await axiosInstance[method](
-        url,
-        { value: val },
-        { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-      );
-      toast.success("Speed saved successfully");
-      fetchSpeeds();
-      setFormSpeed({ value: "" });
-      setEditIdSpeed(null);
-    } catch {
-      toast.error("Failed to save speed.");
-    }
-  };
-
-  const handleEditSpeed = (item) => {
-    setFormSpeed({ value: item.value });
-    setEditIdSpeed(item.id);
-  };
-
-  const handleDeleteSpeed = (id) => {
-    const selected = speeds.find((s) => s.id === id);
-    if (!selected) return;
-    confirmDeleteWithToast(selected.value, async () => {
-      try {
-        await axiosInstance.delete(`${API_SPEED}/${id}`, {
-          headers: { "X-Tenant": localStorage.getItem("tenant") },
-        });
-        toast.success("Deleted successfully");
-        fetchSpeeds();
-      } catch {
-        toast.error("Failed to delete speed.");
-      }
-    });
-  };
-
-  // ================= Fetch =================
-  // ================= Fetch Functions =================
-  const fetchManufacturers = async () => {
-    try {
-      const res = await axiosInstance.get(API_MANUFACTURER, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      const allManufacturers = Object.values(res.data.data || {}).flat();
-      setManufacturers(allManufacturers);
-    } catch (err) {
-      console.error("Error fetching manufacturers:", err);
-      setManufacturers([]);
-    }
-  };
-
-  const fetchComponents = async () => {
-    try {
-      const res = await axiosInstance.get(API_COMPONENT, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      setComponents(res.data.data || []);
-    } catch (err) {
-      console.error("Error fetching components:", err);
-      setComponents([]);
-    }
-  };
-
-  const fetchWarranties = async () => {
-    try {
-      const res = await axiosInstance.get(API_WARRANTY, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      const warrantyData = res.data || [];
-      setWarranty(warrantyData);
-      if (warrantyData.length > 0) {
-        const maxMonths = Math.max(...warrantyData.map((w) => w.warrantyMonth));
-        setWarrantyMessage(
-          `You have set warranties from 1 to ${maxMonths} months`
-        );
-      } else {
-        setWarrantyMessage("");
-      }
-    } catch (err) {
-      console.error("Error fetching warranties:", err);
-      setWarranty([]);
-      setWarrantyMessage("");
-    }
-  };
-
-  const fetchFeatures = async () => {
-    try {
-      const res = await axiosInstance.get(API_FEATURES, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      setFeatures(res.data || []);
-    } catch (err) {
-      console.error("Error fetching features:", err);
-      setFeatures([]);
-    }
-  };
-
-  const fetchOperationTypes = async () => {
-    try {
-      const res = await axiosInstance.get(API_OPERATION_TYPE, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      setOperationTypes(res.data || []);
-    } catch (err) {
-      console.error("Error fetching operation types:", err);
-      setOperationTypes([]);
-    }
-  };
-
-  // ================= useEffect Hook =================
-  useEffect(() => {
-    setLoading(true);
-    const loadAllData = async () => {
-      await Promise.all([
-        fetchManufacturers(),
-        fetchComponents(),
-        fetchWarranties(),
-        fetchFeatures(),
-        fetchOperationTypes(),
-      ]);
-      setLoading(false);
-    };
-
-    loadAllData();
-  }, []);
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
-
-  // const fetchData = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const [manuRes, compRes, warrantyRes, featuresRes, operatingTypeRes] =
-  //       await Promise.all([
-  //         axiosInstance.get(API_MANUFACTURER, {
-  //           headers: { "X-Tenant": localStorage.getItem("tenant") },
-  //         }),
-  //         axiosInstance.get(API_COMPONENT, {
-  //           headers: { "X-Tenant": localStorage.getItem("tenant") },
-  //         }),
-  //         axiosInstance.get(API_WARRANTY, {
-  //           headers: { "X-Tenant": localStorage.getItem("tenant") },
-  //         }),
-  //         axiosInstance.get(API_FEATURES, {
-  //           headers: { "X-Tenant": localStorage.getItem("tenant") },
-  //         }),
-  //         axiosInstance.get(API_OPERATION_TYPE, {
-  //           headers: { "X-Tenant": localStorage.getItem("tenant") },
-  //         }),
-  //       ]);
-
-  //     //setManufacturers(manuRes.data.data || []);
-  //     const allManufacturers = Object.values(manuRes.data.data || {}).flat();
-  //     setManufacturers(allManufacturers);
-  //     setComponents(compRes.data.data || []);
-  //     const warrantyData = warrantyRes.data || [];
-  //     setWarranty(warrantyData);
-  //     setFeatures(featuresRes.data || []);
-  //     setOperationTypes(operatingTypeRes.data || []);
-
-  //     // ✅ If warranties exist, show message
-  //     if (warrantyData.length > 0) {
-  //       const maxMonths = Math.max(...warrantyData.map((w) => w.warrantyMonth));
-  //       setWarrantyMessage(
-  //         `You have set warranties from 1 to ${maxMonths} months`
-  //       );
-  //     } else {
-  //       setWarrantyMessage(""); // or "No warranties configured yet"
-  //     }
-  //   } catch (err) {
-  //     setManufacturers([]);
-  //     setComponents([]);
-  //     setWarranty([]);
-  //     setFeatures([]);
-  //     setOperationTypes([]);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // ================= Filtered Lists =================
-  const filteredManufacturers = useMemo(
-    () =>
-      manufacturers.filter((m) => {
-        const search = searchManufacturer.toLowerCase();
-        return (
-          m.name.toLowerCase().includes(search) ||
-          m.componentName.toLowerCase().includes(search)
-        );
-      }),
-    [manufacturers, searchManufacturer]
-  );
-
-  const filteredComponents = useMemo(
-    () =>
-      components.filter((c) =>
-        c.name.toLowerCase().includes(searchComponent.toLowerCase())
-      ),
-    [components, searchComponent]
-  );
-
-  // ================= Manufacturer Handlers =================
-  const handleSubmitManufacturer = async (e) => {
-    e.preventDefault();
-    const name = sanitize(formManufacturer.value);
-    const componentId = formManufacturer.componentId;
-
-    if (!name || !componentId)
-      return toast.error("Manufacturer name and component are required");
-
-    const duplicate = manufacturers.some(
-      (m) =>
-        m.name.toUpperCase() === name.toUpperCase() &&
-        m.componentId === componentId &&
-        m.id !== editIdManufacturer
-    );
-    if (duplicate)
-      return toast.error(
-        "This manufacturer already exists for the selected component"
-      );
-
-    try {
-      const url = editIdManufacturer
-        ? `${API_MANUFACTURER}/${editIdManufacturer}`
-        : API_MANUFACTURER;
-      const method = editIdManufacturer ? "put" : "post";
-      const res = await axiosInstance[method](
-        url,
-        { name, componentId },
-        { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-      );
-      toast.success(res.data.message || "Saved successfully");
-      setEditIdManufacturer(null);
-      setFormManufacturer({ value: "", componentId: "" });
-      fetchManufacturers();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Save failed");
-    }
-  };
-
-  const handleEditManufacturer = (m) => {
-    setFormManufacturer({ value: m.name, componentId: m.componentId });
-    setEditIdManufacturer(m.id);
-  };
-
-  const handleDeleteManufacturer = (id) => {
-    const selected = manufacturers.find((m) => m.id === id);
-    if (!selected) return;
-
-    confirmDeleteWithToast(selected.name, async () => {
-      try {
-        await axiosInstance.delete(`${API_MANUFACTURER}/${id}`, {
-          headers: { "X-Tenant": localStorage.getItem("tenant") },
-        });
-        toast.success(`${selected.name} deleted successfully`);
-        if (editIdManufacturer === id) setEditIdManufacturer(null);
-        setFormManufacturer({ value: "", componentId: "" });
-        fetchManufacturers();
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Delete failed");
-      }
-    });
-  };
-
-  // ================= Component Handlers =================
-  const handleSubmitComponent = async (e) => {
-    e.preventDefault();
-    const name = sanitize(formComponent.value);
-    if (!name) return toast.error("Component name is required");
-
-    const duplicate = components.some(
-      (c) =>
-        c.name.toUpperCase() === name.toUpperCase() && c.id !== editIdComponent
-    );
-    if (duplicate) return toast.error("This component already exists");
-
-    try {
-      const url = editIdComponent
-        ? `${API_COMPONENT}/${editIdComponent}`
-        : API_COMPONENT;
-      const method = editIdComponent ? "put" : "post";
-      const res = await axiosInstance[method](
-        url,
-        { name },
-        { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-      );
-      toast.success(res.data.message || "Saved successfully");
-      setEditIdComponent(null);
-      setFormComponent({ value: "" });
-      fetchComponents();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Save failed");
-    }
-  };
-
-  const handleEditComponent = (c) => {
-    setFormComponent({ value: c.name });
-    setEditIdComponent(c.id);
-  };
-
-  const handleDeleteComponent = (id) => {
-    const selected = components.find((c) => c.id === id);
-    if (!selected) return;
-
-    // 🔒 Check if this component is used in any manufacturer
-    const isUsed = manufacturers.some((m) => m.componentId === id);
-    if (isUsed) {
-      toast.error(
-        `Cannot delete "${selected.name}" as it is linked with manufacturers.`
-      );
-      return;
-    }
-
-    confirmDeleteWithToast(selected.name, async () => {
-      try {
-        await axiosInstance.delete(`${API_COMPONENT}/${id}`, {
-          headers: { "X-Tenant": localStorage.getItem("tenant") },
-        });
-        toast.success(`${selected.name} deleted successfully`);
-        if (editIdComponent === id) setEditIdComponent(null);
-        setFormComponent({ value: "" });
-        fetchComponents();
-      } catch (err) {
-        toast.error(err.response?.data?.message || "Delete failed");
-      }
-    });
-  };
-
-  // =============== Generate warranties ==============
-  const handleGenerateWarranty = async (e) => {
-    e.preventDefault();
-
-    const totalMonths = parseInt(formWarranty.value, 10);
-
-    if (!totalMonths || totalMonths <= 0) {
-      toast.error("Please enter a valid number of months");
-      return;
-    }
-
-    confirmDeleteWithToast("existing warranties", async () => {
-      try {
-        const res = await axiosInstance.post(
-          `/api/warranties/generate/${totalMonths}`,
-          {},
-          { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-        );
-
-        if (res.data) {
-          toast.success(
-            `You have set warranties from 1 to ${totalMonths} months`
-          );
-          setWarrantyMessage(
-            `You have set warranties from 1 to ${totalMonths} months`
-          );
-
-          fetchWarranties();
-          setFormWarranty({ value: 0 });
-        } else {
-          toast.error(res.data?.message || "Failed to generate warranties");
-        }
-      } catch (err) {
-        toast.error(
-          err.response?.data?.message || "Error generating warranties"
-        );
-      }
-    });
-  };
-
-  // ================== FEATURES CRUD ==================
-  const handleSubmitFeature = async (e) => {
-    e.preventDefault();
-
-    const newValue = formFeatures.value.trim();
-
-    // ✅ Validation
-    if (!newValue) {
-      toast.error("Feature name is required!");
-      return;
-    }
-    if (/^\d+$/.test(newValue)) {
-      toast.error("Feature name cannot be only numbers!");
-      return;
-    }
-    if (
-      features.some(
-        (f) =>
-          f.name.toLowerCase() === newValue.toLowerCase() &&
-          f.id !== editIdFeatures
-      )
-    ) {
-      toast.error("Feature name must be unique!");
-      return;
-    }
-
-    try {
-      if (editIdFeatures) {
-        // ✅ Update feature
-        const res = await axiosInstance.put(
-          `${API_FEATURES}/${editIdFeatures}`,
-          { name: newValue, isActive: true }, // backend entity
-          { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-        );
-
-        setFeatures((prev) =>
-          prev.map((f) => (f.id === editIdFeatures ? res.data : f))
-        );
-        toast.success("Feature updated successfully!");
-        setEditIdFeatures(null);
-      } else {
-        // ✅ Add new feature
-        const res = await axiosInstance.post(
-          API_FEATURES,
-          { name: newValue, isActive: true },
-          { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-        );
-
-        setFeatures((prev) => [...prev, res.data]);
-        toast.success("Feature added successfully!");
-      }
-
-      // Reset form
-      setFormFeatures({ value: "" });
-    } catch (err) {
-      toast.error("Error while saving feature!");
-    }
-  };
-
-  const handleEditFeature = (feature) => {
-    setFormFeatures({ value: feature.name });
-    setEditIdFeatures(feature.id);
-  };
-
-  const handleDeleteFeature = async (id) => {
-    try {
-      await axiosInstance.delete(`${API_FEATURES}/${id}`, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      setFeatures((prev) => prev.filter((f) => f.id !== id));
-      toast.success("Feature deleted successfully!");
-    } catch (err) {
-      toast.error("Error deleting feature!");
-    }
-  };
-
-  const filteredFeatures = features.filter(
-    (feature) =>
-      feature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(feature.id).includes(searchTerm)
-  );
-
-  // Add this new function to your parent component
-  const handleToggleStatus = async (feature) => {
-    try {
-      const newStatus = !feature.active; // Toggle the current status
-
-      // Make the API call to update the feature status
-      const res = await axiosInstance.put(
-        `${API_FEATURES}/${feature.id}`,
-        { name: feature.name, active: newStatus }, // Send the new status
-        { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-      );
-
-      // Update the local state with the new data from the API response
-      setFeatures((prevFeatures) =>
-        prevFeatures.map((f) => (f.id === feature.id ? res.data : f))
-      );
-
-      toast.success(`Feature status updated successfully!`);
-    } catch (err) {
-      toast.error("Failed to update feature status.");
-      console.error(err);
-    }
-  };
-
-  // ================== FEATURES CRUD ==================
-  const handleSubmitOperationType = async (e) => {
-    e.preventDefault();
-
-    const newValue = formOperationType.value.trim();
-
-    // ✅ Validation
-    if (!newValue) {
-      toast.error("Operation Type is required!");
-      return;
-    }
-    if (/^\d+$/.test(newValue)) {
-      toast.error("Operation Type cannot be only numbers!");
-      return;
-    }
-    if (
-      operationTypes.some(
-        (f) =>
-          f.name.toLowerCase() === newValue.toLowerCase() &&
-          f.id !== editIdOperationType
-      )
-    ) {
-      toast.error("Operation Type must be unique!");
-      return;
-    }
-
-    try {
-      if (editIdOperationType) {
-        // ✅ Update feature
-        const res = await axiosInstance.put(
-          `${API_OPERATION_TYPE}/${editIdOperationType}`,
-          { name: newValue, isActive: true }, // backend entity
-          { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-        );
-
-        setOperationTypes((prev) =>
-          prev.map((f) => (f.id === editIdOperationType ? res.data : f))
-        );
-        toast.success("Operation type updated successfully!");
-        setEditIdOperationType(null);
-      } else {
-        // ✅ Add new feature
-        const res = await axiosInstance.post(
-          API_OPERATION_TYPE,
-          { name: newValue, isActive: true },
-          { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-        );
-
-        setOperationTypes((prev) => [...prev, res.data]);
-        toast.success("Operation Type added successfully!");
-      }
-
-      // Reset form
-      setFormOperationType({ value: "" });
-    } catch (err) {
-      toast.error("Error while saving operation type!");
-    }
-  };
-
-  const handleEditOperationType = (opTyp) => {
-    setFormOperationType({ value: opTyp.name });
-    setEditIdOperationType(opTyp.id);
-  };
-
-  const handleDeleteOperationType = async (id) => {
-    try {
-      await axiosInstance.delete(`${API_OPERATION_TYPE}/${id}`, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
-      setOperationTypes((prev) => prev.filter((f) => f.id !== id));
-      toast.success("Operation Type deleted successfully!");
-    } catch (err) {
-      toast.error("Error deleting Operation Type!");
-    }
-  };
-
-  const filteredOperationType = operationTypes.filter(
-    (opType) =>
-      opType.name.toLowerCase().includes(searchOperationType.toLowerCase()) ||
-      String(opType.id).includes(searchOperationType)
-  );
-
-  // Add this new function to your parent component
-  const handleToggleStatusOp = async (opTy) => {
-    try {
-      const newStatus = !opTy.active; // Toggle the current status
-
-      // Make the API call to update the feature status
-      const res = await axiosInstance.put(
-        `${API_OPERATION_TYPE}/${opTy.id}`,
-        { name: opTy.name, active: newStatus }, // Send the new status
-        { headers: { "X-Tenant": localStorage.getItem("tenant") } }
-      );
-
-      // Update the local state with the new data from the API response
-      setOperationTypes((prevOperationTypes) =>
-        prevOperationTypes.map((ot) => (ot.id === opTy.id ? res.data : ot))
-      );
-
-      toast.success(`Operation Type status updated successfully!`);
-    } catch (err) {
-      toast.error("Failed to update Operation Type status.");
-      console.error(err);
-    }
-  };
-
-  //====================capacity and dimensions ========================================
   const fetchAll = async () => {
     setLoading(null);
-    const tenant = localStorage.getItem("tenant");
     try {
       setLoading(true);
       //const [capacityTypeRes, personRes, weightRes, capDimRes] =
@@ -1096,9 +983,7 @@ export default function SupportingData() {
   const fetchComDim = async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get(API_CAPACITY_DIMENSIONS, {
-        headers: { "X-Tenant": localStorage.getItem("tenant") },
-      });
+      const res = await axiosInstance.get(API_CAPACITY_DIMENSIONS);
       setCapDims(Array.isArray(res?.data) ? res.data : []);
     } catch (err) {
       console.error("Error fetching components:", err);
@@ -1108,10 +993,10 @@ export default function SupportingData() {
     }
   };
 
-  useEffect(() => {
-    fetchAll();
-    fetchComDim();
-  }, []);
+  // useEffect(() => {
+  //   fetchAll();
+  //   fetchComDim();
+  // }, []);
 
   const capacityOptionsMap = {
     Person: {
@@ -1216,14 +1101,11 @@ export default function SupportingData() {
         await axiosInstance.put(
           `${API_CAPACITY_DIMENSIONS}/${editIdCapDim}`,
           payload,
-          { headers: { "X-Tenant": tenant } }
         );
         toast.success("Capacity Dimension updated successfully");
       } else {
         // 🔹 Create
-        await axiosInstance.post(API_CAPACITY_DIMENSIONS, payload, {
-          headers: { "X-Tenant": tenant },
-        });
+        await axiosInstance.post(API_CAPACITY_DIMENSIONS, payload);
         toast.success("Capacity Dimension added successfully");
       }
 
@@ -1255,10 +1137,7 @@ export default function SupportingData() {
   // ➡️ Delete
   const handleDeleteCapDim = async (id) => {
     try {
-      const tenant = localStorage.getItem("tenant");
-      await axiosInstance.delete(`${API_CAPACITY_DIMENSIONS}/${id}`, {
-        headers: { "X-Tenant": tenant },
-      });
+      await axiosInstance.delete(`${API_CAPACITY_DIMENSIONS}/${id}`);
       toast.success("Capacity Dimension deleted successfully");
       //await fetchAll();
       await fetchComDim();
@@ -1275,6 +1154,440 @@ export default function SupportingData() {
       .includes(searchCapDim.toLowerCase())
   );
 
+  //================ installation rules ====================================
+  const [installationRules, setInstallationRules] = useState([]);
+  const [formRule, setFormRule] = useState({
+    liftType: "",
+    floorLimits: "",
+    baseAmount: "",
+    extraAmount: "",
+  });
+  const [editRuleId, setEditRuleId] = useState(null);
+  const [searchRule, setSearchRule] = useState("");
+  const [operatorTypes, setOperatorTypes] = useState([]);
+
+  const fetchLiftTypes = async () => {
+    try {
+      const res = await axiosInstance.get(API_ENDPOINTS.OPERATOR, {
+        withCredentials: true,
+      });
+      setOperatorTypes(res.data?.data || []);
+    } catch (error) {
+      toast.error("Error loading lift types");
+    }
+  };
+
+  // ✅ Fetch all rules
+  const fetchInstallationRules = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get(API_ENDPOINTS.INSTALLATION_RULES);
+      setInstallationRules(res.data?.data || []);
+    } catch (err) {
+      console.error("Error fetching installation rules:", err);
+      console.error("Response:", err.response?.data);
+      console.error("URL:", API_ENDPOINTS.INSTALLATION_RULES);
+      setInstallationRules([]);
+      toast.error("Failed to load installation rules");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Create / Update rule
+  const handleSubmitRule = async (e) => {
+    e.preventDefault();
+
+    if (!formRule.liftType || !formRule.floorLimits || !formRule.baseAmount) {
+      toast.error("All fields are required!");
+      return;
+    }
+
+    try {
+      const selectedFloorIds = floors
+        .filter((f) => formRule.floorLimits.includes(f.floorName))
+        .map((f) => f.id);
+
+      const payload = {
+        ...formRule,
+        liftType: Number(formRule.liftType),
+        floorIds: selectedFloorIds, // send IDs
+        floorNames: formRule.floorLimits,
+      };
+
+      let res;
+
+      if (editRuleId) {
+        res = await axiosInstance.put(
+          `${API_ENDPOINTS.INSTALLATION_RULES}/${editRuleId}`,
+          payload,
+        );
+        setInstallationRules((prev) =>
+          prev.map((r) => (r.id === editRuleId ? res.data.data : r))
+        );
+        toast.success("Rule updated successfully!");
+        setEditRuleId(null);
+      } else {
+        res = await axiosInstance.post(
+          API_ENDPOINTS.INSTALLATION_RULES,
+          payload,
+        );
+        setInstallationRules((prev) => [...prev, res.data.data]);
+        toast.success("Rule added successfully!");
+      }
+
+      setFormRule({
+        liftType: "",
+        floorLimits: [],
+        baseAmount: "",
+        extraAmount: "",
+      });
+    } catch (err) {
+      toast.error("Error saving rule!");
+    }
+  };
+
+  // ✅ Edit
+  const handleEditRule = (rule) => {
+    console.log(rule);
+    const operator = operatorTypes.find((o) => o.name === rule.liftType);
+
+    setFormRule({
+      ...rule,
+      liftType: operator ? String(operator.id) : "",
+      floorLimits: Array.isArray(rule.floorNames)
+        ? rule.floorNames
+        : rule.floorLimits?.split(/,\s*/) || [],
+    });
+    setEditRuleId(rule.id);
+  };
+
+  // ✅ Delete
+  const handleDeleteRule = async (id) => {
+    try {
+      await axiosInstance.delete(`${API_ENDPOINTS.INSTALLATION_RULES}/${id}`);
+      setInstallationRules((prev) => prev.filter((r) => r.id !== id));
+      toast.success("Rule deleted successfully!");
+    } catch (err) {
+      toast.error("Error deleting rule!");
+    }
+  };
+
+  // ********************* Load ****************************
+  // const columnsLoad = [
+  //   { key: "value", label: "Load(%)", sortable: true, align: "text-left" },
+  // ];
+  // const [formLoad, setFormLoad] = useState({ value: "" });
+  // const [loads, setLoads] = useState([]);
+  // const [editIdLoad, setEditIdLoad] = useState(null);
+  // const [searchLoad, setSearchLoad] = useState("");
+  // // useEffect(() => {
+  // //   fetchSpeeds();
+  // // }, []);
+
+  // const fetchLoads = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const res = await axiosInstance.get(API_LOAD, {
+  //       headers: { "X-Tenant": localStorage.getItem("tenant") },
+  //     });
+  //     setLoads(res.data || []);
+  //   } catch (err) {
+  //     setLoads([]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const filteredLoads = useMemo(
+  //   () =>
+  //     loads.filter((s) =>
+  //       s.value.toString().toLowerCase().includes(searchLoad.toLowerCase())
+  //     ),
+  //   [loads, searchLoad]
+  // );
+
+  // const handleSubmitLoad = async (e) => {
+  //   e.preventDefault();
+  //   const val = parseFloat(formLoad.value);
+  //   if (isNaN(val) || val <= 0) {
+  //     toast.error("Enter a valid load(m/s).");
+  //     return;
+  //   }
+  //   const duplicate = loads.some((s) => s.value === val && s.id !== editIdLoad);
+  //   if (duplicate) {
+  //     toast.error("Loadal ready exists.");
+  //     return;
+  //   }
+  //   try {
+  //     const url = editIdLoad ? `${API_LOAD}/${editIdLoad}` : API_LOAD;
+  //     const method = editIdLoad ? "put" : "post";
+  //     await axiosInstance[method](
+  //       url,
+  //       { value: val },
+  //       { headers: { "X-Tenant": localStorage.getItem("tenant") } }
+  //     );
+  //     toast.success("Load saved successfully");
+  //     fetchLoads();
+  //     setFormLoad({ value: "" });
+  //     setEditIdLoad(null);
+  //   } catch {
+  //     toast.error("Failed to save speed.");
+  //   }
+  // };
+
+  // const handleEditLoad = (item) => {
+  //   setFormLoad({ value: item.value });
+  //   setEditIdLoad(item.id);
+  // };
+
+  // const handleDeleteLoad = (id) => {
+  //   const selected = speeds.find((s) => s.id === id);
+  //   if (!selected) return;
+  //   confirmDeleteWithToast(selected.value, async () => {
+  //     try {
+  //       await axiosInstance.delete(`${API_LOAD}/${id}`, {
+  //   //       });
+  //       toast.success("Deleted successfully");
+  //       fetchLoads();
+  //     } catch {
+  //       toast.error("Failed to delete speed.");
+  //     }
+  //   });
+  // };
+
+  const [formLoad, setFormLoad] = useState({ value: "" });
+  const [loads, setLoads] = useState([]);
+  const [editIdLoad, setEditIdLoad] = useState(null);
+
+  const fetchLoads = async () => {
+    try {
+      setLoading(true);
+      const res = await axiosInstance.get(API_LOAD);
+      // ✅ Only one record allowed
+      setLoads(Array.isArray(res.data?.data) ? res.data.data.slice(0, 1) : []);
+    } catch (err) {
+      console.error("Error fetching load:", err);
+      console.error("Response:", err.response?.data);
+      console.error("URL:", API_LOAD);
+      setLoads([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitLoad = async (e) => {
+    e.preventDefault();
+    const val = parseFloat(formLoad.value);
+    if (isNaN(val) || val <= 0) {
+      toast.error("Enter a valid load (%)");
+      return;
+    }
+
+    try {
+      const url = editIdLoad ? `${API_LOAD}/${editIdLoad}` : API_LOAD;
+      const method = editIdLoad ? "put" : "post";
+
+      await axiosInstance[method](
+        url,
+        { loadAmount: val },
+      );
+
+      toast.success(
+        editIdLoad ? "Load updated successfully" : "Load saved successfully"
+      );
+      setEditIdLoad(null);
+      setFormLoad({ value: "" });
+      fetchLoads();
+    } catch {
+      toast.error("Failed to save load.");
+    }
+  };
+
+  const handleEditLoad = (item) => {
+    setFormLoad({ value: item.loadAmount });
+    setEditIdLoad(item.id);
+  };
+
+  const handleDeleteLoad = (id) => {
+    const selected = loads.find((l) => l.id === id);
+    if (!selected) return;
+
+    confirmDeleteWithToast(`${selected.value}%`, async () => {
+      try {
+        await axiosInstance.delete(`${API_LOAD}/${id}`);
+        toast.success("Load deleted successfully");
+        fetchLoads();
+      } catch {
+        toast.error("Failed to delete load.");
+      }
+    });
+  };
+
+  // =============it should be at last -================
+
+  // ================= useEffect Hook =================
+  // useEffect(() => {
+  //   setLoading(true);
+  //   const loadAllData = async () => {
+  //     await Promise.all([
+  //       fetchManufacturers(),
+  //       fetchComponents(),
+  //       fetchWarranties(),
+  //       fetchFeatures(),
+  //       fetchOperationTypes(),
+  //     ]);
+  //     setLoading(false);
+  //   };
+
+  //   loadAllData();
+  // }, []);
+
+  const fetchers = {
+    floors: fetchFloors,
+    addFloors: fetchAdditionalFloors,
+    speeds: fetchSpeeds,
+    loads: fetchLoads,
+    compNmanu: async () => {
+      await fetchManufacturers();
+      await fetchComponents();
+    },
+    warranties: fetchWarranties,
+    features: fetchFeatures,
+    operationType: fetchOperationTypes,
+    capacityDimensions: async () => {
+      await fetchAll();
+      await fetchComDim();
+    },
+    installationRules: async () => {
+      await fetchLiftTypes();
+      await fetchInstallationRules();
+    },
+  };
+
+  const handleFormChange = async (formKey) => {
+    setActiveForm(formKey);
+
+    if (fetchers[formKey]) {
+      setLoading(true);
+      try {
+        await fetchers[formKey]();
+      } catch (err) {
+        console.error("Error fetching:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    handleFormChange("floors"); // run default fetcher on mount
+  }, []);
+
+  // 1) enriched display + tokenized search
+  const enrichedInstallationRules = useMemo(() => {
+    if (!installationRules.length) return [];
+
+    return installationRules.map((rule) => {
+      const liftTypeName =
+        operatorTypes.find((o) => o.id === rule.liftType)?.name ??
+        String(rule.liftType ?? "");
+
+      // ⚠️ Tidy up floorLimits to handle different properties robustly
+      const floorNamesArray =
+        Array.isArray(rule.floorNames) && rule.floorNames.length
+          ? rule.floorNames
+          : Array.isArray(rule.floorLimits) && rule.floorLimits.length
+          ? rule.floorLimits // Fallback if old data format uses floorLimits array
+          : [];
+
+      const floorLimits = floorNamesArray.join(", ");
+
+      const baseAmount = String(rule.baseAmount ?? "");
+      const extraAmount = String(rule.extraAmount ?? "");
+
+      // create normalized tokens for search (split by comma or space)
+      const floorTokens = floorLimits
+        .split(/[\s,]+/) // split by comma or any whitespace
+        .map((f) => f.trim())
+        .filter(Boolean);
+
+      const tokens = [
+        liftTypeName,
+        ...floorTokens,
+        baseAmount,
+        extraAmount,
+      ].map((t) => t.toLowerCase());
+
+      return {
+        ...rule,
+        liftType: liftTypeName,
+        floorLimits,
+        baseAmount,
+        extraAmount,
+        _display: {
+          liftType: liftTypeName,
+          floorLimits,
+          baseAmount,
+          extraAmount,
+        },
+        _searchTokens: tokens,
+      };
+    });
+  }, [installationRules, operatorTypes]);
+
+  // filtered search
+  const filteredInstallationRules = useMemo(() => {
+    if (!searchRule) return enrichedInstallationRules;
+
+    // normalize search input (lowercase, remove commas, split by spaces)
+    const terms = searchRule
+      .toLowerCase()
+      .replace(/,/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+
+    // every term must match at least one token
+    return enrichedInstallationRules.filter((r) =>
+      terms.every((originalTerm) => {
+        const term = originalTerm.toLowerCase().trim();
+
+        return r._searchTokens.some((token) => {
+          // exact match for floors like G+1
+          if (/^g\+\d+$/i.test(term)) {
+            return token === term;
+          }
+          // partial match for everything else (liftType, amounts)
+          return token.includes(term);
+        });
+      })
+    );
+  }, [enrichedInstallationRules, searchRule]);
+
+  // 3) columns (unchanged)
+  const columnsInstallationRules = [
+    {
+      key: "liftType",
+      label: "Lift Type",
+      render: (row) => row._display.liftType,
+    },
+    {
+      key: "floorLimits",
+      label: "Floor Limits",
+      render: (row) => row._display?.floorLimits || "",
+    },
+    {
+      key: "baseAmount",
+      label: "Base Amount",
+      render: (row) => row._display?.baseAmount || "",
+    },
+    {
+      key: "extraAmount",
+      label: "Extra Amount",
+      render: (row) => row._display?.extraAmount || "",
+    },
+  ];
+
   // ================= Render =================
   return (
     <div className="space-y-8 w-full p-6 min-h-screen">
@@ -1285,53 +1598,60 @@ export default function SupportingData() {
       />
 
       {/* Toggle Buttons */}
-      <div className="flex gap-3 mb-6">
+      {/* <div className="flex gap-3 mb-6">
         <FormButton
           type="button"
           variant={activeForm === "floors" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("floors")}
+          // onClick={() => setActiveForm("floors")}
+          onClick={() => handleFormChange("floors")}
         >
           Floors
         </FormButton>
         <FormButton
           type="button"
           variant={activeForm === "addFloors" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("addFloors")}
+          // onClick={() => setActiveForm("addFloors")}
+          onClick={() => handleFormChange("addFloors")}
         >
           Additional Floors
         </FormButton>
         <FormButton
           type="button"
           variant={activeForm === "speeds" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("speeds")}
+          // onClick={() => setActiveForm("speeds")}
+          onClick={() => handleFormChange("speeds")}
         >
           Speeds
         </FormButton>
         <FormButton
           type="button"
           variant={activeForm === "compNmanu" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("compNmanu")}
+          // onClick={() => setActiveForm("compNmanu")}
+          onClick={() => handleFormChange("compNmanu")}
         >
           Components & Manufacturers
         </FormButton>
         <FormButton
           type="button"
           variant={activeForm === "warranties" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("warranties")}
+          // onClick={() => setActiveForm("warranties")}
+          onClick={() => handleFormChange("warranties")}
         >
           Warranties
         </FormButton>
         <FormButton
           type="button"
           variant={activeForm === "features" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("features")}
+          // onClick={() => setActiveForm("features")}
+          onClick={() => handleFormChange("features")}
         >
           Features
         </FormButton>
         <FormButton
           type="button"
           variant={activeForm === "operationType" ? "primary" : "secondary"}
-          onClick={() => setActiveForm("operationType")}
+          // onClick={() => setActiveForm("operationType")}
+          onClick={() => handleFormChange("operationType")}
         >
           Operation Type
         </FormButton>
@@ -1340,10 +1660,56 @@ export default function SupportingData() {
           variant={
             activeForm === "capacityDimensions" ? "primary" : "secondary"
           }
-          onClick={() => setActiveForm("capacityDimensions")}
+          // onClick={() => setActiveForm("capacityDimensions")}
+          onClick={() => handleFormChange("capacityDimensions")}
         >
           Capacity & Dimensions
         </FormButton>
+        <FormButton
+          type="button"
+          variant={activeForm === "installationRules" ? "primary" : "secondary"}
+          // onClick={() => setActiveForm("installationRules")}
+          onClick={() => handleFormChange("installationRules")}
+        >
+          Installation Rules
+        </FormButton>
+        <FormButton
+          type="button"
+          variant={activeForm === "load" ? "primary" : "secondary"}
+          onClick={() => handleFormChange("loads")}
+        >
+          Load
+        </FormButton>
+      </div> */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        {[
+          { key: "floors", label: "Floors" },
+          { key: "addFloors", label: "Additional Floors" },
+          { key: "speeds", label: "Speeds" },
+          { key: "compNmanu", label: "Components & Manufacturers" },
+          { key: "warranties", label: "Warranties" },
+          { key: "features", label: "Features" },
+          { key: "operationType", label: "Operation Type" },
+          { key: "capacityDimensions", label: "Capacity & Dimensions" },
+          { key: "installationRules", label: "Installation Rules" },
+          { key: "loads", label: "Load" },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => handleFormChange(key)}
+            className={`px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md transition-all duration-300 transform
+        ${
+          activeForm === key
+            ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg scale-105"
+            : "bg-white text-gray-700 border border-gray-300 hover:border-blue-400 hover:text-blue-600 hover:shadow-lg hover:scale-105"
+        }
+        active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2
+      `}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Floors Form */}
@@ -1958,6 +2324,201 @@ export default function SupportingData() {
             inlineEditing={false}
             loading={loading}
           />
+        </FormSection>
+      )}
+
+      {activeForm === "installationRules" && (
+        <FormSection title="Installation Rules" icon={Settings}>
+          <ResponsiveForm
+            onSubmit={handleSubmitRule}
+            className="flex flex-wrap gap-4"
+          >
+            <div className="flex-1 min-w-[200px]">
+              <FormSelect
+                value={formRule.liftType || ""}
+                onChange={(e) =>
+                  setFormRule({ ...formRule, liftType: e.target.value })
+                }
+                required
+              >
+                <option value="" disabled>
+                  Select Operator Type
+                </option>
+                {operatorTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </FormSelect>
+            </div>
+
+            <div className="flex-1 min-w-[150px]">
+              <FormInput
+                type="number"
+                placeholder="Base Amount"
+                value={formRule.baseAmount || ""}
+                onChange={(e) =>
+                  setFormRule({ ...formRule, baseAmount: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="flex-1 min-w-[150px]">
+              <FormInput
+                type="number"
+                placeholder="Extra Amount"
+                value={formRule.extraAmount || ""}
+                onChange={(e) =>
+                  setFormRule({ ...formRule, extraAmount: e.target.value })
+                }
+                required
+              />
+            </div>
+            <div className="col-span-full">
+              <label className="font-semibold mb-1">Select Floors</label>
+              <div className="flex flex-wrap gap-4 w-full">
+                {floors.map((floor) => (
+                  <label
+                    key={floor.id}
+                    className="flex items-center gap-2 border rounded px-2 py-1 cursor-pointer w-24 justify-center"
+                  >
+                    <input
+                      type="checkbox"
+                      value={floor.floorName}
+                      checked={
+                        formRule.floorLimits?.includes(floor.floorName) || false
+                      }
+                      onChange={(e) => {
+                        const selected = [...(formRule.floorLimits || [])]; // always array
+                        if (e.target.checked) {
+                          selected.push(floor.floorName);
+                        } else {
+                          const idx = selected.indexOf(floor.floorName);
+                          if (idx > -1) selected.splice(idx, 1);
+                        }
+                        setFormRule({ ...formRule, floorLimits: selected });
+                      }}
+                      className="w-4 h-4"
+                    />
+
+                    <span className="text-sm">{floor.floorName}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <FormButton type="submit" variant="primary">
+                {editRuleId ? "Update" : "Add"}
+              </FormButton>
+
+              <FormButton
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setEditRuleId(null);
+                  setFormRule({
+                    liftType: "",
+                    floorLimits: "",
+                    baseAmount: "",
+                    extraAmount: "",
+                  });
+                }}
+              >
+                Cancel
+              </FormButton>
+            </div>
+          </ResponsiveForm>
+
+          <ReusableTable
+            title="Installation Rules List"
+            columns={columnsInstallationRules}
+            data={filteredInstallationRules || []} // fallback
+            rowKey="id"
+            onEdit={handleEditRule}
+            onDelete={handleDeleteRule}
+            searchTerm={searchRule}
+            onSearchChange={setSearchRule}
+            height="350px"
+          />
+        </FormSection>
+      )}
+
+      {/* Load Form */}
+      {activeForm === "loads" && (
+        <FormSection title="Load" icon={SquareStack}>
+          {/* ✅ If load not set, show input form */}
+          {!loads.length ? (
+            <ResponsiveForm
+              onSubmit={handleSubmitLoad}
+              className="flex flex-wrap items-center gap-4 max-w-md"
+            >
+              <FormInput
+                type="number"
+                step="0.01"
+                placeholder="Enter Load (%)"
+                value={formLoad.value}
+                onChange={(e) => setFormLoad({ value: e.target.value })}
+                required
+              />
+              <FormButton variant="primary">
+                {editIdLoad ? "Update" : "Save"}
+              </FormButton>
+            </ResponsiveForm>
+          ) : (
+            // ✅ If load exists, show beautiful card
+            <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg max-w-md">
+              <h3 className="text-lg font-semibold mb-2">
+                Current Load Setting
+              </h3>
+              <p className="text-2xl font-bold">{loads[0].loadAmount}%</p>
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  onClick={() => handleEditLoad(loads[0])}
+                  className="bg-white text-blue-600 px-4 py-1.5 rounded-lg font-medium hover:bg-blue-50 transition"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteLoad(loads[0].id)}
+                  className="bg-red-500 text-white px-4 py-1.5 rounded-lg font-medium hover:bg-red-600 transition"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ✅ When editing existing load, show small inline editor */}
+          {editIdLoad && (
+            <div className="mt-4 p-4 border border-gray-300 rounded-xl bg-gray-50 max-w-md">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                Editing Load
+              </h4>
+              <ResponsiveForm
+                onSubmit={handleSubmitLoad}
+                className="flex flex-wrap items-center gap-4"
+              >
+                <FormInput
+                  type="number"
+                  step="0.01"
+                  value={formLoad.value}
+                  onChange={(e) => setFormLoad({ value: e.target.value })}
+                  required
+                />
+                <FormButton variant="primary">Update</FormButton>
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditIdLoad(null);
+                    setFormLoad({ value: "" });
+                  }}
+                >
+                  Cancel
+                </FormButton>
+              </ResponsiveForm>
+            </div>
+          )}
         </FormSection>
       )}
     </div>

@@ -32,9 +32,14 @@ public class OtherMaterial {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotNull(message = "Material type is required")
-    @Column(name = "material_type", nullable = false)
-    private String materialType;
+    @NotNull(message = "Material main type is required")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "other_material_main_id", nullable = false)
+    private OtherMaterialMain otherMaterialMain;
+
+    @NotNull(message = "Material name is required")
+    @Column(name = "other_material_name", nullable = false)
+    private String otherMaterialName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "operator_type")
@@ -45,7 +50,7 @@ public class OtherMaterial {
     private TypeOfLift machineRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "capacity_type", nullable = false)
+    @JoinColumn(name = "capacity_type")
     private CapacityType capacityType;
 
     @ManyToOne(fetch = FetchType.LAZY)

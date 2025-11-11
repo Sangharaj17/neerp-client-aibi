@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class OtherMaterialService {
 
     private final OtherMaterialRepository repository;
+    private final OtherMaterialMainRepository otherMaterialMainRepository;
     private final OperatorElevatorRepository operatorElevatorRepository;
     private final TypeOfLiftRepository typeOfLiftRepository;
     private final CapacityTypeRepository capacityTypeRepository;
@@ -33,16 +34,15 @@ public class OtherMaterialService {
     public List<OtherMaterialResponseDTO> findAll() {
         log.info("Fetching all OtherMaterial records in ascending order");
 
-        return repository.findAll(
-                        Sort.by(Sort.Order.asc("id"))
-                ).stream()
+        return repository.findAll(Sort.by(Sort.Order.asc("id")))
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public ApiResponse<OtherMaterialResponseDTO> create(OtherMaterialRequestDTO dto) {
-        log.info("Creating OtherMaterial: {}", dto.getMaterialType());
+        log.info("Creating OtherMaterial: {}", dto.getOtherMaterialMainId());
 
         OtherMaterial entity = new OtherMaterial();
         applyDto(dto, entity);
@@ -80,13 +80,14 @@ public class OtherMaterialService {
             Integer operatorId,
             Integer capacityTypeId,
             Integer capacityValueId,
-            Integer typeOfLiftId) {
+            Integer typeOfLiftId,
+            Integer floors) {
 
-        log.info("Searching OtherMaterial by operatorId={}, capacityTypeId={}, capacityValueId={}, typeOfLiftId={}",
-                operatorId, capacityTypeId, capacityValueId, typeOfLiftId);
+        log.info("Searching OtherMaterial by operatorId={}, capacityTypeId={}, capacityValueId={}, typeOfLiftId={} and floors={}",
+                operatorId, capacityTypeId, capacityValueId, typeOfLiftId, floors);
 
-        List<OtherMaterial> results = repository.findByOperatorTypeIdAndCapacityTypeIdAndCapacityValueAndMachineRoomId(
-                operatorId, capacityTypeId, capacityValueId, typeOfLiftId
+        List<OtherMaterial> results = repository.findByOperatorTypeIdAndCapacityTypeIdAndCapacityValueAndMachineRoomIdAndFloorsAndMainType(
+                operatorId, capacityTypeId, capacityValueId, typeOfLiftId, floors,"Machines"
         );
 
         if (results.isEmpty()) {
@@ -98,63 +99,90 @@ public class OtherMaterialService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<OtherMaterialResponseDTO> findByOtherMaterialMainId(Long otherMaterialMainId) {
+        log.info("Fetching OtherMaterial by OtherMaterialMainId={}", otherMaterialMainId);
+
+        List<OtherMaterial> materials = repository.findByOtherMaterialMainId(otherMaterialMainId);
+        if (materials.isEmpty()) {
+            log.warn("No OtherMaterial found for OtherMaterialMainId={}", otherMaterialMainId);
+        }
+
+        return materials.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<OtherMaterialResponseDTO> findByOperatorIdExcludingOthers(Integer operatorId) {
+        log.info("Fetching OtherMaterial for operatorId={} excluding mainType='Others'", operatorId);
+
+        List<OtherMaterial> materials = repository.findByOperatorIdExcludingOthers(operatorId);
+
+        if (materials.isEmpty()) {
+            log.warn("No OtherMaterial found for operatorId={} excluding Others", operatorId);
+        }
+
+        return materials.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
 
     private void applyDto(OtherMaterialRequestDTO dto, OtherMaterial entity) {
-        // Material Type
-        if (dto.getMaterialType() != null) {
-            entity.setMaterialType(Encode.forHtmlContent(dto.getMaterialType().trim()));
+        // Material Type (Required)
+        if (dto.getOtherMaterialMainId() != null) {
+            entity.setOtherMaterialMain(
+                    otherMaterialMainRepository.findById(dto.getOtherMaterialMainId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Material main type not found"))
+            );
+        } else {
+            throw new IllegalArgumentException("Material main type is required");
+        }
+
+        // Other Material Name (Required)
+        if (dto.getOtherMaterialName() != null && !dto.getOtherMaterialName().trim().isEmpty()) {
+            entity.setOtherMaterialName(Encode.forHtmlContent(dto.getOtherMaterialName().trim()));
+        } else {
+            throw new IllegalArgumentException("Other Material Name is required");
         }
 
         // Operator Type
         if (dto.getOperatorTypeId() != null) {
             entity.setOperatorType(operatorElevatorRepository.findById(dto.getOperatorTypeId())
-                    .orElseThrow(() -> {
-                        log.error("Operator Type not found for ID {}", dto.getOperatorTypeId());
-                        return new ResourceNotFoundException("Operator Type not found");
-                    }));
+                    .orElseThrow(() -> new ResourceNotFoundException("Operator Type not found")));
         }
 
         // Machine Room
         if (dto.getMachineRoomId() != null) {
             entity.setMachineRoom(typeOfLiftRepository.findById(dto.getMachineRoomId())
-                    .orElseThrow(() -> {
-                        log.error("Machine Room type not found for ID {}", dto.getMachineRoomId());
-                        return new ResourceNotFoundException("Machine Room type not found");
-                    }));
+                    .orElseThrow(() -> new ResourceNotFoundException("Machine Room type not found")));
         }
 
         // Capacity Type (Required)
-        entity.setCapacityType(capacityTypeRepository.findById(dto.getCapacityTypeId())
-                .orElseThrow(() -> {
-                    log.error("Capacity Type not found for ID {}", dto.getCapacityTypeId());
-                    return new ResourceNotFoundException("Capacity Type not found");
-                }));
+        if (dto.getCapacityTypeId() != null) {
+            entity.setCapacityType(capacityTypeRepository.findById(dto.getCapacityTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Capacity Type not found")));
+        } else {
+            entity.setCapacityType(null); // allow null for non-Others
+        }
 
         // Person Capacity
         if (dto.getPersonCapacityId() != null) {
             entity.setPersonCapacity(personCapacityRepository.findById(dto.getPersonCapacityId())
-                    .orElseThrow(() -> {
-                        log.error("Person Capacity not found for ID {}", dto.getPersonCapacityId());
-                        return new ResourceNotFoundException("Person Capacity not found");
-                    }));
+                    .orElseThrow(() -> new ResourceNotFoundException("Person Capacity not found")));
         }
 
         // Weight
         if (dto.getWeightId() != null) {
             entity.setWeight(weightRepository.findById(dto.getWeightId())
-                    .orElseThrow(() -> {
-                        log.error("Weight not found for ID {}", dto.getWeightId());
-                        return new ResourceNotFoundException("Weight not found");
-                    }));
+                    .orElseThrow(() -> new ResourceNotFoundException("Weight not found")));
         }
 
         // Floors
         if (dto.getFloorsId() != null) {
             entity.setFloors(floorRepository.findById(Long.valueOf(dto.getFloorsId()))
-                    .orElseThrow(() -> {
-                        log.error("Floor not found for ID {}", dto.getFloorsId());
-                        return new ResourceNotFoundException("Floor not found");
-                    }));
+                    .orElseThrow(() -> new ResourceNotFoundException("Floor not found")));
         }
 
         // Quantity
@@ -169,7 +197,12 @@ public class OtherMaterialService {
     private OtherMaterialResponseDTO toResponse(OtherMaterial o) {
         return OtherMaterialResponseDTO.builder()
                 .id(o.getId())
-                .materialType(o.getMaterialType())
+                .otherMaterialMainId(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().getId() : null)
+                .otherMaterialMainName(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().getMaterialMainType() : null)
+                .otherMaterialMainActive(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().getActive() : null)
+                .otherMaterialMainRule(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().getRuleExpression() : null)
+                .otherMaterialMainIsSystemDefined(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().isSystemDefined() : null)
+                .otherMaterialName(o.getOtherMaterialName())
 
                 .operatorTypeId(o.getOperatorType() != null ? o.getOperatorType().getId() : null)
                 .operatorTypeName(o.getOperatorType() != null ? o.getOperatorType().getName() : null)
@@ -186,9 +219,39 @@ public class OtherMaterialService {
                 .weightId(o.getWeight() != null ? o.getWeight().getId() : null)
                 .weightName(o.getWeight() != null ? o.getWeight().getWeightValue() + " " + o.getWeight().getUnit().getUnitName() : null)
 
+                .floors(o.getFloors() != null ? o.getFloors().getId() : null)
                 .floorsLabel(o.getFloors() != null ? o.getFloors().getFloorName() : null)
                 .quantity(o.getQuantity())
                 .price(o.getPrice())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public List<OtherMaterialResponseDTO> findByOperatorAndMainTypeContaining(Integer operatorId, String keyword) {
+        log.info("Fetching OtherMaterial where mainType contains '{}' and operatorId={}", keyword, operatorId);
+
+        // 1️⃣ Fetch all "Default" materials (operatorType IS NULL)
+        List<OtherMaterial> defaultMaterials =
+                repository.findByOtherMaterialMain_MaterialMainTypeContainingIgnoreCaseAndOperatorTypeIsNull("Default");
+
+        // 2️⃣ Fetch all "DefaultOperator" materials for this operator
+        List<OtherMaterial> operatorSpecificMaterials =
+                repository.findByOtherMaterialMain_MaterialMainTypeContainingIgnoreCaseAndOperatorType_Id("DefaultOperator", operatorId);
+
+        // 3️⃣ Combine both lists
+        List<OtherMaterial> combined = new java.util.ArrayList<>();
+        combined.addAll(defaultMaterials);
+        combined.addAll(operatorSpecificMaterials);
+
+        if (combined.isEmpty()) {
+            log.warn("No OtherMaterial found for operatorId={} with Default or DefaultOperator types", operatorId);
+        }
+
+        return combined.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
+
 }

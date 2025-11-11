@@ -22,10 +22,12 @@ export default async function LoginPage() {
   }
 
   try {
-    await axiosAdmin.get(`/api/clients/domain/${tenant}/with-subscription-check`, {
+    const clientResponse = await axiosAdmin.get(`/api/clients/domain/${tenant}/with-subscription-check`, {
       headers: { "X-Tenant": tenant },
     });
-    return <LoginForm tenant={tenant} />;
+    // Client name is nested in client object: {modules: [...], client: {clientName: '...'}}
+    const clientName = clientResponse.data?.client?.clientName || clientResponse.data?.clientName || '';
+    return <LoginForm tenant={tenant} clientName={clientName} />;
   } catch (err) {
     let reason = "not_found";
     if (err.response) {

@@ -31,7 +31,6 @@ public class FloorService {
     /// Add new floors if TotalFloors increased.
     /// Delete extra floors if TotalFloors decreased, but only if they are not referenced (handle foreign key constraints).
     /// If TotalFloors decreased and prefix changed, just update names for existing floors.
-    ///
     @Transactional
     public ApiResponse<List<FloorResponseDTO>> generateAndSaveFloors(FloorRequestDTO requestDTO) {
         log.info("Generating/updating floors with request: {}", requestDTO);
@@ -140,10 +139,16 @@ public class FloorService {
 //                saved.stream().map(this::mapToDTO).collect(Collectors.toList()));
 //    }
 
-    /** READ - Get All Floors (Sorted) */
+    /**
+     * READ - Get All Floors (Sorted)
+     */
     public ApiResponse<List<FloorResponseDTO>> getAllFloorsSorted() {
-        List<FloorResponseDTO> allFloors = floorRepository.findAll().stream()
-                .sorted((f1, f2) -> f1.getFloorName().compareToIgnoreCase(f2.getFloorName()))
+//        List<FloorResponseDTO> allFloors = floorRepository.findAll().stream()
+//                .sorted((f1, f2) -> f1.getFloorName().compareToIgnoreCase(f2.getFloorName()))
+//                .map(this::mapToDTO)
+//                .collect(Collectors.toList());
+
+        List<FloorResponseDTO> allFloors = floorRepository.findAll(Sort.by(Sort.Order.asc("id"))).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
 
@@ -151,7 +156,9 @@ public class FloorService {
         return new ApiResponse<>(true, "Floors fetched successfully", allFloors);
     }
 
-    /** READ - Get Floor By ID */
+    /**
+     * READ - Get Floor By ID
+     */
     public ApiResponse<FloorResponseDTO> getFloorById(Long id) {
         Floor floor = floorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found with ID: " + id));
@@ -159,7 +166,9 @@ public class FloorService {
         return new ApiResponse<>(true, "Floor fetched successfully", mapToDTO(floor));
     }
 
-    /** UPDATE - Update Floor Name */
+    /**
+     * UPDATE - Update Floor Name
+     */
     public ApiResponse<FloorResponseDTO> updateFloor(Long id, String newName) {
         String sanitized = sanitize(newName);
         Floor floor = floorRepository.findById(id)
@@ -176,7 +185,9 @@ public class FloorService {
         return new ApiResponse<>(true, "Floor updated successfully", mapToDTO(updated));
     }
 
-    /** DELETE - Delete Floor By ID */
+    /**
+     * DELETE - Delete Floor By ID
+     */
     public ApiResponse<String> deleteFloor(Long id) {
         Floor floor = floorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found with ID: " + id));
@@ -186,12 +197,16 @@ public class FloorService {
         return new ApiResponse<>(true, "Floor deleted successfully", null);
     }
 
-    /** Map Entity to DTO */
+    /**
+     * Map Entity to DTO
+     */
     private FloorResponseDTO mapToDTO(Floor floor) {
         return new FloorResponseDTO(floor.getId(), floor.getFloorName());
     }
 
-    /** Sanitize Input */
+    /**
+     * Sanitize Input
+     */
     private String sanitize(String input) {
         return StringUtils.trimWhitespace(input.replaceAll("[^a-zA-Z0-9+]", ""));
     }

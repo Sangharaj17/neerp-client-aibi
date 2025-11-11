@@ -65,7 +65,7 @@ export default function WiringPluablebrackets() {
       editable: false,
     },
     {
-      key: "floorName",
+      key: "floorId",
       label: "Floor",
       sortable: true,
       editable: false,
@@ -450,7 +450,7 @@ export default function WiringPluablebrackets() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.floorName}
+                {type.id}
               </option>
             ))}
           </FormSelect>

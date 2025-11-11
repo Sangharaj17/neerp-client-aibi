@@ -49,6 +49,7 @@ public class WireRopeService {
     @Transactional
     public ApiResponse<WireRopeResponseDTO> update(Integer id, WireRopeRequestDTO dto) {
         log.info("Updating WireRope with ID: {}", id);
+        System.out.println(id+"Updating WireRope with ID:");
 
         WireRope wireRope = wireRopeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Wire Rope not found with ID: " + id));
@@ -98,4 +99,37 @@ public class WireRopeService {
                 .price(wr.getPrice())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public List<WireRopeResponseDTO> findByFloorId(Long floorId) {
+        log.info("Fetching WireRopes for Floor ID: {}", floorId);
+
+        // Verify floor exists (optional but recommended)
+        floorRepository.findById(floorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Floor not found with ID: " + floorId));
+
+        return wireRopeRepository.findByFloor_Id(floorId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<WireRopeResponseDTO> findByFloorAndOperator(Long floorId, Long operatorTypeId) {
+        log.info("Fetching WireRopes for Floor ID {} and Operator Type ID {}", floorId, operatorTypeId);
+
+        // Optional validation (recommended)
+        floorRepository.findById(floorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Floor not found with ID: " + floorId));
+
+        operatorElevatorRepository.findById(Math.toIntExact(operatorTypeId))
+                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator not found with ID: " + operatorTypeId));
+
+        return wireRopeRepository.findByFloor_IdAndOperatorElevator_Id(floorId, operatorTypeId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+
 }

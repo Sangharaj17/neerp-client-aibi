@@ -331,8 +331,10 @@ export default function ControlPanelPage() {
       );
       selectedCapacityId = personCapacity?.id || "";
     } else if (item.capacityTypeName === "Weight") {
+      // console.log(item.weightName,"----item.weightName----",weightCapacities,"---weightCapacities----");
+      // console.log("--------------------------");
       const weightCapacity = weightCapacities.find(
-        (wc) => wc.weightValue === item.weightName
+        (wc) => wc.weightFull === item.weightName
       );
       selectedCapacityId = weightCapacity?.id || "";
     }
@@ -340,7 +342,7 @@ export default function ControlPanelPage() {
     // Get the form key dynamically from the capacityOptionsMap
     const capacityMeta = capacityOptionsMap[item.capacityTypeName];
     const dynamicFormKey = capacityMeta ? capacityMeta.formKey : "";
-
+    
     // Set the form state using the found IDs and the dynamic key
     setForm({
       controlPanelType: item.controlPanelType,

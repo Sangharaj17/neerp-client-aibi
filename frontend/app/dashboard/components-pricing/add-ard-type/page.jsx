@@ -68,8 +68,6 @@ export default function ArdTypePage() {
 
   //=============================================
   const fetchAll = async () => {
-    const tenant = localStorage.getItem("tenant");
-
     try {
       const [capacityTypeRes, personRes, weightRes, operatorRes] =
         await Promise.all([
@@ -145,9 +143,6 @@ export default function ArdTypePage() {
     try {
       setLoading(true);
       const res = await axiosInstance.get(API_URL, {
-        headers: {
-          "X-Tenant": localStorage.getItem("tenant"),
-        },
         withCredentials: true,
       });
 
@@ -274,9 +269,6 @@ export default function ArdTypePage() {
       const method = editId ? "put" : "post";
 
       const response = await axiosInstance[method](url, newItem, {
-        headers: {
-          "X-Tenant": localStorage.getItem("tenant"),
-        },
         withCredentials: true,
       });
 
@@ -329,9 +321,6 @@ export default function ArdTypePage() {
     confirmDeleteWithToast(selected.ardDevice, async () => {
       try {
         await axiosInstance.delete(`${API_URL}/${id}`, {
-          headers: {
-            "X-Tenant": localStorage.getItem("tenant"),
-          },
           withCredentials: true,
         });
 

@@ -97,4 +97,16 @@ public class CounterWeightService {
                 .price(entity.getPrice())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public List<CounterWeightResponseDTO> findByFloor(Long floorId) {
+        log.info("Fetching Counter Weights for Floor ID {}", floorId);
+
+        return repository.findByFloors_Id(floorId)
+                .stream()
+                .sorted(Comparator.comparing(CounterWeight::getId))
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
 }
