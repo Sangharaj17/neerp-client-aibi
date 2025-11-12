@@ -68,43 +68,57 @@ public class DatabaseColumnNamingFixer {
      */
     @Transactional
     public boolean validateAndFixColumnNames() {
-        System.out.println("[ColumnNamingFixer] ===== Starting column naming validation and fix =====");
+        System.out.println("[ColumnNamingFixer] ========================================");
+        System.out.println("[ColumnNamingFixer] ===== STARTING COLUMN NAMING FIX =====");
+        System.out.println("[ColumnNamingFixer] ========================================");
         boolean allFixed = true;
         
         try {
+            System.out.println("[ColumnNamingFixer] Checking " + KNOWN_COLUMN_MAPPINGS.size() + " tables for column naming issues...");
+            
             for (Map.Entry<String, Map<String, String>> tableEntry : KNOWN_COLUMN_MAPPINGS.entrySet()) {
                 String tableName = tableEntry.getKey();
                 Map<String, String> columnMappings = tableEntry.getValue();
+                
+                System.out.println("[ColumnNamingFixer] Processing table: " + tableName);
                 
                 if (!tableExists(tableName)) {
                     System.out.println("[ColumnNamingFixer] ⚠️ Table " + tableName + " does not exist, skipping...");
                     continue;
                 }
                 
+                System.out.println("[ColumnNamingFixer] ✅ Table " + tableName + " exists, checking " + columnMappings.size() + " columns...");
+                
                 for (Map.Entry<String, String> columnEntry : columnMappings.entrySet()) {
                     String hibernateExpectedName = columnEntry.getKey();
                     String actualDbColumnName = columnEntry.getValue();
                     
+                    System.out.println("[ColumnNamingFixer] Checking: " + tableName + "." + actualDbColumnName + " → " + hibernateExpectedName);
                     boolean fixed = validateAndFixColumn(tableName, hibernateExpectedName, actualDbColumnName);
                     if (!fixed) {
+                        System.err.println("[ColumnNamingFixer] ❌ FAILED to fix: " + tableName + "." + actualDbColumnName);
                         allFixed = false;
                     }
                 }
             }
             
+            System.out.println("[ColumnNamingFixer] ========================================");
             if (allFixed) {
-                System.out.println("[ColumnNamingFixer] ✅ All column naming issues validated and fixed successfully");
+                System.out.println("[ColumnNamingFixer] ✅ ALL COLUMN NAMING ISSUES FIXED");
             } else {
-                System.out.println("[ColumnNamingFixer] ⚠️ Some column naming issues could not be fixed automatically");
+                System.err.println("[ColumnNamingFixer] ⚠️ SOME COLUMN NAMING ISSUES COULD NOT BE FIXED");
+                System.err.println("[ColumnNamingFixer] ⚠️ Application may fail! Check logs above for details.");
             }
+            System.out.println("[ColumnNamingFixer] ========================================");
             
         } catch (Exception e) {
-            System.err.println("[ColumnNamingFixer] ❌ Error during column naming validation: " + e.getMessage());
+            System.err.println("[ColumnNamingFixer] ❌❌❌ CRITICAL ERROR during column naming validation ❌❌❌");
+            System.err.println("[ColumnNamingFixer] Error: " + e.getMessage());
+            System.err.println("[ColumnNamingFixer] Stack trace:");
             e.printStackTrace();
             allFixed = false;
         }
         
-        System.out.println("[ColumnNamingFixer] ===== Column naming validation complete =====");
         return allFixed;
     }
 
@@ -153,7 +167,13 @@ public class DatabaseColumnNamingFixer {
                 // Old column exists but not the snake_case version - rename it!
                 System.out.println("[ColumnNamingFixer] 🔧 Table " + tableName + 
                     ": Renaming column '" + actualDbColumnName + "' → '" + hibernateExpectedName + "'");
-                return renameColumn(tableName, actualDbColumnName, hibernateExpectedName);
+                boolean renameSuccess = renameColumn(tableName, actualDbColumnName, hibernateExpectedName);
+                if (!renameSuccess) {
+                    System.err.println("[ColumnNamingFixer] ❌ CRITICAL: Failed to rename column " + tableName + 
+                        "." + actualDbColumnName + ". Application may fail!");
+                    System.err.println("[ColumnNamingFixer] 💡 Temporary workaround: Add @Column(name = \"" + actualDbColumnName + "\") to entity field");
+                }
+                return renameSuccess;
             }
             
             // Neither column exists - Hibernate will create it with the correct name
@@ -181,48 +201,88 @@ public class DatabaseColumnNamingFixer {
         try {
             // PostgreSQL stores unquoted identifiers in lowercase
             // Hibernate's naming strategy generates lowercase snake_case (e.g., "unit_name")
-            // So we don't need to quote the new column name - it will be stored as lowercase anyway
-            // We quote the table and old column name to handle any case-sensitivity issues
+            // We need to handle case-insensitive matching for the old column name
+            // but use the exact new name (lowercase snake_case)
             
-            // For the new column name, we use it unquoted since it's already lowercase
-            // and matches what Hibernate expects (lowercase snake_case)
+            // Use unquoted identifiers for PostgreSQL (standard convention)
+            // PostgreSQL will automatically convert to lowercase
             String sql = String.format(
                 "ALTER TABLE %s RENAME COLUMN %s TO %s",
-                quoteIdentifier(tableName),
-                quoteIdentifier(oldColumnName),
-                newColumnName.toLowerCase()  // Ensure lowercase, don't quote (standard PostgreSQL convention)
+                tableName.toLowerCase(),  // Table names are case-insensitive in PostgreSQL
+                oldColumnName.toLowerCase(),  // Old column name (camelCase -> lowercase)
+                newColumnName.toLowerCase()   // New column name (snake_case -> lowercase)
             );
             
-            System.out.println("[ColumnNamingFixer] Executing: " + sql);
+            System.out.println("[ColumnNamingFixer] 🔧 Executing SQL: " + sql);
+            System.out.println("[ColumnNamingFixer] 🔧 Renaming: " + tableName + "." + oldColumnName + " → " + newColumnName);
+            
             jdbcTemplate.execute(sql);
             
-            System.out.println("[ColumnNamingFixer] ✅ Successfully renamed column " + tableName + 
-                "." + oldColumnName + " → " + newColumnName + " (data preserved)");
+            // Wait a moment for the change to propagate
+            Thread.sleep(100);
             
             // Verify the rename was successful
             boolean newColumnExists = columnExists(tableName, newColumnName);
             boolean oldColumnStillExists = columnExists(tableName, oldColumnName);
             
             if (newColumnExists && !oldColumnStillExists) {
-                System.out.println("[ColumnNamingFixer] ✅ Verified: Column rename confirmed");
+                System.out.println("[ColumnNamingFixer] ✅✅✅ SUCCESS: Column renamed and verified!");
+                System.out.println("[ColumnNamingFixer] ✅ Old column '" + oldColumnName + "' no longer exists");
+                System.out.println("[ColumnNamingFixer] ✅ New column '" + newColumnName + "' exists");
                 return true;
+            } else if (newColumnExists && oldColumnStillExists) {
+                System.err.println("[ColumnNamingFixer] ⚠️ WARNING: Both columns exist! This shouldn't happen.");
+                System.err.println("[ColumnNamingFixer] ⚠️ Old: " + oldColumnName + " (exists: " + oldColumnStillExists + ")");
+                System.err.println("[ColumnNamingFixer] ⚠️ New: " + newColumnName + " (exists: " + newColumnExists + ")");
+                return true; // Still return true as new column exists
+            } else if (!newColumnExists && !oldColumnStillExists) {
+                System.err.println("[ColumnNamingFixer] ❌ ERROR: Neither column exists after rename!");
+                return false;
             } else {
-                System.err.println("[ColumnNamingFixer] ⚠️ Warning: Column rename may not have completed correctly");
+                System.err.println("[ColumnNamingFixer] ❌ ERROR: Rename verification failed");
+                System.err.println("[ColumnNamingFixer] ❌ Old column exists: " + oldColumnStillExists);
+                System.err.println("[ColumnNamingFixer] ❌ New column exists: " + newColumnExists);
                 return false;
             }
             
-        } catch (Exception e) {
-            System.err.println("[ColumnNamingFixer] ❌ Failed to rename column " + tableName + 
-                "." + oldColumnName + " to " + newColumnName);
-            System.err.println("[ColumnNamingFixer] Error: " + e.getMessage());
-            System.err.println("[ColumnNamingFixer] 💡 This may happen if:");
-            System.err.println("[ColumnNamingFixer]   1. Column doesn't exist (already renamed?)");
-            System.err.println("[ColumnNamingFixer]   2. New column name already exists");
-            System.err.println("[ColumnNamingFixer]   3. Insufficient database permissions");
-            System.err.println("[ColumnNamingFixer]   4. Column is referenced by views or constraints");
+        } catch (org.postgresql.util.PSQLException e) {
+            // PostgreSQL-specific errors
+            String errorMsg = e.getMessage();
+            System.err.println("[ColumnNamingFixer] ❌❌❌ POSTGRESQL ERROR ❌❌❌");
+            System.err.println("[ColumnNamingFixer] Failed to rename: " + tableName + "." + oldColumnName + " → " + newColumnName);
+            System.err.println("[ColumnNamingFixer] Error: " + errorMsg);
             
-            // Don't throw - allow initialization to continue
-            // If the column already has the correct name, Hibernate will work fine
+            if (errorMsg.contains("does not exist")) {
+                System.err.println("[ColumnNamingFixer] 💡 Column '" + oldColumnName + "' may already be renamed or doesn't exist");
+            } else if (errorMsg.contains("already exists")) {
+                System.err.println("[ColumnNamingFixer] 💡 Column '" + newColumnName + "' already exists - rename may have already been done");
+                // Check if new column exists - if so, consider it success
+                if (columnExists(tableName, newColumnName)) {
+                    System.out.println("[ColumnNamingFixer] ✅ Column '" + newColumnName + "' exists - treating as success");
+                    return true;
+                }
+            } else if (errorMsg.contains("permission denied") || errorMsg.contains("insufficient privilege")) {
+                System.err.println("[ColumnNamingFixer] 💡 INSUFFICIENT DATABASE PERMISSIONS");
+                System.err.println("[ColumnNamingFixer] 💡 Database user needs ALTER TABLE privilege");
+            } else if (errorMsg.contains("cannot rename column") || errorMsg.contains("is being used")) {
+                System.err.println("[ColumnNamingFixer] 💡 Column may be in use by active transactions or views");
+                System.err.println("[ColumnNamingFixer] 💡 Try again when database is less busy");
+            }
+            
+            e.printStackTrace();
+            return false;
+            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("[ColumnNamingFixer] ❌ Thread interrupted during rename verification");
+            return false;
+            
+        } catch (Exception e) {
+            System.err.println("[ColumnNamingFixer] ❌❌❌ UNEXPECTED ERROR ❌❌❌");
+            System.err.println("[ColumnNamingFixer] Failed to rename: " + tableName + "." + oldColumnName + " → " + newColumnName);
+            System.err.println("[ColumnNamingFixer] Error type: " + e.getClass().getName());
+            System.err.println("[ColumnNamingFixer] Error message: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

@@ -58,15 +58,29 @@ public class TenantDefaultDataInitializer {
         System.out.println("[DataInit] ===== Starting default data initialization at " + new java.util.Date() + " =====");
         try {
             // Step 0: Validate and fix column naming issues globally
-            System.out.println("[DataInit] Step 0/8: Validating and fixing column naming issues...");
+            // THIS MUST RUN FIRST BEFORE ANY DATABASE QUERIES
+            System.out.println("[DataInit] ========================================");
+            System.out.println("[DataInit] Step 0/8: CRITICAL - Fixing column naming issues");
+            System.out.println("[DataInit] ========================================");
             try {
-                columnNamingFixer.validateAndFixColumnNames();
-                System.out.println("[DataInit] Step 0/8: ✅ Completed");
+                boolean fixSuccess = columnNamingFixer.validateAndFixColumnNames();
+                if (fixSuccess) {
+                    System.out.println("[DataInit] Step 0/8: ✅ Column naming fix completed successfully");
+                } else {
+                    System.err.println("[DataInit] Step 0/8: ⚠️⚠️⚠️ WARNING - Some column renames failed!");
+                    System.err.println("[DataInit] Step 0/8: Application may encounter errors!");
+                    System.err.println("[DataInit] Step 0/8: Check [ColumnNamingFixer] logs above for details");
+                }
             } catch (Exception e) {
-                System.err.println("[DataInit] Step 0/8: ⚠️ Warning - Column naming validation failed: " + e.getMessage());
+                System.err.println("[DataInit] Step 0/8: ❌❌❌ CRITICAL ERROR - Column naming fix failed!");
+                System.err.println("[DataInit] Step 0/8: Error: " + e.getMessage());
+                System.err.println("[DataInit] Step 0/8: Stack trace:");
+                e.printStackTrace();
+                System.err.println("[DataInit] Step 0/8: Continuing anyway - but errors may occur!");
                 // Don't throw - continue with data initialization
-                // The explicit @Column annotations should handle the mismatches
+                // But log it prominently so it's noticed
             }
+            System.out.println("[DataInit] ========================================");
             
             System.out.println("[DataInit] Step 1/8: Inserting CapacityTypes...");
             insertDefaultCapacityTypes();
