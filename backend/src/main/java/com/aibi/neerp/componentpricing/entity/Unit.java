@@ -18,4 +18,7 @@ public class Unit {
     private String unitName;
 
     private String description;
+
+    // Optional code to verify naming strategy adds unit_code column automatically
+    private String unitCode;
 }
