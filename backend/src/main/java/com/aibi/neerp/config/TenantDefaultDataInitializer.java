@@ -29,7 +29,7 @@ public class TenantDefaultDataInitializer {
     private final PaymentTermRepository paymentTermRepository;
     private final ElevatorMakeRepository elevatorMakeRepository;
     private final NumberOfServiceRepository numberOfServiceRepository;
-    private final DatabaseColumnNamingFixer columnNamingFixer;
+    // Removed: private final DatabaseColumnNamingFixer columnNamingFixer;
     
     @Autowired(required = false)
     private EntityManager entityManager;
@@ -40,8 +40,8 @@ public class TenantDefaultDataInitializer {
                                         EnquiryTypeRepository enquiryTypeRepository,
                                         PaymentTermRepository paymentTermRepository,
                                         ElevatorMakeRepository elevatorMakeRepository,
-                                        NumberOfServiceRepository numberOfServiceRepository,
-                                        DatabaseColumnNamingFixer columnNamingFixer) {
+                                        NumberOfServiceRepository numberOfServiceRepository
+                                        /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
         this.unitRepository = unitRepository;
         this.capacityTypeRepository = capacityTypeRepository;
         this.contractTypeRepository = contractTypeRepository;
@@ -49,7 +49,7 @@ public class TenantDefaultDataInitializer {
         this.paymentTermRepository = paymentTermRepository;
         this.elevatorMakeRepository = elevatorMakeRepository;
         this.numberOfServiceRepository = numberOfServiceRepository;
-        this.columnNamingFixer = columnNamingFixer;
+        // Removed: this.columnNamingFixer = columnNamingFixer;
     }
 
     @Transactional
@@ -57,58 +57,37 @@ public class TenantDefaultDataInitializer {
         long startTime = System.currentTimeMillis();
         System.out.println("[DataInit] ===== Starting default data initialization at " + new java.util.Date() + " =====");
         try {
-            // Step 0: Validate and fix column naming issues globally
-            // THIS MUST RUN FIRST BEFORE ANY DATABASE QUERIES
-            System.out.println("[DataInit] ========================================");
-            System.out.println("[DataInit] Step 0/8: CRITICAL - Fixing column naming issues");
-            System.out.println("[DataInit] ========================================");
-            try {
-                boolean fixSuccess = columnNamingFixer.validateAndFixColumnNames();
-                if (fixSuccess) {
-                    System.out.println("[DataInit] Step 0/8: ✅ Column naming fix completed successfully");
-                } else {
-                    System.err.println("[DataInit] Step 0/8: ⚠️⚠️⚠️ WARNING - Some column renames failed!");
-                    System.err.println("[DataInit] Step 0/8: Application may encounter errors!");
-                    System.err.println("[DataInit] Step 0/8: Check [ColumnNamingFixer] logs above for details");
-                }
-            } catch (Exception e) {
-                System.err.println("[DataInit] Step 0/8: ❌❌❌ CRITICAL ERROR - Column naming fix failed!");
-                System.err.println("[DataInit] Step 0/8: Error: " + e.getMessage());
-                System.err.println("[DataInit] Step 0/8: Stack trace:");
-                e.printStackTrace();
-                System.err.println("[DataInit] Step 0/8: Continuing anyway - but errors may occur!");
-                // Don't throw - continue with data initialization
-                // But log it prominently so it's noticed
-            }
-            System.out.println("[DataInit] ========================================");
-            
-            System.out.println("[DataInit] Step 1/8: Inserting CapacityTypes...");
+            // Removed: Step 0: Validate and fix column naming issues globally
+            // Removed: Entire block for columnNamingFixer.validateAndFixColumnNames();
+            // The step numbers have been adjusted from 1/8 to 7/7
+
+            System.out.println("[DataInit] Step 1/7: Inserting CapacityTypes...");
             insertDefaultCapacityTypes();
-            System.out.println("[DataInit] Step 1/8: ✅ Completed");
+            System.out.println("[DataInit] Step 1/7: ✅ Completed");
             
-            System.out.println("[DataInit] Step 2/8: Inserting Unit...");
+            System.out.println("[DataInit] Step 2/7: Inserting Unit...");
             insertDefaultUnit();
-            System.out.println("[DataInit] Step 2/8: ✅ Completed");
+            System.out.println("[DataInit] Step 2/7: ✅ Completed");
             
-            System.out.println("[DataInit] Step 3/8: Inserting ContractTypes...");
+            System.out.println("[DataInit] Step 3/7: Inserting ContractTypes...");
             insertDefaultContractTypes();
-            System.out.println("[DataInit] Step 3/8: ✅ Completed");
+            System.out.println("[DataInit] Step 3/7: ✅ Completed");
             
-            System.out.println("[DataInit] Step 4/8: Inserting EnquiryTypes...");
+            System.out.println("[DataInit] Step 4/7: Inserting EnquiryTypes...");
             insertDefaultEnquiryTypes();
-            System.out.println("[DataInit] Step 4/8: ✅ Completed");
+            System.out.println("[DataInit] Step 4/7: ✅ Completed");
             
-            System.out.println("[DataInit] Step 5/8: Inserting PaymentTerms...");
+            System.out.println("[DataInit] Step 5/7: Inserting PaymentTerms...");
             insertDefaultPaymentTerms();
-            System.out.println("[DataInit] Step 5/8: ✅ Completed");
+            System.out.println("[DataInit] Step 5/7: ✅ Completed");
             
-            System.out.println("[DataInit] Step 6/8: Inserting ElevatorMakes...");
+            System.out.println("[DataInit] Step 6/7: Inserting ElevatorMakes...");
             insertDefaultElevatorMakes();
-            System.out.println("[DataInit] Step 6/8: ✅ Completed");
+            System.out.println("[DataInit] Step 6/7: ✅ Completed");
             
-            System.out.println("[DataInit] Step 7/8: Inserting NumberOfServices...");
+            System.out.println("[DataInit] Step 7/7: Inserting NumberOfServices...");
             insertDefaultNumberOfServices();
-            System.out.println("[DataInit] Step 7/8: ✅ Completed");
+            System.out.println("[DataInit] Step 7/7: ✅ Completed");
             
             // Explicitly flush to ensure data is saved
             if (entityManager != null) {
@@ -303,4 +282,3 @@ public class TenantDefaultDataInitializer {
     }
 
 }
-

@@ -14,20 +14,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service responsible for initializing tenant database schemas and default data.
- * 
- * <p><b>How it works:</b></p>
+ * * <p><b>How it works:</b></p>
  * <ul>
- *   <li><b>First-time setup:</b> Creates all tables and inserts default data (async, shows progress)</li>
- *   <li><b>Subsequent logins:</b> Only runs lightweight data initialization (idempotent, fast, synchronous)</li>
- *   <li><b>Schema updates:</b> Hibernate's 'update' mode automatically handles new tables/columns when entities are added</li>
- *   <li><b>Default data:</b> Always idempotent - checks if data exists before inserting</li>
+ * <li><b>First-time setup:</b> Creates all tables and inserts default data (async, shows progress)</li>
+ * <li><b>Subsequent logins:</b> Only runs lightweight data initialization (idempotent, fast, synchronous)</li>
+ * <li><b>Schema updates:</b> Hibernate's 'update' mode automatically handles new tables/columns when entities are added</li>
+ * <li><b>Default data:</b> Always idempotent - checks if data exists before inserting</li>
  * </ul>
- * 
- * <p><b>For future schema updates:</b></p>
+ * * <p><b>For future schema updates:</b></p>
  * <ul>
- *   <li>Add new entities - Hibernate will automatically create tables on next login</li>
- *   <li>Add new default data - Add to TenantDefaultDataInitializer (it's idempotent)</li>
- *   <li>Modify existing entities - Hibernate will alter tables automatically</li>
+ * <li>Add new entities - Hibernate will automatically create tables on next login</li>
+ * <li>Add new default data - Add to TenantDefaultDataInitializer (it's idempotent)</li>
+ * <li>Modify existing entities - Hibernate will alter tables automatically</li>
  * </ul>
  */
 @Service
@@ -37,7 +35,7 @@ public class TenantSchemaInitializer {
     private final DataSource dataSource; // DynamicRoutingDataSource
     private final TenantDefaultDataInitializer tenantDefaultDataInitializer;
     private final InitializationStatusTracker statusTracker;
-    private final DatabaseColumnNamingFixer columnNamingFixer;
+    // Removed: private final DatabaseColumnNamingFixer columnNamingFixer;
 
     // Cache to avoid running initializer repeatedly per tenant in the same session
     // Note: This is in-memory and resets on server restart, but isInitialized() check is persistent
@@ -47,13 +45,13 @@ public class TenantSchemaInitializer {
     public TenantSchemaInitializer(JdbcTemplate jdbcTemplate,
                                    javax.sql.DataSource dataSource,
                                    TenantDefaultDataInitializer tenantDefaultDataInitializer,
-                                   InitializationStatusTracker statusTracker,
-                                   DatabaseColumnNamingFixer columnNamingFixer) {
+                                   InitializationStatusTracker statusTracker
+                                   /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.tenantDefaultDataInitializer = tenantDefaultDataInitializer;
         this.statusTracker = statusTracker;
-        this.columnNamingFixer = columnNamingFixer;
+        // Removed: this.columnNamingFixer = columnNamingFixer;
     }
 
     public boolean isInitialized() {
@@ -83,18 +81,12 @@ public class TenantSchemaInitializer {
         boolean schemaExists = isInitialized();
         
         if (schemaExists) {
-            // Schema exists - validate and fix column naming issues first, then ensure default data is initialized
-            System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", validating column names and ensuring default data is initialized...");
+            // Schema exists - ensure default data is initialized
+            System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", ensuring default data is initialized...");
             long startTime = System.currentTimeMillis();
             try {
-                // Validate and fix column naming issues before data initialization
-                System.out.println("[TenantInit] Validating column naming for tenant: " + tenantId);
-                try {
-                    columnNamingFixer.validateAndFixColumnNames();
-                } catch (Exception e) {
-                    System.err.println("[TenantInit] ⚠️ Warning - Column naming validation failed: " + e.getMessage());
-                    // Continue - explicit @Column annotations should handle mismatches
-                }
+                
+                // Removed: Logic for columnNamingFixer.validateAndFixColumnNames();
                 
                 System.out.println("[TenantInit] Calling initializeDefaults() for tenant: " + tenantId);
                 tenantDefaultDataInitializer.initializeDefaults();
@@ -143,6 +135,9 @@ public class TenantSchemaInitializer {
         // Ensure camelCase → snake_case for all entities during schema creation
         jpaProps.put("hibernate.physical_naming_strategy", 
             "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
+        
+        jpaProps.put("hibernate.implicit_naming_strategy",
+        	    "org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy");
 
         
         emfBean.setJpaProperties(jpaProps);
@@ -153,14 +148,7 @@ public class TenantSchemaInitializer {
             // Touch the metamodel to force initialization
             emfBean.getObject().getMetamodel().getEntities();
             
-            // After schema creation, validate and fix any column naming issues
-            statusTracker.updateStatus(tenantId, "validating_schema", 50, "Validating schema column names...");
-            try {
-                columnNamingFixer.validateAndFixColumnNames();
-            } catch (Exception e) {
-                System.err.println("[TenantInit] ⚠️ Warning - Column naming validation failed after schema creation: " + e.getMessage());
-                // Continue - this is not critical for new schemas
-            }
+            // Removed: Logic for columnNamingFixer.validateAndFixColumnNames();
             
             statusTracker.updateStatus(tenantId, "initializing_data", 60, "Initializing default data...");
             tenantDefaultDataInitializer.initializeDefaults();
@@ -182,5 +170,3 @@ public class TenantSchemaInitializer {
         }
     }
 }
-
-

@@ -207,7 +207,7 @@ public class Enquiry {
     
     // Note: Temporarily using explicit column name for production compatibility
     // Once DatabaseColumnNamingFixer renames liftname → lift_name in production, this can be removed
-    @Column(name = "liftname")
+   // @Column(name = "liftname")
     private String liftName;
 
     @ManyToOne
