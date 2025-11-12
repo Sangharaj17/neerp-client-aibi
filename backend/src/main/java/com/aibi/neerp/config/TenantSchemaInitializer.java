@@ -1,6 +1,7 @@
 package com.aibi.neerp.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
@@ -35,7 +36,7 @@ public class TenantSchemaInitializer {
     private final DataSource dataSource; // DynamicRoutingDataSource
     private final TenantDefaultDataInitializer tenantDefaultDataInitializer;
     private final InitializationStatusTracker statusTracker;
-    // Removed: private final DatabaseColumnNamingFixer columnNamingFixer;
+    private final JpaProperties jpaProperties;
 
     // Cache to avoid running initializer repeatedly per tenant in the same session
     // Note: This is in-memory and resets on server restart, but isInitialized() check is persistent
@@ -45,13 +46,13 @@ public class TenantSchemaInitializer {
     public TenantSchemaInitializer(JdbcTemplate jdbcTemplate,
                                    javax.sql.DataSource dataSource,
                                    TenantDefaultDataInitializer tenantDefaultDataInitializer,
-                                   InitializationStatusTracker statusTracker
-                                   /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
+                                   InitializationStatusTracker statusTracker,
+                                   JpaProperties jpaProperties) {
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.tenantDefaultDataInitializer = tenantDefaultDataInitializer;
         this.statusTracker = statusTracker;
-        // Removed: this.columnNamingFixer = columnNamingFixer;
+        this.jpaProperties = jpaProperties;
     }
 
     public boolean isInitialized() {
@@ -124,21 +125,22 @@ public class TenantSchemaInitializer {
         emfBean.setPackagesToScan("com.aibi.neerp");
         emfBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
+        // Use Spring Boot's JPA properties as base to ensure consistency
         Properties jpaProps = new Properties();
+        jpaProps.putAll(jpaProperties.getProperties());
+        
+        // Override with tenant-specific settings
         // Force schema update for the currently routed tenant
         // Hibernate's 'update' mode is smart - it only creates/alters what's needed
         jpaProps.put("hibernate.hbm2ddl.auto", "update");
         jpaProps.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        // Quieter logs
+        // Quieter logs during initialization
         jpaProps.put("hibernate.show_sql", "false");
         
         // Ensure camelCase → snake_case for all entities during schema creation
+        // This matches application.properties configuration
         jpaProps.put("hibernate.physical_naming_strategy", 
             "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
-//        
-//        jpaProps.put("hibernate.implicit_naming_strategy",
-//        	    "org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy");
-
         
         emfBean.setJpaProperties(jpaProps);
 

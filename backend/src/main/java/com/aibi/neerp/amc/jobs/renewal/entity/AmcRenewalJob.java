@@ -71,96 +71,98 @@ public class AmcRenewalJob {
 
     // ---------- Other Columns ----------
 
-    @Column(name = "contract_type", nullable = false)
+    @Column(nullable = false)
     private String contractType;
 
-    @Column(name = "make_of_elevator", nullable = false)
+    @Column(nullable = false)
     private String makeOfElevator;
 
-    @Column(name = "no_of_elevator", nullable = false)
+    @Column(nullable = false)
     private Integer noOfElevator;
 
-    @Column(name = "job_no", nullable = false)
+    @Column(nullable = false)
     private String jobNo;
 
-    @Column(name = "customer_gst_no", nullable = false)
+    @Column(nullable = false)
     private String customerGstNo;
 
-    @Column(name = "job_type", nullable = false)
+    @Column(nullable = false)
     private String jobType;
 
     // Dates as Strings
-    @Column(name = "start_date", nullable = false)
+    @Column(nullable = false)
     private LocalDate startDate;
 
-    @Column(name = "end_date", nullable = false)
+    @Column(nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "deal_date")
+    @Column
     private LocalDate dealDate;
 
-    @Column(name = "no_of_services", nullable = false)
+    @Column(nullable = false)
     private Integer noOfServices;
 
-    @Column(name = "job_amount", nullable = false, precision = 38, scale = 2)
+    @Column(nullable = false, precision = 38, scale = 2)
     private BigDecimal jobAmount;
 
-    @Column(name = "amount_with_GST", nullable = false)
+    @Column(nullable = false)
     private String amountWithGst;
 
-    @Column(name = "amount_without_GST", nullable = false)
+    @Column(nullable = false)
     private String amountWithoutGst;
 
-    @Column(name = "payment_term", nullable = false)
+    @Column(nullable = false)
     private String paymentTerm;
 
-    @Column(name = "gst_percentage", nullable = false)
+    @Column(nullable = false)
     private Integer gstPercentage;
 
-    @Column(name = "job_lift_detail", nullable = false)
+    @Column(nullable = false)
     private String jobLiftDetail;
 
-    @Column(name = "job_status", nullable = false)
+    @Column(nullable = false)
     private String jobStatus;
 
-    @Column(name = "status", nullable = false)
+    @Column(nullable = false)
     private Boolean status;
 
-    @Column(name = "renewal_remark")
+    @Column
     private String renewalRemark;
 
-    @Column(name = "is_new")
+    @Column
     private Boolean isNew;
 
-    @Column(name = "current_service_number")
+    @Column
     private Integer currentServiceNumber;
     
-    @Column(name = "no_of_lifs_service_need_to_complete_count")
+    @Column
     private Integer noOfLifsServiceNeedToCompleteCount;
     
-    @Column(name = "no_of_lifts_current_service_completed_count")
+    @Column
     private Integer noOfLiftsCurrentServiceCompletedCount;
     
+    // Legacy column name - keep explicit as it doesn't match strategy output
     @Column(name = "lastactivitydate")
     private LocalDate lastActivityDate;
     
+    // Legacy column name - keep explicit as it doesn't match strategy output
     @Column(name = "currentservicestatus")
     private String currentServiceStatus;
     
     
-    @Column(name = "received_amount")
+    @Column
     private BigDecimal receivedAmount;
 
-    @Column(name = "balance_amount")
+    @Column
     private BigDecimal balanceAmount;
 
-    @Column(name = "pending_service_count")
+    @Column
     private Integer pendingServiceCount;
     
-    @Column(name = "previous_servicing_date")
+    @Column
     private LocalDate previousServicingDate;
     
-    @Column(name = "is_renewal_quatation_created")
+    @Column
     private Boolean isRenewalQuatationCreated = false;
     
     
