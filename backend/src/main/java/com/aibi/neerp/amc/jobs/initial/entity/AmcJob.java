@@ -103,10 +103,11 @@ public class AmcJob {
     @Column(nullable = false, precision = 38, scale = 2)
     private BigDecimal jobAmount;
 
-    @Column(nullable = false)
+    // Keep explicit names for backward compatibility with existing databases
+    @Column(name = "amount_with_GST", nullable = false)
     private String amountWithGst;
 
-    @Column(nullable = false)
+    @Column(name = "amount_without_GST", nullable = false)
     private String amountWithoutGst;
 
     @Column(nullable = false)

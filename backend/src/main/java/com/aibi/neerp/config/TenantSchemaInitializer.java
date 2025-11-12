@@ -36,13 +36,13 @@ public class TenantSchemaInitializer {
     private final DataSource dataSource; // DynamicRoutingDataSource
     private final TenantDefaultDataInitializer tenantDefaultDataInitializer;
     private final InitializationStatusTracker statusTracker;
-    private final JpaProperties jpaProperties;
+    private final JpaProperties jpaProperties; // Can be null if not available
 
     // Cache to avoid running initializer repeatedly per tenant in the same session
     // Note: This is in-memory and resets on server restart, but isInitialized() check is persistent
     private final Set<String> initializedTenants = ConcurrentHashMap.newKeySet();
 
-    @Autowired
+    @Autowired(required = false)
     public TenantSchemaInitializer(JdbcTemplate jdbcTemplate,
                                    javax.sql.DataSource dataSource,
                                    TenantDefaultDataInitializer tenantDefaultDataInitializer,
@@ -127,7 +127,9 @@ public class TenantSchemaInitializer {
 
         // Use Spring Boot's JPA properties as base to ensure consistency
         Properties jpaProps = new Properties();
-        jpaProps.putAll(jpaProperties.getProperties());
+        if (jpaProperties != null) {
+            jpaProps.putAll(jpaProperties.getProperties());
+        }
         
         // Override with tenant-specific settings
         // Force schema update for the currently routed tenant
