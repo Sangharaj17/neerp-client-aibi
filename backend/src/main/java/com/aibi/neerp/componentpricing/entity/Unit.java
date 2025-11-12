@@ -13,8 +13,8 @@ public class Unit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // Keep explicit name for backward compatibility with existing databases
-    @Column(name = "unitname", nullable = false, unique = true)
+    // Let naming strategy handle: unitName → unit_name
+    @Column(nullable = false, unique = true)
     private String unitName;
 
     private String description;

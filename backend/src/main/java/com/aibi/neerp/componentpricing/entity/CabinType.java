@@ -16,5 +16,7 @@ public class CabinType {
     private int id;
 
     @NotBlank(message = "Cabin Type cannot be blank")
+    // Explicit name for backward compatibility with existing databases (has 'cabintype' not 'cabin_type')
+    @Column(name = "cabintype")
     private String cabinType;
 }
