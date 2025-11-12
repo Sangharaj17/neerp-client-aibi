@@ -135,9 +135,9 @@ public class TenantSchemaInitializer {
         // Ensure camelCase → snake_case for all entities during schema creation
         jpaProps.put("hibernate.physical_naming_strategy", 
             "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
-        
-        jpaProps.put("hibernate.implicit_naming_strategy",
-        	    "org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy");
+//        
+//        jpaProps.put("hibernate.implicit_naming_strategy",
+//        	    "org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy");
 
         
         emfBean.setJpaProperties(jpaProps);
