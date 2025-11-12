@@ -139,6 +139,12 @@ public class TenantSchemaInitializer {
         jpaProps.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         // Quieter logs
         jpaProps.put("hibernate.show_sql", "false");
+        
+        // Ensure camelCase → snake_case for all entities during schema creation
+        jpaProps.put("hibernate.physical_naming_strategy", 
+            "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
+
+        
         emfBean.setJpaProperties(jpaProps);
 
         try {
