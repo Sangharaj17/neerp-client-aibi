@@ -18,6 +18,8 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
   const [clientName, setClientName] = useState(initialClientName);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [recaptchaSiteKey, setRecaptchaSiteKey] = useState(null);
+  const [recaptchaError, setRecaptchaError] = useState(false);
+  const [recaptchaEnabled, setRecaptchaEnabled] = useState(true);
   const recaptchaRef = useRef(null);
 
   useEffect(() => {
@@ -36,26 +38,76 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
           // Fetch reCAPTCHA site key from client config
           const siteKey = response.data?.client?.recaptchaSiteKey ||
             response.data?.recaptchaSiteKey ||
-            process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-            '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Fallback to test key
-          setRecaptchaSiteKey(siteKey);
+            process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+          
+          if (siteKey && siteKey !== '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
+            // Only set if we have a valid key (not the test key)
+            setRecaptchaSiteKey(siteKey);
+            setRecaptchaEnabled(true);
+          } else {
+            // No valid key - disable reCAPTCHA
+            setRecaptchaEnabled(false);
+            setRecaptchaSiteKey(null);
+          }
         } catch (err) {
           // Silently fail - client name is optional
           console.log("Could not fetch client config:", err);
-          // Use fallback reCAPTCHA key if API fails
-          setRecaptchaSiteKey(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI');
+          // Check if we have an environment variable key
+          const envKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+          if (envKey && envKey !== '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
+            setRecaptchaSiteKey(envKey);
+            setRecaptchaEnabled(true);
+          } else {
+            // No valid key - disable reCAPTCHA
+            setRecaptchaEnabled(false);
+            setRecaptchaSiteKey(null);
+          }
         }
       };
       fetchClientConfig();
     }
   }, [tenant]);
 
+  // Monitor for reCAPTCHA domain errors in the DOM
+  useEffect(() => {
+    if (!recaptchaEnabled || !recaptchaSiteKey) return;
+
+    const checkForRecaptchaError = () => {
+      // Look for reCAPTCHA error messages in the DOM
+      const recaptchaElements = document.querySelectorAll('.grecaptcha-badge, iframe[src*="recaptcha"]');
+      recaptchaElements.forEach((el) => {
+        const parent = el.closest('div');
+        if (parent) {
+          const text = parent.textContent || '';
+          if (text.includes('Invalid domain') || text.includes('ERROR for site owner') || text.includes('site key')) {
+            console.warn('reCAPTCHA domain error detected in DOM - disabling reCAPTCHA');
+            setRecaptchaEnabled(false);
+            setRecaptchaSiteKey(null);
+            setRecaptchaError(true);
+            setFormError('');
+          }
+        }
+      });
+    };
+
+    // Check after a short delay to allow reCAPTCHA to render
+    const timeoutId = setTimeout(checkForRecaptchaError, 2000);
+    
+    // Also check periodically
+    const intervalId = setInterval(checkForRecaptchaError, 3000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [recaptchaEnabled, recaptchaSiteKey]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setFormError('');
 
-    // Validate reCAPTCHA
-    if (!recaptchaToken) {
+    // Validate reCAPTCHA only if it's enabled
+    if (recaptchaEnabled && !recaptchaToken) {
       setFormError('Please complete the verification check below to continue.');
       setLoading(false);
       return;
@@ -64,9 +116,10 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
     setLoading(true);
 
     try {
+      // Send reCAPTCHA token only if reCAPTCHA is enabled, otherwise send null
       const res = await axiosInstance.post(
         "/api/login",
-        { email, password, recaptchaToken },
+        { email, password, recaptchaToken: recaptchaEnabled ? recaptchaToken : null },
         {
           headers: {
             "X-Tenant": tenant,
@@ -96,7 +149,7 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
               try {
                 const loginRes = await axiosInstance.post(
                   "/api/login",
-                  { email, password, recaptchaToken },
+                  { email, password, recaptchaToken: recaptchaEnabled ? recaptchaToken : null },
                   {
                     headers: {
                       "X-Tenant": tenant,
@@ -285,7 +338,7 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
               </div>
 
               {/* reCAPTCHA */}
-              {recaptchaSiteKey && (
+              {recaptchaEnabled && recaptchaSiteKey && (
                 <div className="pt-1">
                   <ReCAPTCHA
                     ref={recaptchaRef}
@@ -293,22 +346,46 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
                     onChange={(token) => {
                       setRecaptchaToken(token);
                       setFormError('');
+                      setRecaptchaError(false);
                     }}
                     onExpired={() => {
                       setRecaptchaToken(null);
                     }}
                     onError={() => {
+                      console.warn('reCAPTCHA error detected');
                       setRecaptchaToken(null);
-                      setFormError('Verification failed. Please try again.');
+                      setRecaptchaError(true);
+                      // Check if error is visible in DOM (domain mismatch errors show in the widget)
+                      setTimeout(() => {
+                        const recaptchaContainer = recaptchaRef.current?.widgetId 
+                          ? document.querySelector(`#rc-imageselect, [data-sitekey="${recaptchaSiteKey}"]`)
+                          : null;
+                        const errorText = recaptchaContainer?.parentElement?.textContent || '';
+                        
+                        // If we see domain-related error text, disable reCAPTCHA
+                        if (errorText.includes('Invalid domain') || errorText.includes('site key') || errorText.includes('ERROR for site owner')) {
+                          console.warn('reCAPTCHA domain error detected - disabling reCAPTCHA for this tenant');
+                          setRecaptchaEnabled(false);
+                          setRecaptchaSiteKey(null);
+                          setFormError(''); // Clear error to allow login without reCAPTCHA
+                        } else {
+                          setFormError('Verification failed. Please try again.');
+                        }
+                      }, 500);
                     }}
                   />
+                  {recaptchaError && (
+                    <p className="text-xs text-neutral-500 mt-1">
+                      reCAPTCHA verification is optional for this tenant
+                    </p>
+                  )}
                 </div>
               )}
 
               <button
                 type="submit"
                 className="w-full bg-neutral-900 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-900"
-                disabled={loading || !recaptchaToken}
+                disabled={loading || (recaptchaEnabled && !recaptchaToken)}
               >
                 {loading ? 'Signing in...' : 'Continue'}
               </button>
