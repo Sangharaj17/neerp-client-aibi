@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Input from '@/components/UI/Input';
 import { getTenant } from '@/utils/tenant';
@@ -9,27 +9,33 @@ import axiosInstance from '@/utils/axiosInstance';
 
 export default function ResetPasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [token, setToken] = useState('');
+  const [tenant, setTenant] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [validating, setValidating] = useState(true);
-  
-  const tenant = searchParams.get('tenant') || getTenant();
 
   useEffect(() => {
-    const tokenParam = searchParams.get('token');
-    if (tokenParam) {
-      setToken(tokenParam);
-      setValidating(false);
-    } else {
-      setError('Invalid or missing reset token. Please request a new password reset link.');
-      setValidating(false);
+    // Read URL parameters from client-side window.location
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tokenParam = params.get('token');
+      const tenantParam = params.get('tenant') || getTenant();
+      
+      setTenant(tenantParam || '');
+      
+      if (tokenParam) {
+        setToken(tokenParam);
+        setValidating(false);
+      } else {
+        setError('Invalid or missing reset token. Please request a new password reset link.');
+        setValidating(false);
+      }
     }
-  }, [searchParams]);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
