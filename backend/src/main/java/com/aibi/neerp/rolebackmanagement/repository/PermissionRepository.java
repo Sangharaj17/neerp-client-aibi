@@ -11,4 +11,5 @@ public interface PermissionRepository extends JpaRepository<Permission, Long> {
     List<Permission> findAllByOrderByModuleNameAscFeatureNameAsc();
     List<Permission> findByModuleId(Long moduleId);
     List<Permission> findByFeatureId(Integer featureId);
+    Permission findByModuleNameAndFeatureName(String moduleName, String featureName);
 }

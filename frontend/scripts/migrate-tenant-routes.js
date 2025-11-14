@@ -67,10 +67,10 @@ function rewriteFile(filePath) {
     .replace(/\`\/\$\{tenant\}\/dashboard\//g, '`/dashboard/')
     .replace(/"\/(?:\$\{tenant\}|\[tenant\])\/dashboard\//g, '"/dashboard/')
     .replace(/'\/(?:\$\{tenant\}|\[tenant\])\/dashboard\//g, "'/dashboard/")
-    // Redirects like `/${tenant}/login` -> `/login`
-    .replace(/\`\/\$\{tenant\}\/login\`/g, '`/login`')
-    .replace(/"\/(?:\$\{tenant\}|\[tenant\])\/login"/g, '"/login"')
-    .replace(/'\/(?:\$\{tenant\}|\[tenant\])\/login'/g, "'/login'");
+    // Redirects like `/${tenant}/login` -> `/auth/login`
+    .replace(/\`\/\$\{tenant\}\/login\`/g, '`/auth/login`')
+    .replace(/"\/(?:\$\{tenant\}|\[tenant\])\/login"/g, '"/auth/login"')
+    .replace(/'\/(?:\$\{tenant\}|\[tenant\])\/login'/g, "'/auth/login'");
 
   if (rewritten !== original) {
     if (commit) {

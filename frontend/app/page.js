@@ -7,8 +7,8 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Always redirect to /login - the login page will handle tenant detection from hostname
-    router.push('/login');
+    // Always redirect to /auth/login - the login page will handle tenant detection from hostname
+    router.push('/auth/login');
   }, [router]);
 
   // Show loading while redirecting

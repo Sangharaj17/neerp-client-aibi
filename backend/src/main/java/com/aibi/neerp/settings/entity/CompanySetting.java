@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 public class CompanySetting {
 
     @Id 
+    @Column(name = "refname")
     private String refName;
     
     // ✅ Store Base64 Logo as TEXT (instead of bytes)

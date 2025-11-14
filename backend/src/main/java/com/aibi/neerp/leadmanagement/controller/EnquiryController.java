@@ -81,4 +81,14 @@ public class EnquiryController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/missing-lifts")
+    public ResponseEntity<List<EnquiryResponseDto>> getMissingLifts(
+            @RequestParam Integer leadId,
+            @RequestParam Integer combinedEnquiryId) {
+        List<EnquiryResponseDto> existingLifts =
+                enquiryService.getMissingLiftsForQuotation(leadId, combinedEnquiryId);
+
+        return ResponseEntity.ok(existingLifts);
+    }
+
 }

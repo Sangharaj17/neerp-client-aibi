@@ -71,6 +71,8 @@ public class EnquiryService {
     private BuildingTypeRepository buildingTypeRepository;
     @Autowired
     private AdditionalFloorsRepository additionalFloorsRepository;
+    @Autowired
+    private com.aibi.neerp.quotation.repository.QuotationLiftDetailRepository quotationLiftDetailRepository;
 
     public List<EnquiryResponseDto> getAllSingleEnquirys(Integer enquiryTypeId) {
         return enquiryRepository.findByCombinedEnquiryIsNullAndEnquiryType_EnquiryTypeId(enquiryTypeId)
@@ -689,4 +691,37 @@ public class EnquiryService {
 //                .carInternalDepth(enquiry.getCarInternalDepth())
 //                .build();
 //    }
+
+    public List<EnquiryResponseDto> getMissingLiftsForQuotation(Integer leadId, Integer combinedEnquiryId) {
+        // 1️⃣ Get all enquiry lifts for this Lead + Combined Enquiry
+        List<Enquiry> allEnquiryLifts = enquiryRepository.findByLead_LeadIdAndCombinedEnquiryId(leadId, combinedEnquiryId);
+
+        if (allEnquiryLifts.isEmpty()) {
+            throw new RuntimeException("No enquiries found for leadId=" + leadId + " and combinedEnquiryId=" + combinedEnquiryId);
+        }
+
+        System.out.println("allEnquiryLifts: " + allEnquiryLifts);
+        System.out.println("🔹 Enquiry IDs in allEnquiryLifts:");
+        allEnquiryLifts.forEach(e -> System.out.println("   → Enquiry ID: " + e.getEnquiryId()));
+
+        // 2️⃣ Get all enquiry IDs that already exist in QuotationLiftDetail
+        List<Integer> savedEnquiryIds = quotationLiftDetailRepository.findEnquiryIdsByLeadAndCombinedEnquiry(leadId, combinedEnquiryId);
+
+        System.out.println("Saved Enquiry IDs: " + savedEnquiryIds);
+        // 3️⃣ Filter out those enquiries that are already saved
+        List<Enquiry> missingLifts = allEnquiryLifts.stream()
+                .filter(e -> e.getEnquiryId() != null && (savedEnquiryIds == null || !savedEnquiryIds.contains(e.getEnquiryId())))
+                .toList();
+
+        System.out.println("Missing Lifts: " + missingLifts);
+        System.out.println("🔹 Enquiry IDs in Missing Lifts:");
+        missingLifts.forEach(e -> System.out.println("   → Missing Lift Enquiry ID: " + e.getEnquiryId()));
+
+
+        // 4️⃣ Convert to DTOs
+        return missingLifts.stream()
+                .map(this::toDto)
+                .toList();
+
+    }
 }

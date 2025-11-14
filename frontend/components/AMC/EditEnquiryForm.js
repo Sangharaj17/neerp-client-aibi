@@ -117,6 +117,7 @@ export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action
       .then((response) => {
         const formatted = response.data.data.map((p) => ({
           id: p.id,
+          displayName: p.displayName,
           convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
         }));
 
@@ -354,7 +355,7 @@ console.log(options);
       const response = await axiosInstance.put(apiUrl + query, transformedLifts);
       toast.success("Enquiry updated successfully.");
       router.push(
-        `/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
+        `/${tenant}/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
       );
     } catch (err) {
       console.error(err);
@@ -808,7 +809,8 @@ console.log(options);
                   <option value="">Please Select</option>
                   {personOptions && personOptions.map((opt) => (
                     <option key={opt.id} value={opt.id}>
-                      {opt.convertedString}
+                      {/* {opt.convertedString} */}
+                      {opt.displayName}
                     </option>
                   ))}
                 </Select>
