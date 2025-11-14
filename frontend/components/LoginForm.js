@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import ReCAPTCHA from 'react-google-recaptcha';
 import initStatesAndCities from '@/utils/InitStatesAndCities';
 import axiosInstance from "@/utils/axiosInstance";
 import axiosAdmin from "@/utils/axiosAdmin";
+import Input from '@/components/UI/Input';
 
 export default function LoginForm({ tenant, clientName: initialClientName = '' }) {
   const router = useRouter();
@@ -13,12 +16,14 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [clientName, setClientName] = useState(initialClientName);
-
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [recaptchaSiteKey, setRecaptchaSiteKey] = useState(null);
+  const recaptchaRef = useRef(null);
 
   useEffect(() => {
-    // If client name wasn't passed as prop, try to fetch it
-    if (!clientName && tenant) {
-      const fetchClientName = async () => {
+    // Fetch client configuration including reCAPTCHA site key
+    if (tenant) {
+      const fetchClientConfig = async () => {
         try {
           const response = await axiosAdmin.get(`/api/clients/domain/${tenant}/with-subscription-check`, {
             headers: { "X-Tenant": tenant },
@@ -28,24 +33,40 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
           if (name) {
             setClientName(name);
           }
+          // Fetch reCAPTCHA site key from client config
+          const siteKey = response.data?.client?.recaptchaSiteKey ||
+            response.data?.recaptchaSiteKey ||
+            process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+            '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'; // Fallback to test key
+          setRecaptchaSiteKey(siteKey);
         } catch (err) {
           // Silently fail - client name is optional
-          console.log("Could not fetch client name:", err);
+          console.log("Could not fetch client config:", err);
+          // Use fallback reCAPTCHA key if API fails
+          setRecaptchaSiteKey(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI');
         }
       };
-      fetchClientName();
+      fetchClientConfig();
     }
-  }, [tenant, clientName]);
+  }, [tenant]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setFormError('');
+
+    // Validate reCAPTCHA
+    if (!recaptchaToken) {
+      setFormError('Please complete the verification check below to continue.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await axiosInstance.post(
         "/api/login",
-        { email, password },
+        { email, password, recaptchaToken },
         {
           headers: {
             "X-Tenant": tenant,
@@ -59,23 +80,23 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
         const start = Date.now();
         const maxWaitTime = 120000; // 2 minutes
         let lastStatus = null;
-        
+
         while (Date.now() - start < maxWaitTime) {
           await new Promise(r => setTimeout(r, 2000));
           try {
-            const st = await axiosInstance.get('/api/tenants/init-status', { 
+            const st = await axiosInstance.get('/api/tenants/init-status', {
               headers: { 'X-Tenant': tenant },
               withCredentials: true
             });
             lastStatus = st.data;
             console.log('Initialization status:', st.data);
-            
+
             if (st.data?.initialized === true) {
               // Retry login automatically after initialization
               try {
                 const loginRes = await axiosInstance.post(
                   "/api/login",
-                  { email, password },
+                  { email, password, recaptchaToken },
                   {
                     headers: {
                       "X-Tenant": tenant,
@@ -103,6 +124,11 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
                 console.error("Retry login error:", retryErr);
                 setFormError(retryErr.response?.data?.error || retryErr.response?.data?.message || "Setup complete! Please try logging in again.");
                 setLoading(false);
+                // Reset reCAPTCHA on error
+                setRecaptchaToken(null);
+                if (recaptchaRef.current) {
+                  recaptchaRef.current.reset();
+                }
                 return;
               }
             }
@@ -113,7 +139,7 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
         }
         setLoading(false);
         const timeoutError = new Error(
-          lastStatus?.message || 
+          lastStatus?.message ||
           'Initialization is taking longer than expected. Please try again in a few moments.'
         );
         throw timeoutError;
@@ -141,76 +167,170 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
     } catch (err) {
       console.error("❌ Network or Backend Error:", err);
       console.error("❌ Error details:", err.response?.data || err.message);
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          err.message ||
-                          "Could not connect to server. Please ensure backend is running.";
+
+      // Handle different error scenarios gracefully
+      let errorMessage = "An error occurred. Please try again.";
+
+      if (err.response) {
+        // Server responded with error status
+        const status = err.response.status;
+        const data = err.response.data;
+
+        switch (status) {
+          case 401:
+            // Unauthorized - wrong credentials
+            errorMessage = data?.error || data?.message || "Invalid email or password. Please check your credentials and try again.";
+            break;
+          case 403:
+            // Forbidden
+            errorMessage = data?.error || data?.message || "Access denied. Please contact your administrator.";
+            break;
+          case 404:
+            // Not found
+            errorMessage = data?.error || data?.message || "Service not found. Please check your connection.";
+            break;
+          case 429:
+            // Too many requests
+            errorMessage = data?.error || data?.message || "Too many login attempts. Please wait a moment and try again.";
+            break;
+          case 500:
+          case 502:
+          case 503:
+            // Server errors
+            errorMessage = data?.error || data?.message || "Server error. Please try again in a few moments.";
+            break;
+          default:
+            // Other errors - use backend message if available
+            errorMessage = data?.error || data?.message || `Login failed (${status}). Please try again.`;
+        }
+      } else if (err.request) {
+        // Request was made but no response received
+        errorMessage = "Could not connect to server. Please check your internet connection and ensure the backend is running.";
+      } else {
+        // Error setting up the request
+        errorMessage = err.message || "An unexpected error occurred. Please try again.";
+      }
+
       setFormError(errorMessage);
       setLoading(false);
+      // Reset reCAPTCHA on error so user can retry
+      setRecaptchaToken(null);
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-          <div className="mb-8 text-center">
-            {clientName && (
-              <div className="mb-4">
-                <p className="text-base font-semibold text-blue-600">{clientName}</p>
-              </div>
-            )}
-            <h1 className="text-2xl font-semibold text-gray-900 mb-2">Sign in</h1>
-            <p className="text-sm text-gray-500">Enter your credentials to access your account</p>
+    <div className="min-h-screen bg-white flex flex-col p-4">
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-full max-w-[400px]">
+
+          {/* Logo/Brand */}
+          <div className="text-center mb-12">
+            <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">
+              {clientName || 'NEERP'}
+            </h1>
           </div>
 
-          {formError && (
-            <div className="mb-4 rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-              {formError}
-            </div>
-          )}
+          {/* Form Container */}
+          <div className="space-y-6">
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+            {/* Error Message */}
+            {formError && (
+              <div className="text-sm text-red-600 bg-red-50 px-4 py-3 rounded-lg border border-red-100">
+                {formError}
+              </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5" htmlFor="password">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                className="w-full border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            {/* Form */}
+            <form onSubmit={handleLogin} className="space-y-5">
 
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </form>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-neutral-700" htmlFor="email">
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-neutral-700" htmlFor="password">
+                  Password
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full"
+                />
+                <div className="text-right">
+                  <Link
+                    href={`/auth/forgot-password${tenant ? `?tenant=${tenant}` : ''}`}
+                    className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
+
+              {/* reCAPTCHA */}
+              {recaptchaSiteKey && (
+                <div className="pt-1">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={recaptchaSiteKey}
+                    onChange={(token) => {
+                      setRecaptchaToken(token);
+                      setFormError('');
+                    }}
+                    onExpired={() => {
+                      setRecaptchaToken(null);
+                    }}
+                    onError={() => {
+                      setRecaptchaToken(null);
+                      setFormError('Verification failed. Please try again.');
+                    }}
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full bg-neutral-900 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-neutral-900"
+                disabled={loading || !recaptchaToken}
+              >
+                {loading ? 'Signing in...' : 'Continue'}
+              </button>
+
+            </form>
+
+          </div>
+
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="text-center space-y-2 py-4">
+        <p className="text-xs text-neutral-500 mb-2">
+          Secure access to your workspace
+        </p>
+        <div className="flex flex-col items-center gap-1 text-[10px] text-neutral-400">
+          <p>© {new Date().getFullYear()} Nexa Software. All rights reserved. Protected by enterprise-grade security</p>
+
+        </div>
+      </div>
+
     </div>
   );
 }

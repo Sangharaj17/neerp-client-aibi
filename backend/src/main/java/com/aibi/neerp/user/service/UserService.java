@@ -1,29 +1,28 @@
 package com.aibi.neerp.user.service;
 
 import com.aibi.neerp.employeemanagement.entity.Employee;
+import com.aibi.neerp.employeemanagement.repository.EmployeeRepository;
 import com.aibi.neerp.user.entity.User;
 import com.aibi.neerp.user.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-
-import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
 @Service
 public class UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final EmployeeRepository employeeRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    private final JdbcTemplate jdbcTemplate;
-
-    // Constructor injection (recommended)
-    public UserService(DataSource dataSource) {
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    public UserService(UserRepository userRepository,
+                       EmployeeRepository employeeRepository,
+                       PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.employeeRepository = employeeRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<User> getAllUsers() {
@@ -59,94 +58,70 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
-//    public Optional<User> validateUser(String email, String password) {
-//        return userRepository.findByEmail(email)
-//                .filter(user -> user.getPassword().equals(password));
-//    }
-
     public Optional<User> validateUser1(String email, String password) {
         return userRepository.findByEmailAndPassword(email, password);
     }
-
 
     public Optional<Employee> validateUser(String email, String password) {
         System.out.println("[UserService] ===== Starting user validation =====");
         System.out.println("[UserService] Email: " + email);
         System.out.println("[UserService] Password: " + (password != null ? "***" : "null"));
-        
-        try {
-            // Check database connection
-            String dbName = jdbcTemplate.queryForObject("SELECT current_database()", String.class);
-            System.out.println("[UserService] ✅ Connected to database: " + dbName);
-            
-            // Check if employee table exists
-            try {
-                Integer tableExists = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'tbl_employee'",
-                    Integer.class
-                );
-                System.out.println("[UserService] Employee table exists: " + (tableExists != null && tableExists > 0));
-            } catch (Exception e) {
-                System.err.println("[UserService] ⚠️ Could not check if employee table exists: " + e.getMessage());
-            }
-            
-            // Try to find employee - use query instead of queryForObject to handle no results
-            List<Employee> employees = jdbcTemplate.query(
-                    "SELECT * FROM tbl_employee WHERE email_id = ? AND password = ? AND active = true",
-                    (rs, rowNum) -> {
-                        Employee e = new Employee();
-                        e.setEmployeeId(rs.getInt("employee_id"));
-                        e.setEmployeeName(rs.getString("employee_name"));
-                        e.setContactNumber(rs.getString("contact_number"));
-                        e.setEmailId(rs.getString("email_id"));
-                        e.setAddress(rs.getString("address"));
-                        if (rs.getDate("dob") != null) {
-                            e.setDob(rs.getDate("dob").toLocalDate());
-                        }
-                        if (rs.getDate("joining_date") != null) {
-                            e.setJoiningDate(rs.getDate("joining_date").toLocalDate());
-                        }
-                        e.setUsername(rs.getString("username"));
-                        e.setPassword(rs.getString("password"));
-                        e.setEmpPhoto(rs.getString("emp_photo"));
-                        e.setActive(rs.getBoolean("active"));
-                        e.setEmployeeCode(rs.getString("employee_code"));
-                        e.setEmployeeSign(rs.getString("employee_sign"));
-                        if (rs.getTimestamp("created_at") != null) {
-                            e.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-                        }
-                        return e;
-                    },
-                    email, password
-            );
 
-            if (employees.isEmpty()) {
-                System.out.println("[UserService] ❌ No employee found with email: " + email + " and provided password");
-                // Check if email exists at all
-                Integer emailCount = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM tbl_employee WHERE email_id = ?",
-                    Integer.class,
-                    email
-                );
-                System.out.println("[UserService] Employees with this email: " + emailCount);
+        if (email == null || email.isBlank()) {
+            System.out.println("[UserService] ❌ Email cannot be blank");
+            return Optional.empty();
+        }
+        if (password == null || password.isBlank()) {
+            System.out.println("[UserService] ❌ Password cannot be blank");
+            return Optional.empty();
+        }
+
+        try {
+            Optional<Employee> employeeOpt = employeeRepository.findByEmailIdAndActiveTrue(email);
+
+            if (employeeOpt.isEmpty()) {
+                System.out.println("[UserService] ❌ No active employee found with email: " + email);
                 return Optional.empty();
             }
-            
-            Employee employee = employees.get(0);
-            System.out.println("[UserService] ✅ Employee found: " + employee.getUsername() + " (ID: " + employee.getEmployeeId() + ")");
-            return Optional.of(employee);
-            
-        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
-            System.err.println("[UserService] ❌ No employee found (EmptyResultDataAccessException): " + e.getMessage());
+
+            Employee employee = employeeOpt.get();
+            String storedPassword = employee.getPassword();
+
+            if (passwordMatches(password, storedPassword)) {
+                System.out.println("[UserService] ✅ Employee authenticated: " + employee.getUsername() + " (ID: " + employee.getEmployeeId() + ")");
+
+                // Upgrade legacy plain-text passwords on the fly
+                if (storedPassword != null && storedPassword.equals(password)) {
+                    try {
+                        employee.setPassword(passwordEncoder.encode(password));
+                        employeeRepository.save(employee);
+                        System.out.println("[UserService] 🔐 Legacy password upgraded to BCrypt for employee ID: " + employee.getEmployeeId());
+                    } catch (Exception e) {
+                        System.err.println("[UserService] ⚠️ Failed to upgrade legacy password: " + e.getMessage());
+                    }
+                }
+
+                return Optional.of(employee);
+            }
+
+            System.out.println("[UserService] ❌ Password mismatch for email: " + email);
             return Optional.empty();
+
         } catch (Exception e) {
-            System.err.println("[UserService] ❌ Error during validateEmployee: " + e.getMessage());
+            System.err.println("[UserService] ❌ Error during validateUser: " + e.getMessage());
             System.err.println("[UserService] Error class: " + e.getClass().getName());
             e.printStackTrace();
             return Optional.empty();
         }
     }
 
-    // Removed updateLoginFlag; employee login does not update users table
-
+    private boolean passwordMatches(String rawPassword, String storedPassword) {
+        if (storedPassword == null || storedPassword.isBlank()) {
+            return false;
+        }
+        if (passwordEncoder.matches(rawPassword, storedPassword)) {
+            return true;
+        }
+        return storedPassword.equals(rawPassword);
+    }
 }

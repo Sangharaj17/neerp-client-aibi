@@ -73,4 +73,7 @@ export const API_ENDPOINTS = {
   
   INSTALLATION_RULES : `${API_BASE}/installation-rules`,
   LOAD : `${API_BASE}/load`,
+
+  QUOTATIONS: `${API_BASE}/quotations`,
+  ENQUIRIES: `${API_BASE}/leadmanagement/enquiries`,
 };

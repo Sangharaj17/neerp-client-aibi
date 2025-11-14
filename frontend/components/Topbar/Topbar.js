@@ -180,7 +180,7 @@ const Topbar = () => {
 
       toast.success(customMessage || message);
       // Redirect to clean path; middleware resolves tenant
-      router.push(`/login`);
+      router.push(`/auth/login`);
     } catch (error) {
       console.error("Logout failed:", error);
 

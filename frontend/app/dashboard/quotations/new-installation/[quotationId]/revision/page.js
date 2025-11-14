@@ -18,7 +18,7 @@ import { generatePdfWithLetterhead } from "@/utils/pdfGeneratorWithHead";
 import { generatePdfWithOutLetterhead } from "@/utils/pdfGeneratorWithoutHead";
 
 export default function QuotationList() {
-  const { tenant } = useParams();
+  const { quotationId } = useParams();
 
   // Mock Data - In a real application, this would come from an API call
   // Ensure this data structure is rich enough for PDF generation

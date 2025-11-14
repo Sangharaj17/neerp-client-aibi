@@ -4,7 +4,9 @@ import com.aibi.neerp.rolebackmanagement.entity.RolePermission;
 import com.aibi.neerp.rolebackmanagement.entity.Role;
 import com.aibi.neerp.rolebackmanagement.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -12,5 +14,8 @@ import java.util.List;
 public interface RolePermissionRepository extends JpaRepository<RolePermission, Long> {
     List<RolePermission> findByRole(Role role);
     List<RolePermission> findByRole_RoleId(Integer roleId);
+
+    @Modifying
+    @Transactional
     void deleteByRole_RoleId(Integer roleId);
 }

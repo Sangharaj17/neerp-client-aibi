@@ -1,20 +1,42 @@
-'use client'; // This directive is correct and should remain at the top
+'use client';
+import { toast } from "react-hot-toast";
+import { getQuotationById } from "@/services/quotationApi";
+import { formatDate, formatCurrency } from "@/utils/common";
 
-export const generatePdfWithOutLetterhead = async (quotationData) => { // Make the function async
-  // Dynamically import html2pdf.js inside the function
-  const html2pdf = (await import('html2pdf.js')).default;
+export const generatePdfWithOutLetterhead = async (quotationMainId, onStart, onComplete) => {
+    if (onStart) onStart();
+    const TOAST_ID = 'pdf-plain-loading';
 
-  const element = document.createElement('div');
-  element.style.width = '210mm'; // A4 width
-  element.style.padding = '10mm'; // Margins
-  element.style.boxSizing = 'border-box';
-  element.style.fontFamily = 'Arial, sans-serif';
-  element.style.fontSize = '10pt';
-  element.style.lineHeight = '1.4';
-  element.style.color = '#333';
+    try {
+        // Show a loading notification
+        toast.loading('Generating Plain PDF Copy...', { id: TOAST_ID });
 
-  // Helper for consistent header styling
-  const getHeader = () => `
+
+        const response = await getQuotationById(quotationMainId);
+        console.log('response:', response);
+
+        if (!response.success) {
+            throw new Error('Failed to fetch quotation details from the server.');
+        }
+
+        const quotationData = response.data;
+
+        console.log('Quotation Data for PDF:', quotationData);
+
+        // Dynamically import html2pdf.js inside the function
+        const html2pdf = (await import('html2pdf.js')).default;
+
+        const element = document.createElement('div');
+        element.style.width = '210mm'; // A4 width
+        element.style.padding = '10mm'; // Margins
+        element.style.boxSizing = 'border-box';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.fontSize = '10pt';
+        element.style.lineHeight = '1.4';
+        element.style.color = '#333';
+
+        // Helper for consistent header styling
+        const getHeader = () => `
     <div style="text-align: center; margin-bottom: 5mm;">
       <h1 style="color: #004D99; font-size: 20pt; margin: 0; padding: 0;">VERTEX ELEVATORS</h1>
     </div>
@@ -25,19 +47,23 @@ export const generatePdfWithOutLetterhead = async (quotationData) => { // Make t
     <hr style="border: 0.5px solid #eee; margin: 5mm 0;">
   `;
 
-  // Construct the full HTML content based on the PDF's structure
-  element.innerHTML = `
+        // Construct the full HTML content based on the PDF's structure
+        element.innerHTML = `
     <div style="page-break-after: always; padding-bottom: 10mm;">
         ${getHeader()}
-        <p style="text-align: right; margin-top: 10mm;">REF.NO: Vertex/25-26/Jul/${quotationData.sr}</p>
-        <p style="text-align: right; margin-bottom: 15mm;">Date: ${quotationData.date}</p>
+        <div style="position: relative; width: 100%; padding: 20px 30px 0 30px;">
+            <div style="text-align: right; margin: 0;">
+                <p style="margin: 0;">REF. NO: ${quotationData.id} - ${quotationData.quotationNo}</p>
+                <p style="margin: 0;">Date: ${formatDate(quotationData.quotationDate)}</p>
+            </div>
+        </div>
 
         <p style="margin-bottom: 0;"><strong>To,</strong></p>
         <p style="margin-top: 0; margin-bottom: 0;">TEST.</p>
         <p style="margin-top: 0; margin-bottom: 10mm;">TEST.</p>
 
         <p style="margin-bottom: 0;">Kind Attention,</p>
-        <p style="margin-top: 0; margin-bottom: 10mm;">${quotationData.customer} (${quotationData.contact})</p>
+        <p style="margin-top: 0; margin-bottom: 10mm;">${quotationData.customerName} (${quotationData.siteName})</p>
 
         <p>Dear Sir,</p>
         <p style="margin-bottom: 15px;"><strong>Subject: Quotation for supply installation testing and commissioning of passenger elevator.</strong></p>
@@ -61,32 +87,35 @@ export const generatePdfWithOutLetterhead = async (quotationData) => { // Make t
 
     <div style="page-break-before: always; page-break-after: always; padding-bottom: 10mm;">
         ${getHeader()}
-        <h3 style="text-align: center; margin-bottom: 15mm; font-size: 14pt;">TECHINICAL SPECIFICATIONS SHEET</h3>
+        <h3 style="text-align: center; margin-bottom: 15mm; font-size: 14pt;">TECHNICAL SPECIFICATIONS SHEET</h3>
 
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 15mm;">
             <tr>
                 <td style="padding: 4px; border: 1px solid #ccc; width: 30%;">CLIENT NAME:</td>
-                <td style="padding: 4px; border: 1px solid #ccc; width: 70%;">${quotationData.customer}</td>
+                <td style="padding: 4px; border: 1px solid #ccc; width: 70%;">${quotationData.customerName}</td>
             </tr>
             <tr>
                 <td style="padding: 4px; border: 1px solid #ccc;">SITE ADDRESS:</td>
-                <td style="padding: 4px; border: 1px solid #ccc;">${quotationData.site}</td>
+                <td style="padding: 4px; border: 1px solid #ccc;">${quotationData.siteName}</td>
             </tr>
             <tr>
                 <td style="padding: 4px; border: 1px solid #ccc;">REF.NO:</td>
-                <td style="padding: 4px; border: 1px solid #ccc;">Vertex/25-26/Jul/${quotationData.sr}</td>
+                <td style="padding: 4px; border: 1px solid #ccc;">${quotationData.quotationNo}</td>
             </tr>
             <tr>
                 <td style="padding: 4px; border: 1px solid #ccc;">DATE:</td>
-                <td style="padding: 4px; border: 1px solid #ccc;">${quotationData.date}</td>
+                <td style="padding: 4px; border: 1px solid #ccc;">${quotationData.quotationDate}</td>
             </tr>
         </table>
 
         <h4 style="margin-bottom: 5px;">RANGE-</h4>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 15mm;">
             <tr><td style="padding: 4px; border: 1px solid #ccc; width: 30%;">NO.OF ELEVATOR</td><td style="padding: 4px; border: 1px solid #ccc; width: 70%;">01</td></tr>
-            <tr><td style="padding: 4px; border: 1px solid #ccc;">PRODUCT</td><td style="padding: 4px; border: 1px solid #ccc;">MANUAL ELEVATOR</td></tr>
-            <tr><td style="padding: 4px; border: 1px solid #ccc;">CAPICITY(kg)</td><td style="padding: 4px; border: 1px solid #ccc;">10 Persons/680 Kg.</td></tr>
+            <tr><td style="padding: 4px; border: 1px solid #ccc;">PRODUCT</td><td style="padding: 4px; border: 1px solid #ccc;">${quotationData.liftDetails
+[0].liftTypeName} ELEVATOR</td></tr>
+            <tr><td style="padding: 4px; border: 1px solid #ccc;">CAPICITY(${quotationData.liftDetails
+[0].capacityTypeName})</td><td style="padding: 4px; border: 1px solid #ccc;">${quotationData.liftDetails
+[0].weightName}</td></tr>
             <tr><td style="padding: 4px; border: 1px solid #ccc;">SPEED(mps)</td><td style="padding: 4px; border: 1px solid #ccc;">ABOUT $.65~m/sec$</td></tr>
             <tr><td style="padding: 4px; border: 1px solid #ccc;">DOOR OPERATION</td><td style="padding: 4px; border: 1px solid #ccc;">MANUAL</td></tr>
         </table>
@@ -137,10 +166,10 @@ export const generatePdfWithOutLetterhead = async (quotationData) => { // Make t
 
     <div style="page-break-before: always; page-break-after: always; padding-bottom: 10mm;">
         ${getHeader()}
-        <p style="margin-bottom: 0;">CLIENT NAME: ${quotationData.customer}</p>
-        <p style="margin-top: 0; margin-bottom: 10mm;">SITE ADDRESS: ${quotationData.site}</p>
-        <p style="text-align: right; margin-top: 0; margin-bottom: 0;">REF.NO: Vertex/25-26/Jul</p>
-        <p style="text-align: right; margin-top: 0; margin-bottom: 15mm;">DATE:${quotationData.date}</p>
+        <p style="margin-bottom: 0;">CLIENT NAME: ${quotationData.customerName}</p>
+        <p style="margin-top: 0; margin-bottom: 10mm;">SITE ADDRESS: ${quotationData.siteName}</p>
+        <p style="text-align: right; margin-top: 0; margin-bottom: 0;">REF.NO:${quotationData.quotationNo}</p>
+        <p style="text-align: right; margin-top: 0; margin-bottom: 15mm;">DATE:${quotationData.quotationDate}</p>
 
         <h3 style="margin-bottom: 5px;">Lift Specification</h3>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 15mm;">
@@ -155,23 +184,19 @@ export const generatePdfWithOutLetterhead = async (quotationData) => { // Make t
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td style="padding: 4px; border: 1px solid #ccc;">10 Persons/680 Kg.Manual, 6 stops, 6 Openings, Rise-15 M CABIN In M.S P.C + S.S MIRROR( BACK SIDE) 8 PASSANGER</td>
-                    <td style="padding: 4px; border: 1px solid #ccc;">1</td>
-                    <td style="padding: 4px; border: 1px solid #ccc;">583175/-</td>
-                    <td style="padding: 4px; border: 1px solid #ccc;">583175/-</td>
-                    <td style="padding: 4px; border: 1px solid #ccc;">104972/-</td>
-                    <td style="padding: 4px; border: 1px solid #ccc;">688147/-</td>
-                </tr>
-                ${quotationData.materialsList && quotationData.materialsList.length > 0 ?
-                    quotationData.materialsList.map(item => `
+                ${quotationData.liftDetails
+                && quotationData.liftDetails
+                    .length > 0 ?
+                quotationData.liftDetails
+                    .map(item => `
                         <tr>
-                            <td style="padding: 4px; border: 1px solid #ccc;">${item.description}</td>
-                            <td style="padding: 4px; border: 1px solid #ccc;">${item.quantity}</td>
-                            <td style="padding: 4px; border: 1px solid #ccc;">${item.pricePerUnit}</td>
-                            <td style="padding: 4px; border: 1px solid #ccc;">${item.total}</td>
-                            <td style="padding: 4px; border: 1px solid #ccc;"></td>
-                            <td style="padding: 4px; border: 1px solid #ccc;"></td>
+                            <td style="padding: 4px; border: 1px solid #ccc;">${item.liftQuotationNo}</td>
+                            <td style="padding: 4px; border: 1px solid #ccc;">1</td>
+                            <td style="padding: 4px; border: 1px solid #ccc;">${item.loadAmt}</td>
+                            <td style="padding: 4px; border: 1px solid #ccc;">${item.
+totalAmountWithoutGST}</td>
+                            <td style="padding: 4px; border: 1px solid #ccc;">${item.totalAmount}</td>
+                            <td style="padding: 4px; border: 1px solid #ccc;">${item.totalAmount}</td>
                         </tr>
                     `).join('')
                 : ''}
@@ -310,24 +335,35 @@ export const generatePdfWithOutLetterhead = async (quotationData) => { // Make t
     </div>
   `;
 
-  const opt = {
-    margin: [10, 10, 10, 10], // Top, Left, Bottom, Right margins in mm
-    filename: `Quotation_${quotationData.customer.replace(/ /g, '_')}_${quotationData.sr}_WithoutLetterHead.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-      scale: 2, // Higher scale for better resolution
-      useCORS: true, // Important if you have images from other domains
-      logging: false, // Disable logging for cleaner console
-    },
-    jsPDF: {
-      unit: 'mm',
-      format: 'a4',
-      orientation: 'portrait'
-    },
-    pagebreak: {
-      mode: ['css', 'legacy'] // Use CSS page-break properties primarily
-    }
-  };
+        const opt = {
+            margin: [10, 10, 10, 10], // Top, Left, Bottom, Right margins in mm
+            filename: `Quotation_${quotationData.customerName.replace(/ /g, '_')}_${quotationData.id}_WithoutLetterHead.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2, // Higher scale for better resolution
+                useCORS: true, // Important if you have images from other domains
+                logging: false, // Disable logging for cleaner console
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait'
+            },
+            pagebreak: {
+                mode: ['css', 'legacy'] // Use CSS page-break properties primarily
+            }
+        };
 
-  html2pdf().from(element).set(opt).save();
+        html2pdf().from(element).set(opt).save();
+
+        // Show success notification once download starts
+        toast.success('Plain PDF copy successfully downloaded!', { id: TOAST_ID });
+    } catch (error) {
+        console.error("Plain PDF generation failed:", error);
+        // Show error notification
+        toast.error('Failed to generate Plain PDF.', { id: TOAST_ID });
+    } finally {
+        // 3. COMPLETE LOADING
+        if (onComplete) onComplete();
+    }
 };
