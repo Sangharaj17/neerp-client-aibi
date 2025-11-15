@@ -1,22 +1,21 @@
 'use client';
 
 import axiosInstance from "@/utils/axiosInstance";
-import { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useRouter, useParams } from "next/navigation";
 
 
-export default function AmcQuotationEditForm({quotationId , qid , revise , revision , amcJobId,
-  isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal , 
-  renewalEdit , renewalRevise , renewalRevision , renewalRenewal , renJobId
+export default function AmcQuotationEditForm({ quotationId, qid, revise, revision, amcJobId,
+  isQuatationIdPresent, isRevisedQuatationIdPresent, rawOriginalQid, rawRevisedQid, renewal,
+  renewalEdit, renewalRevise, renewalRevision, renewalRenewal, renJobId
 }) {
 
 
 
-      const router = useRouter();
-const {  tenant } = useParams();
+  const router = useRouter();
 
- // --- base object for combinedQuotations ---
+  // --- base object for combinedQuotations ---
   const combinedQuotationBase = {
     enquiryId: null,
     revisedQuotationId: null,
@@ -39,13 +38,13 @@ const {  tenant } = useParams();
     totalAmountSemi: 0,
     totalAmountComp: 0,
 
-      liftType : "",
-      machineType: "",
-      noOfFloors: "",
-      capacityTerm: "",
-      selectPerson:"",
+    liftType: "",
+    machineType: "",
+    noOfFloors: "",
+    capacityTerm: "",
+    selectPerson: "",
 
-      from:""
+    from: ""
 
   };
 
@@ -56,7 +55,7 @@ const {  tenant } = useParams();
     amcquatationId: 10,
     amcRenewQuatationId: null,
     revisedRenewQuatationId: null,
-    preJobId : 0,
+    preJobId: 0,
     renewalJobId: null,
     quatationDate: today,
     leadId: null,
@@ -71,9 +70,9 @@ const {  tenant } = useParams();
     fromDate: "",
     toDate: "",
 
-     isFinalOrdinary : 0,
-     isFinalSemicomp : 0,
-     isFinalComp : 0,
+    isFinalOrdinary: 0,
+    isFinalSemicomp: 0,
+    isFinalComp: 0,
 
     amountOrdinary: 0,
     gstOrdinary: 0,
@@ -99,300 +98,299 @@ const {  tenant } = useParams();
   });
 
   const [pjobid, setPjobid] = useState(0);
-  const[renewalJobId, setRenewalJobId] = useState(0);
+  const [renewalJobId, setRenewalJobId] = useState(0);
 
   useEffect(() => {
-  if (amcJobId) {
-   setPjobid(amcJobId);
-    setRenewalJobId(renJobId);
-    //alert(amcJobId);
-  }
-}, []);
-
- 
-
-   const handleUpdateAmcQuotation = async () => {
-  try {
-    // ✅ Validate typeContract before submit
-    if (!formData.typeContract || formData.typeContract.trim() === "") {
-      toast.error("Please select at least one contract type before submitting.");
-      return; // stop form submission
+    if (amcJobId) {
+      setPjobid(amcJobId);
+      setRenewalJobId(renJobId);
+      //alert(amcJobId);
     }
+  }, []);
 
-    // Build payload from formData
-    const payload = {
-      ...formData,
-      combinedQuotations: formData.combinedQuotations.length
-        ? formData.combinedQuotations
-        : [combinedQuotationBase], // fallback if empty
-    };
 
-    console.log("Sending Payload to Backend for Update:", payload);
 
-    // ✅ Use PUT instead of POST for update
-    const response = await axiosInstance.put(
-      "/api/amc/quotation/initial", // ✅ your update API endpoint
-      payload
-    );
+  const handleUpdateAmcQuotation = async () => {
+    try {
+      // ✅ Validate typeContract before submit
+      if (!formData.typeContract || formData.typeContract.trim() === "") {
+        toast.error("Please select at least one contract type before submitting.");
+        return; // stop form submission
+      }
 
-    if (response.status === 200) {
-      toast.success("AMC Quotation updated successfully!");
+      // Build payload from formData
+      const payload = {
+        ...formData,
+        combinedQuotations: formData.combinedQuotations.length
+          ? formData.combinedQuotations
+          : [combinedQuotationBase], // fallback if empty
+      };
 
-      // ✅ Redirect back to the list after successful update
-      router.push(`/dashboard/quotations/amc_quatation_list`);
+      console.log("Sending Payload to Backend for Update:", payload);
+
+      // ✅ Use PUT instead of POST for update
+      const response = await axiosInstance.put(
+        "/api/amc/quotation/initial", // ✅ your update API endpoint
+        payload
+      );
+
+      if (response.status === 200) {
+        toast.success("AMC Quotation updated successfully!");
+
+        // ✅ Redirect back to the list after successful update
+        router.push(`/dashboard/quotations/amc_quatation_list`);
+      }
+    } catch (error) {
+      console.error("Error updating AMC Quotation:", error);
+      toast.error("Failed to update AMC Quotation. Please try again.");
     }
-  } catch (error) {
-    console.error("Error updating AMC Quotation:", error);
-    toast.error("Failed to update AMC Quotation. Please try again.");
-  }
-};
+  };
 
- const handleUpdateRenewAmcQuotation = async () => {
-  try {
-    // ✅ Validate typeContract before submit
-    if (!formData.typeContract || formData.typeContract.trim() === "") {
-      toast.error("Please select at least one contract type before submitting.");
-      return; // stop form submission
+  const handleUpdateRenewAmcQuotation = async () => {
+    try {
+      // ✅ Validate typeContract before submit
+      if (!formData.typeContract || formData.typeContract.trim() === "") {
+        toast.error("Please select at least one contract type before submitting.");
+        return; // stop form submission
+      }
+
+      // Build payload from formData
+      const payload = {
+        ...formData,
+        combinedQuotations: formData.combinedQuotations.length
+          ? formData.combinedQuotations
+          : [combinedQuotationBase], // fallback if empty
+      };
+
+      console.log("Sending Payload to Backend for Update:", payload);
+
+      // ✅ Use PUT instead of POST for update
+      const response = await axiosInstance.put(
+        "/api/amc/quotation/renewal", // ✅ your update API endpoint
+        payload
+      );
+
+      if (response.status === 200) {
+        toast.success("AMC Renewal Quotation updated successfully!");
+
+        // ✅ Redirect back to the list after successful update
+        router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+      }
+    } catch (error) {
+      console.error("Error updating AMC Quotation:", error);
+      toast.error("Failed to update AMC Quotation. Please try again.");
     }
+  };
 
-    // Build payload from formData
-    const payload = {
-      ...formData,
-      combinedQuotations: formData.combinedQuotations.length
-        ? formData.combinedQuotations
-        : [combinedQuotationBase], // fallback if empty
-    };
-
-    console.log("Sending Payload to Backend for Update:", payload);
-
-    // ✅ Use PUT instead of POST for update
-    const response = await axiosInstance.put(
-      "/api/amc/quotation/renewal", // ✅ your update API endpoint
-      payload
-    );
-
-    if (response.status === 200) {
-      toast.success("AMC Renewal Quotation updated successfully!");
-
-      // ✅ Redirect back to the list after successful update
-      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
-    }
-  } catch (error) {
-    console.error("Error updating AMC Quotation:", error);
-    toast.error("Failed to update AMC Quotation. Please try again.");
-  }
-};
-
- const handleClickRevision = () => {
-    let tenant = localStorage.getItem('tenant');
+  const handleClickRevision = () => {
     let id = quotationId;
 
-    if(revision == true){
-       id = qid;
+    if (revision == true) {
+      id = qid;
     }
 
     router.push(`/dashboard/quotations/amc_quatation_list/revise_quatation_list/${id}`);
   };
 
-const handleCreateAmcRevisedQuotation = async () => {
-  try {
+  const handleCreateAmcRevisedQuotation = async () => {
+    try {
 
       // ✅ Validate typeContract before submit
-    if (!formData.typeContract || formData.typeContract.trim() === "") {
-      toast.error("Please select at least one contract type before submitting.");
-      return; // stop form submission
-    }
-    // Build payload from formData
-    const payload = {
-      ...formData,
-      combinedQuotations: formData.combinedQuotations.length
-        ? formData.combinedQuotations
-        : [combinedQuotationBase], // fallback if empty
-    };
+      if (!formData.typeContract || formData.typeContract.trim() === "") {
+        toast.error("Please select at least one contract type before submitting.");
+        return; // stop form submission
+      }
+      // Build payload from formData
+      const payload = {
+        ...formData,
+        combinedQuotations: formData.combinedQuotations.length
+          ? formData.combinedQuotations
+          : [combinedQuotationBase], // fallback if empty
+      };
 
-    console.log("Sending Payload to Backend:", payload);
+      console.log("Sending Payload to Backend:", payload);
 
-    const response = await axiosInstance.post(
-      "/api/amc/quotation/initial/revised",
-      payload
-    );
+      const response = await axiosInstance.post(
+        "/api/amc/quotation/initial/revised",
+        payload
+      );
 
-    if (response.status === 200) {
-    //  console.log("AMC Quotation created successfully:", response.data);
-     // alert("AMC Quotation created successfully!");
+      if (response.status === 200) {
+        //  console.log("AMC Quotation created successfully:", response.data);
+        // alert("AMC Quotation created successfully!");
 
         toast.success('AMC Revised Quotation created successfully!');
-      
-            // router.push(
-            //   `/${tenant}/dashboard/quotations/amc_quatation_list`
-            // );
-            handleClickRevision();
+
+        // router.push(
+        //   `/${tenant}/dashboard/quotations/amc_quatation_list`
+        // );
+        handleClickRevision();
+      }
+    } catch (error) {
+      console.error("Error creating AMC Quotation:", error);
+      alert("Failed to create AMC Revised Quotation. Please try again.");
     }
-  } catch (error) {
-    console.error("Error creating AMC Quotation:", error);
-    alert("Failed to create AMC Revised Quotation. Please try again.");
-  }
-};
+  };
 
-useEffect(()=>{
+  useEffect(() => {
 
-  if(formData.preJobId != null && formData.preJobId != undefined && formData.preJobId != 0){
+    if (formData.preJobId != null && formData.preJobId != undefined && formData.preJobId != 0) {
 
-    if(formData.renewalJobId == null || formData.renewalJobId == undefined || formData.renewalJobId == 0)
-       handleCallAmcRenewQuotation();
-  }
+      if (formData.renewalJobId == null || formData.renewalJobId == undefined || formData.renewalJobId == 0)
+        handleCallAmcRenewQuotation();
+    }
 
-},[formData.preJobId]);
+  }, [formData.preJobId]);
 
-useEffect(()=>{
+  useEffect(() => {
 
-  if(formData.renewalJobId != null && formData.renewalJobId != undefined && formData.renewalJobId != 0){
+    if (formData.renewalJobId != null && formData.renewalJobId != undefined && formData.renewalJobId != 0) {
 
-    handleCallAmcRenewQuotation();
-  }
+      handleCallAmcRenewQuotation();
+    }
 
-},[formData.renewalJobId]);
+  }, [formData.renewalJobId]);
 
-const handleCreateAmcRenewQuotation = async () => {
-  // ✅ Update formData with pjobid
+  const handleCreateAmcRenewQuotation = async () => {
+    // ✅ Update formData with pjobid
     setFormData(prevData => ({
       ...prevData,
       preJobId: pjobid,
       renewalJobId: renJobId
     }));
-};
+  };
 
 
-const handleCallAmcRenewQuotation = async () => {
+  const handleCallAmcRenewQuotation = async () => {
 
-  try {
+    try {
 
-   // alert(formData.preJobId);
+      // alert(formData.preJobId);
 
-    // ✅ Validate required field before submission
-    if (!formData.typeContract || formData.typeContract.trim() === "") {
-      toast.error("Please select at least one contract type before submitting.");
-      return; // stop form submission
+      // ✅ Validate required field before submission
+      if (!formData.typeContract || formData.typeContract.trim() === "") {
+        toast.error("Please select at least one contract type before submitting.");
+        return; // stop form submission
+      }
+
+      // ✅ Prepare payload (similar to revised quotation)
+      const payload = {
+        ...formData,
+        combinedQuotations: formData.combinedQuotations?.length
+          ? formData.combinedQuotations
+          : [combinedQuotationBase], // fallback if empty
+      };
+
+      console.log("Sending AMC Renewal Payload to Backend:", payload);
+
+      // ✅ API call to backend
+      const response = await axiosInstance.post(
+        "/api/amc/quotation/renewal",
+        payload
+      );
+
+      if (response.status === 200) {
+        toast.success("AMC Renewal Quotation created successfully!");
+
+        router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+
+      }
+    } catch (error) {
+      console.error("Error creating AMC Renewal Quotation:", error);
+      toast.error("Failed to create AMC Renewal Quotation. Please try again.");
     }
+  };
 
-    // ✅ Prepare payload (similar to revised quotation)
-    const payload = {
-      ...formData,
-      combinedQuotations: formData.combinedQuotations?.length
-        ? formData.combinedQuotations
-        : [combinedQuotationBase], // fallback if empty
-    };
 
-    console.log("Sending AMC Renewal Payload to Backend:", payload);
 
-    // ✅ API call to backend
-    const response = await axiosInstance.post(
-      "/api/amc/quotation/renewal",
-      payload
-    );
+  const handleCreateAmcRenewReviseQuotation = async () => {
 
-    if (response.status === 200) {
-      toast.success("AMC Renewal Quotation created successfully!");
-      
-      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
-    
+    try {
+
+      // alert(formData.preJobId);
+
+      // ✅ Validate required field before submission
+      if (!formData.typeContract || formData.typeContract.trim() === "") {
+        toast.error("Please select at least one contract type before submitting.");
+        return; // stop form submission
+      }
+
+      // ✅ Prepare payload (similar to revised quotation)
+      const payload = {
+        ...formData,
+        combinedQuotations: formData.combinedQuotations?.length
+          ? formData.combinedQuotations
+          : [combinedQuotationBase], // fallback if empty
+      };
+
+      console.log("Sending AMC Renewal Revise Payload to Backend:", payload);
+
+      // ✅ API call to backend
+      const response = await axiosInstance.post(
+        "/api/amc/quotation/renewal/revise",
+        payload
+      );
+
+      if (response.status === 200) {
+        toast.success("AMC Renewal Revise Quotation created successfully!");
+
+        if (renewalRevision === true)
+          router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`);
+        else
+          router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
+
+      }
+    } catch (error) {
+      console.error("Error creating AMC Renewal Revise Quotation:", error);
+      toast.error("Failed to create AMC Renewal Revise Quotation. Please try again.");
     }
-  } catch (error) {
-    console.error("Error creating AMC Renewal Quotation:", error);
-    toast.error("Failed to create AMC Renewal Quotation. Please try again.");
-  }
-};
-
-
-
-const handleCreateAmcRenewReviseQuotation = async () => {
-
-  try {
-
-   // alert(formData.preJobId);
-
-    // ✅ Validate required field before submission
-    if (!formData.typeContract || formData.typeContract.trim() === "") {
-      toast.error("Please select at least one contract type before submitting.");
-      return; // stop form submission
-    }
-
-    // ✅ Prepare payload (similar to revised quotation)
-    const payload = {
-      ...formData,
-      combinedQuotations: formData.combinedQuotations?.length
-        ? formData.combinedQuotations
-        : [combinedQuotationBase], // fallback if empty
-    };
-
-    console.log("Sending AMC Renewal Revise Payload to Backend:", payload);
-
-    // ✅ API call to backend
-    const response = await axiosInstance.post(
-      "/api/amc/quotation/renewal/revise",
-      payload
-    );
-
-    if (response.status === 200) {
-      toast.success("AMC Renewal Revise Quotation created successfully!");
-      
-      if(renewalRevision === true)
-    router.push(`/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`);
-     else
-      router.push(`/dashboard/quotations/amc-renewal-quatation-list`);
-    
-    }
-  } catch (error) {
-    console.error("Error creating AMC Renewal Revise Quotation:", error);
-    toast.error("Failed to create AMC Renewal Revise Quotation. Please try again.");
-  }
-};
+  };
 
 
 
   useEffect(() => {
-  const fetchQuotation = async () => {
-    try {
-      let url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
+    const fetchQuotation = async () => {
+      try {
+        let url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
 
-      if(renewalRenewal === true){
-         if(isQuatationIdPresent === true){
-           url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
-          }else{
+        if (renewalRenewal === true) {
+          if (isQuatationIdPresent === true) {
+            url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
+          } else {
             url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
           }
-      }
-
-      if(renewalRevision === true){
-          url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
-      }
-
-      if (revision === true) {
-        url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
-      }
-
-  // isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal
-
-      if(renewal === true){
-        if(isQuatationIdPresent === true){
-           url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
-        }else{
-           url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
         }
-      }
 
-      if(renewalEdit === true || renewalRevise === true){
-         url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
-      }
+        if (renewalRevision === true) {
+          url = '/api/amc/quotation/renewal/revise/getRenewalRevisedQuotationByIdForRevised';
+        }
+
+        if (revision === true) {
+          url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
+        }
+
+        // isQuatationIdPresent , isRevisedQuatationIdPresent , rawOriginalQid , rawRevisedQid , renewal
+
+        if (renewal === true) {
+          if (isQuatationIdPresent === true) {
+            url = '/api/amc/quotation/initial/getQuotationByIdForEdit';
+          } else {
+            url = '/api/amc/quotation/initial/revised/getRevisedQuotationByIdForRevised';
+          }
+        }
+
+        if (renewalEdit === true || renewalRevise === true) {
+          url = '/api/amc/quotation/renewal/getRenewAmcQuotationByIdForEdit';
+        }
 
 
-      const res = await axiosInstance.get(`${url}/${quotationId}`);
-      const data = res.data;
+        const res = await axiosInstance.get(`${url}/${quotationId}`);
+        const data = res.data;
 
         setFormData({
           quatationDate: data.quatationDate ?? today,
           leadId: data.leadId ?? null,
-          amcquatationId:data.amcQuatationId ?? null,
+          amcquatationId: data.amcQuatationId ?? null,
           amcRenewQuatationId: data.amcRenewQuatationId ?? null,
           revisedRenewQuatationId: data.revisedRenewQuatationId ?? null,
           combinedEnquiryId: data.combinedEnquiryId ?? null,
@@ -465,24 +463,24 @@ const handleCreateAmcRenewReviseQuotation = async () => {
     }));
   };
 
- const handleSetStatus = (e) => {
-  const val = e.target.value;
+  const handleSetStatus = (e) => {
+    const val = e.target.value;
 
-  setFormData((prev) => ({
-    ...prev,
-    status: val,
-  }));
-};
+    setFormData((prev) => ({
+      ...prev,
+      status: val,
+    }));
+  };
 
 
 
-   const [numberOfServices, setNumberOfServices] = useState([]);
+  const [numberOfServices, setNumberOfServices] = useState([]);
 
   // Fetch number of services options on mount
   useEffect(() => {
     axiosInstance.get("/api/amc/common/number-of-services")
       .then(res => {
-        setNumberOfServices(res.data); 
+        setNumberOfServices(res.data);
         // expects array like [{id:1, name:"4"}, {id:2, name:"6"}, {id:3, name:"12"}]
       })
       .catch(err => console.error("Failed to fetch number of services:", err));
@@ -490,20 +488,20 @@ const handleCreateAmcRenewReviseQuotation = async () => {
 
   // Handle change for select
   const handleNumberOfServicesChange = (e) => {
-    const selectedId = parseInt(e.target.value); 
+    const selectedId = parseInt(e.target.value);
     setFormData(prev => ({
       ...prev,
       noOfServicesId: selectedId
     }));
   };
 
-   const [employees, setEmployees] = useState([]);
+  const [employees, setEmployees] = useState([]);
 
   // Fetch employees on mount
   useEffect(() => {
     axiosInstance.get("/api/employees")
       .then(res => {
-        setEmployees(res.data); 
+        setEmployees(res.data);
         // expects array like [{employeeId:1, employeeName:"John"}, ...]
       })
       .catch(err => console.error("Failed to fetch employees:", err));
@@ -511,20 +509,20 @@ const handleCreateAmcRenewReviseQuotation = async () => {
 
   // Handle change for select
   const handleGeneratedByChange = (e) => {
-    const selectedId = parseInt(e.target.value); 
+    const selectedId = parseInt(e.target.value);
     setFormData(prev => ({
       ...prev,
       createdById: selectedId
     }));
   };
 
-   const [elevatorMakes, setElevatorMakes] = useState([]);
+  const [elevatorMakes, setElevatorMakes] = useState([]);
 
   // Fetch elevator makes on component mount
   useEffect(() => {
     axiosInstance.get("/api/amc/common/elevator-makes")
       .then(res => {
-        setElevatorMakes(res.data); 
+        setElevatorMakes(res.data);
         // expects array like [{id:1, name:"OTIS"}, {id:2, name:"Schindler"}, ...]
       })
       .catch(err => console.error("Failed to fetch elevator makes:", err));
@@ -571,599 +569,594 @@ const handleCreateAmcRenewReviseQuotation = async () => {
     gstComp: 0,
    */
 
-  
-
-const handleGetGstAmount = (amount) => {
-  const gstPercentage = Number(formData["gstPercentage"] || 0);
-  const amt = Number(amount || 0);
-  return Math.round((gstPercentage * amt) / 100); // whole number GST
-};
 
 
+  const handleGetGstAmount = (amount) => {
+    const gstPercentage = Number(formData["gstPercentage"] || 0);
+    const amt = Number(amount || 0);
+    return Math.round((gstPercentage * amt) / 100); // whole number GST
+  };
 
-const handleSetGstPercentage = (e) => {
-  const gstPerc = Number(e.target.value || 0);
-  setFormData((prev) => ({
-    ...prev,
-    gstPercentage: gstPerc, // update gstPercentage in state
-  }));
-};
 
-const [valueInserted , setValueInserted] = useState(0);
 
-const handleChange = (index, field, value) => {
+  const handleSetGstPercentage = (e) => {
+    const gstPerc = Number(e.target.value || 0);
+    setFormData((prev) => ({
+      ...prev,
+      gstPercentage: gstPerc, // update gstPercentage in state
+    }));
+  };
 
-    setValueInserted((prev)=>{
-        return prev+=1;
+  const [valueInserted, setValueInserted] = useState(0);
+
+  const handleChange = (index, field, value) => {
+
+    setValueInserted((prev) => {
+      return prev += 1;
     });
 
-  const numericValue = Number(value || 0); // ensure it's a number
+    const numericValue = Number(value || 0); // ensure it's a number
 
-  setFormData((prev) => {
-    const newQuotations = [...prev.combinedQuotations];
+    setFormData((prev) => {
+      const newQuotations = [...prev.combinedQuotations];
 
-    // update the field
-    newQuotations[index] = {
-      ...newQuotations[index],
-      [field]: numericValue,
-    };
-
-    // calculate GST and final amount
-    const gstAmount = handleGetGstAmount(numericValue);
-
-    let gstFieldName = "";
-    let finalAmtFieldName = "";
-
-    if (field === "amountOrdinary") {
-      gstFieldName = "gstOrdinary";
-      finalAmtFieldName = "totalAmountOrdinary";
-    } else if (field === "amountSemi") {
-      gstFieldName = "gstSemi";
-      finalAmtFieldName = "totalAmountSemi";
-    } else if (field === "amountComp") {
-      gstFieldName = "gstComp";
-      finalAmtFieldName = "totalAmountComp";
-    }
-
-    if (gstFieldName && finalAmtFieldName) {
+      // update the field
       newQuotations[index] = {
         ...newQuotations[index],
-        [gstFieldName]: gstAmount,
-        [finalAmtFieldName]: numericValue + gstAmount,
-      };
-    }
-
-    return { ...prev, combinedQuotations: newQuotations };
-  });
-};
-
-useEffect(() => {
-  handleCalculateAllThings();
-}, [valueInserted, formData.gstPercentage]);
-
-const handleCalculateAllThings = () => {
-  setFormData((prev) => {
-    const newQuotations = [...prev.combinedQuotations];
-
-    // Use let instead of const because we are mutating these values
-    let amountOrdinary1 = 0;
-    let gstOrdinary1 = 0;
-    let isFinalOrdinary1 = 0;
-
-    let amountSemiComp1 = 0;
-    let gstSemi1 = 0;
-    let isFinalSemicomp1 = 0;
-
-    let amountComp1 = 0;
-    let gstComp1 = 0;
-    let isFinalComp1 = 0;
-
-    for (let index = 0; index < newQuotations.length; index++) {
-      const elevator = newQuotations[index];
-
-      const amountOrdinary = Number(elevator.amountOrdinary || 0);
-      const amountSemi = Number(elevator.amountSemi || 0);
-      const amountComp = Number(elevator.amountComp || 0);
-
-      const gstOrdinary = handleGetGstAmount(amountOrdinary);
-      const gstSemi = handleGetGstAmount(amountSemi);
-      const gstComp = handleGetGstAmount(amountComp);
-
-      const totalAmountOrdinary = amountOrdinary + gstOrdinary;
-      const totalAmountSemi = amountSemi + gstSemi;
-      const totalAmountComp = amountComp + gstComp;
-
-      newQuotations[index] = {
-        ...elevator,
-        gstOrdinary,
-        gstSemi,
-        gstComp,
-        totalAmountOrdinary,
-        totalAmountSemi,
-        totalAmountComp,
+        [field]: numericValue,
       };
 
-      // Accumulate totals
-      amountOrdinary1 += amountOrdinary;
-      gstOrdinary1 += gstOrdinary;
-      isFinalOrdinary1 += totalAmountOrdinary;
+      // calculate GST and final amount
+      const gstAmount = handleGetGstAmount(numericValue);
 
-      amountSemiComp1 += amountSemi;
-      gstSemi1 += gstSemi;
-      isFinalSemicomp1 += totalAmountSemi;
+      let gstFieldName = "";
+      let finalAmtFieldName = "";
 
-      amountComp1 += amountComp;
-      gstComp1 += gstComp;
-      isFinalComp1 += totalAmountComp;
-    }
+      if (field === "amountOrdinary") {
+        gstFieldName = "gstOrdinary";
+        finalAmtFieldName = "totalAmountOrdinary";
+      } else if (field === "amountSemi") {
+        gstFieldName = "gstSemi";
+        finalAmtFieldName = "totalAmountSemi";
+      } else if (field === "amountComp") {
+        gstFieldName = "gstComp";
+        finalAmtFieldName = "totalAmountComp";
+      }
 
-    return {
-      ...prev,
-      combinedQuotations: newQuotations,
-      amountOrdinary: amountOrdinary1,
-      gstOrdinary: gstOrdinary1,
-      isFinalOrdinary: isFinalOrdinary1,
-      amountSemiComp: amountSemiComp1,
-      gstSemi: gstSemi1,
-      isFinalSemicomp: isFinalSemicomp1,
-      amountComp: amountComp1,
-      gstComp: gstComp1,
-      isFinalComp: isFinalComp1,
-    };
-  });
-};
+      if (gstFieldName && finalAmtFieldName) {
+        newQuotations[index] = {
+          ...newQuotations[index],
+          [gstFieldName]: gstAmount,
+          [finalAmtFieldName]: numericValue + gstAmount,
+        };
+      }
+
+      return { ...prev, combinedQuotations: newQuotations };
+    });
+  };
+
+  useEffect(() => {
+    handleCalculateAllThings();
+  }, [valueInserted, formData.gstPercentage]);
+
+  const handleCalculateAllThings = () => {
+    setFormData((prev) => {
+      const newQuotations = [...prev.combinedQuotations];
+
+      // Use let instead of const because we are mutating these values
+      let amountOrdinary1 = 0;
+      let gstOrdinary1 = 0;
+      let isFinalOrdinary1 = 0;
+
+      let amountSemiComp1 = 0;
+      let gstSemi1 = 0;
+      let isFinalSemicomp1 = 0;
+
+      let amountComp1 = 0;
+      let gstComp1 = 0;
+      let isFinalComp1 = 0;
+
+      for (let index = 0; index < newQuotations.length; index++) {
+        const elevator = newQuotations[index];
+
+        const amountOrdinary = Number(elevator.amountOrdinary || 0);
+        const amountSemi = Number(elevator.amountSemi || 0);
+        const amountComp = Number(elevator.amountComp || 0);
+
+        const gstOrdinary = handleGetGstAmount(amountOrdinary);
+        const gstSemi = handleGetGstAmount(amountSemi);
+        const gstComp = handleGetGstAmount(amountComp);
+
+        const totalAmountOrdinary = amountOrdinary + gstOrdinary;
+        const totalAmountSemi = amountSemi + gstSemi;
+        const totalAmountComp = amountComp + gstComp;
+
+        newQuotations[index] = {
+          ...elevator,
+          gstOrdinary,
+          gstSemi,
+          gstComp,
+          totalAmountOrdinary,
+          totalAmountSemi,
+          totalAmountComp,
+        };
+
+        // Accumulate totals
+        amountOrdinary1 += amountOrdinary;
+        gstOrdinary1 += gstOrdinary;
+        isFinalOrdinary1 += totalAmountOrdinary;
+
+        amountSemiComp1 += amountSemi;
+        gstSemi1 += gstSemi;
+        isFinalSemicomp1 += totalAmountSemi;
+
+        amountComp1 += amountComp;
+        gstComp1 += gstComp;
+        isFinalComp1 += totalAmountComp;
+      }
+
+      return {
+        ...prev,
+        combinedQuotations: newQuotations,
+        amountOrdinary: amountOrdinary1,
+        gstOrdinary: gstOrdinary1,
+        isFinalOrdinary: isFinalOrdinary1,
+        amountSemiComp: amountSemiComp1,
+        gstSemi: gstSemi1,
+        isFinalSemicomp: isFinalSemicomp1,
+        amountComp: amountComp1,
+        gstComp: gstComp1,
+        isFinalComp: isFinalComp1,
+      };
+    });
+  };
 
 
-const handleCreateAmcQuotation = async () => {
-  try {
+  const handleCreateAmcQuotation = async () => {
+    try {
 
       // ✅ Validate typeContract before submit
-    if (!formData.typeContract || formData.typeContract.trim() === "") {
-      toast.error("Please select at least one contract type before submitting.");
-      return; // stop form submission
-    }
-    // Build payload from formData
-    const payload = {
-      ...formData,
-      combinedQuotations: formData.combinedQuotations.length
-        ? formData.combinedQuotations
-        : [combinedQuotationBase], // fallback if empty
-    };
+      if (!formData.typeContract || formData.typeContract.trim() === "") {
+        toast.error("Please select at least one contract type before submitting.");
+        return; // stop form submission
+      }
+      // Build payload from formData
+      const payload = {
+        ...formData,
+        combinedQuotations: formData.combinedQuotations.length
+          ? formData.combinedQuotations
+          : [combinedQuotationBase], // fallback if empty
+      };
 
-    console.log("Sending Payload to Backend:", payload);
+      console.log("Sending Payload to Backend:", payload);
 
-    const response = await axiosInstance.post(
-      "/api/amc/quotation/initial",
-      payload
-    );
+      const response = await axiosInstance.post(
+        "/api/amc/quotation/initial",
+        payload
+      );
 
-    if (response.status === 200) {
-    //  console.log("AMC Quotation created successfully:", response.data);
-     // alert("AMC Quotation created successfully!");
+      if (response.status === 200) {
+        //  console.log("AMC Quotation created successfully:", response.data);
+        // alert("AMC Quotation created successfully!");
 
         toast.success('AMC Quotation created successfully!');
-      
-            router.push(
-              `/dashboard/quotations/amc_quatation_list`
-            );
+
+        router.push(
+          `/dashboard/quotations/amc_quatation_list`
+        );
+      }
+    } catch (error) {
+      console.error("Error creating AMC Quotation:", error);
+      alert("Failed to create AMC Quotation. Please try again.");
     }
-  } catch (error) {
-    console.error("Error creating AMC Quotation:", error);
-    alert("Failed to create AMC Quotation. Please try again.");
-  }
-};
+  };
 
 
-// Function to handle AMC From Date
-const handleAmcFromDateChange = (e) => {
-  const value = e.target.value; // "YYYY-MM-DD" from input[type="date"]
-  setFormData((prev) => ({
-    ...prev,
-    fromDate: value,
-  }));
-};
+  // Function to handle AMC From Date
+  const handleAmcFromDateChange = (e) => {
+    const value = e.target.value; // "YYYY-MM-DD" from input[type="date"]
+    setFormData((prev) => ({
+      ...prev,
+      fromDate: value,
+    }));
+  };
 
-// Function to handle AMC To Date
-const handleAmcToDateChange = (e) => {
-  const value = e.target.value;
-  setFormData((prev) => ({
-    ...prev,
-    toDate: value,
-  }));
-};
+  // Function to handle AMC To Date
+  const handleAmcToDateChange = (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      toDate: value,
+    }));
+  };
 
 
 
-const handleAmcForecastMonthChange = (e) => {
-  const value = e.target.value;
-  setFormData((prev) => ({
-    ...prev,
-    forecastMonth: value,
-  }));
-};
+  const handleAmcForecastMonthChange = (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      forecastMonth: value,
+    }));
+  };
 
- const [nonComprehensiveChecked, setNonComprehensiveChecked] = useState(false);
+  const [nonComprehensiveChecked, setNonComprehensiveChecked] = useState(false);
   const [semiComprehensiveChecked, setSemiComprehensiveChecked] = useState(false);
   const [comprehensiveChecked, setComprehensiveChecked] = useState(false);
 
   // ✅ Keep checkbox states in sync when formData.typeContract changes
-useEffect(() => {
-  const selected = formData.typeContract?.split(",") || [];
-  setNonComprehensiveChecked(selected.includes("Non-Comprehensive"));
-  setSemiComprehensiveChecked(selected.includes("Semi-Comprehensive"));
-  setComprehensiveChecked(selected.includes("Comprehensive"));
+  useEffect(() => {
+    const selected = formData.typeContract?.split(",") || [];
+    setNonComprehensiveChecked(selected.includes("Non-Comprehensive"));
+    setSemiComprehensiveChecked(selected.includes("Semi-Comprehensive"));
+    setComprehensiveChecked(selected.includes("Comprehensive"));
 
-  let nonCompStatus = selected.includes("Non-Comprehensive");
-  let semiCompStatus = selected.includes("Semi-Comprehensive");
-  let compStatus = selected.includes("Comprehensive");
+    let nonCompStatus = selected.includes("Non-Comprehensive");
+    let semiCompStatus = selected.includes("Semi-Comprehensive");
+    let compStatus = selected.includes("Comprehensive");
 
-  setFormData((prev) => {
-    const updatedCombined = prev.combinedQuotations.map((q) => {
-      const updated = { ...q };
+    setFormData((prev) => {
+      const updatedCombined = prev.combinedQuotations.map((q) => {
+        const updated = { ...q };
 
-      // Reset in combinedQuotations based on unchecked status
-      if (!nonCompStatus) {
-        updated.amountOrdinary = 0;
-        updated.gstOrdinary = 0;
-        updated.totalAmountOrdinary = 0;
-      }
-      if (!semiCompStatus) {
-        updated.amountSemi = 0;
-        updated.gstSemi = 0;
-        updated.totalAmountSemi = 0;
-      }
-      if (!compStatus) {
-        updated.amountComp = 0;
-        updated.gstComp = 0;
-        updated.totalAmountComp = 0;
-      }
+        // Reset in combinedQuotations based on unchecked status
+        if (!nonCompStatus) {
+          updated.amountOrdinary = 0;
+          updated.gstOrdinary = 0;
+          updated.totalAmountOrdinary = 0;
+        }
+        if (!semiCompStatus) {
+          updated.amountSemi = 0;
+          updated.gstSemi = 0;
+          updated.totalAmountSemi = 0;
+        }
+        if (!compStatus) {
+          updated.amountComp = 0;
+          updated.gstComp = 0;
+          updated.totalAmountComp = 0;
+        }
 
-      return updated;
+        return updated;
+      });
+
+      return {
+        ...prev,
+        // ✅ Reset only the 9 fields in main formData
+        ...(nonCompStatus
+          ? {}
+          : { amountOrdinary: 0, gstOrdinary: 0, isFinalOrdinary: 0 }),
+        ...(semiCompStatus
+          ? {}
+          : { amountSemiComp: 0, gstSemi: 0, isFinalSemicomp: 0 }),
+        ...(compStatus ? {} : { amountComp: 0, gstComp: 0, isFinalComp: 0 }),
+
+        combinedQuotations:
+          updatedCombined.length > 0 ? updatedCombined : [{ ...combinedQuotationBase }],
+      };
     });
-
-    return {
-      ...prev,
-      // ✅ Reset only the 9 fields in main formData
-      ...(nonCompStatus
-        ? {}
-        : { amountOrdinary: 0, gstOrdinary: 0, isFinalOrdinary: 0 }),
-      ...(semiCompStatus
-        ? {}
-        : { amountSemiComp: 0, gstSemi: 0, isFinalSemicomp: 0 }),
-      ...(compStatus ? {} : { amountComp: 0, gstComp: 0, isFinalComp: 0 }),
-
-      combinedQuotations:
-        updatedCombined.length > 0 ? updatedCombined : [{ ...combinedQuotationBase }],
-    };
-  });
-}, [formData.typeContract]);
+  }, [formData.typeContract]);
 
 
   return (
     <div className="min-h-screen p-2 ">
       <div className="max-w-7xl mx-auto">
-        <form onSubmit={(e) => { 
-            e.preventDefault();
+        <form onSubmit={(e) => {
+          e.preventDefault();
 
-             if(renewalRenewal === true){
-                handleCreateAmcRenewQuotation();
-             }else{
-                if(renewalRevise === true || renewalRevision === true){
-                  handleCreateAmcRenewReviseQuotation();
-                }else{
-                    if(renewalEdit === true){
-                      handleUpdateRenewAmcQuotation();
-                    }else{
-                      if(renewal === true){
-                        handleCreateAmcRenewQuotation();
-                      }else{
-                          if(!revise)
-                          handleUpdateAmcQuotation(); 
-                          else{
-                              handleCreateAmcRevisedQuotation();
-                          }
-                      }
-                    }
+          if (renewalRenewal === true) {
+            handleCreateAmcRenewQuotation();
+          } else {
+            if (renewalRevise === true || renewalRevision === true) {
+              handleCreateAmcRenewReviseQuotation();
+            } else {
+              if (renewalEdit === true) {
+                handleUpdateRenewAmcQuotation();
+              } else {
+                if (renewal === true) {
+                  handleCreateAmcRenewQuotation();
+                } else {
+                  if (!revise)
+                    handleUpdateAmcQuotation();
+                  else {
+                    handleCreateAmcRevisedQuotation();
+                  }
                 }
+              }
             }
+          }
 
         }}>
 
-        {/* Page Header */}
-        <div className="mb-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-700">
-            {
-              renewal === true ? "AMC Quotation Renewal" : revise === true ? "AMC Quotation Revision" :
-               renewalEdit ? "AMC Quotation Edit" : "AMC Quotation Revise"
-           }
+          {/* Page Header */}
+          <div className="mb-6 flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-700">
+              {
+                renewal === true ? "AMC Quotation Renewal" : revise === true ? "AMC Quotation Revision" :
+                  renewalEdit ? "AMC Quotation Edit" : "AMC Quotation Revise"
+              }
             </h1>
-          <button   type="button"  onClick={()=>{
+            <button type="button" onClick={() => {
 
-           let url ="";
+              let url = "";
 
-           if(renewalRevision === true){
-              url = `/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`;
-           }else{
+              if (renewalRevision === true) {
+                url = `/dashboard/quotations/amc-renewal-quatation-list/amc-renewal-revised-quatation-list/${qid}`;
+              } else {
 
-              if(qid!= null && qid != undefined && qid != "")
-                url = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`;
-              
-                if(qid == null || qid == undefined || qid == ""){
+                if (qid != null && qid != undefined && qid != "")
+                  url = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`;
+
+                if (qid == null || qid == undefined || qid == "") {
                   url = `/dashboard/quotations/amc_quatation_list`;
                 }
 
-                if(renewal === true){
+                if (renewal === true) {
                   url = `/dashboard/dashboard-data/amc_renewals_list`
                 }
 
-                if(renewalEdit === true || renewalRevise === true){
+                if (renewalEdit === true || renewalRevise === true) {
                   url = `/dashboard/quotations/amc-renewal-quatation-list`
                 }
               }
 
-            router.push(url);
-            // if(revision == true){
-            //       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${qid}`);
-            // }else{
-            //       router.push(`/${tenant}/dashboard/quotations/amc_quatation_list`);
-            // }
+              router.push(url);
 
-          }} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
-            back to List
-          </button>
-        </div>
+            }} className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+              back to List
+            </button>
+          </div>
 
-        {/* Quotation Details */}
-        <div className="bg-white shadow-md rounded-xl p-6 mb-6 border border-gray-300">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
-            Quotation Details
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Quotation Details inputs remain as your original design */}
-            <div>
-              <label className="block text-sm font-semibold mb-1">Quotation Date</label>
-<input 
-   readOnly
-    type="date" 
-    name="quotationDate" 
-    value={formData['quotationDate'] || new Date().toISOString().split("T")[0]}
-    className="border p-2 w-full rounded bg-gray-100" 
-/>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Select Lead</label>
-            <input name="selectLead" readOnly value={formData['selectLead']}  className=" bg-gray-100 border p-2 w-full rounded" />
+          {/* Quotation Details */}
+          <div className="bg-white shadow-md rounded-xl p-6 mb-6 border border-gray-300">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
+              Quotation Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Quotation Details inputs remain as your original design */}
+              <div>
+                <label className="block text-sm font-semibold mb-1">Quotation Date</label>
+                <input
+                  readOnly
+                  type="date"
+                  name="quotationDate"
+                  value={formData['quotationDate'] || new Date().toISOString().split("T")[0]}
+                  className="border p-2 w-full rounded bg-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Select Lead</label>
+                <input name="selectLead" readOnly value={formData['selectLead']} className=" bg-gray-100 border p-2 w-full rounded" />
 
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Customer</label>
-              <input name="customer" readOnly value={formData['customerName']}  className=" bg-gray-100 border p-2 w-full rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">Customer Site</label>
-              <input name="customerSite" readOnly value={formData['customerSite']} className=" bg-gray-100 border p-2 w-full rounded" />
-            </div>
-             <div>
-      <label className="block text-sm font-semibold mb-1">Make Of Elevators</label>
-      <select
-        className="border p-2 w-full rounded"
-        value={formData.makeOfElevatorId || ""}
-        onChange={handleElevatorMakeChange}
-        required
-      >
-        <option value="">Please Select</option>
-        {elevatorMakes.map(make => (
-          <option key={make.id} value={make.id}>
-            {make.name}
-          </option>
-        ))}
-      </select>
-    </div>
-            <div className="grid grid-cols-2 gap-2">
-             <div>
-  <label className="block text-sm font-semibold mb-1">AMC From Date</label>
-  <input
-    type="date"
-    name="amcFrom"
-    value={formData.fromDate || ""}
-    onChange={handleAmcFromDateChange}
-    className="border p-2 w-full rounded"
-    required
-  />
-</div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Customer</label>
+                <input name="customer" readOnly value={formData['customerName']} className=" bg-gray-100 border p-2 w-full rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Customer Site</label>
+                <input name="customerSite" readOnly value={formData['customerSite']} className=" bg-gray-100 border p-2 w-full rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Make Of Elevators</label>
+                <select
+                  className="border p-2 w-full rounded"
+                  value={formData.makeOfElevatorId || ""}
+                  onChange={handleElevatorMakeChange}
+                  required
+                >
+                  <option value="">Please Select</option>
+                  {elevatorMakes.map(make => (
+                    <option key={make.id} value={make.id}>
+                      {make.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">AMC From Date</label>
+                  <input
+                    type="date"
+                    name="amcFrom"
+                    value={formData.fromDate || ""}
+                    onChange={handleAmcFromDateChange}
+                    className="border p-2 w-full rounded"
+                    required
+                  />
+                </div>
 
-<div>
-  <label className="block text-sm font-semibold mb-1">AMC To Date</label>
-  <input
-    type="date"
-    name="amcTo"
-    value={formData.toDate || ""}
-    onChange={handleAmcToDateChange}
-    className="border p-2 w-full rounded"
-    required
-  />
-</div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">AMC To Date</label>
+                  <input
+                    type="date"
+                    name="amcTo"
+                    value={formData.toDate || ""}
+                    onChange={handleAmcToDateChange}
+                    className="border p-2 w-full rounded"
+                    required
+                  />
+                </div>
 
-            </div>
-            <div>
-      <label className="block text-sm font-semibold mb-1">No Of Services</label>
-      <select
-        className="border p-2 w-full rounded"
-        value={formData.noOfServicesId || ""}
-        onChange={handleNumberOfServicesChange}
-        required
-      >
-        <option value="">Please Select</option>
-        {numberOfServices.map(service => (
-          <option key={service.id} value={service.id}>
-            {service.value}
-          </option>
-        ))}
-      </select>
-    </div>
-            <div>
-              <label className="block text-sm font-semibold mb-1">GST Percentage</label>
-              <input type="number"value={formData.gstPercentage} name="gstPercentage" onChange={handleSetGstPercentage} className="border p-2 w-full rounded" />
-            </div>
-            <div>
-      <label className="block text-sm font-semibold mb-1">Payment Terms</label>
-      <select
-        className="border p-2 w-full rounded"
-        value={formData.paymentTermId || ""}
-        onChange={handlePaymentTermChange}
-        required
-      >
-        <option value="">Select</option>
-        {paymentTerms.map(term => (
-          <option key={term.id} value={term.id}>
-            {term.termName}
-          </option>
-        ))}
-      </select>
-    </div>
-             <div>
-      <label className="block text-sm font-semibold mb-1">Generated By</label>
-      <select
-        className="border p-2 w-full rounded"
-        value={formData.createdById || ""}
-        onChange={handleGeneratedByChange}
-        required
-      >
-        <option value="">Select</option>
-        {employees.map(emp => (
-          <option key={emp.employeeId} value={emp.employeeId}>
-            {emp.employeeName}
-          </option>
-        ))}
-      </select>
-    </div>
-         <div>
-  <label className="block text-sm font-semibold mb-1">Forecast Date</label>
-  <input
-    type="date"
-    name="amcFrom"
-    value={formData.forecastMonth || ""}
-    onChange={handleAmcForecastMonthChange}
-    className="border p-2 w-full rounded"
-    required
-  />
-</div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">No Of Services</label>
+                <select
+                  className="border p-2 w-full rounded"
+                  value={formData.noOfServicesId || ""}
+                  onChange={handleNumberOfServicesChange}
+                  required
+                >
+                  <option value="">Please Select</option>
+                  {numberOfServices.map(service => (
+                    <option key={service.id} value={service.id}>
+                      {service.value}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">GST Percentage</label>
+                <input type="number" value={formData.gstPercentage} name="gstPercentage" onChange={handleSetGstPercentage} className="border p-2 w-full rounded" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Payment Terms</label>
+                <select
+                  className="border p-2 w-full rounded"
+                  value={formData.paymentTermId || ""}
+                  onChange={handlePaymentTermChange}
+                  required
+                >
+                  <option value="">Select</option>
+                  {paymentTerms.map(term => (
+                    <option key={term.id} value={term.id}>
+                      {term.termName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Generated By</label>
+                <select
+                  className="border p-2 w-full rounded"
+                  value={formData.createdById || ""}
+                  onChange={handleGeneratedByChange}
+                  required
+                >
+                  <option value="">Select</option>
+                  {employees.map(emp => (
+                    <option key={emp.employeeId} value={emp.employeeId}>
+                      {emp.employeeName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold mb-1">Forecast Date</label>
+                <input
+                  type="date"
+                  name="amcFrom"
+                  value={formData.forecastMonth || ""}
+                  onChange={handleAmcForecastMonthChange}
+                  className="border p-2 w-full rounded"
+                  required
+                />
+              </div>
 
-{/* ✅ Contract Checkboxes Section */}
-<div className="mt-4">
-  <label className="block text-sm font-semibold mb-1">
-    Contract <span className="text-red-500">*</span>
-  </label>
-  <div className="flex flex-wrap gap-4">
-    {["Non-Comprehensive", "Semi-Comprehensive", "Comprehensive"].map(
-      (contractType) => (
-        <label key={contractType} className="flex items-center gap-2">
-          <input
-            
-            type="checkbox"
-            checked={
-              formData.typeContract?.split(",").includes(contractType) || false
-            }
-            onChange={(e) => {
-              const selected = formData.typeContract
-                ? formData.typeContract.split(",")
-                : [];
+              {/* ✅ Contract Checkboxes Section */}
+              <div className="mt-4">
+                <label className="block text-sm font-semibold mb-1">
+                  Contract <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-wrap gap-4">
+                  {["Non-Comprehensive", "Semi-Comprehensive", "Comprehensive"].map(
+                    (contractType) => (
+                      <label key={contractType} className="flex items-center gap-2">
+                        <input
 
-              let updated;
-              if (e.target.checked) {
-                // Add selected type
-                updated = [...selected, contractType];
-              } else {
-                // Remove unchecked type
-                updated = selected.filter((t) => t !== contractType);
-              }
+                          type="checkbox"
+                          checked={
+                            formData.typeContract?.split(",").includes(contractType) || false
+                          }
+                          onChange={(e) => {
+                            const selected = formData.typeContract
+                              ? formData.typeContract.split(",")
+                              : [];
 
-              setFormData((prev) => ({
-                ...prev,
-                typeContract: updated.join(","), // ✅ Store as comma-separated string
-              }));
-            }}
-          />
-          {contractType}
-        </label>
-      )
-    )}
-  </div>
-</div>
+                            let updated;
+                            if (e.target.checked) {
+                              // Add selected type
+                              updated = [...selected, contractType];
+                            } else {
+                              // Remove unchecked type
+                              updated = selected.filter((t) => t !== contractType);
+                            }
+
+                            setFormData((prev) => ({
+                              ...prev,
+                              typeContract: updated.join(","), // ✅ Store as comma-separated string
+                            }));
+                          }}
+                        />
+                        {contractType}
+                      </label>
+                    )
+                  )}
+                </div>
+              </div>
 
 
 
-            <div className="md:col-span-3">
-              <label className="block text-sm font-semibold mb-1">Status Of Quotation</label>
-              <input required name="status" value={formData.status} onChange={(e) => handleSetStatus(e)} className="border p-2 w-full rounded" placeholder="Enter Status" />
+              <div className="md:col-span-3">
+                <label className="block text-sm font-semibold mb-1">Status Of Quotation</label>
+                <input required name="status" value={formData.status} onChange={(e) => handleSetStatus(e)} className="border p-2 w-full rounded" placeholder="Enter Status" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Elevator Details */}
-        <div className="bg-white shadow-md rounded-xl p-6 border border-gray-300">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Elevator Details</h2>
+          {/* Elevator Details */}
+          <div className="bg-white shadow-md rounded-xl p-6 border border-gray-300">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Elevator Details</h2>
 
-          {formData.combinedQuotations.map((elevator, index) => (
-            <div key={elevator.enquiryId} className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 items-center bg-gray-50 p-4 rounded-lg">
-              {/* Lift ID */}
-             <div className="md:col-span-1 flex items-center justify-center font-semibold text-gray-700">
-  {`Lift ${index + 1}`}
-</div>
+            {formData.combinedQuotations.map((elevator, index) => (
+              <div key={elevator.enquiryId} className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 items-center bg-gray-50 p-4 rounded-lg">
+                {/* Lift ID */}
+                <div className="md:col-span-1 flex items-center justify-center font-semibold text-gray-700">
+                  {`Lift ${index + 1}`}
+                </div>
 
 
-               {/* liftType : "",
+                {/* liftType : "",
       machineType: "",
       noOfFloors: "",
       capacityTerm: "",
       selectPerson:"", */}
 
-              {/* Left Side: Elevator Info */}
-              <div className="md:col-span-3 space-y-2">
-              {/* Lift Type */}
-<div className="flex items-center mb-2">
-  <label className="w-32 text-sm font-semibold text-gray-700">
-    Lift Type
-  </label>
-  <input
-    type="text"
-    placeholder="Lift Type"
-    readOnly
-    value={elevator.liftType || ""}
-    className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-    
-  />
-</div>
+                {/* Left Side: Elevator Info */}
+                <div className="md:col-span-3 space-y-2">
+                  {/* Lift Type */}
+                  <div className="flex items-center mb-2">
+                    <label className="w-32 text-sm font-semibold text-gray-700">
+                      Lift Type
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Lift Type"
+                      readOnly
+                      value={elevator.liftType || ""}
+                      className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
 
-{/* No of Floors */}
-<div className="flex items-center mb-2">
-  <label className="w-32 text-sm font-semibold text-gray-700">
-    No. of Floors
-  </label>
-  <input
-    type="number"
-    placeholder="No. of Floors"
-    readOnly
-    value={elevator.noOfFloors || ""}
-    className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-  />
-</div>
+                    />
+                  </div>
 
-{/* No. of Persons */}
-<div className="flex items-center">
-  <label className="w-32 text-sm font-semibold text-gray-700">
-    Capacity value
-  </label>
-  <input
-    type="text"
-    placeholder="Capacity value"
-    readOnly
-    value={elevator.selectPerson || ""}
-    className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-  />
-</div>
+                  {/* No of Floors */}
+                  <div className="flex items-center mb-2">
+                    <label className="w-32 text-sm font-semibold text-gray-700">
+                      No. of Floors
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="No. of Floors"
+                      readOnly
+                      value={elevator.noOfFloors || ""}
+                      className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
 
-                {/* <select
+                  {/* No. of Persons */}
+                  <div className="flex items-center">
+                    <label className="w-32 text-sm font-semibold text-gray-700">
+                      Capacity value
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Capacity value"
+                      readOnly
+                      value={elevator.selectPerson || ""}
+                      className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* <select
                  // value={formData[elevator.id]?.type || ""}
                  // onChange={(e) => handleChange(e, elevator.id, "type")}
                   className="p-2 w-full rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -1182,163 +1175,160 @@ useEffect(() => {
                   <option>10 Persons / 680 Kg</option>
                 </select> */}
 
-              </div>
+                </div>
 
-              {/* Right Side: Pricing */}
-              <div className="md:col-span-8 grid grid-cols-3 gap-3">
+                {/* Right Side: Pricing */}
+                <div className="md:col-span-8 grid grid-cols-3 gap-3">
 
-                  <div  className="bg-white rounded-lg p-2 shadow-sm">
+                  <div className="bg-white rounded-lg p-2 shadow-sm">
                     <h3 className="font-semibold text-center mb-2">Non-Comp</h3>
                     <input
                       type="number"
                       placeholder="Base Price"
                       value={elevator['amountOrdinary'] || ""}
                       required={nonComprehensiveChecked}
-                        readOnly={!nonComprehensiveChecked}
-                     // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
-                       onChange={(e) => handleChange(index, "amountOrdinary", e.target.value)}
- className={`p-2 w-full rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-    nonComprehensiveChecked ? "bg-white" : "bg-gray-50"
-  }`}                      // className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      readOnly={!nonComprehensiveChecked}
+                      // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
+                      onChange={(e) => handleChange(index, "amountOrdinary", e.target.value)}
+                      className={`p-2 w-full rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${nonComprehensiveChecked ? "bg-white" : "bg-gray-50"
+                        }`}                      // className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
 
-                   />
+                    />
                     <input
                       type="number"
                       placeholder="GST"
-                       value={elevator['gstOrdinary'] || ""}
-                       readOnly
-                    //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
-                    //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
+                      value={elevator['gstOrdinary'] || ""}
+                      readOnly
+                      //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
+                      //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
                       className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
                     />
                     <input
                       type="number"
                       placeholder="Final Amount"
-                       value={elevator['totalAmountOrdinary'] || ""}
-                       readOnly
-                    //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
-                    //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
+                      value={elevator['totalAmountOrdinary'] || ""}
+                      readOnly
+                      //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
+                      //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
                       className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
                     />
                   </div>
 
-                   <div  className="bg-white rounded-lg p-2 shadow-sm">
+                  <div className="bg-white rounded-lg p-2 shadow-sm">
                     <h3 className="font-semibold text-center mb-2">Semi-Comp</h3>
                     <input
                       type="number"
                       placeholder="Base Price"
-                       value={elevator['amountSemi'] || ""}
-                         onChange={(e) => handleChange(index, "amountSemi", e.target.value)}
-                       required={semiComprehensiveChecked}
-                       readOnly={ !semiComprehensiveChecked}
-                     // value={formData[elevator.id]?.[`${plan}_base`] || ""}
-                     // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
-                     // className="p-2 w-full rounded bg-white-900 shadow-sm  focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    className={`p-2 w-full rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-    semiComprehensiveChecked ? "bg-white" : "bg-gray-50"
-  }`}
-                   />
+                      value={elevator['amountSemi'] || ""}
+                      onChange={(e) => handleChange(index, "amountSemi", e.target.value)}
+                      required={semiComprehensiveChecked}
+                      readOnly={!semiComprehensiveChecked}
+                      // value={formData[elevator.id]?.[`${plan}_base`] || ""}
+                      // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
+                      // className="p-2 w-full rounded bg-white-900 shadow-sm  focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className={`p-2 w-full rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${semiComprehensiveChecked ? "bg-white" : "bg-gray-50"
+                        }`}
+                    />
                     <input
                       type="number"
                       placeholder="GST"
-                       value={elevator['gstSemi'] || ""}
-                       readOnly
-                    //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
-                    //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
+                      value={elevator['gstSemi'] || ""}
+                      readOnly
+                      //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
+                      //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
                       className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
                     />
                     <input
                       type="number"
                       placeholder="Final Amount"
-                       value={elevator['totalAmountSemi'] || ""}
-                       readOnly
-                    //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
-                    //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
+                      value={elevator['totalAmountSemi'] || ""}
+                      readOnly
+                      //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
+                      //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
                       className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
                     />
                   </div>
 
-                   <div  className="bg-white rounded-lg p-2 shadow-sm">
+                  <div className="bg-white rounded-lg p-2 shadow-sm">
                     <h3 className="font-semibold text-center mb-2">Comp</h3>
                     <input
                       type="number"
                       placeholder="Base Price"
-                       value={elevator['amountComp'] || ""}
-                         onChange={(e) => handleChange(index, "amountComp", e.target.value)}
-                          required={comprehensiveChecked}
-                          readOnly={!comprehensiveChecked}
+                      value={elevator['amountComp'] || ""}
+                      onChange={(e) => handleChange(index, "amountComp", e.target.value)}
+                      required={comprehensiveChecked}
+                      readOnly={!comprehensiveChecked}
 
-                     // value={formData[elevator.id]?.[`${plan}_base`] || ""}
-                     // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
-                     // className="p-2 w-full rounded bg-white-900 shadow-sm  focus:outline-none focus:ring-1 focus:ring-blue-500"
-                     className={`p-2 w-full rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${
-    comprehensiveChecked ? "bg-white" : "bg-gray-50"
-  }`}
+                      // value={formData[elevator.id]?.[`${plan}_base`] || ""}
+                      // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
+                      // className="p-2 w-full rounded bg-white-900 shadow-sm  focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className={`p-2 w-full rounded shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${comprehensiveChecked ? "bg-white" : "bg-gray-50"
+                        }`}
                     />
                     <input
                       type="number"
                       placeholder="GST"
-                       value={elevator['gstComp'] || ""}
-                       readOnly
-                    //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
-                    //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
+                      value={elevator['gstComp'] || ""}
+                      readOnly
+                      //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
+                      //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
                       className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
                     />
                     <input
                       type="number"
                       placeholder="Final Amount"
-                       value={elevator['totalAmountComp'] || ""}
-                       readOnly
-                    //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
-                    //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
+                      value={elevator['totalAmountComp'] || ""}
+                      readOnly
+                      //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
+                      //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
                       className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
                     />
                   </div>
-            
+
+                </div>
+
+
               </div>
+            ))}
 
-             
-            </div>
-          ))}
 
-          
-        </div>
+          </div>
 
-        {/*  last final amount part   */}
+          {/*  last final amount part   */}
 
-<div className="bg-white shadow-md rounded-xl mt-10 p-6 border border-gray-300">
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Final Amounts Details</h2>
+          <div className="bg-white shadow-md rounded-xl mt-10 p-6 border border-gray-300">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Final Amounts Details</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 items-center bg-gray-50 p-4 rounded-lg">
               {/* Lift ID */}
-           <div className="md:col-span-1 flex items-center justify-center font-semibold text-gray-700">
-  
-</div>
+              <div className="md:col-span-1 flex items-center justify-center font-semibold text-gray-700">
+
+              </div>
 
 
-               {/* liftType : "",
+              {/* liftType : "",
       machineType: "",
       noOfFloors: "",
       capacityTerm: "",
       selectPerson:"", */}
 
               {/* Left Side: Elevator Info */}
-          <div className="md:col-span-3 space-y-6 mt-9">
-  {/* Final Amount */}
-  <div className="flex items-center ml-20">
-    <label className="font-semibold text-gray-900">Final Amount</label>
-  </div>
+              <div className="md:col-span-3 space-y-6 mt-9">
+                {/* Final Amount */}
+                <div className="flex items-center ml-20">
+                  <label className="font-semibold text-gray-900">Final Amount</label>
+                </div>
 
-  {/* Final GST */}
-  <div className="flex items-center ml-20">
-    <label className="font-semibold text-gray-900">Final GST</label>
-  </div>
+                {/* Final GST */}
+                <div className="flex items-center ml-20">
+                  <label className="font-semibold text-gray-900">Final GST</label>
+                </div>
 
-  {/* Final Total Amount */}
-  <div className="flex items-center ml-20">
-    <label className="font-semibold text-gray-900">Final Total Amount</label>
-  </div>
-</div>
+                {/* Final Total Amount */}
+                <div className="flex items-center ml-20">
+                  <label className="font-semibold text-gray-900">Final Total Amount</label>
+                </div>
+              </div>
 
 
 
@@ -1346,120 +1336,120 @@ useEffect(() => {
 
               {/* Right Side: Pricing */}
               <div className="md:col-span-8 grid grid-cols-3 gap-3">
-               
-                     {/* non - comp */}
-                  <div  className="bg-white rounded-lg p-2 shadow-sm">
-                    <h3 className="font-semibold text-center mb-2">Non-Comp</h3>
-                    <input
-                      type="number"
-                      placeholder="Base Price"
-                      value={formData['amountOrdinary'] || ""}
-                      readOnly
-                     // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="GST"
-                      value={formData['gstOrdinary'] || ""}
-                      readOnly
+
+                {/* non - comp */}
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <h3 className="font-semibold text-center mb-2">Non-Comp</h3>
+                  <input
+                    type="number"
+                    placeholder="Base Price"
+                    value={formData['amountOrdinary'] || ""}
+                    readOnly
+                    // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    placeholder="GST"
+                    value={formData['gstOrdinary'] || ""}
+                    readOnly
                     //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
                     //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Final Amount"
-                      value={formData['isFinalOrdinary'] || ""}
-                      readOnly
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Final Amount"
+                    value={formData['isFinalOrdinary'] || ""}
+                    readOnly
                     //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
                     //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
-                    />
-                  </div>
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
+                  />
+                </div>
 
-                     {/* semi - comp */}
-                  <div  className="bg-white rounded-lg p-2 shadow-sm">
-                    <h3 className="font-semibold text-center mb-2">Semi-Comp</h3>
-                    <input
-                      type="number"
-                      placeholder="Base Price"
-                      value={formData['amountSemiComp'] || ""}
-                      readOnly
-                     // value={formData[elevator.id]?.[`${plan}_base`] || ""}
-                     // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="GST"
-                      value={formData['gstSemi'] || ""}
-                      readOnly
+                {/* semi - comp */}
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <h3 className="font-semibold text-center mb-2">Semi-Comp</h3>
+                  <input
+                    type="number"
+                    placeholder="Base Price"
+                    value={formData['amountSemiComp'] || ""}
+                    readOnly
+                    // value={formData[elevator.id]?.[`${plan}_base`] || ""}
+                    // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    placeholder="GST"
+                    value={formData['gstSemi'] || ""}
+                    readOnly
                     //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
                     //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Final Amount"
-                      value={formData['isFinalSemicomp'] || ""}
-                      readOnly
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Final Amount"
+                    value={formData['isFinalSemicomp'] || ""}
+                    readOnly
                     //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
                     //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
-                    />
-                  </div>
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
+                  />
+                </div>
 
-                  {/* comp */}
-                  <div   className="bg-white rounded-lg p-2 shadow-sm">
-                    <h3 className="font-semibold text-center mb-2">Comp</h3>
-                    <input
-                      type="number"
-                      placeholder="Base Price"
-                      value={formData['amountComp'] || ""}
-                      readOnly
-                     // value={formData[elevator.id]?.[`${plan}_base`] || ""}
-                     // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                    <input
-                      type="number"
-                      placeholder="GST"
-                      value={formData['gstComp'] || ""}
-                      readOnly
+                {/* comp */}
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <h3 className="font-semibold text-center mb-2">Comp</h3>
+                  <input
+                    type="number"
+                    placeholder="Base Price"
+                    value={formData['amountComp'] || ""}
+                    readOnly
+                    // value={formData[elevator.id]?.[`${plan}_base`] || ""}
+                    // onChange={(e) => handleChange(e, elevator.id, `${plan}_base`)}
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <input
+                    type="number"
+                    placeholder="GST"
+                    value={formData['gstComp'] || ""}
+                    readOnly
                     //  value={formData[elevator.id]?.[`${plan}_gst`] || ""}
                     //  onChange={(e) => handleChange(e, elevator.id, `${plan}_gst`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Final Amount"
-                      value={formData['isFinalComp'] || ""}
-                      readOnly
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Final Amount"
+                    value={formData['isFinalComp'] || ""}
+                    readOnly
                     //  value={formData[elevator.id]?.[`${plan}_final`] || ""}
                     //  onChange={(e) => handleChange(e, elevator.id, `${plan}_final`)}
-                      className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
-                    />
-                  </div>
+                    className="p-2 w-full rounded bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500 mt-2"
+                  />
+                </div>
 
 
-                  
-              
+
+
               </div>
 
-             
+
             </div>
-        
 
-          
-        </div>
 
-        {/* Footer Buttons */}
-        <div className="flex justify-end gap-4 mt-6">
-          <button className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 transition">Cancel</button>
-          <button   // <-- call function here
- className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">Update</button>
-        </div>
+
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 transition">Cancel</button>
+            <button   // <-- call function here
+              className="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">Update</button>
+          </div>
         </form>
       </div>
     </div>

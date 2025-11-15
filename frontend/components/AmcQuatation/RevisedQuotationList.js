@@ -70,8 +70,7 @@ export default function RevisedQuotationList({ quotationId }) {
   const handleRevise = (id) => {
 
     // Navigate to revise page
-    let tenant = localStorage.getItem("tenant");
-    window.location.href = `/${tenant}/dashboard/quotations/amc_quatation_list/revise_quatation_list/${quotationId}/revision/${id}`;
+    window.location.href = `/dashboard/quotations/amc_quatation_list/revise_quatation_list/${quotationId}/revision/${id}`;
   };
 
   const previewMail = (id) => {

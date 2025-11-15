@@ -14,7 +14,7 @@ import StageTwoButton from './StageTwoButton';
 export default function AddLeadAndEnquiry() {
       const router = useRouter();
 
-        const { id, tenant } = useParams();
+        const { id } = useParams();
       
 
   const [activeStage, setActiveStage] = useState(1);
@@ -369,7 +369,7 @@ const enquiryDate = form.enquiryDate;
 
     handleSetLeadSumbited(false);
    // alert("Success");
-//window.location.href = `/${tenant}/dashboard/lead-management/enquiries/${id}`;
+//window.location.href = `/dashboard/lead-management/enquiries/${id}`;
 // ✅ Redirect using props (customer, site, leadId, enquiryTypeName)
 
  // ✅ Use Next.js router to redirect

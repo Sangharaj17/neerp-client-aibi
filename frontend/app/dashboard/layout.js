@@ -17,7 +17,7 @@ export default function DClientLayout({ children }) {
           {/* ✅ Top-Center Toasts */}
           <Toaster position="top-center" reverseOrder={false} />
 
-          <div className="">
+          <div className="p-4">
             {children}
           </div>
         </section>

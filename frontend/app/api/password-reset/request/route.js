@@ -100,7 +100,7 @@ export async function POST(request) {
     const baseUrl = `${protocol}://${host}`;
     
     // Create reset link
-    const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}&tenant=${encodeURIComponent(tenant)}`;
+    const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}`;
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({

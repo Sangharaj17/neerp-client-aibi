@@ -8,7 +8,6 @@ import axiosInstance from '@/utils/axiosInstance';
 
 export default function AddTodo({closeModal , leadId}) {
   const router = useRouter();
-  const { tenant } = useParams();
 
   const [leads, setLeads] = useState([]);
   const [executives, setExecutives] = useState([]);
@@ -81,7 +80,7 @@ export default function AddTodo({closeModal , leadId}) {
         toast.success("Todo added successfully.");
 
       closeModal();
-      //router.push(`/${tenant}/dashboard/lead-management/to-do-list`);
+      //router.push(`/dashboard/lead-management/to-do-list`);
     } catch (err) {
       console.error('Submit error:', err);
       const msg = err.response?.data || err.message;

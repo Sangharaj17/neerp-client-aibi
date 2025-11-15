@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
       if (response.data.success || response.data.message) {
         setSuccess(true);
         setTimeout(() => {
-          router.push(`/auth/login${tenant ? `?tenant=${tenant}` : ''}`);
+          router.push(`/auth/login`);
         }, 3000);
       }
     } catch (err) {
@@ -119,7 +119,7 @@ export default function ResetPasswordPage() {
 
             {/* Manual Link */}
             <Link 
-              href={`/auth/login${tenant ? `?tenant=${tenant}` : ''}`}
+              href="/auth/login"
               className="inline-block text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
             >
               Go to login
@@ -204,7 +204,7 @@ export default function ResetPasswordPage() {
           {/* Back to Login Link */}
           <div className="text-center">
             <Link 
-              href={`/auth/login${tenant ? `?tenant=${tenant}` : ''}`}
+              href="/auth/login"
               className="text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
             >
               Back to login

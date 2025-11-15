@@ -9,7 +9,7 @@ import axiosInstance from '@/utils/axiosInstance';
 export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action }) {
 
   console.log("Selected enquiryTypeName:", enquiryTypeName);
-  const { id, tenant } = useParams();
+  const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -355,7 +355,7 @@ console.log(options);
       const response = await axiosInstance.put(apiUrl + query, transformedLifts);
       toast.success("Enquiry updated successfully.");
       router.push(
-        `/${tenant}/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
+        `/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
       );
     } catch (err) {
       console.error(err);

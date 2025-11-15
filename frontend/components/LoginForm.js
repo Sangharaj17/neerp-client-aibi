@@ -246,7 +246,7 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
                 />
                 <div className="text-right">
                   <Link
-                    href={`/auth/forgot-password${tenant ? `?tenant=${tenant}` : ''}`}
+                    href="/auth/forgot-password"
                     className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
                   >
                     Forgot password?

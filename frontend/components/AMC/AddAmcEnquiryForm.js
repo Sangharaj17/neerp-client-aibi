@@ -31,7 +31,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
   };
 
   console.log("Selected enquiryTypeId:", enquiryTypeId);
-  const { id, tenant } = useParams();
+  const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -419,7 +419,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
     // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${enquiryTypeId}`;
 
-    const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
+    const query = `?projectName=${encodeURIComponent(projectName)}&siteName=${encodeURIComponent(site)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
 
 
     // 🔁 transform all lifts before sending
@@ -433,7 +433,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     try {
       const response = await axiosInstance.post(apiUrl + query, transformedLifts);
       //alert("Success");
-      //window.location.href = `/${tenant}/dashboard/lead-management/enquiries/${id}`;
+      //window.location.href = `/dashboard/lead-management/enquiries/${id}`;
       // ✅ Redirect using props (customer, site, leadId, enquiryTypeName)
 
       // ✅ Use Next.js router to redirect
@@ -441,7 +441,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       toast.success('Enquiry added successfully!');
 
       router.push(
-        `/${tenant}/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(typeName)}`
+        `/dashboard/lead-management/enquiries/${leadId}?customer=${encodeURIComponent(customer)}&site=${encodeURIComponent(site)}&enquiryTypeName=${encodeURIComponent(typeName)}`
       );
 
     } catch (err) {

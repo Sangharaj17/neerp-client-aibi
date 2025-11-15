@@ -121,7 +121,7 @@ export default function ChangePasswordPage() {
             {/* Forgot Password Link */}
             <div className="text-center">
               <Link
-                href={`/auth/forgot-password${tenant ? `?tenant=${tenant}` : ''}`}
+                href="/auth/forgot-password"
                 className="text-xs text-blue-600 hover:text-blue-900 transition-colors underline"
               >
                 Forgot current password?
