@@ -7,15 +7,85 @@ import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 
 const API = {
-  // unit: "/api/unit",
-  // capacityType: "/api/capacityTypes",
-  // weight: "/api/weights",
-  // personCapacity: "/api/personCapacity",
   unit: API_ENDPOINTS.UNIT,
   capacityType: API_ENDPOINTS.CAPACITY_TYPES,
   weight: API_ENDPOINTS.WEIGHTS,
   personCapacity: API_ENDPOINTS.PERSON_CAPACITY,
 };
+
+const defaultWeightsData = [
+  { unitId: 1, weightValue: 100, capacityTypeId: 2 }, // Example: 100Kg
+  { unitId: 1, weightValue: 150, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 200, capacityTypeId: 2 }, // Example: 500Kg
+  { unitId: 1, weightValue: 250, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 300, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 500, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 750, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 1000, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 1500, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 2000, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 2500, capacityTypeId: 2 },
+  { unitId: 1, weightValue: 3000, capacityTypeId: 2 },
+];
+
+const defaultPersonCapsData = [
+  {
+    personCount: 4,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  }, // Assuming Person Cap Type ID is 1
+  {
+    personCount: 5,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+  {
+    personCount: 6,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+  {
+    personCount: 8,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+  {
+    personCount: 10,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+  {
+    personCount: 13,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+  {
+    personCount: 15,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+  {
+    personCount: 20,
+    label: "Persons",
+    individualWeight: 68,
+    unitId: 1,
+    capacityTypeId: 1,
+  },
+];
 
 export default function UnitCapacityCrud() {
   const [units, setUnits] = useState([]);
@@ -194,6 +264,7 @@ export default function UnitCapacityCrud() {
     const url = editId ? `${API[endpoint]}/${editId}` : API[endpoint];
 
     const toastId = toast.loading(editId ? "Updating..." : "Adding...");
+    console.log("==data==>", data);
     try {
       let res;
 
@@ -206,6 +277,8 @@ export default function UnitCapacityCrud() {
       }
 
       const result = res.data;
+
+      // const result = null;
 
       if (!result || result.success === false) {
         throw new Error(
@@ -266,6 +339,74 @@ export default function UnitCapacityCrud() {
   //   setIsPersonDuplicate(duplicate);
   // }, [personForm, personCaps]);
 
+  const addDefaultWeights = async () => {
+    // const defaultUnitId =
+    //   units.find((u) => u.unitName.toLowerCase().includes("kg"))?.id || 1;
+    // const defaultCapTypeId =
+    //   capacityTypes.find(
+    //     (c) =>
+    //       c.type.toLowerCase().includes("weight") ||
+    //       c.type.toLowerCase().includes("kgs")
+    //   )?.id || 2;
+
+    const dataToPost = defaultWeightsData.map((d) => ({
+      unitId: d.unitId, // Use dynamically found or fallback
+      weightValue: d.weightValue,
+      capacityTypeId: d.capacityTypeId, // Use dynamically found or fallback
+    }));
+
+    for (const data of dataToPost) {
+      // Prevent duplicate addition before postData does its check
+      const isAlreadyExisting = weight.some(
+        (w) =>
+          +w.unitId === +data.unitId &&
+          +w.weightValue === +data.weightValue &&
+          +w.capacityTypeId === +data.capacityTypeId
+      );
+
+      if (!isAlreadyExisting) {
+        // Note: postData is not designed for batch success logging,
+        // but we call it iteratively here.
+        await postData(
+          "weight",
+          data,
+          null,
+          () => {} // Don't reset form for batch
+        );
+      }
+    }
+    // Final fetch after all posts are done (postData already does fetchAll() on success,
+    // but a final one ensures the latest state is captured)
+    fetchAll();
+  };
+
+  const addDefaultPersonCaps = async () => {
+    const defaultUnitId =
+      units.find((u) => u.unitName.toLowerCase().includes("kg"))?.id || 1;
+    const defaultCapTypeId =
+      capacityTypes.find((c) => c.type.toLowerCase().includes("person"))?.id ||
+      1;
+
+    const dataToPost = defaultPersonCapsData.map((d) => ({
+      personCount: d.personCount,
+      label: d.label,
+      individualWeight: d.individualWeight,
+      unitId: d.unitId,
+      capacityTypeId: d.capacityTypeId,
+    }));
+
+    for (const data of dataToPost) {
+      // PostData has a duplicate check for personCapacity, so we can rely on that.
+      await postData(
+        "personCapacity",
+        data,
+        null,
+        () => {} // Don't reset form for batch
+      );
+    }
+    fetchAll();
+  };
+
   return (
     <div className="space-y-10 p-6 w-full min-h-screen">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -293,8 +434,8 @@ export default function UnitCapacityCrud() {
             }}
             // className="flex flex-wrap gap-3 items-center mb-4"
             className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
-            unitForm.editId ? "bg-yellow-50" : "bg-gray-100"
-          }`}
+              unitForm.editId ? "bg-yellow-50" : "bg-gray-100"
+            }`}
           >
             <input
               value={unitForm.unit}
@@ -473,7 +614,20 @@ export default function UnitCapacityCrud() {
       </div>
 
       {/* weight */}
-      <Section title="Weight Capacity" searchKey="weight" setSearch={setSearch}>
+      <Section
+        title="Weight Capacity"
+        searchKey="weight"
+        setSearch={setSearch}
+        actionButton={
+          <button
+            onClick={addDefaultWeights}
+            className="bg-purple-600 text-white px-3 py-1 text-sm rounded-md hover:bg-purple-700 transition"
+            title="Add 100Kg, 250Kg, 500Kg defaults"
+          >
+            Add Default Weights
+          </button>
+        }
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -621,7 +775,20 @@ export default function UnitCapacityCrud() {
       </Section>
 
       {/* Person Capacity */}
-      <Section title="Person Capacity" searchKey="person" setSearch={setSearch}>
+      <Section
+        title="Person Capacity"
+        searchKey="person"
+        setSearch={setSearch} // Pass the new button via a prop
+        actionButton={
+          <button
+            onClick={addDefaultPersonCaps}
+            className="bg-purple-600 text-white px-3 py-1 text-sm rounded-md hover:bg-purple-700 transition"
+            title="Add 2, 4, 6 Person defaults"
+          >
+            Add Default Persons
+          </button>
+        }
+      >
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -804,19 +971,32 @@ export default function UnitCapacityCrud() {
   );
 }
 
-function Section({ title, children, searchKey, setSearch }) {
+function Section({ title, children, searchKey, setSearch, actionButton }) {
   return (
     <div className="space-y-2 rounded-2xl p-4 bg-white rounded shadow-lg border border-gray-400">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-blue-700">{title}</h2>
-        <input
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-blue-700">
+          {title}
+        </h2>
+        <div className="flex gap-2 items-center">
+          {actionButton}
+          <input
+            type="text"
+            placeholder="Search..."
+            onChange={(e) =>
+              setSearch((prev) => ({ ...prev, [searchKey]: e.target.value }))
+            }
+            className="border px-2 py-1 text-sm w-48 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        {/* <input
           type="text"
           placeholder="Search..."
           onChange={(e) =>
             setSearch((prev) => ({ ...prev, [searchKey]: e.target.value }))
           }
           className="border px-2 py-1 text-sm w-48  rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        /> */}
       </div>
       {children}
     </div>

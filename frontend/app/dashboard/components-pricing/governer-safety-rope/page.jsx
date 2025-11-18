@@ -49,6 +49,7 @@ export default function GovernerSafetyRope() {
       label: "Floor",
       sortable: true,
       editable: false,
+      render: (item) => `${item.floorId} (${item.floorName})`,
     },
     {
       key: "quantity",
@@ -279,7 +280,7 @@ export default function GovernerSafetyRope() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.floorName}
+                {type.id+1} ({type.floorName})
               </option>
             ))}
           </FormSelect>

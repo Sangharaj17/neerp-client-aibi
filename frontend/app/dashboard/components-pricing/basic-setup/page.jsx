@@ -178,6 +178,7 @@ export default function SupportingData() {
   };
 
   // ********************* Speeds ****************************
+  const DEFAULT_SPEEDS = [0.25, 0.65, 1.0, 1.1, 1.5, 1.75, 2.0];
   const columnsSpeed = [
     { key: "value", label: "Speed (m/s)", sortable: true, align: "text-left" },
   ];
@@ -226,10 +227,7 @@ export default function SupportingData() {
     try {
       const url = editIdSpeed ? `${API_SPEED}/${editIdSpeed}` : API_SPEED;
       const method = editIdSpeed ? "put" : "post";
-      await axiosInstance[method](
-        url,
-        { value: val },
-      );
+      await axiosInstance[method](url, { value: val });
       toast.success("Speed saved successfully");
       fetchSpeeds();
       setFormSpeed({ value: "" });
@@ -256,6 +254,39 @@ export default function SupportingData() {
         toast.error("Failed to delete speed.");
       }
     });
+  };
+
+  const handleAddDefaultSpeeds = async () => {
+    // Filter out speeds that already exist to prevent unnecessary API calls and duplicates
+    const speedsToAdd = DEFAULT_SPEEDS.filter(
+      (defaultSpeed) => !speeds.some((s) => s.value === defaultSpeed)
+    );
+
+    if (speedsToAdd.length === 0) {
+      toast.info("All default speeds already exist.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Create an array of promises for concurrent POST requests
+      const postPromises = speedsToAdd.map((value) =>
+        axiosInstance.post(API_SPEED, { value })
+      );
+
+      // Wait for all requests to finish
+      await Promise.all(postPromises);
+
+      toast.success(
+        `Successfully added ${speedsToAdd.length} new default speed(s).`
+      );
+      fetchSpeeds(); // Refresh the list
+    } catch (error) {
+      console.error("Error adding default speeds:", error);
+      toast.error("Failed to add one or more default speeds.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ********************** Manufacturers ************************
@@ -395,10 +426,7 @@ export default function SupportingData() {
         ? `${API_MANUFACTURER}/${editIdManufacturer}`
         : API_MANUFACTURER;
       const method = editIdManufacturer ? "put" : "post";
-      const res = await axiosInstance[method](
-        url,
-        { name, componentId },
-      );
+      const res = await axiosInstance[method](url, { name, componentId });
       toast.success(res.data.message || "Saved successfully");
       setEditIdManufacturer(null);
       setFormManufacturer({ value: "", componentId: "" });
@@ -451,10 +479,7 @@ export default function SupportingData() {
         ? `${API_COMPONENT}/${editIdComponent}`
         : API_COMPONENT;
       const method = editIdComponent ? "put" : "post";
-      const res = await axiosInstance[method](
-        url,
-        { name },
-      );
+      const res = await axiosInstance[method](url, { name });
       toast.success(res.data.message || "Saved successfully");
       setEditIdComponent(null);
       setFormComponent({ value: "" });
@@ -526,7 +551,7 @@ export default function SupportingData() {
       try {
         const res = await axiosInstance.post(
           `/api/warranties/generate/${totalMonths}`,
-          {},
+          {}
         );
 
         if (res.data) {
@@ -634,7 +659,7 @@ export default function SupportingData() {
         // ✅ Update feature
         const res = await axiosInstance.put(
           `${API_FEATURES}/${editIdFeatures}`,
-          { name: newValue, isActive: true }, // backend entity
+          { name: newValue, isActive: true } // backend entity
         );
 
         setFeatures((prev) =>
@@ -644,10 +669,10 @@ export default function SupportingData() {
         setEditIdFeatures(null);
       } else {
         // ✅ Add new feature
-        const res = await axiosInstance.post(
-          API_FEATURES,
-          { name: newValue, isActive: true },
-        );
+        const res = await axiosInstance.post(API_FEATURES, {
+          name: newValue,
+          isActive: true,
+        });
 
         setFeatures((prev) => [...prev, res.data]);
         toast.success("Feature added successfully!");
@@ -690,7 +715,7 @@ export default function SupportingData() {
       // Make the API call to update the feature status
       const res = await axiosInstance.put(
         `${API_FEATURES}/${feature.id}`,
-        { name: feature.name, active: newStatus }, // Send the new status
+        { name: feature.name, active: newStatus } // Send the new status
       );
 
       // Update the local state with the new data from the API response
@@ -788,7 +813,7 @@ export default function SupportingData() {
         // ✅ Update feature
         const res = await axiosInstance.put(
           `${API_OPERATION_TYPE}/${editIdOperationType}`,
-          { name: newValue, isActive: true }, // backend entity
+          { name: newValue, isActive: true } // backend entity
         );
 
         setOperationTypes((prev) =>
@@ -798,10 +823,10 @@ export default function SupportingData() {
         setEditIdOperationType(null);
       } else {
         // ✅ Add new feature
-        const res = await axiosInstance.post(
-          API_OPERATION_TYPE,
-          { name: newValue, isActive: true },
-        );
+        const res = await axiosInstance.post(API_OPERATION_TYPE, {
+          name: newValue,
+          isActive: true,
+        });
 
         setOperationTypes((prev) => [...prev, res.data]);
         toast.success("Operation Type added successfully!");
@@ -843,7 +868,7 @@ export default function SupportingData() {
       // Make the API call to update the feature status
       const res = await axiosInstance.put(
         `${API_OPERATION_TYPE}/${opTy.id}`,
-        { name: opTy.name, active: newStatus }, // Send the new status
+        { name: opTy.name, active: newStatus } // Send the new status
       );
 
       // Update the local state with the new data from the API response
@@ -1100,7 +1125,7 @@ export default function SupportingData() {
         // 🔹 Update
         await axiosInstance.put(
           `${API_CAPACITY_DIMENSIONS}/${editIdCapDim}`,
-          payload,
+          payload
         );
         toast.success("Capacity Dimension updated successfully");
       } else {
@@ -1220,7 +1245,7 @@ export default function SupportingData() {
       if (editRuleId) {
         res = await axiosInstance.put(
           `${API_ENDPOINTS.INSTALLATION_RULES}/${editRuleId}`,
-          payload,
+          payload
         );
         setInstallationRules((prev) =>
           prev.map((r) => (r.id === editRuleId ? res.data.data : r))
@@ -1230,7 +1255,7 @@ export default function SupportingData() {
       } else {
         res = await axiosInstance.post(
           API_ENDPOINTS.INSTALLATION_RULES,
-          payload,
+          payload
         );
         setInstallationRules((prev) => [...prev, res.data.data]);
         toast.success("Rule added successfully!");
@@ -1388,10 +1413,7 @@ export default function SupportingData() {
       const url = editIdLoad ? `${API_LOAD}/${editIdLoad}` : API_LOAD;
       const method = editIdLoad ? "put" : "post";
 
-      await axiosInstance[method](
-        url,
-        { loadAmount: val },
-      );
+      await axiosInstance[method](url, { loadAmount: val });
 
       toast.success(
         editIdLoad ? "Load updated successfully" : "Load saved successfully"
@@ -1839,6 +1861,15 @@ export default function SupportingData() {
                 Cancel
               </FormButton>
             )}
+
+            <FormButton
+              type="button"
+              variant="info" // Assuming you have an 'info' or custom variant for this action
+              onClick={handleAddDefaultSpeeds}
+              disabled={loading} // Disable while loading/posting
+            >
+              Add Default Speeds
+            </FormButton>
           </ResponsiveForm>
 
           <ReusableTable
@@ -1955,18 +1986,18 @@ export default function SupportingData() {
                   {editIdManufacturer ? "Update" : "Add Manufacturer"}
                 </FormButton>
 
-                {editIdManufacturer && (
-                  <FormButton
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      setEditIdComponent(null);
-                      setFormManufacturer({ value: "", componentId: "" });
-                    }}
-                  >
-                    Cancel
-                  </FormButton>
-                )}
+                {/* {editIdManufacturer && ( */}
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditIdComponent(null);
+                    setFormManufacturer({ value: "", componentId: "" });
+                  }}
+                >
+                  Cancel
+                </FormButton>
+                {/* )} */}
               </div>
             </ResponsiveForm>
 
@@ -2128,10 +2159,13 @@ export default function SupportingData() {
           <ResponsiveForm onSubmit={handleSubmitCapDim} className="w-full px-6">
             <div
               className="
-                grid grid-cols-1 
-                md:grid-cols-2 
-                lg:grid-cols-[minmax(200px,auto)_minmax(200px,auto)_repeat(6,minmax(165px,1fr))_auto] 
-                gap-4 items-end w-full
+                col-span-full
+                grid grid-cols-1
+                md:grid-cols-2
+                lg:grid-cols-[repeat(auto-fit,minmax(150px,1fr))]
+                gap-4 
+                items-end 
+                w-full 
               "
             >
               {/* Capacity Type (radio) */}
@@ -2293,7 +2327,7 @@ export default function SupportingData() {
               </div>
 
               {/* Buttons at the end */}
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end w-full">
                 <FormButton type="submit" variant="primary">
                   {editIdCapDim ? "Update" : "Add"}
                 </FormButton>

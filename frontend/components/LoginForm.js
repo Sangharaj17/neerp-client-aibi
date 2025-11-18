@@ -85,11 +85,12 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
                   }
                 );
                 if (loginRes.data) {
-                  const { clientId, username, userEmail, token, clientName } = loginRes.data;
+                  const { clientId, username, userEmail, token, clientName, userId } = loginRes.data;
                   localStorage.setItem("tenant", tenant);
                   localStorage.setItem(`${tenant}_clientId`, clientId);
                   localStorage.setItem(`${tenant}_username`, username);
                   localStorage.setItem(`${tenant}_userEmail`, userEmail);
+                  localStorage.setItem(`${tenant}_userId`, userId);
                   localStorage.setItem(`${tenant}_token`, token);
                   localStorage.setItem(`${tenant}_clientName`, clientName);
                   try {
@@ -121,11 +122,12 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
       }
 
       if (res.data) {
-        const { clientId, username, userEmail, token, clientName } = res.data;
+        const { clientId, username, userEmail, token, clientName, userId } = res.data;
         localStorage.setItem("tenant", tenant);
         localStorage.setItem(`${tenant}_clientId`, clientId);
         localStorage.setItem(`${tenant}_username`, username);
         localStorage.setItem(`${tenant}_userEmail`, userEmail);
+        localStorage.setItem(`${tenant}_userId`, userId);
         localStorage.setItem(`${tenant}_token`, token);
         localStorage.setItem(`${tenant}_clientName`, clientName);
 

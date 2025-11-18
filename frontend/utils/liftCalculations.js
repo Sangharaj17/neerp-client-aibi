@@ -4,11 +4,11 @@ import { toast } from "react-hot-toast";
 
 // 🔹 Prices based on liftType, capacityType, capacityValue, typeOfLift
 // export const calculateLiftMaterialPrices = async ({ liftType, capacityType, capacityValue, typeOfLift, cabinType }) => {
-export const calculateLiftMaterialPrices = async ({ liftType, capacityType, capacityValue, typeOfLift, floors, leadID, existingItem, existingArd, setErrors }) => {
+export const calculateLiftMaterialPrices = async ({ liftType, capacityType, capacityValue, typeOfLift, floors, leadID, existingItem, existingArd, existingArdAmount, setErrors }) => {
   try {
-
+console.log("==========existingArdAmount====2222========>",existingArdAmount);
     const [ardResult, machineResult, cabinPrice] = await Promise.all([
-      fetchArdPrice(liftType, capacityType, capacityValue, leadID, existingArd, setErrors),
+      fetchArdPrice(liftType, capacityType, capacityValue, leadID, existingArd,existingArdAmount, setErrors),
       fetchMachinePrice(liftType, capacityType, capacityValue, typeOfLift, floors, leadID, existingItem, setErrors),
       //fetchCabinPrice(cabinType, capacityType, capacityValue),
     ]);
@@ -231,7 +231,7 @@ const calculateTruffingPrice = async (floors, setErrors) => {
 // Helper to fetch ARD Price
 
 
-const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, existingArd, setErrors) => {
+const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, existingArd, existingArdAmount, setErrors) => {
   try {
     const res = await axiosInstance.get(
       API_ENDPOINTS.ARD_DEVICE + "/searchByOperatorAndCapacity",
@@ -245,11 +245,27 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
     );
 
     const apiRes = res.data;
-    console.log("===apiRes= ard==>", apiRes);
+    console.log("==========existingArdAmount============>",existingArdAmount);
+    console.log(existingArd,"===apiRes= ard==>", apiRes);
 
     if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
       const ard = apiRes.data[0];
-      const price = ard.price || 0;
+      const newCalculatedPrice = ard.price || 0; // Price calculated from API
+
+        // --- 🎯 New Logic to Preserve Existing Price ---
+        let finalPrice = newCalculatedPrice;
+
+        if (
+            // existingArd && 
+            // existingArd.materialId === ard.id && // Ensure material ID matches the API result
+            // existingArd.price > 0 
+            existingArdAmount > 0 && existingArdAmount!=newCalculatedPrice
+        ) {
+            // If the material is the same and a price already exists (from the copy), use it.
+            // This preserves manually entered/copied prices.
+            // finalPrice = existingArd.price; 
+            finalPrice = existingArdAmount; 
+        }
 
       // 1. Create the ARD material object
       const ardMaterial = {
@@ -262,7 +278,7 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
         materialName: ard.ardDevice, // Assuming the name field is ardDeviceName
         quantity: 1, // ARD is typically a quantity of 1
         quantityUnit: "",
-        price: price,
+        price: finalPrice,
         operatorType: existingArd?.operatorId || liftType,
         materialType: "ARD", // Use a distinct materialType
       };
@@ -275,7 +291,7 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
       });
 
       // 2. Return the price AND the material object
-      return { price: price, ardMaterial: ardMaterial };
+      return { price: finalPrice, ardMaterial: ardMaterial };
     }
 
     const message = apiRes.message || "No ARD devices found for given criteria";

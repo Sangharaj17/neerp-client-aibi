@@ -129,7 +129,8 @@ public class CarDoorTypeService {
         if (!StringUtils.hasText(dto.getCarDoorType())) {
             throw new IllegalArgumentException("Car Door Type is invalid");
         }
-        dto.setCarDoorType(dto.getCarDoorType().replaceAll("[^\\w\\s-]", "").trim());
+        // Updated regex to explicitly allow the period/dot (.)
+        dto.setCarDoorType(dto.getCarDoorType().replaceAll("[^\\w\\s-.]", "").trim());
     }
 
     public List<CarDoorTypeResponseDTO> getByLiftType(Integer operatorElevatorId) {

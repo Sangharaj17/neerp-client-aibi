@@ -11,6 +11,7 @@ public class BracketResponseDTO {
     private int id;
     private Integer bracketTypeId;
     private String bracketTypeName;
+    private String carBracketSubType;
     private Integer price;
     private Integer floorId;
     private String floorName;

@@ -1,5 +1,6 @@
 package com.aibi.neerp.componentpricing.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -11,6 +12,9 @@ public class BracketRequestDTO {
 
     @NotNull(message = "Bracket Type ID is mandatory")
     private Integer bracketTypeId;
+
+    @NotBlank(message = "Car Bracket Sub Type is mandatory")
+    private String carBracketSubType;
 
     @NotNull(message = "Price cannot be null")
     @Positive(message = "Price must be greater than zero")

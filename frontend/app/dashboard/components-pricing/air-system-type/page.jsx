@@ -673,7 +673,7 @@ export default function AirManagement() {
             <FormButton type="submit" variant="primary">
               {editAirSystemId ? "Update" : "Add"}
             </FormButton>
-            {editAirSystemId && (
+            {/* {editAirSystemId && ( */}
               <FormButton
                 type="button"
                 variant="secondary"
@@ -685,7 +685,7 @@ export default function AirManagement() {
               >
                 Cancel
               </FormButton>
-            )}
+            {/* )} */}
           </div>
         </ResponsiveForm>
         {/* {console.log(airSystems, "========", transformedAirSystems)} */}
@@ -695,6 +695,18 @@ export default function AirManagement() {
           columns={columnsAirSystem}
           data={transformedAirSystems}
           onEdit={(item) => {
+            let dynamicCapacityKey = {};
+            
+            // Assuming capacityTypeId: 1 is 'Person' (uses personCapacityId)
+            if (item.capacityTypeId === 1) {
+              // Map the database field 'personCapacityId' to the form field 'personId'
+              dynamicCapacityKey = { personId: item.personCapacityId };
+            
+            // Assuming capacityTypeId: 2 is 'Weight' (uses weightId)
+            } else if (item.capacityTypeId === 2) {
+              // Map the database field 'weightId' to the form field 'weightId'
+              dynamicCapacityKey = { weightId: item.weightId };
+            }
             // This is the correct logic for editing an Air System
             setEditAirSystemId(item.id);
             setAirSystemForm({
@@ -704,6 +716,7 @@ export default function AirManagement() {
               weightId: item.weightId, // Assuming data includes this or is derived
               price: item.price,
               quantity: item.quantity,
+              ...dynamicCapacityKey,
             });
           }}
           onDelete={(id) => handleDelete("airSystem", id)}

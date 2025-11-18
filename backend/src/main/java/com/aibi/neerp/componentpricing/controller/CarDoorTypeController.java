@@ -50,7 +50,7 @@ public class CarDoorTypeController {
     }
 
     @GetMapping
-    public ApiResponse<?> getAll(@RequestParam(defaultValue = "carDoorType") String sortBy) {
+    public ApiResponse<?> getAll(@RequestParam(defaultValue = "operatorElevator") String sortBy) {
         log.info("API called: Get All Car Door Types");
         List<?> list = service.getAll(sortBy);
         return new ApiResponse<>(true, "Fetched all", list);

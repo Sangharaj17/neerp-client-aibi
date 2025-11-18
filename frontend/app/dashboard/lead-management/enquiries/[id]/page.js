@@ -147,9 +147,10 @@ function ViewEnquiryClientPageContent() {
     const site = searchParams.get("site") || "";
 
     const payload = {
+      leadId,
       tenant,
-      customer,
-      site,
+      customerName: customer,
+      siteName: site,
       enquiryTypeId,
       enquiryTypeName,
       combinedEnquiryId,
@@ -160,7 +161,8 @@ function ViewEnquiryClientPageContent() {
     sessionStorage.setItem("quotationPayload", JSON.stringify(payload));
 
     // ✅ Clean navigation (no query string in URL)
-    router.push(`/dashboard/lead-management/enquiries/${id}/quotation/add`);
+    // router.push(`/dashboard/lead-management/enquiries/${id}/quotation/add`);
+     router.push(`/dashboard/lead-management/enquiries/${id}/quotation/add/${combinedEnquiryId}`);
   };
 
 
@@ -208,7 +210,6 @@ function ViewEnquiryClientPageContent() {
         group.enquiries.map((combined) => ({
           combinedId: combined.id,
           enquiryTitle: combined.projectName,
-          leadId: combined.leadId,
           createdDate: combined.enquiryDate, // 👈 Add this line
            customerName: combined.customerName,
            customerSite: combined.customerSite,
@@ -224,9 +225,14 @@ function ViewEnquiryClientPageContent() {
             noOfFloors: entry.noOfFloors?.name ?? '-',
             capacityTerm: entry.capacityTerm?.capacityType ?? '-',
             from: entry.from?.from ?? '',
+            // selectPerson:
+            //   entry.capacityTerm?.capacityType === 'Person'
+            //     ? `${entry.personCapacity?.personCount ?? '-'} Persons / ${entry.personCapacity?.weight ?? '-'}Kg`
+            //     : `${entry.weight?.weightValue ?? '-'} Kg`,
+            // cabinType: entry.cabinType?.cabinType ?? '-'
             selectPerson:
               entry.capacityTerm?.capacityType === 'Person'
-                ? `${entry.personCapacity?.personCount ?? '-'} Persons / ${entry.personCapacity?.weight ?? '-'}Kg`
+                ? `${entry.personCapacity?.text}`
                 : `${entry.weight?.weightValue ?? '-'} Kg`,
             cabinType: entry.cabinType?.cabinType ?? '-'
             ,

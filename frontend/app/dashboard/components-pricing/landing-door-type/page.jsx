@@ -479,7 +479,7 @@ export default function LandingDoorTypeAndSubType() {
               {editTypeId ? "Update" : "Add"}
             </FormButton>
 
-            {editTypeId && (
+            {/* {editTypeId && ( */}
               <FormButton
                 type="button"
                 variant="secondary"
@@ -490,7 +490,7 @@ export default function LandingDoorTypeAndSubType() {
               >
                 Cancel
               </FormButton>
-            )}
+            {/* )} */}
           </div>
         </ResponsiveForm>
 
@@ -594,7 +594,7 @@ export default function LandingDoorTypeAndSubType() {
               {editSubId ? "Update" : "Add"}
             </FormButton>
 
-            {editSubId && (
+            {/* {editSubId && ( */}
               <FormButton
                 className="w-auto"
                 type="button"
@@ -611,7 +611,7 @@ export default function LandingDoorTypeAndSubType() {
               >
                 Cancel
               </FormButton>
-            )}
+            {/* )} */}
           </div>
         </ResponsiveForm>
 

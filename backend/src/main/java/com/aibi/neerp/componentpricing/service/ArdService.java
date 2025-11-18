@@ -60,7 +60,7 @@ public class ArdService {
         Ard ard = ardRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ARD not found with ID: " + id));
 
-       // boolean typeChanged = !ard.getArdDevice().equals(dto.getArdDevice());
+        // boolean typeChanged = !ard.getArdDevice().equals(dto.getArdDevice());
 
         mapDtoToEntity(dto, ard);
         Ard updated = ardRepository.save(ard);

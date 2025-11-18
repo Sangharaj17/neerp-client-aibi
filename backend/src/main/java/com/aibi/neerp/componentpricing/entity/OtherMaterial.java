@@ -5,22 +5,23 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
-@Table(
-        name = "tbl_other_material",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_other_material_combination",
-                        columnNames = {
-                                "operator_type",
-                                "material_type",
-                                "capacity_type",
-                                "person_capacity_id",
-                                "weight_id",
-                                "machine_room_id"
-                        }
-                )
-        }
-)
+//@Table(
+//        name = "tbl_other_material",
+//        uniqueConstraints = {
+//                @UniqueConstraint(
+//                        name = "uk_other_material_combination",
+//                        columnNames = {
+//                                "operator_type",
+//                                "material_type",
+//                                "capacity_type",
+//                                "person_capacity_id",
+//                                "weight_id",
+//                                "machine_room_id"
+//                        }
+//                )
+//        }
+//)
+@Table(name = "tbl_other_material")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,6 +41,10 @@ public class OtherMaterial {
     @NotNull(message = "Material name is required")
     @Column(name = "other_material_name", nullable = false)
     private String otherMaterialName;
+
+    @NotNull(message = "Material display name is required")
+    @Column(name = "other_material_display_name", nullable = false)
+    private String otherMaterialDisplayName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "operator_type")
@@ -68,6 +73,9 @@ public class OtherMaterial {
     @NotNull(message = "Quantity is required")
     @Column(name = "quantity", nullable = false)
     private String quantity;
+
+    @Column(name = "quantity_unit")
+    private String quantityUnit;
 
     @NotNull(message = "Price is required")
     @Column(name = "price", nullable = false)
