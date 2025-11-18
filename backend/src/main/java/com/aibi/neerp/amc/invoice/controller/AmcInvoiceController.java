@@ -7,9 +7,6 @@ import com.aibi.neerp.amc.invoice.dto.AmcInvoiceRequestDto;
 import com.aibi.neerp.amc.invoice.dto.AmcInvoiceResponseDto;
 import com.aibi.neerp.amc.invoice.service.AmcInvoiceService;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -17,15 +14,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/amc/invoices")
-@RequiredArgsConstructor // Injects the final service dependency
-@Slf4j // Provides the 'log' object for logging
 public class AmcInvoiceController {
 
+    private static final Logger log = LoggerFactory.getLogger(AmcInvoiceController.class);
+
     private final AmcInvoiceService invoiceService;
+
+    public AmcInvoiceController(AmcInvoiceService invoiceService) {
+        this.invoiceService = invoiceService;
+    }
 
     // API 1: GET All Invoices
     // Endpoint: GET /api/invoices

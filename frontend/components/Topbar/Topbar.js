@@ -49,7 +49,7 @@ const Topbar = () => {
     // console.log("📦 Retrieved from localStorage:", storedUsername, storedToken);
 
     if (!storedUsername || !storedToken || !storedClientId || !storedUserEmail) {
-      //router.push(`/${tenant}/login`);
+      //router.push(`/login`);
       //return;
       handleLogout('Logging out');
     }
@@ -180,7 +180,7 @@ const Topbar = () => {
 
       toast.success(customMessage || message);
       // Redirect to clean path; middleware resolves tenant
-      router.push(`/login`);
+      router.push(`/auth/login`);
     } catch (error) {
       console.error("Logout failed:", error);
 

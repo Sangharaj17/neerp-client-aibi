@@ -32,6 +32,7 @@ export default function WiringPluablebrackets() {
   const [typeForm, setTypeForm] = useState(initialsType);
 
   const initials = {
+    carBracketSubType: "",
     bracketType: "",
     floor: "",
     price: "",
@@ -43,7 +44,7 @@ export default function WiringPluablebrackets() {
   // const API_TYPES = "/api/bracket-types";
   // const API_BRACKETS = "/api/brackets";
   // const API_FLOORS = "/api/floors";
-  
+
   const API_TYPES = API_ENDPOINTS.BRACKETS_TYPES;
   const API_BRACKETS = API_ENDPOINTS.BRACKETS;
   const API_FLOORS = API_ENDPOINTS.FLOORS;
@@ -65,10 +66,17 @@ export default function WiringPluablebrackets() {
       editable: false,
     },
     {
+      key: "carBracketSubType", // 👇 ADD NEW COLUMN
+      label: "Sub Type",
+      sortable: true,
+      editable: false,
+    },
+    {
       key: "floorId",
       label: "Floor",
       sortable: true,
       editable: false,
+      render: (item) => `${item.floorId} (${item.floorName})`,
     },
     {
       key: "price",
@@ -214,7 +222,14 @@ export default function WiringPluablebrackets() {
       return;
     }
 
-    confirmDeleteWithToast(selected.name, async () => {
+    // confirmDeleteWithToast(selected.name, async () => {
+    const nm =
+      selected.bracketTypeName +
+      " - " +
+      selected.carBracketSubType +
+      " - " +
+      selected.floorName;
+    confirmDeleteWithToast(nm, async () => {
       try {
         await axiosInstance.delete(`/types/${id}`); // ✅ relative path, baseURL is already in axiosInstance
 
@@ -247,19 +262,28 @@ export default function WiringPluablebrackets() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const bracketTypeId = form.bracketType;
-    if (!bracketTypeId) {
-      toast.error("brackets Type cannot be empty");
+    const subType = form.carBracketSubType
+      ? sanitize(form.carBracketSubType)
+      : ""; // Sanitize the new field
+
+    if (!bracketTypeId || !subType) {
+      // Check both fields are present
+      toast.error("Bracket Type and Sub Type cannot be empty");
       return;
     }
-//console.log(JSON.stringify(brackets, null, 2)+"====="+bracketTypeId+"----"+editId+"*****"+form.floor)
+
+    //console.log(JSON.stringify(brackets, null, 2)+"====="+bracketTypeId+"----"+editId+"*****"+form.floor)
     const isDuplicate = brackets.some(
       (lt) =>
         lt.bracketTypeId === Number(bracketTypeId) &&
         lt.id !== editId &&
-        lt.floorId === Number(form.floor)
+        lt.floorId === Number(form.floor) &&
+        lt.carBracketSubType === subType
     );
     if (isDuplicate) {
-      toast.error("Bracket already exists for this floor.");
+      toast.error(
+        "A Bracket with this Type, Sub Type, and Floor already exists."
+      );
       return;
     }
 
@@ -269,6 +293,7 @@ export default function WiringPluablebrackets() {
 
       const payload = {
         bracketTypeId: bracketTypeId,
+        carBracketSubType: subType,
         floorId: form.floor,
         price: form.price,
       };
@@ -305,6 +330,7 @@ export default function WiringPluablebrackets() {
     setForm({
       bracketType: bracketType ? bracketType.id : "",
       floor: floor ? floor.id : "",
+      carBracketSubType: found.carBracketSubType || "",
       price: found.price,
     });
 
@@ -326,7 +352,7 @@ export default function WiringPluablebrackets() {
       toast.error("Bracket not found.");
       return;
     }
-    const nm = selected.bracketTypeName + " - " +selected.floorName;
+    const nm = selected.bracketTypeName + " - " + selected.floorName;
     confirmDeleteWithToast(nm, async () => {
       try {
         await axiosInstance.delete(`${API_BRACKETS}/${id}`);
@@ -355,7 +381,7 @@ export default function WiringPluablebrackets() {
       {/* Header */}
       <PageHeader
         title="Car Bracket"
-        description="Add car & counterweight bracket types for each floor level."
+        description="Add car & counterweight bracket pair for each floor level."
         icon={SlidersHorizontal}
       />
 
@@ -385,16 +411,16 @@ export default function WiringPluablebrackets() {
             </FormButton>
 
             {/* {typeEditId && ( */}
-              <FormButton
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setTypeEditId(null);
-                  setTypeForm({ bracketType: "" });
-                }}
-              >
-                Cancel
-              </FormButton>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setTypeEditId(null);
+                setTypeForm({ bracketType: "" });
+              }}
+            >
+              Cancel
+            </FormButton>
             {/* )} */}
           </div>
         </ResponsiveForm>
@@ -440,6 +466,16 @@ export default function WiringPluablebrackets() {
             ))}
           </FormSelect>
 
+          <FormInput
+            type="text"
+            placeholder="Enter Bracket Sub Type"
+            value={form.carBracketSubType || ""}
+            onChange={(e) =>
+              setForm({ ...form, carBracketSubType: e.target.value })
+            }
+            required
+          />
+
           <FormSelect
             value={form.floor || ""}
             onChange={(e) => setForm({ ...form, floor: e.target.value })}
@@ -450,7 +486,7 @@ export default function WiringPluablebrackets() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.id}
+                {type.id + 1} ({type.floorName})
               </option>
             ))}
           </FormSelect>
@@ -469,13 +505,13 @@ export default function WiringPluablebrackets() {
             </FormButton>
 
             {/* {editId && ( */}
-              <FormButton
-                type="button"
-                variant="secondary"
-                onClick={handleCancel}
-              >
-                Cancel
-              </FormButton>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </FormButton>
             {/* )} */}
           </div>
         </ResponsiveForm>

@@ -31,7 +31,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
   };
 
   console.log("Selected enquiryTypeId:", enquiryTypeId);
-  const { id, tenant } = useParams();
+  const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -151,8 +151,10 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       .then((response) => {
         const formatted = response.data.data.map((p) => ({
           id: p.id,
+          displayName: p.displayName,
           convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
         }));
+        console.log(response.data,'Formatted persons:', formatted);
 
         setPersonOptions(formatted); // Directly set formatted array
       })
@@ -325,7 +327,6 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
   function getEmptyLift() {
     return {
-      liftName: '',
       leadId: id,
       liftUsageType: '',
       liftMechanism: '',
@@ -355,7 +356,6 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     enquiryDate: new Date().toISOString().split('T')[0],
     leadDetail: `${customer} For ${site}`,
     noOfLifts: '1',
-    siteName: site,
     lifts: [getEmptyLift()],
   });
 
@@ -382,7 +382,6 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     const repeatSetting = repeatSettings[index] || {}; // fallback if missing
     return {
       leadId: lift.leadId,
-      liftName: lift.liftName || `Lift ${index + 1}`,
       enquiryId: lift.enquiryId,
       buildTypeId: lift.liftUsageType,
       typeOfLiftId: lift.liftMechanism,
@@ -409,8 +408,6 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     };
   };
 
-
-
   const handleSubmitj = async (event) => {
     event.preventDefault(); // 🛑 Prevent full page reload
 
@@ -418,18 +415,11 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     const projectName = "sacwwc";
     const enquiryDate = form.enquiryDate;
 
-    // const apiUrl = `/api/combined-enquiry/${leadId}/create-combined-enquiries`;
+    const apiUrl = `/api/combined-enquiry/${leadId}/create-combined-enquiries`;
 
-    // // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${enquiryTypeId}`;
+    // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${enquiryTypeId}`;
 
-    // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
-
-      const siteName = form.siteName; // ✅ Get siteName from form
-
-  const apiUrl = `/api/combined-enquiry/${leadId}/create-combined-enquiries`;
-
-  // Build query string including siteName
-  const query = `?projectName=${encodeURIComponent(projectName)}&siteName=${encodeURIComponent(siteName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
+    const query = `?projectName=${encodeURIComponent(projectName)}&siteName=${encodeURIComponent(site)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
 
 
     // 🔁 transform all lifts before sending
@@ -443,7 +433,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
     try {
       const response = await axiosInstance.post(apiUrl + query, transformedLifts);
       //alert("Success");
-      //window.location.href = `/${tenant}/dashboard/lead-management/enquiries/${id}`;
+      //window.location.href = `/dashboard/lead-management/enquiries/${id}`;
       // ✅ Redirect using props (customer, site, leadId, enquiryTypeName)
 
       // ✅ Use Next.js router to redirect
@@ -673,70 +663,48 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
   return (
     <div className="w-full max-w-7xl bg-white rounded shadow-md">
-      <div className="bg-blue-600 text-white text-center py-2 text-base font-semibold rounded-t-md">
-        Add Lift Requirement</div>
+      <div className="bg-blue-600 text-white text-center py-2 text-base font-semibold rounded-t-md">Add Lift Requirement</div>
 
- 
       {/* Label + Dropdown horizontally aligned */}
       {/* Parent container as a row without border */}
 
       <div className="inline-flex items-center gap-4 bg-white w-full pt-4 px-4">
 
-  {/* Label + Dropdown */}
-  <div className="flex items-center gap-2">
-    <label
-      htmlFor="enquiryTypeId"
-      className="text-gray-600 text-xs font-medium whitespace-nowrap"
-    >
-      Select Enquiry Type
-    </label>
-    <select
-      id="enquiryTypeId"
-      name="enquiryTypeId"
-      className="border text-sm rounded px-2 py-1"
-      value={typeId || ''}
-      onChange={handleEnquiryTypeChange}
-    >
-      <option value="" disabled>
-        Select
-      </option>
-      {enquiryTypes.map((type) => (
-        <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
-          {type.enquiryTypeName}
-        </option>
-      ))}
-    </select>
-  </div>
+        {/* Label + Dropdown */}
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="enquiryTypeId"
+            className="text-gray-600 text-xs font-medium whitespace-nowrap"
+          >
+            Select Enquiry Type
+          </label>
+          <select
+            id="enquiryTypeId"
+            name="enquiryTypeId"
+            className="border text-sm rounded px-2 py-1"
+            value={typeId || ''}
+            onChange={handleEnquiryTypeChange}
+          >
+            <option value="" disabled>
+              Select
+            </option>
+            {enquiryTypes.map((type) => (
+              <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
+                {type.enquiryTypeName}
+              </option>
+            ))}
+          </select>
+        </div>
 
-  {/* Site Name Input */}
-  <div className="flex items-center gap-2">
-    <label
-      htmlFor="siteName"
-      className="text-gray-600 text-xs font-medium whitespace-nowrap"
-    >
-      Site Name
-    </label>
-    <input
-      type="text"
-      id="siteName"
-      name="siteName"
-      value={form.siteName}
-      onChange={handleChange}
-      placeholder="Enter site name"
-      className="border text-sm rounded px-2 py-1"
-    />
-  </div>
-
-  {/* Floors info shifted right */}
-  <div className="flex text-xs text-gray-700 gap-3 ml-auto">
-    {floorOptions.map((floor) => (
-      <span key={floor}>
-        {floor} = {floorLabels[floor]}
-      </span>
-    ))}
-  </div>
-</div>
-
+        {/* Floors info shifted right */}
+        <div className="flex text-xs text-gray-700 gap-3 ml-auto">
+          {floorOptions.map((floor) => (
+            <span key={floor}>
+              {floor} = {floorLabels[floor]}
+            </span>
+          ))}
+        </div>
+      </div>
 
 
 
@@ -762,24 +730,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
         </div>
         {form.lifts.map((lift, index) => (
           <div key={index} className="border p-3 rounded my-3 bg-gray-50">
-
-            {/* <SectionTitle title={`Lift ${index + 1} Details`} /> */}
-
-         <div className="text-lg mb-3 flex items-center gap-2">
-  <input
-    type="text"
-    className="border-b border-gray-300 focus:outline-none text-lg"
-    value={lift.liftName || `Lift ${index + 1}`}
-    onChange={(e) => {
-      const newLifts = [...form.lifts];
-      newLifts[index].liftName = e.target.value;
-      setForm({ ...form, lifts: newLifts });
-    }}
-  />
-  <span>Details</span> {/* Fixed keyword */}
-</div>
-
-
+            <SectionTitle title={`Lift ${index + 1} Details`} />
             {index > 0 && (
               <div className="flex items-center gap-2 mb-2">
                 <input type="checkbox" checked={repeatSettings[index]?.checked || false} onChange={(e) => handleRepeatChange(index, 'checked', e.target.checked)} title="Check to enable repeat functionality." />
@@ -910,7 +861,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
                   <option value="">Please Select</option>
                   {personOptions.map((opt) => (
                     <option key={opt.id} value={opt.id}>
-                      {opt.convertedString}
+                      {opt.displayName}
                     </option>
                   ))}
                 </Select>

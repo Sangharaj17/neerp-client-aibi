@@ -147,6 +147,13 @@ public class OtherMaterialService {
             throw new IllegalArgumentException("Other Material Name is required");
         }
 
+        // ✅ Other Material Display Name (Required)
+        if (dto.getOtherMaterialDisplayName() != null && !dto.getOtherMaterialDisplayName().trim().isEmpty()) {
+            entity.setOtherMaterialDisplayName(Encode.forHtmlContent(dto.getOtherMaterialDisplayName().trim()));
+        } else {
+            throw new IllegalArgumentException("Other Material Display Name is required");
+        }
+
         // Operator Type
         if (dto.getOperatorTypeId() != null) {
             entity.setOperatorType(operatorElevatorRepository.findById(dto.getOperatorTypeId())
@@ -190,6 +197,11 @@ public class OtherMaterialService {
             entity.setQuantity(Encode.forHtmlContent(dto.getQuantity().trim()));
         }
 
+        // quantityUnit
+        if (dto.getQuantityUnit() != null) {
+            entity.setQuantityUnit(dto.getQuantityUnit());
+        }
+
         // Price
         entity.setPrice(dto.getPrice());
     }
@@ -203,6 +215,7 @@ public class OtherMaterialService {
                 .otherMaterialMainRule(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().getRuleExpression() : null)
                 .otherMaterialMainIsSystemDefined(o.getOtherMaterialMain() != null ? o.getOtherMaterialMain().isSystemDefined() : null)
                 .otherMaterialName(o.getOtherMaterialName())
+                .otherMaterialDisplayName(o.getOtherMaterialDisplayName())
 
                 .operatorTypeId(o.getOperatorType() != null ? o.getOperatorType().getId() : null)
                 .operatorTypeName(o.getOperatorType() != null ? o.getOperatorType().getName() : null)
@@ -222,6 +235,7 @@ public class OtherMaterialService {
                 .floors(o.getFloors() != null ? o.getFloors().getId() : null)
                 .floorsLabel(o.getFloors() != null ? o.getFloors().getFloorName() : null)
                 .quantity(o.getQuantity())
+                .quantityUnit(o.getQuantityUnit())
                 .price(o.getPrice())
                 .build();
     }

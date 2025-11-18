@@ -1,20 +1,28 @@
 'use client'; // This directive is correct and should remain at the top
+import { toast } from "react-hot-toast";
 
-export const generatePdfWithLetterhead = async (quotationData) => { // Make the function async
-  // Dynamically import html2pdf.js inside the function
-  const html2pdf = (await import('html2pdf.js')).default;
+export const generatePdfWithLetterhead = async (quotationData, onStart, onComplete) => { 
 
-  const element = document.createElement('div');
-  element.style.width = '210mm'; // A4 width
-  element.style.padding = '10mm'; // Margins
-  element.style.boxSizing = 'border-box';
-  element.style.fontFamily = 'Arial, sans-serif';
-  element.style.fontSize = '10pt';
-  element.style.lineHeight = '1.4';
-  element.style.color = '#333';
+    if (onStart) onStart();
+    const TOAST_ID = 'pdf-loading';
 
-  // Helper for consistent header styling
-  const getHeader = () => `
+    try {
+        toast.loading('Generating PDF with Letterhead...', { id: TOAST_ID });
+
+        // Dynamically import html2pdf.js inside the function
+        const html2pdf = (await import('html2pdf.js')).default;
+
+        const element = document.createElement('div');
+        element.style.width = '210mm'; // A4 width
+        element.style.padding = '10mm'; // Margins
+        element.style.boxSizing = 'border-box';
+        element.style.fontFamily = 'Arial, sans-serif';
+        element.style.fontSize = '10pt';
+        element.style.lineHeight = '1.4';
+        element.style.color = '#333';
+
+        // Helper for consistent header styling
+        const getHeader = () => `
     <div style="text-align: center; margin-bottom: 5mm;">
       <h1 style="color: #004D99; font-size: 20pt; margin: 0; padding: 0;">VERTEX ELEVATORS</h1>
     </div>
@@ -25,8 +33,8 @@ export const generatePdfWithLetterhead = async (quotationData) => { // Make the 
     <hr style="border: 0.5px solid #eee; margin: 5mm 0;">
   `;
 
-  // Construct the full HTML content based on the PDF's structure
-  element.innerHTML = `
+        // Construct the full HTML content based on the PDF's structure
+        element.innerHTML = `
     <div style="page-break-after: always; padding-bottom: 10mm;">
         ${getHeader()}
         <p style="text-align: right; margin-top: 10mm;">REF.NO: Vertex/25-26/Jul/${quotationData.sr}</p>
@@ -164,7 +172,7 @@ export const generatePdfWithLetterhead = async (quotationData) => { // Make the 
                     <td style="padding: 4px; border: 1px solid #ccc;">688147/-</td>
                 </tr>
                 ${quotationData.materialsList && quotationData.materialsList.length > 0 ?
-                    quotationData.materialsList.map(item => `
+                quotationData.materialsList.map(item => `
                         <tr>
                             <td style="padding: 4px; border: 1px solid #ccc;">${item.description}</td>
                             <td style="padding: 4px; border: 1px solid #ccc;">${item.quantity}</td>
@@ -310,24 +318,31 @@ export const generatePdfWithLetterhead = async (quotationData) => { // Make the 
     </div>
   `;
 
-  const opt = {
-    margin: [10, 10, 10, 10], // Top, Left, Bottom, Right margins in mm
-    filename: `Quotation_${quotationData.customer.replace(/ /g, '_')}_${quotationData.sr}_WithLetterHead.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-      scale: 2, // Higher scale for better resolution
-      useCORS: true, // Important if you have images from other domains
-      logging: false, // Disable logging for cleaner console
-    },
-    jsPDF: {
-      unit: 'mm',
-      format: 'a4',
-      orientation: 'portrait'
-    },
-    pagebreak: {
-      mode: ['css', 'legacy'] // Use CSS page-break properties primarily
-    }
-  };
+        const opt = {
+            margin: [10, 10, 10, 10], // Top, Left, Bottom, Right margins in mm
+            filename: `Quotation_${quotationData.customer.replace(/ /g, '_')}_${quotationData.sr}_WithLetterHead.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2, // Higher scale for better resolution
+                useCORS: true, // Important if you have images from other domains
+                logging: false, // Disable logging for cleaner console
+            },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: 'portrait'
+            },
+            pagebreak: {
+                mode: ['css', 'legacy'] // Use CSS page-break properties primarily
+            }
+        };
 
-  html2pdf().from(element).set(opt).save();
+        await html2pdf().from(element).set(opt).save();
+        toast.success('PDF successfully downloaded!', { id: TOAST_ID });
+    } catch (error) {
+        console.error("PDF generation failed:", error);
+        toast.error('Failed to generate PDF.', { id: TOAST_ID });
+    } finally {
+        if (onComplete) onComplete();
+    }
 };

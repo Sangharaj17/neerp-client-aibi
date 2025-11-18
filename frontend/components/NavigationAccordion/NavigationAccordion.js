@@ -171,11 +171,11 @@ const NavigationAccordion = () => {
         { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
         { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
         // Attendance & time
-        { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
-        { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
-        { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry' },
-        { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list' },
-        { title: 'Attendance', href: '/dashboard/user-resource/attendance' }
+        // { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
+        // { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
+        // { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry' },
+        // { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list' },
+        // { title: 'Attendance', href: '/dashboard/user-resource/attendance' }
       ]
     },
     {
@@ -185,38 +185,7 @@ const NavigationAccordion = () => {
       hasSubmenu: true,
       submenu: componentsPricingSubmenu,
     },
-    // {
-    //   id: 'material-management',
-    //   title: 'Material Management',
-    //   icon: Package,
-    //   hasSubmenu: true,
-    //   submenu: [
-    //     { title: 'Add ARD Type', href: `/${tenant}/dashboard/material-management/add-ard-type` },
-    //     { title: 'Air System Type', href: `/${tenant}/dashboard/material-management/air-system-type` },
-    //     { title: 'Cabin False Celling', href: `/${tenant}/dashboard/material-management/cabin-false-celling` },
-    //     { title: 'Cabin Flooring', href: `/${tenant}/dashboard/material-management/cabin-flooring` },
-    //     { title: 'Cabin Subtypes Prizes', href: `/${tenant}/dashboard/material-management/cabin-subtypes-prizes` },
-    //     { title: 'Cabin Type', href: `/${tenant}/dashboard/material-management/cabin-type` },
-    //     { title: 'Car Bracket Counter Bracket', href: `/${tenant}/dashboard/material-management/car-bracket-counter-bracket` },
-    //     { title: 'Car Door Subtype', href: `/${tenant}/dashboard/material-management/car-door-subtype` },
-    //     { title: 'Car Door Type', href: `/${tenant}/dashboard/material-management/car-door-type` },
-    //     { title: 'Control Panel Type', href: `/${tenant}/dashboard/material-management/control-panel-type` },
-    //     { title: 'Cop Main Type', href: `/${tenant}/dashboard/material-management/cop-main-type` },
-    //     { title: 'Counter Weight', href: `/${tenant}/dashboard/material-management/counter-weight` },
-    //     { title: 'Elevator Operation', href: `/${tenant}/dashboard/material-management/elevator-operation` },
-    //     { title: 'Governer Saftey Rope', href: `/${tenant}/dashboard/material-management/governer-saftey-rope` },
-    //     { title: 'Guide Rail', href: `/${tenant}/dashboard/material-management/guide-rail` },
-    //     { title: 'Landing Door Prizes', href: `/${tenant}/dashboard/material-management/landing-door-prizes` },
-    //     { title: 'Landing Door Type', href: `/${tenant}/dashboard/material-management/landing-door-type` },
-    //     { title: 'Lop Main Type', href: `/${tenant}/dashboard/material-management/lop-main-type` },
-    //     { title: 'LOP Type', href: `/${tenant}/dashboard/material-management/lop-type` },
-    //     { title: 'Machine Room Type', href: `/${tenant}/dashboard/material-management/machine-room-type` },
-    //     { title: 'Other Material', href: `/${tenant}/dashboard/material-management/other-material` },
-    //     { title: 'Type Of Lift', href: `/${tenant}/dashboard/material-management/type-of-lift` },
-    //     { title: 'Wire Rope', href: `/${tenant}/dashboard/material-management/wire-rope` },
-    //     { title: 'Wiring Plugable Harness', href: `/${tenant}/dashboard/material-management/wiring-plugable-harnes` }
-    //   ]
-    // },
+  
     {
       id: 'lead-management',
       title: 'Lead Management',
@@ -317,13 +286,13 @@ const NavigationAccordion = () => {
   }, [normalizedQuery]);
 
   return (
-    <div className="w-64 sticky top-0 z-20 bg-white border-r border-gray-200 h-screen ">
-      <div className="p-1 border-b border-gray-200 h-16">
+    <div className="w-64 sticky top-0 z-20 bg-white border-r border-gray-200 h-screen flex flex-col overflow-hidden">
+      <div className="p-1 border-b border-gray-200 h-16 flex-shrink-0">
         {/* <h2 className="text-lg font-semibold text-gray-800">{clientname}</h2> */}
         <CompanyLogo/>
       </div>
 
-      <div className="p-2">
+      <div className="p-2 flex-shrink-0">
         <div className="relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
@@ -335,7 +304,7 @@ const NavigationAccordion = () => {
         </div>
       </div>
 
-      <nav className="p-2 pt-0">
+      <nav className="p-2 pt-0 flex-1 overflow-y-auto">
         {(normalizedQuery ? filteredSections : menuSections).map((section) => {
           const isActive = isSectionActive(section);
           const isOpen = normalizedQuery ? true : openSections[section.id];

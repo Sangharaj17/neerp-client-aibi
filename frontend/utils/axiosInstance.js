@@ -20,12 +20,19 @@ axiosInstance.interceptors.request.use(
     if (typeof location !== 'undefined' && location.hostname === 'localhost') {
       // On localhost, always prefer full host with port (e.g., localhost:3000)
       tenant = location.port ? `localhost:${location.port}` : 'localhost';
-    } else if (!tenant && typeof document !== 'undefined') {
-      // Fallback to cookie set by middleware
-      const match = document.cookie.match(/(?:^|; )tenant=([^;]+)/);
-      if (match) {
-        tenant = decodeURIComponent(match[1]);
-      }
+  } else if (!tenant && typeof location !== 'undefined') {
+    // For deployed environments: use hostname (+ port if present) as default tenant
+    tenant = location.port
+      ? `${location.hostname}:${location.port}`
+      : location.hostname;
+  }
+
+  if (!tenant && typeof document !== 'undefined') {
+    // Final fallback to cookie set by middleware
+    const match = document.cookie.match(/(?:^|; )tenant=([^;]+)/);
+    if (match) {
+      tenant = decodeURIComponent(match[1]);
+    }
     }
     if (tenant) {
       config.headers["X-Tenant"] = tenant;

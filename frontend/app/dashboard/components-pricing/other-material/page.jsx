@@ -140,7 +140,7 @@ export default function OtherMaterialPage() {
             materialMainType: newValue,
             ruleExpression: ruleExp, // <-- include this
             active: true,
-          },
+          }
         );
 
         setMaterialMainType((prev) =>
@@ -153,14 +153,11 @@ export default function OtherMaterialPage() {
         setEditIdMaterialMainType(null);
       } else {
         // Add new
-        const res = await axiosInstance.post(
-          API_OTHER_MATERIAL_MAIN_TYPE,
-          {
-            materialMainType: newValue,
-            ruleExpression: ruleExp, // <-- include this
-            active: true,
-          },
-        );
+        const res = await axiosInstance.post(API_OTHER_MATERIAL_MAIN_TYPE, {
+          materialMainType: newValue,
+          ruleExpression: ruleExp, // <-- include this
+          active: true,
+        });
 
         setMaterialMainType((prev) => [...prev, res.data.data]);
         toast.success("Material Main Type added successfully!");
@@ -291,6 +288,12 @@ export default function OtherMaterialPage() {
       align: "text-left",
     },
     {
+      key: "otherMaterialDisplayName",
+      label: "Display Name",
+      sortable: true,
+      align: "text-left",
+    },
+    {
       key: "operatorTypeName",
       label: "Operator Type",
       sortable: true,
@@ -360,6 +363,7 @@ export default function OtherMaterialPage() {
   const initialForm = {
     otherMaterialMainId: defaultOthers ? defaultOthers.id : "",
     otherMaterialName: "",
+    otherMaterialDisplayName: "",
     operatorTypeId: "",
     liftType: "",
     capacityTypeId: "",
@@ -489,6 +493,7 @@ export default function OtherMaterialPage() {
         ...item,
         operatorTypeName: item.operatorTypeName || "N/A",
         otherMaterialName: item.otherMaterialName || "N/A",
+        otherMaterialDisplayName: item.otherMaterialDisplayName || "N/A",
         machineRoomName: item.machineRoomName || "N/A",
         capacityTypeName: item.capacityTypeName || "N/A",
         capacityType: item.capacityTypeName || "N/A",
@@ -527,7 +532,7 @@ export default function OtherMaterialPage() {
     );
 
     const price = parseInt(form.price);
-    if (isNaN(price) || price <= 0) {
+    if (isNaN(price) || price < 0) {
       toast.error("Price must be a valid positive integer.");
       return;
     }
@@ -627,6 +632,7 @@ export default function OtherMaterialPage() {
       id: editId || null,
       otherMaterialMainId: parseInt(form.otherMaterialMainId, 10),
       otherMaterialName: form.otherMaterialName,
+      otherMaterialDisplayName: form.otherMaterialDisplayName,
       price: parseInt(form.price, 10),
       quantity: parseInt(form.quantity, 10),
       ...(isOthers && form.operatorTypeId
@@ -716,6 +722,7 @@ export default function OtherMaterialPage() {
       //   ? ""
       //   : selectedMaterial?.materialMainType || "",
       otherMaterialName: item.otherMaterialName || "",
+      otherMaterialDisplayName: item.otherMaterialDisplayName || "",
       liftType: liftType?.id || "",
       operatorTypeId: operatorType?.id || "",
       capacityTypeId: capacityType?.id || "",
@@ -746,6 +753,7 @@ export default function OtherMaterialPage() {
       otherMaterialName: isOthers
         ? ""
         : defaultMaterial?.materialMainType || "", // auto-set for non-Others
+      otherMaterialDisplayName: "",
       capacityTypeId: defaultCapacityType?.id || "",
       quantityDisabled: false,
       isOthersSelected: isOthers,
@@ -936,6 +944,16 @@ export default function OtherMaterialPage() {
             }
             required
             // disabled={form.quantityDisabled}
+          />
+
+          <FormInput
+            placeholder="Enter Display Name"
+            label="Display Name"
+            value={form.otherMaterialDisplayName || ""}
+            onChange={(e) =>
+              setForm({ ...form, otherMaterialDisplayName: e.target.value })
+            }
+            required
           />
 
           {/* Only show these fields if 'Others' is selected */}

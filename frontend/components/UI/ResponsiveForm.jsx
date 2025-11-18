@@ -4,7 +4,7 @@ export default function ResponsiveForm({
   children,
   columns = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
   gap = "gap-4",
-  className = "",
+  className = "w-full",
 }) {
   return (
     <form

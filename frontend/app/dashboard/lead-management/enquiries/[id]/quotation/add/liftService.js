@@ -1,17 +1,330 @@
 import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 import { useEffect, useMemo } from "react";
+import toast from "react-hot-toast";
 
-const fieldLabels = {}; // Declare it at component level (outside render return)
+
+export const clearError = (setErrors, field) => {
+  setErrors((prev) => {
+    // Do nothing if no previous errors
+    if (!prev || typeof prev !== "object" || Object.keys(prev).length === 0) return prev;
+
+    // If that field doesn't exist, leave as-is
+    if (!Object.prototype.hasOwnProperty.call(prev, field)) return prev;
+
+    const newErrors = { ...prev };
+    // delete newErrors[field];
+    return newErrors;
+  });
+};
+
+
+export const fieldLabels = {}; // Declare it at component level (outside render return)
 
 export function getLabel(key, labelText) {
   fieldLabels[key] = labelText;
   return labelText;
 }
 
+function decodeHtmlEntities(text) {
+  if (!text) return "";
+  const txt = document.createElement("textarea");
+  txt.innerHTML = text;
+  return txt.value;
+}
+
+function formatDateTime(dateStr) {
+  if (!dateStr) return "";
+
+  const date = new Date(dateStr);
+  if (isNaN(date)) return dateStr;
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const monthName = date.toLocaleString("default", { month: "long" });
+  const year = date.getFullYear();
+
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${day} / ${monthName} / ${year} ${hours}:${minutes}:${seconds}`;
+}
+
+
+export function getReadableValue(key, value, formData, initialOptions = {}) {
+  if (value == null || value === "") return "";
+
+  const findById = (arr, val) =>
+    arr?.find((opt) => String(opt.id) === String(val)) || null;
+
+  const getNameFromObject = (val) => {
+    if (!val) return null;
+    if (typeof val === "object") {
+      if ("name" in val) return val.name;
+      if ("displayName" in val) return val.displayName;
+      if ("subTypeName" in val) return val.subTypeName;
+      if ("cabinType" in val) return val.cabinType;
+      if ("weightValue" in val) return `${val.weightValue} ${val.unitNM || ""}`.trim();
+    }
+    return null;
+  };
+
+  switch (key) {
+    case "leadDate":
+    case "enqDate":
+    case "quotationDate":
+      return formatDateTime(value);
+
+
+    case "liftType":
+      return getNameFromObject(value) || findById(initialOptions.operatorTypes, value)?.name || value;
+
+    case "typeOfLift":
+      return getNameFromObject(value) || findById(initialOptions.liftTypes, value)?.name || value;
+
+    case "capacityType":
+      return getNameFromObject(value) || findById(initialOptions.capacityTypes, value)?.type || value;
+
+    case "capacityValue": {
+      const capacityType = formData.capacityType;
+      if (String(capacityType) === "1" || String(capacityType).toLowerCase() === "person") {
+        const opt = getNameFromObject(value) || findById(initialOptions.personOptions, value);
+        return opt?.displayName || value;
+      }
+      if (String(capacityType) === "2" || String(capacityType).toLowerCase() === "kg") {
+        const opt = getNameFromObject(value) || findById(initialOptions.kgOptions, value);
+        return opt ? `${opt.weightValue} ${opt.unitNM || ""}`.trim() : value;
+      }
+      return value;
+    }
+
+    case "airSystem":
+      return getNameFromObject(value) || findById(initialOptions.airSystem, value)?.name || value;
+
+    case "lightFitting":
+      return getNameFromObject(value) || findById(initialOptions.lightFittings, value)?.name || value;
+
+    case "cabinType":
+      return getNameFromObject(value) || findById(initialOptions.cabinTypes, value)?.cabinType || value;
+
+    case "cabinSubType": {
+      const opt = findById(initialOptions.cabinSubTypes, value);
+      if (!opt) return value;
+      const capacityDisplay = opt.personCapacityDTO
+        ? opt.personCapacityDTO.displayName
+        : opt.weightDTO
+          ? `${opt.weightDTO.weightValue} ${opt.weightDTO.unitNM}`
+          : "";
+      return capacityDisplay ? `${opt.cabinSubName} - ${capacityDisplay}` : opt.cabinSubName;
+    }
+
+    case "cabinFlooring": {
+      const opt = findById(initialOptions.cabinFlooring, value);
+      return opt ? opt.flooringName : value;
+    }
+
+    case "cabinCeiling": {
+      const opt = initialOptions.cabinCeiling?.find(
+        (c) => String(c.ceilingId) === String(value)
+      );
+      return opt ? opt.ceilingName : value;
+    }
+
+    // case "carEntrance": {
+    //   const opt = findById(initialOptions.carEntranceTypes, value);
+    //   return opt ? opt.carDoorType : value;
+    // }
+
+    // case "carEntranceSubType": {
+    //   const opt = findById(initialOptions.carEntranceSubTypes, value);
+    //   return opt ? opt.carDoorSubType : value;
+    // }
+
+    // case "landingEntranceSubType1":
+    // case "landingEntranceSubType2": {
+    //   const opt = findById(initialOptions.landingEntranceSubTypes, value);
+    //   return opt ? opt.name : value;
+    // }
+
+    case "landingEntranceCount": {
+      if (value === Number(formData.openings)) return "ALL";
+      return value;
+    }
+
+    case "controlPanelMake":
+      return getNameFromObject(value) || findById(initialOptions.controlPanelTypes, value)?.name || value;
+
+    case "wiringHarness":
+      return getNameFromObject(value) || findById(initialOptions.wiringHarness, value)?.name || value;
+
+    case "carEntrance":
+      return getNameFromObject(value) || findById(initialOptions.carEntranceTypes, value)?.name || value;
+
+    case "carEntranceSubType":
+      return getNameFromObject(value) || findById(initialOptions.carEntranceSubTypes, value)?.name || value;
+
+    case "landingEntranceSubType1":
+    case "landingEntranceSubType2":
+      return getNameFromObject(value) || findById(initialOptions.landingEntranceSubTypes, value)?.name || value;
+
+    case "guideRail": {
+      const opt = findById(initialOptions.guideRail, value);
+      if (!opt) return value;
+      return `${decodeHtmlEntities(opt.counterWeightName)} [${opt.floorName}-${opt.counterWeightTypeName}]`;
+    }
+
+    case "bracketType": {
+      const opt = findById(initialOptions.bracketTypes, value);
+      if (!opt) return value;
+      return `${opt.bracketTypeName} [${opt.floorName}]`;
+    }
+
+    case "ropingType": {
+      const opt = findById(initialOptions.wireRopes, value);
+      if (!opt) return value;
+      return `${opt.wireRopeTypeName} [${opt.floorName}]`;
+    }
+
+    case "lopType":
+      return getNameFromObject(value) || findById(initialOptions.lopTypes, value)?.name || value;
+
+    case "copType": {
+      const opt = findById(initialOptions.copTypes, value);
+      return opt ? decodeHtmlEntities(opt.copName) : value;
+    }
+
+    case "operationType": {
+      const opt = findById(initialOptions.operationType, value);
+      return opt ? decodeHtmlEntities(opt.name) : value;
+    }
+
+    case "mainMachineSet":
+      return getNameFromObject(value) || findById(initialOptions.mainMachineSets, value)?.name || value;
+
+    case "carRails":
+      return getNameFromObject(value) || findById(initialOptions.carRails, value)?.name || value;
+
+    case "counterWeightRails":
+      return getNameFromObject(value) || findById(initialOptions.counterWeightRails, value)?.name || value;
+
+    case "wireRope":
+      return getNameFromObject(value) || findById(initialOptions.wireRopes, value)?.name || value;
+
+    case "fastenerType": {
+      // Try to find the fastener in initialOptions
+      const opt = findById(initialOptions.fasteners, value);
+
+      // If found, use its name
+      if (opt) {
+        return `${decodeHtmlEntities(opt.name || opt.fastenerName)} - ₹${opt.price || formData.fastenerPrice || 0}`;
+      }
+
+      // Fallback: value may exist but not loaded in initialOptions
+      if (value) {
+        return `Fastener #${value} - ₹${formData.fastenerPrice || 0}`;
+      }
+
+      return "";
+    }
+
+    case "stdFeatures": {
+      if (!Array.isArray(value) || value.length === 0) return "";
+
+      // Map selected IDs to feature names
+      const selectedNames = value
+        .map((id) => {
+          const feature = initialOptions.features?.find(f => f.id === id);
+          return feature ? decodeHtmlEntities(feature.name) : null;
+        })
+        .filter(Boolean); // remove nulls
+
+      return selectedNames.join(", ");
+    }
+
+    case "installationAmount": {
+      if (!formData.installationAmount) return "";
+      return `₹${formData.installationAmount} (Rule ID: ${formData.installationAmountRuleId || "-"})`;
+    }
+
+    case "installationAmountRuleId": {
+      const opt = findById(initialOptions.installationRules, value);
+
+      if (opt) {
+        return `${decodeHtmlEntities(opt.name || opt.ruleName || "Installation Rule")} - ₹${formData.installationAmount || opt.amount || 0}`;
+      }
+
+      // Fallback if not found in options
+      if (value) {
+        return `Installation Rule #${value} - ₹${formData.installationAmount || 0}`;
+      }
+
+      return "";
+    }
+
+
+
+    default:
+      return getNameFromObject(value) || value;
+  }
+}
+
+
+
+// export function getReadableValue(key, value, formData, initialOptions = {}) {
+//   if (value == null || value === "") return "";
+
+//   const tryFind = (arr, prop = "id", label = "name") =>
+//     arr?.find((opt) => opt[prop] === Number(value))?.[label] || value;
+
+//   switch (key) {
+//     case "liftType":
+//       return tryFind(initialOptions.operatorTypes);
+
+//     case "capacityType":
+//       return tryFind(initialOptions.capacityTypes, "id", "type");
+
+//     case "capacityValue": {
+//       const capacityType = formData.capacityType;
+
+//       // 👤 Person capacity
+//       if (String(capacityType) === "1" || String(capacityType).toLowerCase() === "person") {
+//         const opt = tryFind(initialOptions.personOptions);
+//         return opt ? opt.displayName : value;
+//       }
+
+//       // ⚖️ Kg capacity
+//       if (String(capacityType) === "2" || String(capacityType).toLowerCase() === "kg") {
+//         const opt = tryFind(initialOptions.kgOptions);
+//         // ✅ Combine weight and unitNM, e.g. "300 Kg"
+//         return opt ? `${opt.weightValue} ${opt.unitNM || ""}`.trim() : value;
+//       }
+
+//       return value;
+//     }
+
+//     case "airSystem":
+//       return tryFind(initialOptions.airSystemOptions);
+
+//     case "lightFitting":
+//       return tryFind(initialOptions.lightFittingOptions);
+
+//     case "cabinType":
+//       return tryFind(initialOptions.cabinTypes);
+
+//     case "cabinSubType":
+//       return tryFind(initialOptions.cabinSubTypes);
+
+//     // add more mappings as needed
+//     default:
+//       return value;
+//   }
+// }
+
+
+
 
 // 🔹 Fetch Cabin Types based on capacity
-export const fetchCabinSubTypes = async (capacityType, capacityValue, cabinType) => {
+export const fetchCabinSubTypes = async (capacityType, capacityValue, cabinType, setErrors) => {
   try {
     if (!capacityType || !capacityValue || !cabinType) {
       return [];
@@ -28,9 +341,26 @@ export const fetchCabinSubTypes = async (capacityType, capacityValue, cabinType)
       }
     );
 
-    return res.data?.data || [];
+    const data = res.data?.data || [];
+
+    if (data.length === 0) {
+      const errorMessage = "No Cabin Sub Types found for the selected criteria.";
+      if (setErrors) setErrors((prev) => ({ ...prev, cabinSubTypes: errorMessage }));
+      return [];
+    }
+
+    // Clear error if fetch is successful
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.cabinSubTypes;
+      return updated;
+    });
+
+    return data;
+
   } catch (err) {
     console.error("Error fetching cabin types", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, cabinSubTypes: "Failed to fetch cabin subtypes" }));
     return [];
   }
 };
@@ -45,74 +375,129 @@ export const fetchAirSystemPrice = async ({ airTypeId, capacityTypeId, personId,
       ...(capacityTypeId === 1 ? { personId } : { weightId }),
     });
 
+    // console.log("Error fetching AirSystem price:", res.data);
+
     if (res.data?.success && res.data?.data) {
+      // if (setErrors) setErrors((prev) => {
+      //   const updated = { ...prev };
+      //   delete updated.airSystemPrice;
+      //   return updated;
+      // });
+
       return {
+        airSystemId: res.data.data.id || 0,
         price: res.data.data.price || 0,
         success: true,
         message: res.data.message || "AirSystem price fetched successfully",
       };
     } else {
-      return {
-        price: 0,
-        success: false,
-        message: res.data?.message || "No price available or assigned",
-      };
+      // console.log("--------eeeeeeee----------->",res.data?.message);
+      const message = res.data?.message || "No price available or assigned";
+      // if (setErrors) setErrors((prev) => ({ ...prev, airSystemPrice: message }));
+      return { price: 0, success: false, message };
     }
   } catch (err) {
     console.error("Error fetching AirSystem price:", err);
-    return {
-      price: 0,
-      success: false,
-      message: "Failed to fetch Air System price",
-    };
+    // if (setErrors) setErrors((prev) => ({ ...prev, airSystemPrice: "Failed to fetch Air System price" }));
+    return { price: 0, success: false, message: "Failed to fetch Air System price" };
   }
 };
 
 
 // 🔹 Fetch Car Entrance Types by liftType
-export const fetchCarEntranceTypes = async (liftType) => {
+export const fetchCarEntranceTypes = async (liftType, setErrors) => {
   if (!liftType) return [];
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.CAR_DOOR_TYPE}/searchByLiftType`, {
       params: { operatorElevatorId: liftType },
     });
+
+    const data = res.data?.data || [];
+
+    // Set error if no records found
+    if (data.length === 0) {
+      const errorMessage = "No Car Entrance Types found for the selected lift type.";
+      if (setErrors) setErrors((prev) => ({ ...prev, carEntranceTypes: errorMessage }));
+      return [];
+    }
+
+    // Clear error on success
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.carEntranceTypes;
+      return updated;
+    });
+
     return res.data?.data || [];
   } catch (err) {
     console.error("Error fetching Car Entrance Types", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, carEntranceTypes: "Failed to fetch Car Entrance Types" }));
     return [];
   }
 };
 
 // 🔹 Fetch Car Entrance SubTypes by carEntranceId
-export const fetchCarEntranceSubTypes = async (carEntranceId) => {
+export const fetchCarEntranceSubTypes = async (carEntranceId, setErrors) => {
   if (!carEntranceId) return [];
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.CAR_DOOR_SUBTYPE}/searchByCarDoorType`, {
       params: { carDoorTypeId: carEntranceId },
     });
+
+    const data = res.data?.data || [];
+    if (data.length === 0) {
+      const errorMessage = "No Car Entrance Sub Types found for the selected entrance type.";
+      if (setErrors) setErrors((prev) => ({ ...prev, carEntranceSubTypes: errorMessage }));
+      return [];
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.carEntranceSubTypes;
+      return updated;
+    });
+
     return res.data?.data || [];
   } catch (err) {
     console.error("Error fetching Car Entrance SubTypes", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, carEntranceSubTypes: "Failed to fetch Car Entrance SubTypes" }));
     return [];
   }
 };
 
 // 🔹 Fetch Landing Entrance Types by liftType
-export const fetchLandingEntranceSubType = async (liftType) => {
+export const fetchLandingEntranceSubType = async (liftType, setErrors) => {
   if (!liftType) return [];
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.LANDING_DOOR_SUBTYPE}/searchByLiftType`, {
       params: { operatorTypeId: liftType },
     });
+
+    const data = res.data?.data || [];
+
+    //Set error if no records found
+    if (data.length === 0) {
+      const errorMessage = "No Landing Entrance Sub Types found for the selected lift type.";
+      if (setErrors) setErrors((prev) => ({ ...prev, landingEntranceSubTypes: errorMessage }));
+      return [];
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.landingEntranceSubTypes;
+      return updated;
+    });
+
     return res.data?.data || [];
   } catch (err) {
     console.error("Error fetching Landing Entrance Sub Types", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, landingEntranceSubTypes: "Failed to fetch Landing Entrance Sub Types" }));
     return [];
   }
 };
 
 // 🔹 Fetch control panel types filtered by liftType + capacityType
-export const fetchControlPanelTypes = async (liftType, capacityType, capacityValue, typeOfLiftId) => {
+export const fetchControlPanelTypes = async (liftType, capacityType, capacityValue, typeOfLiftId, setErrors) => {
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.CONTROL_PANEL}/search`, {
       params: {
@@ -122,39 +507,90 @@ export const fetchControlPanelTypes = async (liftType, capacityType, capacityVal
         capacityValue: capacityValue,
       },
     });
+
+    const data = res.data?.data || [];
+
+    // Set error if no records found
+    if (data.length === 0) {
+      const errorMessage = "No Control Panel Types found for the selected criteria.";
+      if (setErrors) setErrors((prev) => ({ ...prev, controlPanelTypes: errorMessage }));
+      return [];
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.controlPanelTypes;
+      return updated;
+    });
+
     return res.data?.data || [];
   } catch (err) {
     console.error("Error fetching control panels", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, controlPanelTypes: "Failed to fetch control panels" }));
     return [];
   }
 };
 
 // 🔹 Fetch LOP/COP based on liftType + floor
-export const fetchLOP = async (liftType, floor) => {
+export const fetchLOP = async (liftType, floor, setErrors) => {
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.LOP_SUBTYPE}/search`, {
       params: { operatorTypeId: liftType, floorId: (floor - 1) },
     });
+
+    const data = res.data?.data || [];
+
+    //Set error if no records found
+    if (data.length === 0) {
+      const errorMessage = "No LOP options found for the selected criteria.";
+      if (setErrors) setErrors((prev) => ({ ...prev, lop: errorMessage }));
+      return [];
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.lop;
+      return updated;
+    });
+
     return res.data?.data || [];
   } catch (err) {
     console.error("Error fetching LOP", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, lop: "Failed to fetch LOP" }));
     return [];
   }
 };
 
-export const fetchCOP = async (liftType, floor) => {
+export const fetchCOP = async (liftType, floor, setErrors) => {
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.COP_TYPE}/search`, {
       params: { operatorTypeId: liftType, floorId: floor },
     });
+
+    const data = res.data?.data || [];
+
+    //Set error if no records found
+    if (data.length === 0) {
+      const errorMessage = "No COP options found for the selected criteria.";
+      if (setErrors) setErrors((prev) => ({ ...prev, cop: errorMessage }));
+      return [];
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.cop;
+      return updated;
+    });
+
     return res.data?.data || [];
   } catch (err) {
     console.error("Error fetching COP", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, cop: "Failed to fetch COP" }));
     return [];
   }
 };
 
-export const fetchCapacityDimension = async (capacityType, capacityValue) => {
+export const fetchCapacityDimension = async (capacityType, capacityValue, setErrors) => {
   try {
     if (!capacityType || !capacityValue) {
       return null;
@@ -170,12 +606,28 @@ export const fetchCapacityDimension = async (capacityType, capacityValue) => {
       }
     );
 
+    const dimension = res.data?.data || res.data || null;
+
+    // Set error if no record found (assuming null/undefined is the indicator)
+    if (!dimension || (Array.isArray(dimension) && dimension.length === 0)) {
+      const errorMessage = "No Capacity Dimension found for the selected capacity.";
+      if (setErrors) setErrors((prev) => ({ ...prev, capacityDimension: errorMessage }));
+      return null;
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.capacityDimension;
+      return updated;
+    });
+
     // console.log(res,"-------res-------------",res.data?.data);
 
     // API should return a single dimension object (or null if not found)
     return res.data || null;
   } catch (err) {
     console.error("Error fetching capacity dimension", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, capacityDimension: "Failed to fetch capacity dimension" }));
     return null;
   }
 };
@@ -190,39 +642,490 @@ export function getOptionPrice(id, options, key = "id") {
   return 0;
 }
 
-export const fetchRopingTypePrice = async (ropingTypeId, capacityType, capacityValue, liftTypeId) => {
+export const fetchRopingTypePrice = async (ropingTypeId, capacityType, capacityValue, liftTypeId, setErrors) => {
+  if (!ropingTypeId || !capacityType || !capacityValue || !liftTypeId) {
+    const message = "Please select Roping Type, Capacity, and Lift Type to fetch the price.";
+
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        ropingTypePrice: message
+      }));
+    }
+    // Return the expected object structure with error details
+    return { price: 0, found: false, error: message };
+  }
+
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.COUNTER_FRAME_TYPES}/search`, {
       params: {
-        counterFrameTypeId: ropingTypeId, // roping_type
+        counterFrameTypeId: ropingTypeId,
         capacityTypeId: capacityType,
         capacityValue: capacityValue,
-        operatorTypeId: liftTypeId,      // lift_type
+        operatorTypeId: liftTypeId,
       },
     });
 
     const data = res.data;
+    let price = 0;
+    let found = false;
 
+    // Determine the price and whether a record was actually found
     if (Array.isArray(data)) {
-      return data.length > 0 ? data[0].price || 0 : 0;
-    } else {
-      return data?.price || 0;
+      price = data.length > 0 ? data[0].price || 0 : 0;
+      found = data.length > 0;
+    } else if (data && typeof data === 'object') {
+      price = data.price || 0;
+      found = price > 0 || (data.price === 0 && 'price' in data); // Treat 0 as found if the key exists
     }
+
+    if (!found) {
+      const errorMessage = "No price found for the selected Roping Type criteria.";
+      if (setErrors) setErrors((prev) => ({ ...prev, ropingTypePrice: errorMessage }));
+      return { price: 0, found: false, error: errorMessage };
+    }
+
+    // Clear existing error if we found a record
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.ropingTypePrice;
+      return updated;
+    });
+
+    // Return both the price and a status
+    return { price, found, error: null };
+
   } catch (err) {
     console.error("Error fetching roping type price", err);
-    return 0;
+    const message = "Failed to fetch roping type price";
+    if (setErrors) setErrors((prev) => ({ ...prev, ropingTypePrice: message }));
+    return { price: 0, found: false, error: message };
   }
 };
 
-export const fetchFastner = async (floor) => {
+// In liftService.js
+export const fetchFastner = async (floor, setErrors) => {
+  if (!floor) {
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        guideRail: "Failed to fetch fastener price. Please select Floors first."
+      }));
+    }
+    return [];
+  }
+
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.FASTENERS}/floor/${floor}`);
-    return res.data?.data || [];
+
+    // Check if the API returned a successful data array/object
+    const data = res.data?.data;
+    const foundData = Array.isArray(data) ? data.length > 0 : (data && Object.keys(data).length > 0);
+
+    if (foundData) {
+      // Clear error on success
+      if (setErrors) setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.fastenerPrice; // Use fastenerPrice to match formData
+        return updated;
+      });
+      return { success: true, data: data };
+    } else {
+      // No data found, but API call was successful
+      const message = "No fastener price found for this floor count.";
+      if (setErrors) setErrors((prev) => ({ ...prev, fastenerPrice: message }));
+      return { success: false, data: [], message: message };
+    }
+
   } catch (err) {
     console.error("Error fetching fasteners", err);
+    const message = "Failed to fetch fastener price due to network error.";
+    if (setErrors) setErrors((prev) => ({ ...prev, fastenerPrice: message }));
+    return { success: false, data: [], message: message };
+  }
+};
+
+
+export const fetchInstallationRule = async (floorId, liftType, setErrors) => {
+  if (!floorId) {
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        installationRule: "Failed to fetch installation rule. Please select Floor or operator type first."
+      }));
+    }
+    return [];
+  }
+  try {
+    const res = await axiosInstance.get(
+      `${API_ENDPOINTS.INSTALLATION_RULES}/search`,
+      { params: { floorId, liftType } }
+    );
+
+    const materials = res.data || [];
+    // If no records found
+    if (materials.length === 0) {
+      const errorMessage = "No Other Materials (excluding Others) options found for the selected operator.";
+
+      // Set error state
+      if (setErrors) {
+        setErrors((prev) => ({
+          ...prev,
+          installationRule: errorMessage
+        }));
+      }
+      return []; // Return empty array since no options exist
+    }
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.installationRule;
+      return updated;
+    });
+
+    return res.data; // return full {success, message, data}
+  } catch (err) {
+    console.error("Error fetching installation rule", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, installationRule: "Failed to fetch installation rule" }));
+    return { success: false, message: "Error fetching installation rule", data: null };
+  }
+};
+
+// export const fetchOtherMaterialsByMainId = async (mainId, setErrors) => {
+//   try {
+//     const res = await axiosInstance.get(`${API_ENDPOINTS.OTHER_MATERIAL}/byMainId/${mainId}`);
+//     // res.data contains the ApiResponse { success, message, data }
+
+//     if (setErrors) setErrors((prev) => {
+//       const updated = { ...prev };
+//       delete updated.otherMaterials;
+//       return updated;
+//     });
+
+//     return res.data;
+//   } catch (err) {
+//     console.error("Failed to fetch Other Materials by mainId", err);
+//     if (setErrors) setErrors((prev) => ({ ...prev, otherMaterials: "Failed to fetch Other Materials" }));
+//     return {
+//       success: false,
+//       message: "Error fetching Other Materials",
+//       data: null,
+//     };
+//   }
+// };
+
+
+export const fetchOtherMaterialExcludeOthers = async (operatorId, setErrors) => {
+  if (!operatorId) {
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        otherMaterialsExcludeOthers: "Failed to fetch Other Materials. Please select Operator Type first."
+      }));
+    }
+    return [];
+  }
+  try {
+    // const res = await axiosInstance.get(
+    //   `${API_ENDPOINTS.OTHER_MATERIAL}/byOperator/${operatorId}/excludeOthers`
+    // );
+
+    //  const res = await axiosInstance.get(
+    //   `${API_ENDPOINTS.OTHER_MATERIAL}/byMainTypeContains/Default`
+    // );
+
+    const res = await axiosInstance.get(
+      `${API_ENDPOINTS.OTHER_MATERIAL}/byOperator/${operatorId}/mainTypeContains/CommonPrice`
+    );
+
+    const materials = res.data || [];
+    // If no records found
+    if (materials.length === 0) {
+      const errorMessage = "No Other Materials (excluding Others) options found for the selected operator.";
+
+      // Set error state
+      if (setErrors) {
+        setErrors((prev) => ({
+          ...prev,
+          otherMaterialsExcludeOthers: errorMessage
+        }));
+      }
+      return []; // Return empty array since no options exist
+    }
+
+
+    if (setErrors) setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.otherMaterialsExcludeOthers;
+      return updated;
+    });
+
+    return res.data?.data || [];
+  } catch (err) {
+    console.error("Error fetching Other Materials (excluding Others):", err);
+    if (setErrors) setErrors((prev) => ({ ...prev, otherMaterialsExcludeOthers: "Failed to fetch Other Materials" }));
     return [];
   }
 };
+
+
+export const fetchGuideRails = async (floors, operatorType, setErrors) => {
+  // if (!floors) return [];
+  if (!floors) {
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        guideRail: "Failed to load guide rails. Please select Floors first."
+      }));
+    }
+    return [];
+  }
+
+  if (!operatorType) {
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        guideRail: "Failed to load guide rails. Please select operator type first."
+      }));
+    }
+    return [];
+  }
+
+  try {
+    const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/${operatorType}/floor/${floors}`);
+    const guideRails = response.data || [];
+
+    console.log("Fetched Guide Rails for floor", floors, guideRails);
+
+    // If no records found
+    if (guideRails.length === 0) {
+      const errorMessage = "No guide rail options found for the selected operator or floor.";
+
+      // Set error state
+      if (setErrors) {
+        setErrors((prev) => ({
+          ...prev,
+          guideRail: errorMessage
+        }));
+      }
+      return []; // Return empty array since no options exist
+    }
+
+    // ✅ Clear error on success
+    if (setErrors) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.guideRail;
+        return updated;
+      });
+    }
+
+    return guideRails;
+  } catch (error) {
+    console.error("❌ Error fetching guide rails:", error);
+    toast.error("Failed to load guide rails");
+
+    // ❌ Set error on failure
+    if (setErrors) {
+      setErrors((prev) => ({
+        ...prev,
+        guideRail: "Failed to load guide rails",
+      }));
+    }
+    return [];
+  }
+};
+
+
+export const fetchBracketTypes = async (floors, setErrors) => {
+  if (!floors) {
+    if (setErrors) {
+      // Set the specific warning message for missing input
+      setErrors((prev) => ({
+        ...prev,
+        bracketTypes: "Failed to fetch bracket types. Please select Floors first."
+      }));
+    }
+    return [];
+  }
+
+  try {
+    // const response = await axiosInstance.get(`${API_ENDPOINTS.BRACKETS}/floor/${floors}`);
+    const res = await axiosInstance.get(`${API_ENDPOINTS.BRACKETS}/floor/${floors}`);
+
+    const bracketTypes = res.data?.data || [];
+
+    if (bracketTypes.length === 0) {
+      const errorMessage = "No bracket options found for the selected floor.";
+
+      // Set error state
+      if (setErrors) {
+        setErrors((prev) => ({
+          ...prev,
+          bracketTypes: errorMessage
+        }));
+      }
+      return []; // Return empty array since no options exist
+    }
+
+    // ✅ Clear error on success
+    if (setErrors) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.bracketTypes;
+        return updated;
+      });
+    }
+
+    return bracketTypes;
+  } catch (err) {
+    console.error("Error fetching bracket types:", err);// ❌ Set error on failure
+    const message = "Failed to fetch bracket types";
+    toast.error(message);
+    if (setErrors) {
+      setErrors((prev) => ({
+        ...prev,
+        bracketTypes: message
+      }));
+    }
+    return [];
+  }
+};
+
+export const fetchWireRopes = async (floorId, operatorTypeId, setErrors) => {
+  if (!floorId || !operatorTypeId) {
+    if (setErrors) {
+      setErrors((prev) => ({ ...prev, wireRopes: "Failed to fetch wire ropes.Please select Floor and Operator Type first." }));
+    }
+    return [];
+  }
+
+  try {
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.WIRE_ROPE}/floor/${floorId}/operator/${operatorTypeId}`
+    );
+    const wireRopes = response.data || [];
+
+    if (wireRopes.length === 0) {
+      const errorMessage = "No wire ropes options found for the selected floor or operator Type.";
+
+      // Set error state
+      if (setErrors) {
+        setErrors((prev) => ({
+          ...prev,
+          wireRopes: errorMessage
+        }));
+      }
+      return []; // Return empty array since no options exist
+    }
+
+    // ✅ Clear error on success
+    if (setErrors) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.wireRopes;
+        return updated;
+      });
+    }
+
+    return wireRopes;
+  } catch (error) {
+    console.error("Error fetching wire ropes:", error);
+    toast.error("Failed to load wire ropes");
+    if (setErrors) setErrors((prev) => ({ ...prev, wireRopes: "Failed to fetch wire ropes" }));
+    return [];
+  }
+};
+
+export const fetchLoads = async (setErrors) => {
+  try {
+    const res = await axiosInstance.get(`${API_ENDPOINTS.LOAD}`, {
+      headers: { "X-Tenant": localStorage.getItem("tenant") },
+    });
+
+    const apiRes = res.data;
+    console.log("===apiRes=load==>", apiRes);
+
+    if (apiRes.length === 0) {
+      const errorMessage = "No load options found.";
+
+      // Set error state
+      if (setErrors) {
+        setErrors((prev) => ({
+          ...prev,
+          loadPerAmt: errorMessage
+        }));
+      }
+      return []; // Return empty array since no options exist
+    }
+
+    // ✅ Success: data found
+    if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
+      const loadRecord = apiRes.data[0];
+      const loadAmount = loadRecord?.loadAmount ?? 0;
+
+      // ✅ Clear any previous load error
+      if (setErrors)
+        setErrors((prev) => {
+          const updated = { ...prev };
+          delete updated.loadPerAmt;
+          return updated;
+        });
+
+      return loadAmount; // ✅ Return only the numeric value
+    }
+
+    // ⚠️ If no data found
+    const message = apiRes.message || "No load setting found.";
+    toast.warning(message);
+
+    if (setErrors)
+      setErrors((prev) => ({ ...prev, loadPerAmt: message }));
+
+    return 0; // Return 0 if not found
+  } catch (error) {
+    console.error("Error fetching load:", error);
+    const message = "Failed to fetch load. Please check server or tenant.";
+    toast.error(message);
+
+    if (setErrors)
+      setErrors((prev) => ({ ...prev, loadPerAmt: message }));
+
+    return 0; // Return 0 on error
+  }
+};
+
+
+// export const fetchGuideRails = async (floors, setErrors) => {
+//   if (!floors) return [];
+
+//   try {
+//     const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}`);
+//     const allGuideRails = response.data || [];
+//     console.log(floors, "Fetched Guide Rails:", allGuideRails);
+
+//     // 🔹 Filter based on floor ID or name depending on your backend data
+//     // const filtered = allGuideRails.filter(
+//     //   (gr) => Number(gr.floorId) === Number(floors) // adjust logic if needed
+//     // );
+//     // console.log("Filtered Guide Rails:", filtered);
+
+//     // return filtered;
+//     return allGuideRails;
+//   } catch (error) {
+//     console.error("❌ Error fetching guide rails:", error);
+//     toast.error("Failed to load guide rails");
+//     if (setErrors) setErrors((prev) => ({ ...prev, guideRail: "Failed to load guide rails" }));
+//     return [];
+//   }
+// };
+
 
 
 
@@ -235,6 +1138,34 @@ export const fetchFastner = async (floor) => {
 //       ropingTypePrice: lift.data?.ropingTypePrice || "",
 //       lopTypePrice: lift.data?.lopTypePrice || "",
 //       copTypePrice: lift.data?.copTypePrice || "", 
+
+// Function to handle the custom rounding logic for Guide Rail quantity
+
+const calculateRoundedGuideRailQuantity = (noOfStops) => {
+  // 1. Calculate Raw Quantity: ((($no_of_stops * 3) + 3) * 2) / 5
+  const rawQty = (((noOfStops * 3) + 3) * 2) / 5;
+
+  // 2. Custom Rounding Logic (PHP logic replicated)
+  const whole = Math.floor(rawQty);
+  let decimalPart = rawQty - whole;
+  let roundedDecimal;
+
+  // JavaScript Floating Point Safety: Ensure we're comparing decimals correctly
+  // Round to a reasonable precision before checking
+  const decimalCheck = parseFloat(decimalPart.toFixed(10));
+
+  if (decimalCheck < 0.0001) { // Very close to 0
+    roundedDecimal = 0;
+  } else if (decimalCheck >= 0.0001 && decimalCheck <= 0.5) { // 0.1 to 0.5 -> 0.5
+    roundedDecimal = 0.5;
+  } else { // 0.6 to 0.9 -> 1
+    roundedDecimal = 1;
+  }
+
+  // $guide_rail_qty1 = $whole + $decimal;
+  return whole + roundedDecimal;
+};
+
 export const PriceBelowSelect = ({
   id = "id",
   options,
@@ -242,16 +1173,121 @@ export const PriceBelowSelect = ({
   formValue,               // single id or array of ids
   color = "green-600",
   isAirSystem = false,
+  isArdSystem = false,
+  showPrice = true,
   priceVal = 0,
   setPrice = "",
+  setName = "",
+  nameKey = "name",
+  itemMainName = "",
+  itemUnit = "",
   setFormData,
   formData = {},           // must pass whole formData (openings, landingEntranceCount etc.)
+  isOnlyLabel = false,
+  lead_id,
+  lift,
 }) => {
-  const { totalPrice, breakdownParts, price1, price2 } = useMemo(() => {
-    if (isAirSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
+  const lead = lead_id ?? formData.leadId;;
+  const operator = lift ?? formData.liftType;
+  if (isOnlyLabel) {
+    if (!label) return null;
 
+    return (
+      <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+        <span className="font-medium space-y-1">{label}</span>
+      </div>
+    );
+  }
+
+  if (!showPrice) {
+    return null;
+  }
+
+  const { totalPrice, breakdownParts, price1, price2, selectedName, newMaterial } = useMemo(() => {
+    // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
+
+
+    // 🛑 FIX: If 'options' is missing AND it's not a special system (ARD/AIR), return early.
+    // We only proceed if it IS an ARD/AIR system or if options ARE present.
+    // if (!options && !isArdSystem && !isAirSystem) {
+    //     return {
+    //         totalPrice: priceVal || 0,
+    //         breakdownParts: [],
+    //         price1: 0,
+    //         price2: 0,
+    //         selectedName: "",
+    //         newMaterial: null,
+    //     };
+    // }
+
+    // if (isArdSystem) { console.log("----------ardamount-----", priceVal); }
+
+    // --- SPECIAL ARD SYSTEM LOGIC ---
+    // if (isArdSystem) {
+    //   // ARD is an input field, using formData.ardAmount for price
+    //   const ardMaterial = {
+    //     id: null,
+    //     leadId: formData.leadId,
+    //     quotationLiftDetailId: formData.quotLiftDetailId || null,
+    //     materialId: 0,
+    //     materialName: "ARD Amount",
+    //     quantity: 1,
+    //     price: priceVal,
+    //     operatorType: formData.liftType,
+    //     materialType: "ARD",
+    //   };
+
+    //   // return {
+    //   //   totalPrice: priceVal,
+    //   //   breakdownParts: [],
+    //   //   price1: 0,
+    //   //   price2: 0,
+    //   //   selectedName: "ARD Amount",
+    //   //   newMaterial: ardMaterial // <-- Return the constructed object
+    //   // };
+    // }
+    // --- END ARD SYSTEM LOGIC ---
+
+    // console.log(options, "------", !options, "=====options========>", options);
+    if (!options) {
+      // if (isArdSystem) {
+      //   const ardMaterial = {
+      //     id: null,
+      //     leadId: formData.leadId,
+      //     quotationLiftDetailId: formData.quotLiftDetailId || null,
+      //     materialId: 0,
+      //     materialName: "ARD Amount",
+      //     quantity: 1,
+      //     price: priceVal,
+      //     operatorType: formData.liftType,
+      //     materialType: "ARD",
+      //   };
+      //   return {
+      //     totalPrice: priceVal,
+      //     breakdownParts: [],
+      //     price1: 0,
+      //     price2: 0,
+      //     selectedName: "ARD Amount",
+      //     newMaterial: ardMaterial // <-- Return the constructed object
+      //   };
+      // } else {
+      return {
+        totalPrice: priceVal || 0,
+        breakdownParts: [],
+        price1: 0,
+        price2: 0,
+        selectedName: "",
+        newMaterial: null,
+      };
+      // }
+    }
     const totalOpenings = Number(formData.openings) || 0;
     const splitCount = Number(formData.landingEntranceCount) || 0;
+
+    const noOfStops = Number(formData.stops) || 0;
+    const liftQuantity = Number(formData.liftQuantity) || 1;
+
+    console.log(options, "-------options----------->");
 
     // helper to find option
     const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
@@ -259,19 +1295,124 @@ export const PriceBelowSelect = ({
 
     let price1 = 0, price2 = 0;
     let breakdownParts = [];
+    let finalGuideRailQty = 0;
 
-    // ✅ Default single price (no split)
-    if (
+    const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+    const opt = findOpt(sid);
+
+    let materialId = opt ? opt[id] : null;
+    let quantity = 1; // Default quantity
+    // NAME ASSIGNMENT LOGIC:
+    let selectedName = "";
+    if (opt && formValue) {
+      quantity = Number(opt.quantity || opt.wireRopeQty
+      ) || 1;
+      selectedName = opt[nameKey] || opt.name || "";
+    }
+
+    let finalPrice = priceVal || 0;
+
+    // --- SPECIAL AIR SYSTEM LOGIC ---
+    if (isAirSystem) {
+      console.log("----formData.selectedMaterials-------", formData.selectedMaterials);
+      const existingMaterials = formData.selectedMaterials || [];
+
+      console.log("----In AIr-------", existingMaterials);
+      // Try to find if an Air System material already exists
+      const existingIndex = existingMaterials.findIndex(
+        (item) =>
+          item.materialType?.toLowerCase().includes("Air System".toLowerCase()) 
+      );
+
+      console.log("----In AIr--existingIndex-----", existingIndex);
+      console.log("----In AIr---existingMaterials[existingIndex]----", existingMaterials[existingIndex]);
+
+      const existing = existingIndex !== -1 ? existingMaterials[existingIndex] : {};
+
+      const airMaterial = {
+        ...existing,  // keep id, quotationLiftDetailId, etc.
+        id: existing.id,
+        leadId: formData.leadId ?? existing.leadId,
+        quotationLiftDetailId: existing.quotationLiftDetailId,
+        materialId: materialId ?? existing.materialId,
+        materialName: selectedName || existing.materialName || "Air System",
+        quantity: 1,
+        quantityUnit: existing.quantityUnit || "",
+        price: finalPrice ?? existing.price ?? 0,
+        operatorType: formData.liftType ?? existing.operatorType,
+        materialType: itemMainName || existing.materialType || "Air System",
+      };
+
+      // Prepare updated materials list (for reference/debugging, optional)
+      let updatedMaterials = [...existingMaterials];
+      if (existingIndex !== -1) {
+        updatedMaterials[existingIndex] = airMaterial; // Update
+      } else {
+        updatedMaterials.push(airMaterial); // Add new
+      }
+
+      // ✅ Return the airMaterial for parent to use
+      return {
+        totalPrice: finalPrice,
+        breakdownParts: [],
+        price1: 0,
+        price2: 0,
+        selectedName,
+        newMaterial: airMaterial,
+      };
+    }
+
+    // console.log(materialId, "---materialId---", selectedName);
+    // --- GUIDERAIL LOGIC ---
+    if (setPrice === "guideRailPrice") {
+
+      if (opt && noOfStops > 0) {
+        const unitPrice = unitOf(opt);
+
+        // Calculate rounded quantity (PHP $guide_rail_qty1)
+        const roundedQty1 = calculateRoundedGuideRailQuantity(noOfStops);
+
+        // Calculate final quantity (PHP $guide_rail_qty2)
+        finalGuideRailQty = roundedQty1 * liftQuantity;
+
+        // Calculate total price (PHP $guide_rail_price)
+        price1 = unitPrice * finalGuideRailQty;
+
+        // Optional breakdown
+        breakdownParts.push(
+          // `${opt.counterWeightName} (${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+          `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+        );
+
+        quantity = finalGuideRailQty || 0;
+      }
+    } 
+    // -------------------------
+
+    // ✅ Default single price (for other non-split items)
+    else if (
       setPrice &&
       setPrice !== "landingEntrancePrice1" &&
       setPrice !== "landingEntrancePrice2"
     ) {
-      const sid = Array.isArray(formValue) ? formValue[0] : formValue;
-      const opt = findOpt(sid);
+       if(setPrice="airSystemPrice"){
+console.log("=====airSystemPrice====>",opt);
+      }
+      // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+      // const opt = findOpt(sid);
       if (opt) {
         const unit = unitOf(opt);
-        price1 = unit; // just the unit price
+        price1 = unit * quantity; // just the unit price
         // breakdownParts.push(`${opt.name} = ₹ ${unit.toLocaleString()}`);
+        if (quantity > 1) {
+          breakdownParts.push(
+            `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+          );
+        } else {
+          breakdownParts.push(
+            `: ₹ ${price1.toLocaleString()}`
+          );
+        }
       }
     }
 
@@ -288,6 +1429,8 @@ export const PriceBelowSelect = ({
         breakdownParts.push(
           `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
         );
+
+        quantity = floors1; // set quantity for Landing Entrance 1
       }
     }
 
@@ -295,6 +1438,12 @@ export const PriceBelowSelect = ({
     if (setPrice === "landingEntrancePrice2") {
       const sid2 = Array.isArray(formValue) ? formValue[1] : null;
       const opt2 = findOpt(sid2);
+
+      let materialId = opt2 ? opt2[id] : null;
+      if (opt2 && formValue) {
+        selectedName = opt2[nameKey] || opt2.name || "";
+      }
+      console.log(materialId, "------", selectedName);
 
       if (opt2) {
         // default remaining floors
@@ -315,7 +1464,39 @@ export const PriceBelowSelect = ({
         breakdownParts.push(
           `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
         );
+
+        quantity = floors2; // set quantity for Landing Entrance 2
       }
+    }
+
+
+    const totalPrice = price1 + price2;
+
+    // 🧩 Find if the same material type already exists in selectedMaterials
+    const existingMaterials = formData.selectedMaterials || [];
+    const existingIndex = existingMaterials.findIndex(
+      (item) =>
+        item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
+    );
+
+console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+    console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
+    // ✅ Build newMaterial with existing id (if found)
+    const newMaterial = {
+      id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+      leadId: lead,
+      quotationLiftDetailId: formData.quotLiftDetailId || null,
+      materialId: materialId,          // ID of the selected option
+      materialName: selectedName,
+      quantity: quantity,
+      quantityUnit: itemUnit,
+      price: totalPrice,               // The total calculated price
+      operatorType: operator,  // Assuming liftType is available
+      materialType: itemMainName,      // "Guide Rail", "Door", etc.
+    };
+
+    if (setPrice === "cabinPrice") {
+      console.log("----->newMaterial----->", newMaterial);
     }
 
     return {
@@ -323,13 +1504,15 @@ export const PriceBelowSelect = ({
       breakdownParts,
       price1,
       price2,
+      selectedName,
+      newMaterial,
     };
-  }, [isAirSystem, priceVal, options, formValue, id, formData, setPrice]);
+  }, [isAirSystem, priceVal, options, formValue, id, formData, setPrice, nameKey, itemMainName, formData.liftType, formData.leadId,]);
 
 
   // write total back into formData
   useEffect(() => {
-    if (!setFormData || !setPrice) return;
+    if (!setFormData || !setPrice && !setName) return;
 
     // setFormData(prev => {
     //   if ((prev[setPrice] || 0) === (totalPrice || 0)) return prev;
@@ -338,6 +1521,7 @@ export const PriceBelowSelect = ({
 
     setFormData((prev) => {
       const next = { ...prev };
+      let updated = false;
 
       // if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
       //   next.landingEntrancePrice1 = price1;
@@ -349,64 +1533,312 @@ export const PriceBelowSelect = ({
       if (setPrice === "landingEntrancePrice1") {
         if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
           next.landingEntrancePrice1 = price1;
+          updated = true;
         }
       } else if (setPrice === "landingEntrancePrice2") {
         if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
           next.landingEntrancePrice2 = price2;
+          updated = true;
         }
-      } else {
+      } else if (setPrice) {
         console.log(setPrice + '======>price1:- ' + price1 + "---------price2:- " + price2 + "---totalPrice------" + totalPrice);
         if (prev[setPrice] !== totalPrice) {
           next[setPrice] = totalPrice || 0;
+          updated = true;
         }
       }
 
-      return next;
+      if (setName && prev[setName] !== selectedName) {
+        next[setName] = selectedName;
+        updated = true;
+      }
+
+      // 3. ✅ NEW: SAVE STRUCTURED MATERIAL OBJECT
+      // Field name is created from the setPrice prop (e.g., guideRailPrice -> guideRailMaterial)
+      const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
+      // const materialFieldName = setPrice ? `${setPrice.replace(/Price\d*/, '')}Material` : null;
+
+      console.log(newMaterial, "Material Field Name:", materialFieldName);
+
+      if (materialFieldName) {
+        // Check if the item is valid (has a materialId and total price > 0)
+        console.log("---newMaterial:---", newMaterial);
+        // if (newMaterial.materialId && newMaterial.price > 0) {
+        if (newMaterial.materialId) {
+          // Check if the object is changing (using JSON.stringify for a simple deep compare)
+          console.log("JSON.stringify(prev[materialFieldName]):", JSON.stringify(prev[materialFieldName]));
+          console.log("JSON.stringify(newMaterial):", JSON.stringify(newMaterial));
+          console.log("Are they equal?", JSON.stringify(prev[materialFieldName]) === JSON.stringify(newMaterial));
+          console.log("prev[materialFieldName]", prev[materialFieldName]);
+
+          if (JSON.stringify(prev[materialFieldName]) !== JSON.stringify(newMaterial)) {
+            next[materialFieldName] = newMaterial;
+            updated = true;
+          }
+        } else {
+          // If selection is cleared, set the material object to null/undefined
+          if (prev[materialFieldName] !== undefined && prev[materialFieldName] !== null) {
+            next[materialFieldName] = null;
+            updated = true;
+          }
+        }
+      }
+
+
+      console.log(materialFieldName, "---next---", next[materialFieldName]);
+
+      return updated ? next : prev;
     });
-  }, [price1, price2, setPrice, setFormData]);
+  }, [
+    price1,
+    price2,
+    totalPrice,
+    selectedName,
+    setPrice,
+    setName,
+    setFormData
+  ]);
 
   // nothing to display
-  if (!totalPrice || totalPrice === 0) return null;
+  if (showPrice && (!totalPrice || totalPrice === 0)) return null;
 
   return (
-    <div className={`absolute right-0 mt-[3.7rem] text-sm ${color}`}>
+    <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
       {label ? (
         <>
-          {/* Hide total for Landing Entrance 1 & 2 */}
-          {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+          {/* Hide total for Landing Entrance 1 & 2...if not landingentrance */}
+          {/* {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
             <span>
-              {label}: <span className="font-medium">₹ {totalPrice.toLocaleString()}</span>
+              {label}
+              {showPrice && (
+                <span className="font-medium space-y-1">
+                  :{" "}₹ {totalPrice.toLocaleString()}
+                </span>
+              )}
             </span>
           )}
 
           {breakdownParts && breakdownParts.length > 0 && breakdownParts && (
-            <div className="text-xs mt-1 space-y-1">
+            <div className="text-xs space-y-1">
               {breakdownParts.map((b, i) => (
                 <div key={i}>{b}</div>
               ))}
             </div>
+          )} */}
+
+          {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+            <span>
+              {/* Check if a breakdown exists */}
+              {breakdownParts && breakdownParts.length > 0 ? (
+                // Condition 1: Breakdown exists
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    {breakdownParts.map((b, i) => (
+                      <span key={i}>{b}</span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                // Condition 2: No breakdown, show label followed by price
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    :{" "}₹ {totalPrice.toLocaleString()}
+                  </span>
+                </>
+              )}
+            </span>
           )}
+
+
+          {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+            <span>
+              {/* Check if a breakdown exists */}
+              {breakdownParts && breakdownParts.length > 0 ? (
+                // Condition 1: Breakdown exists
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    {breakdownParts.map((b, i) => (
+                      <span key={i}>{b}</span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                // Condition 2: No breakdown, show label followed by price
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    :{" "}₹ {totalPrice.toLocaleString()}
+                  </span>
+                </>
+              )}
+            </span>
+          )}
+
+
         </>
       ) : (
         <>
-          {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+          {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
             <span>
-              Price: <span className="font-medium">₹ {totalPrice.toLocaleString()}</span>
+              Price
+              {breakdownParts && breakdownParts.length > 0 ? (
+                // Condition 1: Breakdown exists
+                <>
+                  <span className="font-medium space-y-1">
+                    {breakdownParts.map((b, i) => (
+                      <span key={i}>{b}</span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                // Condition 2: No breakdown, show label followed by price
+                <>
+
+                  <span className="font-medium space-y-1">
+                    {" "}₹ {totalPrice.toLocaleString()}
+                  </span>
+                </>
+              )}
             </span>
           )}
-          {breakdownParts && breakdownParts.length > 0 && (
-            <div className="text-xs text-gray-500 mt-1 space-y-1">
+          {/* {breakdownParts && breakdownParts.length > 0 && (
+            <div className="font-medium space-y-1">
               {breakdownParts.map((b, i) => (
                 <div key={i}>{b}</div>
               ))}
             </div>
-          )}
+          )} */}
         </>
       )}
     </div>
   );
 
 };
+
+
+export const calculateTotal = (formData) => {
+  return priceKeys.reduce((sum, key) => sum + Number(formData[key] || 0), 0);
+};
+
+export const handleRefresh = async (
+  fieldLabel,
+  refreshFnOrField,   // can be string (field name) or function
+  fetchOptionsFn,      // pass your local fetchOptions function here
+  setFormData,
+  fieldsToReset = []
+) => {
+  if (!setFormData) return;
+
+  // ✅ Step 1: Reset specified fields in the form
+  if (Array.isArray(fieldsToReset) && fieldsToReset.length > 0) {
+    setFormData((prev) => {
+      const updated = { ...prev };
+      fieldsToReset.forEach((key) => {
+        if (key in updated) updated[key] = "";
+      });
+      return updated;
+    });
+  }
+
+  // ✅ Step 2: Validate argument
+  const isString = typeof refreshFnOrField === "string";
+  const isFunction = typeof refreshFnOrField === "function";
+
+  if (!isString && !isFunction) {
+    console.warn("⚠️ Invalid refresh argument passed to handleRefresh");
+    return;
+  }
+
+  // ✅ Step 3: Run toast + refresh logic
+  await toast.promise(
+    (async () => {
+      if (isFunction) {
+        await refreshFnOrField(); // e.g. a custom refresh function
+      } else if (isString && fetchOptionsFn) {
+        await fetchOptionsFn(refreshFnOrField); // call your local fetchOptions
+      } else {
+        console.warn("⚠️ fetchOptions function missing or invalid");
+      }
+    })(),
+    {
+      loading: `Refreshing ${fieldLabel}...`,
+      success: `${fieldLabel} refreshed successfully!`,
+      error: `Failed to refresh ${fieldLabel}!`,
+    }
+  );
+};
+
+
+
+// export const handleRefresh = async (
+//   fieldLabel,
+//   refreshFn,
+//   setFormData,
+//   fieldsToReset = []
+// ) => {
+//   if (typeof refreshFn !== "function" || typeof setFormData !== "function") return;
+
+//   // ✅ Step 1: Clear selected formData fields (if any)
+//   if (Array.isArray(fieldsToReset) && fieldsToReset.length > 0) {
+//     setFormData((prev) => {
+//       const updated = { ...prev };
+//       fieldsToReset.forEach((key) => {
+//         if (key in updated) updated[key] = ""; // or null if you prefer
+//       });
+//       return updated;
+//     });
+//   }
+
+//   // ✅ Step 2: Show loading & handle refresh
+//   await toast.promise(
+//     (async () => {
+//       await refreshFn(); // e.g., loadGuideRails()
+//     })(),
+//     {
+//       loading: `Refreshing ${fieldLabel}...`,
+//       success: `${fieldLabel} refreshed successfully!`,
+//       error: `Failed to refresh ${fieldLabel}!`,
+//     }
+//   );
+// };
+
+
+// export const handleRefresh = async (fieldLabel, refreshFn) => {
+//   if (typeof refreshFn !== "function") return;
+
+//   await toast.promise(
+//     (async () => {
+//       await refreshFn(); // your actual fetch / reload logic
+//     })(),
+//     {
+//       loading: `Refreshing ${fieldLabel}...`,
+//       success: `${fieldLabel} refreshed successfully!`,
+//       error: `Failed to refresh ${fieldLabel}!`,
+//     }
+//   );
+// };
+
+
+// export const handleRefresh = async (fieldLabel, refreshFn) => {
+//   await toast.promise(
+//     (async () => {
+//       // Optional: run custom logic for that field
+//       if (typeof refreshFn === "function") await refreshFn();
+//       else await new Promise((resolve) => setTimeout(resolve, 1500)); // fallback delay
+//     })(),
+//     {
+//       loading: `Refreshing ${fieldLabel} prices...`,
+//       success: `${fieldLabel} prices refreshed!`,
+//       error: `Failed to refresh ${fieldLabel} prices!`,
+//     }
+//   );
+// };
+
+
+
 
 
 

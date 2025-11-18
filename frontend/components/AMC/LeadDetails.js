@@ -16,7 +16,7 @@ export default function LeadDetails({ leadId}) {
 
       const router = useRouter();
 
-        const { id, tenant } = useParams();
+        const { id } = useParams();
 
 
         
@@ -129,7 +129,7 @@ const updateStageOfProject = () => {
 
 
   const backToList = () => {
-    router.push(ROUTES.LEAD_LIST(tenant));
+    router.push(ROUTES.LEAD_LIST());
   };
 
   // ---- Buttons Config ----

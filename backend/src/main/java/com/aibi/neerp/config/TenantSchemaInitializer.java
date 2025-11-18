@@ -76,17 +76,42 @@ public class TenantSchemaInitializer {
 
     @Transactional
     public void initializeIfRequired(String tenantId) {
-        if (tenantId == null || tenantId.isBlank()) return;
+        if (tenantId == null || tenantId.isBlank()) {
+            System.out.println("[TenantInit] ⚠️ Tenant ID is null or blank, skipping initialization");
+            return;
+        }
+        
+        System.out.println("[TenantInit] ===== initializeIfRequired called for tenant: " + tenantId + " =====");
         
         // Check if schema is already initialized (persistent check, not just in-memory cache)
         boolean schemaExists = isInitialized();
+        System.out.println("[TenantInit] Schema exists check result: " + schemaExists);
         
         if (schemaExists) {
-            // Schema exists - ensure default data is initialized
+            // Schema exists - ensure default data is initialized and check for missing tables
             System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", ensuring default data is initialized...");
             long startTime = System.currentTimeMillis();
+            
+            // ALWAYS ensure new tables exist - run this FIRST and separately to ensure it happens
+            System.out.println("[TenantInit] ===== Ensuring new tables exist (runs on every login) =====");
             try {
-                
+                // Ensure tbl_password_reset_otp table exists (for new password reset feature)
+                ensurePasswordResetOtpTableExists();
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ❌ Failed to ensure tbl_password_reset_otp table: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            try {
+                // Ensure tbl_password_reset_token table exists (for magic link password reset)
+                ensurePasswordResetTokenTableExists();
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ❌ Failed to ensure tbl_password_reset_token table: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            // Now run the rest of initialization
+            try {
                 // Removed: Logic for columnNamingFixer.validateAndFixColumnNames();
                 
                 System.out.println("[TenantInit] Calling initializeDefaults() for tenant: " + tenantId);
@@ -171,6 +196,105 @@ public class TenantSchemaInitializer {
                     emfBean.getObject().close();
                 }
             } catch (Exception ignore) {}
+        }
+    }
+
+    /**
+     * Ensures the tbl_password_reset_otp table exists in the current tenant database.
+     * This is needed for the password reset OTP feature.
+     * Made public so it can be called on-demand from services.
+     */
+    public void ensurePasswordResetOtpTableExists() {
+        try {
+            // Check if table exists
+            String checkSql = "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema='public' AND table_name = 'tbl_password_reset_otp')";
+            Boolean exists = jdbcTemplate.queryForObject(checkSql, Boolean.class);
+            
+            if (Boolean.TRUE.equals(exists)) {
+                System.out.println("[TenantInit] ✅ tbl_password_reset_otp table already exists");
+                return;
+            }
+            
+            // Table doesn't exist - create it
+            System.out.println("[TenantInit] 🔧 Creating tbl_password_reset_otp table...");
+            String createTableSql = 
+                "CREATE TABLE IF NOT EXISTS tbl_password_reset_otp (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "email VARCHAR(255) NOT NULL, " +
+                "code_hash VARCHAR(255) NOT NULL, " +
+                "expires_at TIMESTAMP NOT NULL, " +
+                "attempts INTEGER NOT NULL DEFAULT 0, " +
+                "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, " +
+                "invalidated BOOLEAN NOT NULL DEFAULT FALSE" +
+                ")";
+            jdbcTemplate.execute(createTableSql);
+            
+            // Create index on email for faster lookups
+            String createIndexSql = "CREATE INDEX IF NOT EXISTS idx_password_reset_email ON tbl_password_reset_otp(email)";
+            jdbcTemplate.execute(createIndexSql);
+            
+            System.out.println("[TenantInit] ✅ tbl_password_reset_otp table created successfully");
+        } catch (Exception e) {
+            System.err.println("[TenantInit] ⚠️ Warning - Failed to ensure tbl_password_reset_otp table exists: " + e.getMessage());
+            // Don't throw - allow login to proceed, Hibernate might create it later
+        }
+    }
+
+    /**
+     * Ensures the tbl_password_reset_token table exists in the current tenant database.
+     * This is needed for the magic link password reset feature.
+     * This method is called on every login to ensure new tables are created even after initial setup.
+     */
+    private void ensurePasswordResetTokenTableExists() {
+        try {
+            System.out.println("[TenantInit] Checking for tbl_password_reset_token table...");
+            
+            // Check if table exists
+            String checkSql = "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema='public' AND table_name = 'tbl_password_reset_token')";
+            Boolean exists = jdbcTemplate.queryForObject(checkSql, Boolean.class);
+            
+            if (Boolean.TRUE.equals(exists)) {
+                System.out.println("[TenantInit] ✅ tbl_password_reset_token table already exists");
+                return;
+            }
+            
+            // Table doesn't exist - create it
+            System.out.println("[TenantInit] 🔧 Creating tbl_password_reset_token table...");
+            String createTableSql = 
+                "CREATE TABLE IF NOT EXISTS tbl_password_reset_token (" +
+                "id BIGSERIAL PRIMARY KEY, " +
+                "email VARCHAR(255) NOT NULL, " +
+                "token_hash VARCHAR(255) NOT NULL, " +
+                "expires_at TIMESTAMP NOT NULL, " +
+                "used BOOLEAN NOT NULL DEFAULT FALSE, " +
+                "created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP" +
+                ")";
+            jdbcTemplate.execute(createTableSql);
+            System.out.println("[TenantInit] ✅ Table created");
+            
+            // Create indexes for faster lookups
+            try {
+                String createEmailIndexSql = "CREATE INDEX IF NOT EXISTS idx_password_reset_token_email ON tbl_password_reset_token(email)";
+                jdbcTemplate.execute(createEmailIndexSql);
+                System.out.println("[TenantInit] ✅ Email index created");
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ⚠️ Failed to create email index (may already exist): " + e.getMessage());
+            }
+            
+            try {
+                String createTokenHashIndexSql = "CREATE INDEX IF NOT EXISTS idx_password_reset_token_hash ON tbl_password_reset_token(token_hash)";
+                jdbcTemplate.execute(createTokenHashIndexSql);
+                System.out.println("[TenantInit] ✅ Token hash index created");
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ⚠️ Failed to create token hash index (may already exist): " + e.getMessage());
+            }
+            
+            System.out.println("[TenantInit] ✅ tbl_password_reset_token table created successfully");
+        } catch (Exception e) {
+            System.err.println("[TenantInit] ❌ ERROR - Failed to ensure tbl_password_reset_token table exists: " + e.getMessage());
+            e.printStackTrace();
+            // Don't throw - allow login to proceed, the controller will try to create it on-demand
+            System.err.println("[TenantInit] ⚠️ Table will be created on-demand when password reset is used");
         }
     }
 }

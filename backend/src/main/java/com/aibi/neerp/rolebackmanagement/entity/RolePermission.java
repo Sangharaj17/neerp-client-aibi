@@ -24,6 +24,13 @@ public class RolePermission {
     @JoinColumn(name = "permission_id")
     private Permission permission;
 
+    // Legacy support (existing rows)
+    @Column(name = "module_name")
+    private String moduleName;
+
+    @Column(name = "feature_name")
+    private String featureName;
+
     @Column(name = "active")
     private Boolean active = true;
 }

@@ -6,11 +6,13 @@ import com.aibi.neerp.componentpricing.entity.Bracket;
 import com.aibi.neerp.componentpricing.entity.BracketType;
 import com.aibi.neerp.componentpricing.entity.Floor;
 import com.aibi.neerp.exception.ResourceNotFoundException;
+import com.aibi.neerp.exception.DuplicateResourceException;
 import com.aibi.neerp.componentpricing.repository.BracketRepository;
 import com.aibi.neerp.componentpricing.repository.BracketTypeRepository;
 import com.aibi.neerp.componentpricing.repository.FloorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,13 +49,22 @@ public class BracketService {
 
         Bracket bracket = new Bracket();
         bracket.setBracketType(bracketType);
+        bracket.setCarBracketSubType(request.getCarBracketSubType());
         bracket.setPrice(request.getPrice());
         bracket.setFloor(floor);
 
-        Bracket saved = bracketRepository.save(bracket);
-        log.info("Bracket created successfully with ID {}", saved.getId());
 
-        return mapToResponse(saved);
+        try {
+            Bracket saved = bracketRepository.save(bracket);
+            log.info("Bracket created successfully with ID {}", saved.getId());
+
+            return mapToResponse(saved);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Duplicate Bracket entry: Type={}, SubType={}, Floor={}",
+                    request.getBracketTypeId(), request.getCarBracketSubType(), request.getFloorId(), e);
+            // 👇 THROWING THE EXISTING DuplicateResourceException
+            throw new DuplicateResourceException("Bracket with this Type, SubType, and Floor already exists.");
+        }
     }
 
     @Transactional
@@ -79,14 +90,22 @@ public class BracketService {
                     return new ResourceNotFoundException("Floor not found");
                 });
 
-        bracket.setBracketType(bracketType); // Reflect new type in Bracket
+        bracket.setBracketType(bracketType);
+        bracket.setCarBracketSubType(request.getCarBracketSubType());
         bracket.setPrice(request.getPrice());
         bracket.setFloor(floor);
 
-        Bracket updated = bracketRepository.save(bracket);
-        log.info("Bracket updated successfully with ID {}", updated.getId());
+        try {
+            Bracket updated = bracketRepository.save(bracket);
+            log.info("Bracket updated successfully with ID {}", updated.getId());
 
-        return mapToResponse(updated);
+            return mapToResponse(updated);
+        } catch (DataIntegrityViolationException e) {
+            log.error("Duplicate Bracket entry during update: Type={}, SubType={}, Floor={}",
+                    request.getBracketTypeId(), request.getCarBracketSubType(), request.getFloorId(), e);
+            // 👇 THROWING the existing DuplicateResourceException for update conflict
+            throw new DuplicateResourceException("Another Bracket already exists with this Type, SubType, and Floor combination.");
+        }
     }
 
     public List<BracketResponseDTO> getAllBrackets(String sortBy, String direction) {
@@ -124,6 +143,7 @@ public class BracketService {
                 .id(bracket.getId())
                 .bracketTypeId(bracket.getBracketType().getId())
                 .bracketTypeName(bracket.getBracketType().getName())
+                .carBracketSubType(bracket.getCarBracketSubType())
                 .price(bracket.getPrice())
                 .floorName(bracket.getFloor().getFloorName())
                 .floorId(bracket.getFloor().getId())

@@ -10,6 +10,7 @@ public class OtherMaterialResponseDTO {
     private Integer id;
 
     private String otherMaterialName;
+    private String otherMaterialDisplayName;
 
     private Long otherMaterialMainId;
     private String otherMaterialMainName;
@@ -36,5 +37,6 @@ public class OtherMaterialResponseDTO {
     private Integer floors;
     private String floorsLabel;
     private String quantity;
+    private String quantityUnit;
     private Integer price;
 }

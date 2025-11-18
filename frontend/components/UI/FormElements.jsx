@@ -10,26 +10,65 @@ export function FormSection({ title, icon: Icon, children }) {
   );
 }
 
-export function FormInput({ className = "", ...props }) {
-  const value =
-    props.value === undefined || props.value === null ? "" : props.value;
+// export function FormInput({ className = "", ...props }) {
+//   const value =
+//     props.value === undefined || props.value === null ? "" : props.value;
+
+//   return (
+//     <input
+//       {...props}
+//       value={value}
+//       className={`border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none w-full ${className}`}
+//     />
+//   );
+// }
+
+// export function FormSelect({ className = "", children, ...props }) {
+//   const value = props.value === null ? "" : props.value;
+//   return (
+//     <select
+//       {...props}
+//       value={value}
+//       className={`border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none w-full ${className}`}
+//     >
+//       {children}
+//     </select>
+//   );
+// }
+
+export function FormInput({ className = "", value, ...props }) {
+  const inputValue = value === undefined || value === null ? "" : value;
+  const hasValue = inputValue !== "";
+
+  const baseClasses =
+    "border rounded-md px-4 py-2 text-sm focus:outline-none w-full transition-colors duration-150";
+  const bgClass = hasValue ? "bg-gray-100" : "bg-white";
+  const borderClass = hasValue ? "border-gray-700" : "border-gray-300";
 
   return (
     <input
       {...props}
-      value={value}
-      className={`border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none w-full ${className}`}
+      value={inputValue}
+      className={`${baseClasses} ${borderClass} ${bgClass} ${className}`}
     />
   );
 }
 
-export function FormSelect({ className = "", children, ...props }) {
-  const value = props.value === null ? "" : props.value;
+export function FormSelect({ className = "", children, value, ...props }) {
+  const selectValue = value === null || value === undefined ? "" : value;
+  const hasSelection =
+    selectValue !== "" && selectValue !== null && selectValue !== undefined;
+
+  const baseClasses =
+    "border rounded-md px-4 py-2 text-sm focus:outline-none w-full transition-colors duration-150";
+  const bgClass = hasSelection ? "bg-gray-100" : "bg-white";
+  const borderClass = hasSelection ? "border-gray-700" : "border-gray-300";
+
   return (
     <select
       {...props}
-      value={value}
-      className={`border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none w-full ${className}`}
+      value={selectValue}
+      className={`${baseClasses} ${borderClass} ${bgClass} ${className}`}
     >
       {children}
     </select>
@@ -52,6 +91,7 @@ export function FormButton({
     secondary: "border border-gray-300 text-gray-700 hover:bg-gray-100", // inactive
     danger: "bg-red-600 text-white hover:bg-red-700",
     success: "bg-green-600 text-white hover:bg-green-700",
+    info: "bg-cyan-500 text-white hover:bg-cyan-600",
   };
 
   return (

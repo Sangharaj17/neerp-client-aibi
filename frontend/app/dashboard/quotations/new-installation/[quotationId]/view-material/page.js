@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Calendar } from "lucide-react";
 import Link from "next/link";
 import BillOfMaterialModal from "./BillOfMaterialModal";
-import { useParams } from 'next/navigation'; 
+import { useParams } from 'next/navigation';
+import { getTenant } from '@/utils/tenant';
 
 // --- IMPORTANT: These constants are duplicated for initial calculation.
 // --- In a real app, you'd import these from a central config/data file.
@@ -54,9 +55,8 @@ const allMaterials = [
 // --- End of duplicated constants ---
 
 export default function ViewMaterialPage(params) {
-  // Use useParams to get the tenant from the URL in ViewMaterialPage
-  const { tenant } = useParams();
-  const { quotationId } = params; // quotationId can still come from params if it's a dynamic segment for this page
+  const tenant = getTenant();
+  const { quotationId } = useParams();
 
   const [lifts, setLifts] = useState([
     { id: 1, totalAmount: 0, gstAmount: 0, loadAmount: 0, finalAmount: 0 },

@@ -9,7 +9,7 @@ import axiosInstance from '@/utils/axiosInstance';
 export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action }) {
 
   console.log("Selected enquiryTypeName:", enquiryTypeName);
-  const { id, tenant } = useParams();
+  const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -117,6 +117,7 @@ export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action
       .then((response) => {
         const formatted = response.data.data.map((p) => ({
           id: p.id,
+          displayName: p.displayName,
           convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
         }));
 
@@ -808,7 +809,8 @@ console.log(options);
                   <option value="">Please Select</option>
                   {personOptions && personOptions.map((opt) => (
                     <option key={opt.id} value={opt.id}>
-                      {opt.convertedString}
+                      {/* {opt.convertedString} */}
+                      {opt.displayName}
                     </option>
                   ))}
                 </Select>

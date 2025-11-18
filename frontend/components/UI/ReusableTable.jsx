@@ -92,9 +92,9 @@ const ReusableTable = ({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-2 border border-gray-200 bg-gray-100 text-gray-700 ${col.align || "text-left"} ${
-                    col.sortable ? "cursor-pointer select-none" : ""
-                  }`}
+                  className={`px-4 py-2 border border-gray-200 bg-gray-100 text-gray-700 ${
+                    col.align || "text-left"
+                  } ${col.sortable ? "cursor-pointer select-none" : ""}`}
                   onClick={() => col.sortable && toggleSort(col.key)}
                 >
                   <div className="flex items-center justify-between items-center w-full">
@@ -154,7 +154,7 @@ const ReusableTable = ({
                 ))}
             </tr>
           </thead>
-          
+
           <tbody>
             {loading ? (
               <tr>
@@ -204,19 +204,33 @@ const ReusableTable = ({
                         className="px-4 py-2 border border-gray-200 text-center space-x-2"
                       >
                         {onEdit && (
-                          <button onClick={() => onEdit(item)}>
-                            <Pencil
-                              size={16}
-                              className="text-blue-500 hover:text-blue-700"
-                            />
-                          </button>
-                        )}
-                        {onDelete && (
-                          <button onClick={() => onDelete(item.id)}>
-                            <Trash2
-                              size={16}
-                              className="text-red-400 hover:text-red-700"
-                            />
+                          // <button onClick={() => onEdit(item)}>
+                          //   <Pencil
+                          //     size={16}
+                          //     className="text-blue-500 hover:text-blue-700"
+                          //   />
+                          // </button>
+                          <button
+                            onClick={() => {
+                              if (!item.systemDefined) onEdit(item);
+                            }}
+                            className={`${
+                              item.systemDefined
+                                ? "text-gray-400 cursor-not-allowed opacity-50"
+                                : "text-blue-500 hover:text-blue-700"
+                            }`}
+                            style={{
+                              pointerEvents: item.systemDefined
+                                ? "none"
+                                : "auto",
+                            }}
+                            title={
+                              item.systemDefined
+                                ? "System-defined items cannot be edited"
+                                : "Edit item"
+                            }
+                          >
+                            <Pencil size={16} />
                           </button>
                         )}
                       </td>
@@ -227,11 +241,27 @@ const ReusableTable = ({
                             key={`edit-${item.id ?? idx}`}
                             className="px-4 py-2 border border-gray-200 text-center"
                           >
-                            <button onClick={() => onEdit(item)}>
-                              <Pencil
-                                size={16}
-                                className="text-blue-500 hover:text-blue-700"
-                              />
+                            <button
+                              onClick={() => {
+                                if (!item.systemDefined) onEdit(item);
+                              }}
+                              className={`${
+                                item.systemDefined
+                                  ? "text-gray-400 cursor-not-allowed opacity-50"
+                                  : "text-blue-500 hover:text-blue-700"
+                              }`}
+                              style={{
+                                pointerEvents: item.systemDefined
+                                  ? "none"
+                                  : "auto",
+                              }}
+                              title={
+                                item.systemDefined
+                                  ? "System-defined items cannot be edited"
+                                  : "Edit item"
+                              }
+                            >
+                              <Pencil size={16} />
                             </button>
                           </td>
                         )}

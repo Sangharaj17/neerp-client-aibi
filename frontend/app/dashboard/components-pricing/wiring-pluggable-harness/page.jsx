@@ -113,8 +113,8 @@ export default function WiringPluableHarness() {
       setEditId("");
       fetchHarness();
     } catch (err) {
-      console.error("Error saving harness type:", error);
-      toast.error(error.response?.data?.message || "Something went wrong");
+      console.error("Error saving harness type:", err);
+      toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -217,7 +217,7 @@ export default function WiringPluableHarness() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.floorName}
+                {type.id+1} ({type.floorName})
               </option>
             ))}
           </FormSelect>
@@ -261,6 +261,7 @@ export default function WiringPluableHarness() {
             label: "Floor",
             sortable: true,
             editable: false,
+            render: (item) => `${item.floorId} (${item.floorName})`,
           },
           {
             key: "price",

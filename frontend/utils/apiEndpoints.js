@@ -59,18 +59,25 @@ export const API_ENDPOINTS = {
 
   COP_TYPE: `${API_BASE}/cops`,
 
-  OTHER_MATERIAL: `${API_BASE}/other-material`,  
+  LANDING_DOOR_TYPE: `${API_BASE}/landing-door-type`,
+  LANDING_DOOR_SUBTYPE: `${API_BASE}/landing-door-subType`,
+
+  OTHER_MATERIAL: `${API_BASE}/other-material`,
+  OTHER_MATERIAL_MAIN_TYPE: `${API_BASE}/material-main`,
   ARD_DEVICE: `${API_BASE}/ardDevice`,
 
-  COMPONENT : `${API_BASE}/components`,
-  MANUFACTURER : `${API_BASE}/manufactures`,
-  WARRANTY : `${API_BASE}/warranties`,
-  FEATURES : `${API_BASE}/features`,
-  OPERATION_TYPE : `${API_BASE}/operationType`,
-  CAPACITY_DIMENSIONS : `${API_BASE}/capacity-dimensions`,
+  COMPONENT: `${API_BASE}/components`,
+  MANUFACTURER: `${API_BASE}/manufactures`,
+  WARRANTY: `${API_BASE}/warranties`,
+  FEATURES: `${API_BASE}/features`,
+  OPERATION_TYPE: `${API_BASE}/operationType`,
+  CAPACITY_DIMENSIONS: `${API_BASE}/capacity-dimensions`,
 
-  FASTENERS : `${API_BASE}/fasteners`,
-  
-  INSTALLATION_RULES : `${API_BASE}/installation-rules`,
-  LOAD : `${API_BASE}/load`,
+  FASTENERS: `${API_BASE}/fasteners`,
+  INSTALLATION_RULES: `${API_BASE}/installation-rules`,
+  LOAD: `${API_BASE}/load`,
+
+  QUOTATIONS: `${API_BASE}/quotations`,
+  ENQUIRIES: `${API_BASE}/leadmanagement/enquiries`,
+
 };

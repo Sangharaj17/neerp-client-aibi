@@ -31,7 +31,15 @@ public class RoleController {
         return ResponseEntity.ok(roleService.getAllRoles());
     }
 
-    @GetMapping("/{id}")
+    /**
+     * Direct list of roles without any extra wrapping – useful for simple UIs.
+     */
+    @GetMapping("/direct")
+    public List<Role> getAllRolesDirect() {
+        return roleService.getAllRoles();
+    }
+
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<Role> getRoleById(@PathVariable Integer id) {
         return ResponseEntity.ok(roleService.getRoleById(id));
     }

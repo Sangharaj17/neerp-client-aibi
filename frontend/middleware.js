@@ -10,7 +10,9 @@ export const config = {
   matcher: [
     // Minimal matcher to avoid conflicts
     '/',
-    '/login'
+    '/auth/login',
+    '/auth/forgot-password',
+    '/auth/reset-password'
   ],
 };
 
