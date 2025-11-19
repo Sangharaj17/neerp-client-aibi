@@ -10,6 +10,7 @@ import com.aibi.neerp.componentpricing.repository.FastenerRepository;
 import com.aibi.neerp.componentpricing.repository.FloorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class FastenerService {
     }
 
     public List<FastenerResponseDTO> getAllFasteners() {
-        return fastenerRepository.findAll()
+        return fastenerRepository.findAll(Sort.by(Sort.Direction.ASC, "id"))
                 .stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());

@@ -29,10 +29,10 @@ public class CounterWeight {
     @JoinColumn(name = "counter_weight_type", referencedColumnName = "id", nullable = false)
     private CounterWeightType counterWeightType;
 
-    @ManyToOne
-    @JoinColumn(name = "operator_type", referencedColumnName = "id", nullable = false)
-    @NotNull(message = "Operator Type is mandatory")
-    private OperatorElevator operatorType;
+//    @ManyToOne
+//    @JoinColumn(name = "operator_type", referencedColumnName = "id", nullable = false)
+//    @NotNull(message = "Operator Type is mandatory")
+//    private OperatorElevator operatorType;
 
     @NotNull(message = "Floors is required")
     @ManyToOne(fetch = FetchType.LAZY)

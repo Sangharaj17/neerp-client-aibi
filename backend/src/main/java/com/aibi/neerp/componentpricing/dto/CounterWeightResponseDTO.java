@@ -11,8 +11,8 @@ public class CounterWeightResponseDTO {
     private String counterWeightName;
     private Integer counterWeightTypeId;
     private String counterWeightTypeName;
-    private Integer operatorTypeId;
-    private String operatorTypeName;
+//    private Integer operatorTypeId;
+//    private String operatorTypeName;
     private Integer floorId;
     private String floorName;
     private Integer price;

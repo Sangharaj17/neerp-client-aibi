@@ -35,6 +35,7 @@ public class FloorService {
     public ApiResponse<List<FloorResponseDTO>> generateAndSaveFloors(FloorRequestDTO requestDTO) {
         log.info("Generating/updating floors with request: {}", requestDTO);
 
+        // Assuming sanitize(requestDTO.getPrefix()) returns "G+"
         String sanitizedPrefix = sanitize(requestDTO.getPrefix());
         int totalFloors = requestDTO.getTotalFloors();
 
@@ -44,22 +45,26 @@ public class FloorService {
         try {
             List<Floor> updatedFloors = new ArrayList<>();
 
-            // 1️⃣ Update existing floor names if prefix changed
+            // 1️⃣ Update existing floor names (0 to totalFloors - 1)
             for (int i = 0; i < Math.min(totalFloors, existingCount); i++) {
                 Floor floor = existingFloors.get(i);
-                String newName = sanitizedPrefix + (i + 1);
+
+                // 🚀 CORRECTION: Use index 'i' directly for the floor number (0, 1, 2, ...)
+                String newName = sanitizedPrefix + i;
+
                 if (!floor.getFloorName().equals(newName)) {
                     floor.setFloorName(newName);
                 }
                 updatedFloors.add(floor);
             }
 
-            // 2️⃣ Add new floors if totalFloors > existingCount
+            // 2️⃣ Add new floors (starting from existingCount up to totalFloors - 1)
             for (int i = existingCount; i < totalFloors; i++) {
-                updatedFloors.add(new Floor(sanitizedPrefix + (i + 1)));
+                // 🚀 CORRECTION: Use index 'i' directly for the floor number (0, 1, 2, ...)
+                updatedFloors.add(new Floor(sanitizedPrefix + i));
             }
 
-            // 3️⃣ Delete extra floors if totalFloors < existingCount
+            // 3️⃣ Delete extra floors (Logic remains correct for indices)
             if (totalFloors < existingCount) {
                 List<Floor> floorsToDelete = existingFloors.subList(totalFloors, existingCount);
                 for (Floor floor : floorsToDelete) {
@@ -88,6 +93,63 @@ public class FloorService {
             return new ApiResponse<>(false, "Failed to generate floors: " + ex.getMessage(), null);
         }
     }
+//    @Transactional
+//    public ApiResponse<List<FloorResponseDTO>> generateAndSaveFloors(FloorRequestDTO requestDTO) {
+//        log.info("Generating/updating floors with request: {}", requestDTO);
+//
+//        String sanitizedPrefix = sanitize(requestDTO.getPrefix());
+//        int totalFloors = requestDTO.getTotalFloors();
+//
+//        List<Floor> existingFloors = floorRepository.findAll(Sort.by(Sort.Order.asc("id")));
+//        int existingCount = existingFloors.size();
+//
+//        try {
+//            List<Floor> updatedFloors = new ArrayList<>();
+//
+//            // 1️⃣ Update existing floor names if prefix changed
+//            for (int i = 0; i < Math.min(totalFloors, existingCount); i++) {
+//                Floor floor = existingFloors.get(i);
+//                String newName = sanitizedPrefix + (i + 1);
+//                if (!floor.getFloorName().equals(newName)) {
+//                    floor.setFloorName(newName);
+//                }
+//                updatedFloors.add(floor);
+//            }
+//
+//            // 2️⃣ Add new floors if totalFloors > existingCount
+//            for (int i = existingCount; i < totalFloors; i++) {
+//                updatedFloors.add(new Floor(sanitizedPrefix + (i + 1)));
+//            }
+//
+//            // 3️⃣ Delete extra floors if totalFloors < existingCount
+//            if (totalFloors < existingCount) {
+//                List<Floor> floorsToDelete = existingFloors.subList(totalFloors, existingCount);
+//                for (Floor floor : floorsToDelete) {
+//                    try {
+//                        floorRepository.delete(floor);
+//                    } catch (DataIntegrityViolationException ex) {
+//                        log.warn("Cannot delete floor {} as it is referenced in other tables", floor.getFloorName());
+//                        // keep it in updatedFloors
+//                        updatedFloors.add(floor);
+//                    }
+//                }
+//            }
+//
+//            // 4️⃣ Save all updated and new floors
+//            List<Floor> saved = floorRepository.saveAll(updatedFloors);
+//
+//            log.info("Generated/updated {} floors", saved.size());
+//
+//            return new ApiResponse<>(true, "Floors generated/updated successfully",
+//                    saved.stream()
+//                            .map(f -> new FloorResponseDTO(f.getId(), f.getFloorName()))
+//                            .collect(Collectors.toList()));
+//
+//        } catch (Exception ex) {
+//            log.error("Error generating floors: {}", ex.getMessage());
+//            return new ApiResponse<>(false, "Failed to generate floors: " + ex.getMessage(), null);
+//        }
+//    }
 
 //    @Transactional
 //    public ApiResponse<List<FloorResponseDTO>> generateAndSaveFloors(FloorRequestDTO requestDTO) {

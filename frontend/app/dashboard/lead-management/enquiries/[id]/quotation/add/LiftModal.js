@@ -387,7 +387,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
       0
     );
 
-
+console.log("---liftRatePriceKeys--------------",liftRatePriceKeys);
+console.log("---****************------------");
     console.log(liftRateTotal, "---priceKeys--------------", priceKeys);
     const adjustedPriceKeys1 = priceKeys.filter(
       (key) => !liftRatePriceKeys.includes(key)
@@ -691,12 +692,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
   const loadWireRope = async () => {
     if (formData.floors) {
       try {
-        const wireRopes = await fetchWireRopes(formData.floors, formData.liftType, setErrors);
+        const wireRopes = await fetchWireRopes(formData.floors, formData.typeOfLift, setErrors);
 
         if (wireRopes.length === 0) {
           toast.error("No wire ropes available for the selected floor");
         }
-        console.log("wireRopes==========>", wireRopes);
+        console.log(formData.floors,"-------" ,formData.liftType,"wireRopes==========>", wireRopes);
         setInitialOptions((prev) => ({
           ...prev,
           wireRopes: wireRopes,

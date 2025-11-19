@@ -1405,9 +1405,9 @@ export default function QuotationAddPage() {
                   {/* Dynamic Status Display */}
                   {/* Determine status based on isFinalized and isSaved */}
                   {(() => {
-                    console.log("Lift status check:", lift);
+                    // console.log("Lift status check:", lift);
                     const { isSaved, isFinalized, fullyFilled, id } = lift;
-                    console.log("..............isSaved:", isSaved, "isFinalized:", isFinalized, "fullyFilled:", fullyFilled, "id:", id);
+                    // console.log("..............isSaved:", isSaved, "isFinalized:", isFinalized, "fullyFilled:", fullyFilled, "id:", id);
 
                     let statusText = "⚠️ Incomplete";
                     let statusClass = "bg-red-100 text-red-700";

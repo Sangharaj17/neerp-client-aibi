@@ -330,6 +330,12 @@ export default function OtherMaterialPage() {
       align: "text-left",
     },
     {
+      key: "quantityUnit",
+      label: "Unit",
+      sortable: true,
+      align: "text-left",
+    },
+    {
       key: "price",
       label: "Price",
       sortable: true,
@@ -371,6 +377,7 @@ export default function OtherMaterialPage() {
     weightId: "",
     floor: "",
     quantity: "",
+    quantityUnit: "",
     price: "",
     quantityDisabled: false,
     isOthersSelected: true, // since default is Others
@@ -505,6 +512,7 @@ export default function OtherMaterialPage() {
             : "N/A",
         floorsLabel: item.floorsLabel || "N/A",
         quantity: item.quantity || "0",
+        quantityUnit: item.quantityUnit || "N/A",
         price: item.price != null ? item.price : 0,
       }));
   }, [otherMaterials, typeSearch]);
@@ -521,9 +529,10 @@ export default function OtherMaterialPage() {
       return;
     }
 
+    const isMachines = selectedMaterial.materialMainType === "Machines";
     const isOthers =
-      selectedMaterial.materialMainType === "Others" ||
-      selectedMaterial.materialMainType === "Machines";
+      selectedMaterial.materialMainType === "Others" || isMachines;
+
     console.log(isOthers, "-----isOthers----");
     console.log(selectedMaterial, "-----selectedMaterial----");
     console.log(
@@ -546,15 +555,31 @@ export default function OtherMaterialPage() {
       const selectedCapacityKey =
         capacityOptionsMap[capacityType?.type]?.formKey;
 
-      if (
-        !form.operatorTypeId ||
-        !form.capacityTypeId ||
-        !form[selectedCapacityKey] ||
-        !form.otherMaterialName ||
-        !form.floor
-      ) {
+      let requiredFieldsMissing = false;
+      let errorMessage = "The following fields are required: ";
+
+      const requiredChecks = [
+        { check: !form.capacityTypeId, name: "Capacity Type" },
+        { check: !form[selectedCapacityKey], name: "Capacity Value" },
+        { check: !form.otherMaterialName, name: "Other Material Name" },
+      ];
+
+      // Conditional fields based on NOT being 'Machines'
+      if (!isMachines) {
+        requiredChecks.push(
+          { check: !form.operatorTypeId, name: "Operator Type" },
+          { check: !form.floor, name: "Floor" }
+        );
+      }
+
+      // Check for missing fields
+      const missingNames = requiredChecks
+        .filter((field) => field.check)
+        .map((field) => field.name);
+
+      if (missingNames.length > 0) {
         toast.error(
-          "Other Material Name, Operator Type, Capacity Type, Capacity Value, and Floor are required for 'Others'."
+          `Please fill out the required fields: ${missingNames.join(", ")}.`
         );
         return;
       }
@@ -575,24 +600,31 @@ export default function OtherMaterialPage() {
       }
 
       const duplicate = otherMaterials.some((m) => {
-        return (
+        let baseCondition = (
           m.id !== editId &&
           m.otherMaterialMainId === parseInt(form.otherMaterialMainId, 10) &&
-          // m.otherMaterialName?.trim().toLowerCase() ===
-          //   form.otherMaterialName.trim().toLowerCase() &&
-          parseInt(m.operatorTypeId) === parseInt(form.operatorTypeId) &&
           parseInt(m.capacityTypeId) === parseInt(form.capacityTypeId) &&
           parseInt(m[selectedCapacityKey]) ===
-            parseInt(form[selectedCapacityKey]) &&
-          m.floorsLabel?.trim() ===
-            floors.find((f) => f.id === parseInt(form.floor))?.floorName
+            parseInt(form[selectedCapacityKey])
         );
+
+        // Add Operator and Floor checks ONLY if NOT Machines
+        if (!isMachines) {
+            baseCondition = baseCondition && 
+              parseInt(m.operatorTypeId) === parseInt(form.operatorTypeId) &&
+              m.floorsLabel?.trim() ===
+              floors.find((f) => f.id === parseInt(form.floor))?.floorName
+        }
+
+        return baseCondition;
       });
 
       if (duplicate) {
-        toast.error(
-          "Duplicate material is not allowed for the same floor/operator/capacity combination."
-        );
+       let errorMsg = "Duplicate material is not allowed for the same capacity combination.";
+        if (!isMachines) {
+             errorMsg = "Duplicate material is not allowed for the same floor/operator/capacity combination.";
+        }
+        toast.error(errorMsg);
         return;
       }
     } else {
@@ -635,7 +667,8 @@ export default function OtherMaterialPage() {
       otherMaterialDisplayName: form.otherMaterialDisplayName,
       price: parseInt(form.price, 10),
       quantity: parseInt(form.quantity, 10),
-      ...(isOthers && form.operatorTypeId
+      quantityUnit: form.quantityUnit,
+      ...(isOthers && !isMachines && form.operatorTypeId
         ? { operatorTypeId: parseInt(form.operatorTypeId, 10) }
         : {}),
       ...(isOthers && form.capacityTypeId
@@ -645,7 +678,9 @@ export default function OtherMaterialPage() {
         ? { [capacityMeta.formKey]: parseInt(form[capacityMeta.formKey], 10) }
         : {}),
       ...(form.liftType ? { machineRoomId: parseInt(form.liftType, 10) } : {}),
-      ...(form.floor ? { floorsId: parseInt(form.floor, 10) } : {}),
+      ...((isOthers && !isMachines && form.floor) 
+        ? { floorsId: parseInt(form.floor, 10) } 
+        : {}),
     };
 
     try {
@@ -732,6 +767,7 @@ export default function OtherMaterialPage() {
       weightId: dynamicFormKey === "weightId" ? selectedCapacityId : "",
       floor: floor ? floor.id : "",
       quantity: item.quantity,
+      quantityUnit: item.quantityUnit || "",
       price: item.price,
       quantityDisabled: false,
       isOthersSelected: isOthers,
@@ -757,6 +793,7 @@ export default function OtherMaterialPage() {
       capacityTypeId: defaultCapacityType?.id || "",
       quantityDisabled: false,
       isOthersSelected: isOthers,
+      quantityUnit: "",
     });
 
     setEditId(null);
@@ -1053,6 +1090,15 @@ export default function OtherMaterialPage() {
             placeholder="Enter Quantity"
             value={form.quantity}
             onChange={(e) => setForm({ ...form, quantity: e.target.value })}
+            // required
+            disabled={form.quantityDisabled}
+          />          
+          {/* Quantity Unit */}
+          <FormInput
+            type="number"
+            placeholder="Enter Unit (Set / Nos / Pair)"
+            value={form.quantityUnit}
+            onChange={(e) => setForm({ ...form, quantityUnit: e.target.value })}
             // required
             disabled={form.quantityDisabled}
           />

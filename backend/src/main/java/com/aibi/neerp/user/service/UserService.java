@@ -65,7 +65,7 @@ public class UserService {
     public Optional<Employee> validateUser(String email, String password) {
         System.out.println("[UserService] ===== Starting user validation =====");
         System.out.println("[UserService] Email: " + email);
-        System.out.println("[UserService] Password: " + (password != null ? "***" : "null"));
+        System.out.println(password+"[UserService] Password: " + (password != null ? "***" : "null"));
 
         if (email == null || email.isBlank()) {
             System.out.println("[UserService] ❌ Email cannot be blank");

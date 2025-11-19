@@ -55,7 +55,13 @@ export default function CounterWeightPage() {
       sortable: true,
       align: "text-left",
     },
-    { key: "quantity", label: "Quantity", sortable: true, align: "text-left" },
+    {
+      key: "quantity",
+      label: "Quantity",
+      sortable: true,
+      align: "text-left",
+      render: (item) => `${item.quantity} Kg`,
+    },
     { key: "price", label: "Price", sortable: true, align: "text-left" },
   ];
 
@@ -67,7 +73,7 @@ export default function CounterWeightPage() {
         // axiosInstance.get("/api/capacityTypes"),
         // axiosInstance.get("/api/personCapacity"),
         // axiosInstance.get("/api/weights"),
-        
+
         axiosInstance.get(API_ENDPOINTS.CAPACITY_TYPES),
         axiosInstance.get(API_ENDPOINTS.PERSON_CAPACITY),
         axiosInstance.get(API_ENDPOINTS.WEIGHTS),

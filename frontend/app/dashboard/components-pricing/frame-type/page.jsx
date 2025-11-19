@@ -15,7 +15,6 @@ import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 
 export default function CounterFrameType() {
-  const [counterFrameType, setCounterFrameType] = useState("");
   const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [counterFrameTypes, setCounterFrameTypes] = useState([]);
@@ -63,6 +62,7 @@ export default function CounterFrameType() {
     capacityTypeId: 1, // default = Person
     personCapacityId: "", // ID of selected person capacity
     weightId: "",
+    counterFrameName: "",
     price: "",
   };
   const [formData, setFormData] = useState(initialForm);

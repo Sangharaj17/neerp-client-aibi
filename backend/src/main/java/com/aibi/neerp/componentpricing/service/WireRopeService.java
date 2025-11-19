@@ -2,7 +2,12 @@ package com.aibi.neerp.componentpricing.service;
 
 import com.aibi.neerp.componentpricing.dto.WireRopeRequestDTO;
 import com.aibi.neerp.componentpricing.dto.WireRopeResponseDTO;
-import com.aibi.neerp.componentpricing.entity.*;
+//import com.aibi.neerp.componentpricing.entity.*;
+import com.aibi.neerp.componentpricing.entity.Floor;
+import com.aibi.neerp.componentpricing.entity.TypeOfLift;
+import com.aibi.neerp.componentpricing.entity.WireRope;
+import com.aibi.neerp.componentpricing.entity.WireRopeType;
+
 import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
 import com.aibi.neerp.componentpricing.repository.*;
@@ -22,7 +27,7 @@ public class WireRopeService {
 
     private final WireRopeRepository wireRopeRepository;
     private final WireRopeTypeRepository wireRopeTypeRepository;
-    private final OperatorElevatorRepository operatorElevatorRepository;
+    private final TypeOfLiftRepository typeOfLiftRepository;
     private final FloorRepository floorRepository;
 
     @Transactional(readOnly = true)
@@ -49,7 +54,7 @@ public class WireRopeService {
     @Transactional
     public ApiResponse<WireRopeResponseDTO> update(Integer id, WireRopeRequestDTO dto) {
         log.info("Updating WireRope with ID: {}", id);
-        System.out.println(id+"Updating WireRope with ID:");
+        System.out.println(id + "Updating WireRope with ID:");
 
         WireRope wireRope = wireRopeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Wire Rope not found with ID: " + id));
@@ -74,14 +79,15 @@ public class WireRopeService {
     private void mapDtoToEntity(WireRopeRequestDTO dto, WireRope entity) {
         WireRopeType type = wireRopeTypeRepository.findById(Long.valueOf(dto.getWireRopeTypeId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Wire Rope Type not found"));
-        OperatorElevator op = operatorElevatorRepository.findById(dto.getOperatorElevatorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator not found"));
+        TypeOfLift machineType = typeOfLiftRepository.findById(dto.getMachineTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Machine Type not found"));
         Floor floor = floorRepository.findById(Long.valueOf(dto.getFloorId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found"));
 
         entity.setWireRopeType(type);
-        entity.setOperatorElevator(op);
+        entity.setMachineType(machineType);
         entity.setFloor(floor);
+        entity.setWireRopeName(dto.getWireRopeName());
         entity.setWireRopeQty(dto.getWireRopeQty());
         entity.setPrice(dto.getPrice());
     }
@@ -91,8 +97,10 @@ public class WireRopeService {
                 .id(wr.getId())
                 .wireRopeTypeId(Integer.valueOf(Encode.forHtml(String.valueOf(wr.getWireRopeType().getId()))))
                 .wireRopeTypeName(Encode.forHtml(wr.getWireRopeType().getWireRopeType()))
-                .operatorElevatorId(wr.getOperatorElevator().getId())
-                .operatorElevatorName(Encode.forHtml(wr.getOperatorElevator().getName()))
+                .wireRopeName(wr.getWireRopeName())
+                .wireRopeSize(wr.getWireRopeType().getWireRopeSize())
+                .machineTypeId(wr.getMachineType().getId())
+                .machineTypeName(Encode.forHtml(wr.getMachineType().getLiftTypeName()))
                 .floorId(wr.getFloor().getId())
                 .floorName(Encode.forHtml(wr.getFloor().getFloorName()))
                 .wireRopeQty(wr.getWireRopeQty())
@@ -115,20 +123,61 @@ public class WireRopeService {
     }
 
     @Transactional(readOnly = true)
-    public List<WireRopeResponseDTO> findByFloorAndOperator(Long floorId, Long operatorTypeId) {
-        log.info("Fetching WireRopes for Floor ID {} and Operator Type ID {}", floorId, operatorTypeId);
+    public List<WireRopeResponseDTO> findByFloorAndMachineType(Long floorId, Integer machineTypeId) {
+        // Stage 1: Initial call and input logging
+        log.info("Stage 1: Starting fetch for WireRopes.");
+        log.info("Input Parameters: Floor ID = {}, Machine Type ID = {}", floorId, machineTypeId);
+        System.out.println("Stage 1: Starting fetch for WireRopes.");
+        System.out.println("Input Parameters: Floor ID = " + floorId + ", Machine Type ID = " + machineTypeId);
 
-        // Optional validation (recommended)
-        floorRepository.findById(floorId)
+        // Stage 2: Validation Check (Floor)
+        log.info("Stage 2: Validating Floor ID {}.", floorId);
+        System.out.println("Stage 2: Validating Floor ID " + floorId + ".");
+        Floor floor = floorRepository.findById(floorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found with ID: " + floorId));
+        log.info("Stage 2 Complete: Floor found (Name: {})", floor.getFloorName());
+        System.out.println("Stage 2 Complete: Floor found (Name: " + floor.getFloorName() + ")");
 
-        operatorElevatorRepository.findById(Math.toIntExact(operatorTypeId))
-                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator not found with ID: " + operatorTypeId));
+        // Stage 3: Validation Check (Machine Type)
+        log.info("Stage 3: Validating Machine Type ID {}.", machineTypeId);
+        System.out.println("Stage 3: Validating Machine Type ID " + machineTypeId + ".");
+        TypeOfLift machineType = typeOfLiftRepository.findById(machineTypeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Machine Type not found with ID: " + machineTypeId));
+        log.info("Stage 3 Complete: Machine Type found (Name: {})", machineType.getLiftTypeName());
+        System.out.println("Stage 3 Complete: Machine Type found (Name: " + machineType.getLiftTypeName() + ")");
 
-        return wireRopeRepository.findByFloor_IdAndOperatorElevator_Id(floorId, operatorTypeId)
-                .stream()
-                .map(this::mapToResponse)
+        // Stage 4: Repository Call
+        log.info("Stage 4: Calling repository method findByFloor_IdAndMachineType_Id({}, {}).", floorId, machineTypeId);
+        System.out.println("Stage 4: Calling repository method findByFloor_IdAndMachineType_Id(" + floorId + ", " + machineTypeId + ").");
+        List<WireRope> wireRopes = wireRopeRepository.findByFloor_IdAndMachineType_Id(floorId, machineTypeId);
+        log.info("Stage 4 Complete: Found {} WireRope entities.", wireRopes.size());
+        System.out.println("Stage 4 Complete: Found " + wireRopes.size() + " WireRope entities.");
+
+        // Debugging data before mapping (showing IDs and basic info)
+        if (!wireRopes.isEmpty()) {
+            wireRopes.forEach(wr -> log.debug("  Entity found: ID {}, RopeName: {}, Size: {}",
+                    wr.getId(), wr.getWireRopeName(), wr.getWireRopeType().getWireRopeSize()));
+        }
+
+
+        // Stage 5: Mapping and Collection
+        log.info("Stage 5: Mapping entities to DTOs and collecting results.");
+        System.out.println("Stage 5: Mapping entities to DTOs and collecting results.");
+        List<WireRopeResponseDTO> responseList = wireRopes.stream()
+                .map(this::mapToResponse) // Assuming mapToResponse correctly populates wireRopeSize via the relationship
                 .collect(Collectors.toList());
+        log.info("Stage 5 Complete: Successfully mapped {} DTOs.", responseList.size());
+        System.out.println("Stage 5 Complete: Successfully mapped " + responseList.size() + " DTOs.");
+
+        // Stage 6: Final result logging
+        if (!responseList.isEmpty()) {
+            responseList.forEach(dto -> log.debug("  DTO output: ID {}, RopeName: {}, Size: {}",
+                    dto.getId(), dto.getWireRopeName(), dto.getWireRopeSize()));
+        }
+        log.info("Stage 6: Fetching process completed successfully.");
+        System.out.println("Stage 6: Fetching process completed successfully.");
+
+        return responseList;
     }
 
 

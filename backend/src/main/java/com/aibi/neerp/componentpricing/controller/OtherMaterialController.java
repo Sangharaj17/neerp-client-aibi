@@ -82,6 +82,29 @@ public class OtherMaterialController {
         return new ApiResponse<>(true, "Fetched other material for "+operatorId+" - "+capacityTypeId+" - "+capacityValueId+" - "+typeOfLift +"  successfully", results);
     }
 
+    @GetMapping("/searchMachineByCapacity_LiftType")
+    public ApiResponse<List<OtherMaterialResponseDTO>> searchByCapacityAndLiftType(
+            @RequestParam Integer capacityTypeId,
+            @RequestParam Integer capacityValueId,
+            @RequestParam Integer typeOfLift) { // Corresponds to machineRoomId in the service
+
+        log.info("API Request: Search OtherMaterial by capacityTypeId={}, capacityValueId={}, typeOfLift={}",
+                capacityTypeId, capacityValueId, typeOfLift);
+
+        List<OtherMaterialResponseDTO> results =
+                service.searchByCapacityAndMachineRoom(capacityTypeId, capacityValueId, typeOfLift);
+
+        if (results.isEmpty()) {
+            return new ApiResponse<>(false, "No material found for given criteria (Capacity and Lift Type)", null);
+        }
+
+        return new ApiResponse<>(
+                true,
+                "Fetched other material for capacityTypeId=" + capacityTypeId + " and typeOfLift=" + typeOfLift + " successfully",
+                results
+        );
+    }
+
     @GetMapping("/byOperator/{operatorId}/excludeOthers")
     public ApiResponse<List<OtherMaterialResponseDTO>> getByOperatorExcludingOthers(@PathVariable Integer operatorId) {
         log.info("API Request: Fetch OtherMaterial by operatorId={} excluding 'Others'", operatorId);

@@ -82,6 +82,7 @@ export default function GuideRailPage() {
       label: "Floor",
       sortable: true,
       editable: false,
+      render: (item) => `${item.floorId} (${item.floorName})`,
     },
     {
       key: "price",
@@ -490,7 +491,7 @@ export default function GuideRailPage() {
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
                 {/* {type.floorName} */}
-                {type.id}
+                {type.id} ({type.floorName})
               </option>
             ))}
           </FormSelect>

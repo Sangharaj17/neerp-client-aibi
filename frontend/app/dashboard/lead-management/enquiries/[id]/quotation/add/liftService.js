@@ -898,7 +898,8 @@ export const fetchGuideRails = async (floors, operatorType, setErrors) => {
   }
 
   try {
-    const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/${operatorType}/floor/${floors}`);
+    // const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/${operatorType}/floor/${floors}`);
+     const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/floor/${floors}`);
     const guideRails = response.data || [];
 
     console.log("Fetched Guide Rails for floor", floors, guideRails);
@@ -998,8 +999,8 @@ export const fetchBracketTypes = async (floors, setErrors) => {
   }
 };
 
-export const fetchWireRopes = async (floorId, operatorTypeId, setErrors) => {
-  if (!floorId || !operatorTypeId) {
+export const fetchWireRopes = async (floorId, machineTypeId, setErrors) => {
+  if (!floorId || !machineTypeId) {
     if (setErrors) {
       setErrors((prev) => ({ ...prev, wireRopes: "Failed to fetch wire ropes.Please select Floor and Operator Type first." }));
     }
@@ -1008,7 +1009,7 @@ export const fetchWireRopes = async (floorId, operatorTypeId, setErrors) => {
 
   try {
     const response = await axiosInstance.get(
-      `${API_ENDPOINTS.WIRE_ROPE}/floor/${floorId}/operator/${operatorTypeId}`
+      `${API_ENDPOINTS.WIRE_ROPE}/floor/${floorId}/machine/${machineTypeId}`
     );
     const wireRopes = response.data || [];
 

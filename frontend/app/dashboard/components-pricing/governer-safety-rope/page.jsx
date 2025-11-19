@@ -280,7 +280,7 @@ export default function GovernerSafetyRope() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.id+1} ({type.floorName})
+                {type.id} ({type.floorName})
               </option>
             ))}
           </FormSelect>

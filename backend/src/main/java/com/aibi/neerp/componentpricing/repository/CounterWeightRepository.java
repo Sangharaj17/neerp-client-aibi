@@ -9,5 +9,5 @@ import java.util.List;
 public interface CounterWeightRepository extends JpaRepository<CounterWeight, Integer> {
     List<CounterWeight> findByFloors_Id(Long floorId);
 
-    List<CounterWeight> findByOperatorType_IdAndFloors_Id(Long operatorId, Long floorId);
+//    List<CounterWeight> findByOperatorType_IdAndFloors_Id(Long operatorId, Long floorId);
 }

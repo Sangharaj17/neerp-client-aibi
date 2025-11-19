@@ -28,8 +28,24 @@ public class CounterFrameService {
 
     @Transactional(readOnly = true)
     public List<CounterFrameResponseDTO> findAll() {
-        log.info("Fetching all CounterFrame records");
-        return repository.findAll().stream()
+//        log.info("Fetching all CounterFrame records");
+//        return repository.findAll().stream()
+//                .map(this::mapToResponse)
+//                .collect(Collectors.toList());
+
+//        log.info("Fetching all CounterFrame records sorted by operatorElevator.name");//
+//        return repository.findAll().stream()
+//                .sorted(Comparator.comparing(
+//                        cf -> cf.getOperatorElevator().getName(),
+//                        String.CASE_INSENSITIVE_ORDER
+//                ))
+//                .map(this::mapToResponse)
+//                .collect(Collectors.toList());
+
+        log.info("Fetching all CounterFrame records sorted by operatorElevator name");
+
+        return repository.findAllByOrderByOperatorElevator_NameAsc()
+                .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

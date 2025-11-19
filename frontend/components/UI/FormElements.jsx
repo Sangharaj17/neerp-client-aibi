@@ -54,6 +54,30 @@ export function FormInput({ className = "", value, ...props }) {
   );
 }
 
+
+export const FormInputWithSuffix = ({ label, suffix, value, className = "", ...props }) => {
+  return (
+    <div className={className}>
+      {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
+      <div className="flex rounded-md shadow-sm">
+        <FormInput
+          value={value}
+          {...props}
+          // Custom styling to remove right border-radius and add padding
+          className="rounded-r-none border-r-0 focus:ring-0" 
+        />
+        <span 
+          className={`inline-flex items-center px-3 rounded-r-md border border-l-0 text-gray-500 sm:text-sm 
+                    ${value ? "bg-gray-100 border-gray-700" : "bg-gray-50 border-gray-300"}`}
+          style={{ height: '38px' }} // Match height of FormInput
+        >
+          {suffix}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export function FormSelect({ className = "", children, value, ...props }) {
   const selectValue = value === null || value === undefined ? "" : value;
   const hasSelection =

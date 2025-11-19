@@ -12,8 +12,8 @@ public class CounterWeightRequestDTO {
     @NotNull(message = "Counter Weight Type is required")
     private Integer counterWeightTypeId;
 
-    @NotNull(message = "Lift Type is required")
-    private Integer operatorTypeId;
+//    @NotNull(message = "Lift Type is required")
+//    private Integer operatorTypeId;
 
     @NotNull(message = "Floors is required")
     private Integer floorsId;

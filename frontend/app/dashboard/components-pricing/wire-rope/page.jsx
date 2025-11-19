@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { SlidersHorizontal, SquareStack } from "lucide-react";
 import { toast } from "react-hot-toast";
 import ReusableTable from "@/components/UI/ReusableTable";
@@ -10,6 +10,7 @@ import {
   FormInput,
   FormButton,
   FormSelect,
+  FormInputWithSuffix,
 } from "@/components/UI/FormElements";
 import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
@@ -22,22 +23,27 @@ export default function WireRope() {
   const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [wireRopes, setWireRopes] = useState([]);
-  const [operatorTypes, setOperatorTypes] = useState([]);
+  const [machineTypes, setMachineTypes] = useState([]);
   const [floors, setFloors] = useState([]);
+  // const [operatorTypes, setOperatorTypes] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
   const initialsType = {
+    machineTypeId: "",
+    wireRopeSize: "",
     wireRopeType: "",
   };
   const [typeForm, setTypeForm] = useState(initialsType);
 
   const initials = {
-    wireRopeType: "",
-    operatorTypeId: "",
+    wireRopeTypeId: "",
+    wireRopeName: "",
+    machineTypeId: "",
     floor: "",
     wireRopeQty: "",
     price: "",
+    wireRopeSize: "",
   };
   const [form, setForm] = useState(initials);
 
@@ -45,7 +51,7 @@ export default function WireRope() {
     if (typeof value === "string") {
       return value.trim().toUpperCase();
     }
-    return value ?? ""; 
+    return value ?? "";
   };
 
   // const API_WIRE_ROPE_TYPES = "/api/wire-rope-types";
@@ -55,9 +61,21 @@ export default function WireRope() {
   const API_WIRE_ROPE_TYPES = API_ENDPOINTS.WIRE_ROPE_TYPES;
   const API_WIRE_ROPE = API_ENDPOINTS.WIRE_ROPE;
   const API_FLOOR = API_ENDPOINTS.FLOORS;
-  const API_OPERATOR = API_ENDPOINTS.OPERATOR;
+  const API_MACHINE = API_ENDPOINTS.TYPE_OF_LIFT;
 
   const columnsType = [
+    {
+      key: "machineTypeName",
+      label: "Machine Type",
+      sortable: true,
+      align: "text-left",
+    },
+    {
+      key: "wireRopeSize",
+      label: "Rope Size (mm)",
+      sortable: true,
+      align: "text-center",
+    },
     {
       key: "wireRopeType",
       label: "Wire Rope Type",
@@ -74,8 +92,20 @@ export default function WireRope() {
       editable: false,
     },
     {
-      key: "operatorElevatorName",
-      label: "Operator Type",
+      key: "wireRopeSize",
+      label: "Rope Size (mm)",
+      sortable: true,
+      editable: false,
+    },
+    {
+      key: "wireRopeName",
+      label: "Rope Name",
+      sortable: true,
+      align: "text-left",
+    },
+    {
+      key: "machineTypeName",
+      label: "Machine Type",
       sortable: true,
       align: "text-left",
     },
@@ -84,6 +114,7 @@ export default function WireRope() {
       label: "Floor",
       sortable: true,
       editable: false,
+      render: (item) => `${item.floorId} (${item.floorName})`,
     },
     {
       key: "wireRopeQty",
@@ -138,26 +169,26 @@ export default function WireRope() {
   const fetchOthers = async () => {
     const tenant = localStorage.getItem("tenant");
     try {
-      const [operatorRes, floorRes] = await Promise.all([
-        axiosInstance.get(API_OPERATOR),
+      const [machineRes, floorRes] = await Promise.all([
+        axiosInstance.get(API_MACHINE),
         axiosInstance.get(API_FLOOR),
       ]);
 
-      const operatorList = Array.isArray(operatorRes.data?.data)
-        ? operatorRes.data.data
+      const machineList = Array.isArray(machineRes.data?.data)
+        ? machineRes.data.data
         : [];
 
       const floorsList = Array.isArray(floorRes.data?.data)
         ? floorRes.data.data
         : floorRes.data?.lopSubTypes || [];
 
-      setOperatorTypes(operatorList);
+      setMachineTypes(machineList);
       setFloors(floorsList);
     } catch (err) {
-      console.error("Failed to fetch operator or floor data:", err);
+      console.error("Failed to fetch machine type or floor data:", err);
       const message =
         err.response?.data?.message ||
-        "Failed to fetch operator or floor data.";
+        "Failed to fetch machine type or floor data.";
       toast.error(message);
     }
   };
@@ -170,6 +201,23 @@ export default function WireRope() {
 
   const handleTypeSubmit = async (e) => {
     e.preventDefault();
+    const { machineTypeId, wireRopeSize, wireRopeType } = typeForm;
+    const size = Number(wireRopeSize);
+    const typeName = sanitize(wireRopeType);
+
+    if (!machineTypeId) {
+      toast.error("Machine Type must be selected.");
+      return;
+    }
+    if (isNaN(size) || size <= 0) {
+      toast.error("Wire Rope Size must be a valid number.");
+      return;
+    }
+    if (!typeName) {
+      toast.error("Wire Rope Type cannot be empty");
+      return;
+    }
+
     const name = sanitize(typeForm.wireRopeType);
     if (!name) {
       toast.error("wireRopeType Type cannot be empty");
@@ -178,6 +226,8 @@ export default function WireRope() {
 
     const isDuplicate = wireRopeTypes.some(
       (lt) =>
+        lt.machineTypeId === Number(machineTypeId) &&
+        lt.wireRopeSize === size &&
         lt.wireRopeType.toUpperCase() === name.toUpperCase() &&
         lt.id !== typeEditId
     );
@@ -192,7 +242,11 @@ export default function WireRope() {
         ? API_WIRE_ROPE_TYPES + `/${typeEditId}`
         : API_WIRE_ROPE_TYPES;
 
-      await axiosInstance[method](url, { wireRopeType: name });
+      await axiosInstance[method](url, {
+        machineTypeId: Number(machineTypeId),
+        wireRopeSize: size,
+        wireRopeType: typeName,
+      });
 
       toast.success(`Wire Rope Type ${typeEditId ? "updated" : "created"}`);
       setTypeForm(initialsType);
@@ -217,6 +271,8 @@ export default function WireRope() {
     }
 
     setTypeForm({
+      machineTypeId: found.machineTypeId,
+      wireRopeSize: found.wireRopeSize,
       wireRopeType: found.wireRopeType || "",
     });
 
@@ -240,9 +296,8 @@ export default function WireRope() {
       return;
     }
 
-    const typeName = selected.wireRopeType;
-
-    const isUsed = wireRopes.some((item) => item.wireRopeTypeName === typeName);
+    const typeId = selected.id;
+    const isUsed = wireRopes.some((item) => item.wireRopeTypeId === typeId);
 
     if (isUsed) {
       toast.error(
@@ -274,30 +329,121 @@ export default function WireRope() {
     });
   };
 
-  const filteredTypeList = wireRopeTypes.filter((lt) =>
-    lt.wireRopeType?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredTypeList = useMemo(() => {
+    if (!searchTypeTerm) return wireRopeTypes;
+    const lowerCaseSearch = searchTypeTerm.toLowerCase();
 
-  //-----------------------------------------------------
+    return wireRopeTypes.filter((lt) => {
+      const machineName =
+        machineTypes.find((o) => o.id === lt.machineTypeId)?.machineTypeName ||
+        "";
+      return (
+        lt.wireRopeType?.toLowerCase().includes(lowerCaseSearch) ||
+        String(lt.wireRopeSize).includes(lowerCaseSearch) ||
+        machineName.toLowerCase().includes(lowerCaseSearch)
+      );
+    });
+  }, [wireRopeTypes, searchTypeTerm, machineTypes]);
+
+  //--------------------WIRE ROPE MANAGEMENT LOGIC---------------------------------
+
+  // Filtered wire rope types based on selected operator (EXISTING)
+  const filteredWireRopeTypes = useMemo(() => {
+    console.log("------form.machineTypeId-------------->", form.machineTypeId);
+    const mId = Number(form.machineTypeId);
+    if (!mId) return wireRopeTypes;
+
+    console.log("------wireRopeTypes-------------->", wireRopeTypes);
+
+    // Filter the full list by the Machine Type ID selected in the main form
+    return wireRopeTypes.filter((type) => type.machineTypeId === mId);
+  }, [wireRopeTypes, form.machineTypeId]);
+
+  // NEW: Extract unique sizes based on the filtered types
+  const uniqueWireRopeSizes = useMemo(() => {
+    if (!form.machineTypeId) return [];
+
+    const sizes = new Set();
+
+    filteredWireRopeTypes.forEach((type) => {
+      sizes.add(type.wireRopeSize);
+    });
+
+    console.log("===filteredWireRopeTypes====>", filteredWireRopeTypes);
+    // Convert Set to sorted Array for dropdown
+    return Array.from(sizes).sort((a, b) => a - b);
+  }, [filteredWireRopeTypes, form.machineTypeId]);
+
+  // UPDATED: Wire Rope Type Options, now filtered by Operator AND Size
+  const finalWireRopeTypeOptions = useMemo(() => {
+    const size = form.wireRopeSize ? Number(form.wireRopeSize) : null;
+    if (!size) return filteredWireRopeTypes;
+
+    return filteredWireRopeTypes.filter((type) => type.wireRopeSize === size);
+  }, [filteredWireRopeTypes, form.wireRopeSize]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const wireRopeTypeId = sanitize(form.wireRopeType);
+
+    const {
+      wireRopeTypeId,
+      wireRopeName,
+      machineTypeId,
+      floor,
+      wireRopeQty,
+      price,
+    } = form;
+
+    if (!machineTypeId) {
+      toast.error("Machine Type must be selected.");
+      return;
+    }
     if (!wireRopeTypeId) {
-      toast.error("Wire Rope Type Type cannot be empty");
+      // Check the combination ID
+      toast.error("Wire Rope Type must be selected.");
+      return;
+    }
+    if (!wireRopeName || wireRopeName.trim() === "") {
+      toast.error("Wire rope name cannot be blank.");
+      return;
+    }
+    if (!machineTypeId) {
+      toast.error("Machine Type must be selected.");
+      return;
+    }
+    if (!floor) {
+      toast.error("Floor must be selected.");
+      return;
+    }
+    const selectedWireRopeType = wireRopeTypes.find(
+      (t) => t.id === Number(wireRopeTypeId)
+    );
+    const wireRopeSize = selectedWireRopeType
+      ? selectedWireRopeType.wireRopeSize
+      : null;
+
+    if (!wireRopeSize) {
+      toast.error("Wire Rope Type is invalid or missing size data.");
       return;
     }
 
-    //console.log(JSON.stringify(wireRopes, null, 2)+"-----"+editId+"========"+form.wireRopeType+"==="+form.operatorTypeId+"----"+form.floor);
+    if (isNaN(Number(wireRopeSize)) || Number(wireRopeSize) <= 0) {
+      toast.error("Wire Rope Size is invalid.");
+      return;
+    }
+
+    // UPDATED: Duplicate check on (operatorTypeId, wireRopeType, wireRopeName, machineTypeId, floor)
     const isDuplicate = wireRopes.some(
       (lt) =>
-        lt.wireRopeTypeId === Number(form.wireRopeType) &&
-        lt.operatorElevatorId === Number(form.operatorTypeId) &&
-        lt.id !== editId &&
-        lt.floorId === Number(form.floor)
+        lt.wireRopeTypeId === Number(wireRopeTypeId) &&
+        lt.wireRopeName.trim().toLowerCase() ===
+          wireRopeName.trim().toLowerCase() &&
+        lt.machineTypeId === Number(machineTypeId) &&
+        lt.floorId === Number(floor) &&
+        lt.id !== editId
     );
     if (isDuplicate) {
-      toast.error("Wire Rope already exists for this floor.");
+      toast.error("Wire Rope configuration already exists for this floor.");
       return;
     }
 
@@ -306,11 +452,13 @@ export default function WireRope() {
       const url = editId ? API_WIRE_ROPE + `/${editId}` : API_WIRE_ROPE;
 
       await axiosInstance[method](url, {
-        wireRopeTypeId: wireRopeTypeId,
-        operatorElevatorId: form.operatorTypeId,
-        floorId: form.floor,
-        wireRopeQty: form.wireRopeQty,
+        wireRopeTypeId: Number(wireRopeTypeId),
+        wireRopeName: form.wireRopeName,
+        machineTypeId: Number(form.machineTypeId),
+        floorId: Number(form.floor),
+        wireRopeQty: Number(form.wireRopeQty),
         price: form.price,
+        wireRopeSize: wireRopeSize,
       });
 
       toast.success(`Wire Rope ${editId ? "updated" : "created"}`);
@@ -330,12 +478,19 @@ export default function WireRope() {
     // console.log(numericId,"-----wireRopes--------",wireRopeObj);
     const found = wireRopes.find((l) => l.id === numericId);
 
-    const wireRopeTypeId = wireRopeTypes.find((ct) => ct.id === wireRopeObj.wireRopeTypeId);
+    if (!found) {
+      toast.error("Wire Rope not found");
+      return;
+    }
 
-    const floor = floors.find((ct) => ct.floorName === wireRopeObj.floorName);
+    const wireRopeType = wireRopeTypes.find(
+      (ct) => ct.id === wireRopeObj.wireRopeTypeId
+    );
 
-    const operatorType = operatorTypes.find(
-      (ot) => ot.name === wireRopeObj.operatorElevatorName
+    const floor = floors.find((ct) => ct.id === wireRopeObj.floorId);
+
+    const machineType = machineTypes.find(
+      (ot) => ot.id === wireRopeObj.machineTypeId
     );
 
     if (!found) {
@@ -344,11 +499,13 @@ export default function WireRope() {
     }
 
     setForm({
-      wireRopeType: wireRopeTypeId ? wireRopeTypeId.id:"",
-      operatorTypeId: operatorType ? operatorType.id : "",
+      wireRopeTypeId: wireRopeType ? wireRopeType.id : "",
+      wireRopeName: found.wireRopeName,
+      machineTypeId: machineType ? machineType.id : "",
       floor: floor ? floor.id : "",
       wireRopeQty: found.wireRopeQty,
       price: found.price,
+      wireRopeSize: wireRopeType ? wireRopeType.wireRopeSize : "",
     });
 
     setEditId(numericId);
@@ -391,9 +548,24 @@ export default function WireRope() {
       }
     });
   };
-  const filteredList = wireRopes.filter((lt) =>
-    lt.wireRopeTypeName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
+  const filteredList = useMemo(() => {
+    if (!searchTerm) return wireRopes;
+    const lowerCaseSearch = searchTerm.toLowerCase();
+
+    return wireRopes.filter((lt) => {
+      return (
+        lt.wireRopeTypeName?.toLowerCase().includes(lowerCaseSearch) ||
+        lt.wireRopeName?.toLowerCase().includes(lowerCaseSearch) ||
+        lt.machineTypeName?.toLowerCase().includes(lowerCaseSearch) ||
+        lt.floorName?.toLowerCase().includes(lowerCaseSearch) ||
+        String(lt.floorId).includes(lowerCaseSearch) ||
+        String(lt.wireRopeQty).includes(lowerCaseSearch) ||
+        String(lt.price).includes(lowerCaseSearch) ||
+        String(lt.wireRopeSize).includes(lowerCaseSearch)
+      );
+    });
+  }, [wireRopes, searchTerm]);
 
   return (
     <div className="space-y-8 w-full p-6 min-h-screen">
@@ -423,12 +595,44 @@ export default function WireRope() {
           <div className="w-full md:w-1/3">
             <ResponsiveForm
               onSubmit={handleTypeSubmit}
-              columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-2"
+              columns="grid-cols-1"
               className="mt-4"
             >
+              <FormSelect
+                label="Machine Type"
+                value={typeForm.machineTypeId || ""}
+                onChange={(e) =>
+                  setTypeForm({ ...typeForm, machineTypeId: e.target.value })
+                }
+                required
+              >
+                <option value="" disabled>
+                  Select Machine Type
+                </option>
+                {machineTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.liftTypeName}
+                  </option>
+                ))}
+              </FormSelect>
+
+              <FormInputWithSuffix
+                label="Wire Rope Size (mm)"
+                placeholder="Enter Rope Size"
+                type="number"
+                value={typeForm.wireRopeSize || ""}
+                onChange={(e) =>
+                  setTypeForm({ ...typeForm, wireRopeSize: e.target.value })
+                }
+                required
+                suffix="mm"
+                step="0.01"
+              />
+
               <FormInput
+                label="Rope Type Name"
                 type="text"
-                placeholder="Enter Wire Rope Type"
+                placeholder="Enter Wire Rope Type Name"
                 value={typeForm.wireRopeType || ""}
                 onChange={(e) =>
                   setTypeForm({ ...typeForm, wireRopeType: e.target.value })
@@ -442,16 +646,16 @@ export default function WireRope() {
                 </FormButton>
 
                 {/* {typeEditId && ( */}
-                  <FormButton
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      setTypeEditId(null);
-                      setTypeForm({ initialsType });
-                    }}
-                  >
-                    Cancel
-                  </FormButton>
+                <FormButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setTypeEditId(null);
+                    setTypeForm({ initialsType });
+                  }}
+                >
+                  Cancel
+                </FormButton>
                 {/* )} */}
               </div>
             </ResponsiveForm>
@@ -489,38 +693,92 @@ export default function WireRope() {
           className="mt-4"
         >
           <FormSelect
-            value={form.wireRopeType || ""}
-            onChange={(e) => setForm({ ...form, wireRopeType: e.target.value })}
+            label="Machine Type"
+            value={form.machineTypeId || ""}
+            onChange={(e) => {
+              setForm({
+                ...form,
+                machineTypeId: e.target.value,
+                wireRopeTypeId: "",
+                wireRopeSize: "",
+              });
+            }}
             required
+          >
+            <option value="" disabled>
+              Select Machine Type
+            </option>
+            {machineTypes.map((type) => (
+              <option key={type.id} value={type.id}>
+                {type.liftTypeName}
+              </option>
+            ))}
+          </FormSelect>
+
+          <FormSelect
+            label="Wire Rope Size (Filter)"
+            value={form.wireRopeSize || ""}
+            onChange={(e) => {
+              // Reset wireRopeType when size filter changes
+              setForm({
+                ...form,
+                wireRopeSize: e.target.value,
+                wireRopeTypeId: "",
+              });
+            }}
+            required={false} // Make filter optional
+            disabled={!form.machineTypeId || uniqueWireRopeSizes.length === 0}
+          >
+            <option value="">Select Rope Size </option>
+            {uniqueWireRopeSizes.map((size) => (
+              <option key={size} value={size}>
+                {size} mm
+              </option>
+            ))}
+          </FormSelect>
+
+          <FormSelect
+            label="Wire Rope Type (Main Selection)"
+            value={form.wireRopeTypeId || ""}
+            onChange={(e) => {
+              const selectedType = finalWireRopeTypeOptions.find(
+                (t) => t.id === Number(e.target.value)
+              );
+              setForm({
+                ...form,
+                wireRopeTypeId: e.target.value,
+                // If size was not selected/filtered, update it here based on type selection
+                wireRopeSize: selectedType
+                  ? selectedType.wireRopeSize
+                  : form.wireRopeSize,
+              });
+            }}
+            required
+            disabled={
+              !form.machineTypeId || finalWireRopeTypeOptions.length === 0
+            }
           >
             <option value="" disabled>
               Select Wire Rope Type
             </option>
-            {wireRopeTypes.map((type) => (
+            {/* Renders types matching both operator and size filter */}
+            {finalWireRopeTypeOptions.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.wireRopeType}
+                {type.wireRopeType} ({type.wireRopeSize} mm)
               </option>
             ))}
           </FormSelect>
 
-          <FormSelect
-            value={form.operatorTypeId || ""}
-            onChange={(e) =>
-              setForm({ ...form, operatorTypeId: e.target.value })
-            }
+          <FormInput
+            label="Rope Name"
+            placeholder="Enter Wire Rope Name"
+            value={form.wireRopeName || ""}
+            onChange={(e) => setForm({ ...form, wireRopeName: e.target.value })}
             required
-          >
-            <option value="" disabled>
-              Select Operator Type
-            </option>
-            {operatorTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </FormSelect>
+          />
 
           <FormSelect
+            label="Floor"
             value={form.floor || ""}
             onChange={(e) => setForm({ ...form, floor: e.target.value })}
             required
@@ -530,12 +788,13 @@ export default function WireRope() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.floorName}
+                {type.id} ({type.floorName})
               </option>
             ))}
           </FormSelect>
 
           <FormInput
+            label="Quantity"
             type="number"
             placeholder="Enter Quantity"
             value={form.wireRopeQty || ""}
@@ -544,6 +803,7 @@ export default function WireRope() {
           />
 
           <FormInput
+            label="Price"
             type="number"
             placeholder="Enter Price"
             value={form.price || ""}
@@ -557,13 +817,13 @@ export default function WireRope() {
             </FormButton>
 
             {/* {editId && ( */}
-              <FormButton
-                type="button"
-                variant="secondary"
-                onClick={handleCancel}
-              >
-                Cancel
-              </FormButton>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </FormButton>
             {/* )} */}
           </div>
         </ResponsiveForm>

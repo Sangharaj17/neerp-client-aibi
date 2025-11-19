@@ -1,6 +1,7 @@
 package com.aibi.neerp.componentpricing.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -22,10 +23,13 @@ public class WireRope {
     @JoinColumn(name = "wire_rope_type", nullable = false)
     private WireRopeType wireRopeType;
 
-    @NotNull(message = "Operator Type must be selected")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_type", referencedColumnName = "id", nullable = false)
-    private OperatorElevator operatorElevator;
+    @NotBlank(message = "Wire rope name cannot be blank")
+    private String wireRopeName;
+
+    @NotNull(message = "Machine type must be selected")
+    @ManyToOne
+    @JoinColumn(name = "machine_type", referencedColumnName = "lift_type_id", nullable = false)
+    private TypeOfLift machineType;
 
     @NotNull(message = "Floor must be selected")
     @ManyToOne(fetch = FetchType.LAZY)
@@ -39,4 +43,7 @@ public class WireRope {
     @NotNull(message = "Price is required")
     @Column(name = "price", nullable = false)
     private Integer price;
+
+    @Transient
+    private Double wireRopeSize;
 }
