@@ -89,11 +89,28 @@ public class TenantSchemaInitializer {
         
         if (schemaExists) {
             // Schema exists - ensure default data is initialized and check for missing tables
-            System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", ensuring default data is initialized...");
+            System.out.println("[TenantInit] Schema exists for tenant: " + tenantId + ", ensuring schema is up-to-date...");
             long startTime = System.currentTimeMillis();
-            
-            // ALWAYS ensure new tables exist - run this FIRST and separately to ensure it happens
-            System.out.println("[TenantInit] ===== Ensuring new tables exist (runs on every login) =====");
+
+            // CRITICAL: Run Hibernate schema update to create any new tables/columns from entities
+            // This ensures that when developers add new entities or columns, they are automatically
+            // created in existing tenant databases on next login
+            //
+            // IMPORTANT: This runs synchronously to maintain tenant context integrity
+            // Performance impact: Creates temporary EMF (~500ms-2s depending on entity count)
+            System.out.println("[TenantInit] ===== Running Hibernate schema update for existing tenant =====");
+            System.out.println("[TenantInit] Current TenantContext before schema update: " + TenantContext.getTenantId());
+            try {
+                runHibernateSchemaUpdate();
+                System.out.println("[TenantInit] ✅ Hibernate schema update completed");
+                System.out.println("[TenantInit] Current TenantContext after schema update: " + TenantContext.getTenantId());
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ⚠️ Hibernate schema update failed (will try manual table creation): " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            // ALWAYS ensure new tables/columns exist - run this FIRST and separately to ensure it happens
+            System.out.println("[TenantInit] ===== Ensuring specific tables/columns exist (runs on every login) =====");
             try {
                 // Ensure tbl_password_reset_otp table exists (for new password reset feature)
                 ensurePasswordResetOtpTableExists();
@@ -101,12 +118,20 @@ public class TenantSchemaInitializer {
                 System.err.println("[TenantInit] ❌ Failed to ensure tbl_password_reset_otp table: " + e.getMessage());
                 e.printStackTrace();
             }
-            
+
             try {
                 // Ensure tbl_password_reset_token table exists (for magic link password reset)
                 ensurePasswordResetTokenTableExists();
             } catch (Exception e) {
                 System.err.println("[TenantInit] ❌ Failed to ensure tbl_password_reset_token table: " + e.getMessage());
+                e.printStackTrace();
+            }
+
+            try {
+                // Ensure other_material_display_name column exists (for material display names)
+                ensureOtherMaterialDisplayNameColumnExists();
+            } catch (Exception e) {
+                System.err.println("[TenantInit] ❌ Failed to ensure other_material_display_name column: " + e.getMessage());
                 e.printStackTrace();
             }
             
@@ -200,6 +225,69 @@ public class TenantSchemaInitializer {
     }
 
     /**
+     * Runs Hibernate schema update (ddl-auto=update) to create any new tables/columns
+     * that have been added to entities since the tenant was first initialized.
+     * This is called on every login for existing tenants to ensure schema is always up-to-date.
+     */
+    private void runHibernateSchemaUpdate() {
+        String currentTenant = TenantContext.getTenantId();
+        System.out.println("[TenantInit] Creating temporary EntityManagerFactory for schema update...");
+        System.out.println("[TenantInit] TenantContext in runHibernateSchemaUpdate: " + currentTenant);
+
+        if (currentTenant == null) {
+            System.err.println("[TenantInit] ⚠️ WARNING: TenantContext is null in runHibernateSchemaUpdate!");
+            System.err.println("[TenantInit] This will cause schema updates to run on the default/fallback database!");
+            throw new IllegalStateException("TenantContext is null - cannot run schema update safely");
+        }
+
+        LocalContainerEntityManagerFactoryBean emfBean = new LocalContainerEntityManagerFactoryBean();
+        emfBean.setDataSource(dataSource); // This datasource routes based on TenantContext
+        emfBean.setPackagesToScan("com.aibi.neerp");
+        emfBean.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+
+        // Use Spring Boot's JPA properties as base to ensure consistency
+        Properties jpaProps = new Properties();
+        if (jpaProperties != null) {
+            jpaProps.putAll(jpaProperties.getProperties());
+        }
+
+        // Configure for schema update
+        jpaProps.put("hibernate.hbm2ddl.auto", "update");
+        jpaProps.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        jpaProps.put("hibernate.show_sql", "false");
+
+        // Ensure camelCase → snake_case for all entities during schema creation
+        jpaProps.put("hibernate.physical_naming_strategy",
+                "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
+
+        emfBean.setJpaProperties(jpaProps);
+
+        try {
+            System.out.println("[TenantInit] TenantContext before EMF build: " + TenantContext.getTenantId());
+            emfBean.afterPropertiesSet(); // Build the EMF and run schema update
+            System.out.println("[TenantInit] TenantContext after EMF build: " + TenantContext.getTenantId());
+
+            // Touch the metamodel to force initialization
+            if (emfBean.getObject() != null) {
+                emfBean.getObject().getMetamodel().getEntities();
+            }
+            System.out.println("[TenantInit] ✅ Schema update completed successfully for tenant: " + TenantContext.getTenantId());
+        } catch (Exception e) {
+            System.err.println("[TenantInit] ❌ Error during schema update for tenant " + currentTenant + ": " + e.getMessage());
+            throw new RuntimeException("Failed to update schema for tenant: " + currentTenant, e);
+        } finally {
+            try {
+                if (emfBean.getObject() != null) {
+                    emfBean.getObject().close();
+                }
+            } catch (Exception ignore) {
+                // Ignore close errors
+            }
+            System.out.println("[TenantInit] TenantContext after EMF close: " + TenantContext.getTenantId());
+        }
+    }
+
+    /**
      * Ensures the tbl_password_reset_otp table exists in the current tenant database.
      * This is needed for the password reset OTP feature.
      * Made public so it can be called on-demand from services.
@@ -237,6 +325,39 @@ public class TenantSchemaInitializer {
         } catch (Exception e) {
             System.err.println("[TenantInit] ⚠️ Warning - Failed to ensure tbl_password_reset_otp table exists: " + e.getMessage());
             // Don't throw - allow login to proceed, Hibernate might create it later
+        }
+    }
+
+    /**
+     * Ensures the other_material_display_name column exists in tbl_other_material table.
+     * This is needed when the column is added to the entity after initial tenant setup.
+     */
+    private void ensureOtherMaterialDisplayNameColumnExists() {
+        try {
+            System.out.println("[TenantInit] Checking for other_material_display_name column in tbl_other_material...");
+
+            // Check if column exists
+            String checkSql = "SELECT EXISTS (SELECT 1 FROM information_schema.columns " +
+                            "WHERE table_schema='public' " +
+                            "AND table_name='tbl_other_material' " +
+                            "AND column_name='other_material_display_name')";
+            Boolean exists = jdbcTemplate.queryForObject(checkSql, Boolean.class);
+
+            if (Boolean.TRUE.equals(exists)) {
+                System.out.println("[TenantInit] ✅ other_material_display_name column already exists");
+                return;
+            }
+
+            // Column doesn't exist - add it
+            System.out.println("[TenantInit] 🔧 Adding other_material_display_name column to tbl_other_material...");
+            String addColumnSql = "ALTER TABLE tbl_other_material " +
+                                "ADD COLUMN IF NOT EXISTS other_material_display_name VARCHAR(255)";
+            jdbcTemplate.execute(addColumnSql);
+
+            System.out.println("[TenantInit] ✅ other_material_display_name column added successfully");
+        } catch (Exception e) {
+            System.err.println("[TenantInit] ⚠️ Warning - Failed to ensure other_material_display_name column exists: " + e.getMessage());
+            // Don't throw - allow initialization to continue
         }
     }
 

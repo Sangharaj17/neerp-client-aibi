@@ -192,25 +192,26 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultCapacityTypes() {
         try {
-            long count = capacityTypeRepository.count();
-            System.out.println("[DataInit] CapacityType count: " + count);
-            if (count == 0) {
+            // Check and insert each capacity type individually for true idempotency
+            if (!capacityTypeRepository.existsByType("Person")) {
                 CapacityType person = new CapacityType();
                 person.setType("Person");
                 person.setFieldKey("personCapacityId");
                 person.setFormKey("personId");
                 capacityTypeRepository.save(person);
                 System.out.println("[DataInit] ✅ Inserted CapacityType: Person");
+            }
 
+            if (!capacityTypeRepository.existsByType("Weight")) {
                 CapacityType kgs = new CapacityType();
                 kgs.setType("Weight");
                 kgs.setFieldKey("weightId");
                 kgs.setFormKey("weightId");
                 capacityTypeRepository.save(kgs);
                 System.out.println("[DataInit] ✅ Inserted CapacityType: Weight");
-            } else {
-                System.out.println("[DataInit] CapacityType already exists, skipping");
             }
+
+            System.out.println("[DataInit] CapacityTypes check complete, count: " + capacityTypeRepository.count());
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting CapacityTypes: " + e.getMessage());
             throw e;
@@ -363,15 +364,25 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultFloors() {
         try {
-            log.info("[DataInit] Inserting default 20 floors with prefix 'G+'...");
+            log.info("[DataInit] Checking default 20 floors with prefix 'G+'...");
 
-            // Prevent duplicate initialization
-            if (floorRepository.count() > 0) {
-                log.info("[DataInit] Floors already exist. Skipping.");
+            // Check if we need to insert any floors
+            // We check for specific floor names to allow partial initialization
+            boolean hasAllFloors = true;
+            for (int i = 1; i <= 20; i++) {
+                String floorName = "G+" + i;
+                if (!floorRepository.existsByFloorName(floorName)) {
+                    hasAllFloors = false;
+                    break;
+                }
+            }
+
+            if (hasAllFloors) {
+                log.info("[DataInit] All default floors already exist. Skipping.");
                 return;
             }
 
-            // Prepare request object for generation logic
+            // Insert missing floors - the service should handle duplicates
             FloorRequestDTO requestDTO = new FloorRequestDTO();
             requestDTO.setPrefix("G+");
             requestDTO.setTotalFloors(20);
@@ -379,7 +390,7 @@ public class TenantDefaultDataInitializer {
             // Directly use service method
             floorService.generateAndSaveFloors(requestDTO);
 
-            log.info("[DataInit] ✅ Default 20 floors inserted successfully.");
+            log.info("[DataInit] ✅ Default 20 floors inserted/updated successfully.");
         } catch (Exception e) {
             log.error("[DataInit] ❌ Error inserting default floors: {}", e.getMessage());
             throw e;
@@ -389,28 +400,41 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultInstallationRules() {
         try {
-            if (installationRuleRepository.count() == 0) {
-                List<Floor> allFloors = floorRepository.findAll()
-                        .stream()
-                        .sorted((f1, f2) -> f1.getId().compareTo(f2.getId()))
-                        .toList();
+            // Check if specific rules exist by liftType and baseAmount combination
+            // This allows partial initialization and adding new rules
+            boolean hasRule1 = installationRuleRepository.existsByLiftTypeAndBaseAmount(1, 30000.0);
+            boolean hasRule2 = installationRuleRepository.existsByLiftTypeAndBaseAmount(2, 37500.0);
+            boolean hasRule3 = installationRuleRepository.existsByLiftTypeAndBaseAmount(1, 35000.0);
+            boolean hasRule4 = installationRuleRepository.existsByLiftTypeAndBaseAmount(2, 37500.0) &&
+                               installationRuleRepository.existsByLiftTypeAndExtraAmount(2, 7500.0);
 
-                if (allFloors.isEmpty()) {
-                    log.warn("[DataInit] ⚠️ No floors found in DB. Skipping default InstallationRules insertion.");
-                    return;
-                }
+            if (hasRule1 && hasRule2 && hasRule3 && hasRule4) {
+                System.out.println("[DataInit] All default InstallationRules already exist, skipping");
+                return;
+            }
 
-                // First 4 floors
-                List<Floor> firstFourFloors = allFloors.stream()
-                        .limit(4)
-                        .toList();
+            List<Floor> allFloors = floorRepository.findAll()
+                    .stream()
+                    .sorted((f1, f2) -> f1.getId().compareTo(f2.getId()))
+                    .toList();
 
-                // Remaining floors
-                List<Floor> remainingFloors = allFloors.stream()
-                        .skip(4)
-                        .toList();
+            if (allFloors.isEmpty()) {
+                log.warn("[DataInit] ⚠️ No floors found in DB. Skipping default InstallationRules insertion.");
+                return;
+            }
 
-                // --- Rules for first 4 floors ---
+            // First 4 floors
+            List<Floor> firstFourFloors = allFloors.stream()
+                    .limit(4)
+                    .toList();
+
+            // Remaining floors
+            List<Floor> remainingFloors = allFloors.stream()
+                    .skip(4)
+                    .toList();
+
+            // --- Rules for first 4 floors ---
+            if (!hasRule1) {
                 InstallationRule rule1 = new InstallationRule();
                 rule1.setLiftType(1);
                 rule1.setFloorLimits(firstFourFloors);
@@ -418,7 +442,9 @@ public class TenantDefaultDataInitializer {
                 rule1.setExtraAmount(0.0);
                 installationRuleRepository.save(rule1);
                 System.out.println("[DataInit] ✅ Inserted InstallationRule for LiftType 1 (first 4 floors)");
+            }
 
+            if (!hasRule2) {
                 InstallationRule rule2 = new InstallationRule();
                 rule2.setLiftType(2);
                 rule2.setFloorLimits(firstFourFloors);
@@ -426,9 +452,11 @@ public class TenantDefaultDataInitializer {
                 rule2.setExtraAmount(0.0);
                 installationRuleRepository.save(rule2);
                 System.out.println("[DataInit] ✅ Inserted InstallationRule for LiftType 2 (first 4 floors)");
+            }
 
-                // --- Rules for remaining floors (if any) ---
-                if (!remainingFloors.isEmpty()) {
+            // --- Rules for remaining floors (if any) ---
+            if (!remainingFloors.isEmpty()) {
+                if (!hasRule3) {
                     InstallationRule rule3 = new InstallationRule();
                     rule3.setLiftType(1);
                     rule3.setFloorLimits(remainingFloors);
@@ -436,7 +464,9 @@ public class TenantDefaultDataInitializer {
                     rule3.setExtraAmount(6000.0);
                     installationRuleRepository.save(rule3);
                     System.out.println("[DataInit] ✅ Inserted InstallationRule for LiftType 1 (remaining floors)");
+                }
 
+                if (!hasRule4) {
                     InstallationRule rule4 = new InstallationRule();
                     rule4.setLiftType(2);
                     rule4.setFloorLimits(remainingFloors);
@@ -445,11 +475,9 @@ public class TenantDefaultDataInitializer {
                     installationRuleRepository.save(rule4);
                     System.out.println("[DataInit] ✅ Inserted InstallationRule for LiftType 2 (remaining floors)");
                 }
-
-                log.info("[DataInit] ✅ Default InstallationRules inserted for {} floors.", allFloors.size());
-            } else {
-                System.out.println("[DataInit] InstallationRules already exist, skipping");
             }
+
+            log.info("[DataInit] ✅ Default InstallationRules check complete for {} floors.", allFloors.size());
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting InstallationRules: " + e.getMessage());
             throw e;
@@ -458,17 +486,17 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultOperators() {
         try {
-            if (operatorElevatorRepository.count() == 0) {
-                for (String operatorName : OPERATOR_TYPES.values()) {
+            // Check each operator individually for true idempotency
+            for (String operatorName : OPERATOR_TYPES.values()) {
+                String upperName = operatorName.toUpperCase();
+                if (!operatorElevatorRepository.existsByNameIgnoreCase(upperName)) {
                     OperatorElevator operator = new OperatorElevator();
-                    operator.setName(operatorName.toUpperCase());
+                    operator.setName(upperName);
                     operatorElevatorRepository.save(operator);
-                    System.out.println("[DataInit] ✅ Inserted OperatorElevator: " + operatorName.toUpperCase());
+                    System.out.println("[DataInit] ✅ Inserted OperatorElevator: " + upperName);
                 }
-                System.out.println("[DataInit] ✅ Default OperatorElevators inserted: " + OPERATOR_TYPES.values());
-            } else {
-                System.out.println("[DataInit] OperatorElevators already exist, skipping");
             }
+            System.out.println("[DataInit] OperatorElevators check complete, count: " + operatorElevatorRepository.count());
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting OperatorElevators: " + e.getMessage());
             throw e;
@@ -526,6 +554,7 @@ public class TenantDefaultDataInitializer {
                 OtherMaterial truffing = OtherMaterial.builder()
                         .otherMaterialMain(truffingMain)
                         .otherMaterialName("Truffing")
+                        .otherMaterialDisplayName("Truffing") // Required field
                         .quantity("1")
                         .price(100) // default price
                         .build();

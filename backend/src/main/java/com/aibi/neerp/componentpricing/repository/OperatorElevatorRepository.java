@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface OperatorElevatorRepository extends JpaRepository <OperatorElevator, Integer> {
     Optional<OperatorElevator> findByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCase(String name);
 }
