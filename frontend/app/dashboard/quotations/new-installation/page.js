@@ -35,7 +35,7 @@ export default function QuotationList() {
   const [totalElements, setTotalElements] = useState(0);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: "sr", direction: "desc" }); // Default sort
+  const [sortConfig, setSortConfig] = useState({ key: "id", direction: "desc" }); // Default sort
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
