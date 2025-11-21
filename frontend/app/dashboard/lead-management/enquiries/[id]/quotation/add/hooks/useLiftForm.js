@@ -408,7 +408,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       totalAmountWithoutGST: lift.data?.totalAmountWithoutGST ?? 0,
       totalAmountWithoutLoad: lift.data?.totalAmountWithoutLoad ?? 0,
       liftRate: lift.data?.liftRate ?? 0,
-      isLiftRateManual: false,
+      isLiftRateManual: lift.data?.isLiftRateManual ?? false,
       commercialTotal: lift.data?.commercialTotal ?? lift.data?.total_amt_commercial ?? 0,
       commercialTaxAmount: lift.data?.commercialTaxAmount ?? lift.data?.tax_amount ?? 0,
       commercialFinalAmount: lift.data?.commercialFinalAmount ?? lift.data?.final_amt ?? 0,
@@ -1035,7 +1035,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       }
 
       if (name === "liftRate") {
-        isLiftRateManual: true;
+        updated.isLiftRateManual = true;
       }
 
       // ✅ Validation: Car Internal Depth must be < Shaft Depth
@@ -1077,7 +1077,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
           quotationLiftDetailId: prev.quotationId,
           materialId: 0, // Because this is user-entered, not from API
           materialName: "Manual ARD Amount",
-          matrialDisplayName: "Manual ARD Amount",
+          materialDisplayName: "Manual ARD Amount",
           quantity: 1,
           quantityUnit: "",
           price: ardValue,

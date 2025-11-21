@@ -45,8 +45,10 @@ public class CounterFrameService {
                 dto.getCounterFrameTypeId(), dto.getCapacityTypeId(), dto.getMachineTypeId());
 
         CounterFrameType entity = new CounterFrameType();
+
         entity.setCounterFrameType(wireRopeTypeRepository.findById(Long.valueOf(dto.getCounterFrameTypeId()))
-                .orElseThrow(() -> new ResourceNotFoundException("Wire Rope not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Wire Rope with ID " + dto.getCounterFrameTypeId() + " not found.")));
+
         entity.setCapacityType(capacityTypeRepository.findById(dto.getCapacityTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Capacity Type not found")));
         if (dto.getPersonCapacityId() != null) {

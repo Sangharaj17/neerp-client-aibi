@@ -142,7 +142,7 @@ const calculateTruffingPrice = async (floors, setErrors) => {
         // id, leadId, quotationLiftDetailId will be set in fetchFloorPrices
         materialId: material.id,
         materialName: material.otherMaterialName,
-        matrialDisplayName: material.otherMaterialDisplayName || material.otherMaterialName,
+        materialDisplayName: material.otherMaterialDisplayName || material.otherMaterialName,
         quantity: quantity,
         quantityUnit: "",
         price: truffingPrice,
@@ -278,7 +278,7 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
         materialId: ard.id,
         materialName: ard.ardDevice, // Assuming the name field is ardDeviceName
 
-        matrialDisplayName: ard.ardDevice,
+        materialDisplayName: ard.ardDevice,
         quantity: 1, // ARD is typically a quantity of 1
         quantityUnit: "",
         price: finalPrice,
@@ -364,7 +364,7 @@ const fetchMachinePrice = async (liftType, capacityType, capacityValue, typeOfLi
         quotationLiftDetailId: existingItem?.quotationLiftDetailId || null,
         materialId: machine.id,
         materialName: machine.otherMaterialName,
-        matrialDisplayName: machine.otherMaterialDisplayName || machine.otherMaterialName,
+        materialDisplayName: machine.otherMaterialDisplayName || machine.otherMaterialName,
         // materialName: machine.otherMaterialName +" / "+ machine.otherMaterialDisplayName,
         quantity: machine.quantity,
         quantityUnit: "",
@@ -429,7 +429,7 @@ const fetchHarnessPrice = async (floorDesignations, setErrors) => {
         // id, leadId, quotationLiftDetailId will be set in fetchFloorPrices
         materialId: material.id,
         materialName: material.name, // Assuming the name field is harnessName
-        matrialDisplayName: material.name,
+        materialDisplayName: material.name,
         quantity: 1, // Assuming quantity is 1 for harness
         quantityUnit: "",
         price: price,
@@ -541,7 +541,7 @@ const fetchGovernorRopePriceByNm = async (floorDesignations, setErrors) => {
       const governorMaterial = {
         materialId: material.id,
         materialName: material.governorName,
-        matrialDisplayName: material.governorName,
+        materialDisplayName: material.governorName,
         quantity: material.quantity,
         quantityUnit: "mtrs",
         price: material.quantity * material.price,

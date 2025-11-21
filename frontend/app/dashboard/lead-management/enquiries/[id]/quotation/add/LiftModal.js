@@ -368,19 +368,38 @@ export default function LiftModal({ lift, onClose, onSave }) {
     const loadPerAmtPer = Number(formData.loadPerAmt || 0);
     const loadAmt = (totalIncludingTax * loadPerAmtPer) / 100;
 
-    // ✅ Keep two decimal places (convert back to number)
-    setFormData((prev) => ({
-      ...prev,
-      totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
-      totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
-      // (formData.totalAmount + formData.loadAmt).toFixed(2)
-      totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
-      loadAmt: parseFloat(loadAmt.toFixed(2)),
-      liftRate: parseFloat(liftRateTotal.toFixed(2)),
-      commercialTotal: parseFloat(commercialTotal.toFixed(2)),
-      commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
-      commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
-    }));
+    // // ✅ Keep two decimal places (convert back to number)
+    // setFormData((prev) => ({
+    //   ...prev,
+    //   totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
+    //   totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
+    //   // (formData.totalAmount + formData.loadAmt).toFixed(2)
+    //   totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
+    //   loadAmt: parseFloat(loadAmt.toFixed(2)),
+    //   liftRate: parseFloat(liftRateTotal.toFixed(2)),
+    //   commercialTotal: parseFloat(commercialTotal.toFixed(2)),
+    //   commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
+    //   commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
+    // }));
+
+    setFormData((prev) => {
+        const updates = {
+            ...prev,
+            totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
+            totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
+            totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
+            loadAmt: parseFloat(loadAmt.toFixed(2)),
+            commercialTotal: parseFloat(commercialTotal.toFixed(2)),
+            commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
+            commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
+        };
+
+        if (!prev.isLiftRateManual) {
+            updates.liftRate = parseFloat(liftRateTotal.toFixed(2));
+        }
+
+        return updates;
+    });
 
     console.log("Total (with decimals):", total.toFixed(2));
     console.log("Total incl. GST:", totalIncludingTax.toFixed(2));
@@ -1039,7 +1058,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
             quotationLiftDetailId: quotLiftDetailId || null,
             materialId: fastener.id,
             materialName: fastener.fastenerName,
-            matrialDisplayName: fastener.fastenerName,
+            materialDisplayName: fastener.fastenerName,
             quantity: 1,
             quantityUnit: "Set",
             price: fastener.price || 0,
@@ -1430,7 +1449,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
           quotationLiftDetailId: quotLiftDetailId || null, // to be set later
           materialId: item.id,
           materialName: item.otherMaterialName,
-          matrialDisplayName: item.otherMaterialDisplayName || item.otherMaterialName || "",
+          materialDisplayName: item.otherMaterialDisplayName || item.otherMaterialName || "",
           // materialName: item.otherMaterialName +" / "+ item.otherMaterialDisplayName,
           quantity: finalQunatity,
           quantityUnit: itemQuantityUnit,
@@ -2160,7 +2179,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         quotationLiftDetailId: formData.quotationId,
         materialId: selectedRope.id,
         materialName: "Mechanism/RopingType", // Differentiate the name
-        matrialDisplayName: selectedRope.wireRopeTypeName+ " | " +counterFrameRopeName,
+        materialDisplayName: selectedRope.wireRopeTypeName+ " | " +counterFrameRopeName,
         quantity: 1,
         quantityUnit: "Set",
         price: ropingTypePrice,
@@ -2192,7 +2211,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         materialId: selectedRope.id,
         materialName: "Rope/Wire Roping", // Differentiate the name
         // quantity: formData.floors, // Placeholder for calculated rope quantity
-        matrialDisplayName: selectedRope.wireRopeTypeName + " | " + selectedRope.wireRopeName,
+        materialDisplayName: selectedRope.wireRopeTypeName + " | " + selectedRope.wireRopeName,
         quantity: selectedRope.wireRopeQty,
         quantityUnit: "mtrs",
         // price: wireRopePrice * selectedRope.wireRopeQty,

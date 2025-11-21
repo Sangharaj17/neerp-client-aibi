@@ -1283,7 +1283,7 @@ export const PriceBelowSelect = ({
         quotationLiftDetailId: existing.quotationLiftDetailId,
         materialId: materialId ?? existing.materialId,
         materialName: selectedName || existing.materialName || "Air System",
-        matrialDisplayName: selectedName || existing.materialName || "Air System",
+        materialDisplayName: selectedName || existing.materialName || "Air System",
         quantity: 1,
         quantityUnit: existing.quantityUnit || "",
         price: finalPrice ?? existing.price ?? 0,
@@ -1456,7 +1456,7 @@ export const PriceBelowSelect = ({
       quotationLiftDetailId: formData.quotLiftDetailId || null,
       materialId: materialId,          // ID of the selected option
       materialName: selectedName,
-      matrialDisplayName: selectedName,
+      materialDisplayName: selectedName,
       quantity: quantity,
       quantityUnit: itemUnit,
       price: totalPrice,               // The total calculated price

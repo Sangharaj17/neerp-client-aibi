@@ -198,6 +198,7 @@ export default function CounterFrameType() {
       );
       return;
     }
+    console.log("========formData=======",formData);
 
     const payload = {
       counterFrameName: formData.counterFrameName,
@@ -231,7 +232,7 @@ export default function CounterFrameType() {
       toast.error("Duplicate entry exists for same combination");
       return;
     }
-
+console.log("========payload=======",payload);
     try {
       if (editId) {
         await axiosInstance.put(`${API_URL}/${editId}`, payload);

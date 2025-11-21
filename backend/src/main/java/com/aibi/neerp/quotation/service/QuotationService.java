@@ -800,7 +800,15 @@ public class QuotationService {
             for (SelectedMaterialRequestDTO materialDTO : dto.getSelectedMaterials()) {
                 // NOTE: The helper method MUST be updated to accept QuotationLiftDetail (entity)
                 // as the parent instead of QuotationMain.
+                if(materialDTO.getMaterialName().equals("PVC MAT")){
+                    System.out.println("_____materialDTO___________>>>>>>>"+materialDTO);
+                }
                 SelectedQuotationMaterial material = mapSelectedMaterialDTOToEntity(materialDTO, entity);
+
+                if(materialDTO.getMaterialName().equals("PVC MAT")){
+                    System.out.println("_____SelectedQuotationMaterial___________>>>>>>>"+material);
+                }
+
                 incomingSelectedMaterials.add(material);
             }
         }
@@ -1313,6 +1321,7 @@ public class QuotationService {
 
         material.setMaterialName(dto.getMaterialName());
         material.setMaterialType(dto.getMaterialType());
+        material.setMaterialDisplayName(dto.getMaterialDisplayName());
         material.setQuantity(dto.getQuantity());
         material.setQuantityUnit(dto.getQuantityUnit());
         material.setPrice(dto.getPrice());
@@ -1336,6 +1345,7 @@ public class QuotationService {
         dto.setQuotationLiftDetailId(Math.toIntExact(entity.getQuotationLiftDetail().getId()));
         dto.setMaterialName(entity.getMaterialName());
         dto.setMaterialType(entity.getMaterialType());
+        dto.setMaterialDisplayName(entity.getMaterialDisplayName());
         dto.setQuantity(entity.getQuantity());
         dto.setQuantityUnit(entity.getQuantityUnit());
         dto.setPrice(entity.getPrice());
