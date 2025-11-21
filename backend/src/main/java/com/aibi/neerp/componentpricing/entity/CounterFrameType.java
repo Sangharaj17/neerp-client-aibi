@@ -2,6 +2,7 @@ package com.aibi.neerp.componentpricing.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -14,7 +15,7 @@ import lombok.*;
                         "capacity_type",
                         "person_capacity_id",
                         "weight_id",
-                        "operator_type"
+                        "machine_type_id"
                 }
         )
 )
@@ -35,6 +36,10 @@ public class CounterFrameType {
     @JoinColumn(name = "counter_frame_type", referencedColumnName = "id", nullable = false)
     private WireRopeType counterFrameType;
 
+    @NotBlank(message = "Counter Frame Name cannot be blank")
+    @Column(name = "counter_frame_name", nullable = false)
+    private String counterFrameName;
+
     @NotNull(message = "Capacity Type is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "capacity_type", referencedColumnName = "id", nullable = false)
@@ -48,10 +53,10 @@ public class CounterFrameType {
     @JoinColumn(name = "weight_id", referencedColumnName = "id")
     private Weight weight;
 
-    @NotNull(message = "Operator Type must be selected")
+    @NotNull(message = "Machine Type must be selected")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "operator_type", referencedColumnName = "id", nullable = false)
-    private OperatorElevator operatorElevator;
+    @JoinColumn(name = "machine_type_id", referencedColumnName = "lift_type_id", nullable = false)
+    private TypeOfLift machineType;
 
     @NotNull(message = "Price cannot be null")
     @Min(value = 1, message = "Price must be greater than 0")

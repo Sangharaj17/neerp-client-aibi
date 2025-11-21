@@ -212,6 +212,7 @@ public class LoginController {
                         "message", "Login successful",
                         // "modules", allowedModules,
                         "clientName", client.getClientName(),
+                        "userId", user.getEmployeeId(),
                         "userEmail", user.getEmailId(),
                         "token", token));
     }

@@ -1077,6 +1077,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
           quotationLiftDetailId: prev.quotationId,
           materialId: 0, // Because this is user-entered, not from API
           materialName: "Manual ARD Amount",
+          matrialDisplayName: "Manual ARD Amount",
           quantity: 1,
           quantityUnit: "",
           price: ardValue,

@@ -49,7 +49,6 @@ export default function GovernerSafetyRope() {
       label: "Floor",
       sortable: true,
       editable: false,
-      render: (item) => `${item.floorId} (${item.floorName})`,
     },
     {
       key: "quantity",

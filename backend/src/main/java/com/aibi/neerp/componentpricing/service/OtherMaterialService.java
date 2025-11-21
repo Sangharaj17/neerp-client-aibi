@@ -87,7 +87,7 @@ public class OtherMaterialService {
                 operatorId, capacityTypeId, capacityValueId, typeOfLiftId, floors);
 
         List<OtherMaterial> results = repository.findByOperatorTypeIdAndCapacityTypeIdAndCapacityValueAndMachineRoomIdAndFloorsAndMainType(
-                operatorId, capacityTypeId, capacityValueId, typeOfLiftId, floors,"Machines"
+                operatorId, capacityTypeId, capacityValueId, typeOfLiftId, floors, "Machines"
         );
 
         if (results.isEmpty()) {
@@ -99,9 +99,36 @@ public class OtherMaterialService {
                 .collect(Collectors.toList());
     }
 
-    // OtherMaterialService.java (Class)
 
-// ... other methods
+    @Transactional(readOnly = true)
+    public List<OtherMaterialResponseDTO> searchByCapacityAndLiftTypeAndMainType(
+            Integer capacityTypeId,
+            Integer capacityValueId,
+            Integer typeOfLiftId, // Maps to machineRoomId in repository
+            String materialMainType) {
+
+        log.info("Searching OtherMaterial by capacityTypeId={}, capacityValueId={}, typeOfLiftId={} and materialMainType={}",
+                capacityTypeId, capacityValueId, typeOfLiftId, materialMainType);
+
+        // Calling the repository method that excludes operator and floors
+        // Note: typeOfLiftId maps to machineRoomId in the repository query.
+        List<OtherMaterial> results = repository.findByCapacityTypeIdAndCapacityValueAndMachineRoomIdAndMainType(
+                capacityTypeId,
+                capacityValueId,
+                typeOfLiftId,
+                materialMainType
+        );
+
+        if (results.isEmpty()) {
+            log.warn("No OtherMaterial found for given criteria (Capacity, Lift Type, Main Type)");
+        }
+
+        return results.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
 
     @Transactional(readOnly = true)
     public List<OtherMaterialResponseDTO> searchByCapacityAndMachineRoom(
@@ -294,7 +321,6 @@ public class OtherMaterialService {
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
-
 
 
 }

@@ -28,7 +28,7 @@ export default function CounterFrameType() {
 
   const API_URL = API_ENDPOINTS.COUNTER_FRAME_TYPES;
 
-  const columnsArdDevice = [
+  const columns = [
     {
       key: "counterFrameTypeName",
       label: "Counter Frame Type",
@@ -36,8 +36,14 @@ export default function CounterFrameType() {
       align: "text-left",
     },
     {
-      key: "operatorTypeName",
-      label: "Operator Type",
+      key: "counterFrameName",
+      label: "Name",
+      sortable: true,
+      align: "text-left",
+    },
+    {
+      key: "machineTypeName",
+      label: "Machine Type",
       sortable: true,
       align: "text-left",
     },
@@ -58,7 +64,7 @@ export default function CounterFrameType() {
 
   const initialForm = {
     counterFrameTypeId: "",
-    operatorTypeId: "",
+    machineTypeId: "",
     capacityTypeId: 1, // default = Person
     personCapacityId: "", // ID of selected person capacity
     weightId: "",
@@ -69,16 +75,14 @@ export default function CounterFrameType() {
 
   const fetchDropdowns = async () => {
     try {
-      const [wrRes, opRes, ctRes, pcRes, wRes] = await Promise.all([
+      const [wrRes, ctRes, pcRes, wRes] = await Promise.all([
         axiosInstance.get(API_ENDPOINTS.WIRE_ROPE_TYPES),
-        axiosInstance.get(API_ENDPOINTS.OPERATOR),
         axiosInstance.get(API_ENDPOINTS.CAPACITY_TYPES),
         axiosInstance.get(API_ENDPOINTS.PERSON_CAPACITY),
         axiosInstance.get(API_ENDPOINTS.WEIGHTS),
       ]);
 
       setWireRopes(wrRes.data?.data || []);
-      setOperators(opRes.data?.data || []);
 
       const capTypesData = ctRes.data;
       const persons = pcRes.data;
@@ -109,6 +113,32 @@ export default function CounterFrameType() {
   useEffect(() => {
     fetchDropdowns();
   }, []);
+
+  // --- useEffect for automatically setting machineTypeId ---
+  useEffect(() => {
+    const selectedWireRopeId = Number(formData.counterFrameTypeId);
+    if (selectedWireRopeId) {
+      const selectedWireRope = wireRopes.find(
+        (wr) => Number(wr.id) === selectedWireRopeId
+      );
+
+      const machineTypeId = selectedWireRope?.machineTypeId;
+
+      setFormData((prev) => {
+        if (prev.machineTypeId !== machineTypeId) {
+          return {
+            ...prev,
+            machineTypeId: machineTypeId || "", // Set machineTypeId based on the selected wire rope
+          };
+        }
+        return prev;
+      });
+    } else if (formData.machineTypeId !== "") {
+      // Clear machineTypeId if counterFrameTypeId is cleared
+      setFormData((prev) => ({ ...prev, machineTypeId: "" }));
+    }
+  }, [formData.counterFrameTypeId, wireRopes]);
+  // -----------------------------------------------------------------
 
   const capacityOptionsMap = {
     Person: {
@@ -162,9 +192,17 @@ export default function CounterFrameType() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.machineTypeId) {
+      toast.error(
+        "Machine Type could not be determined. Select a valid Wire Rope Type."
+      );
+      return;
+    }
+
     const payload = {
+      counterFrameName: formData.counterFrameName,
       counterFrameTypeId: Number(formData.counterFrameTypeId),
-      operatorTypeId: Number(formData.operatorTypeId),
+      machineTypeId: Number(formData.machineTypeId),
       capacityTypeId: Number(formData.capacityTypeId),
       price: Number(formData.price),
     };
@@ -179,8 +217,9 @@ export default function CounterFrameType() {
     const exists = counterFrameTypes.some((item) => {
       return (
         item.counterFrameTypeId === payload.counterFrameTypeId &&
-        item.operatorTypeId === payload.operatorTypeId &&
+        item.machineTypeId === payload.machineTypeId &&
         item.capacityTypeId === payload.capacityTypeId &&
+        item.counterFrameName === payload.counterFrameName &&
         (payload.personCapacityId
           ? item.personCapacityId === payload.personCapacityId
           : item.weightId === payload.weightId) &&
@@ -213,11 +252,12 @@ export default function CounterFrameType() {
   const handleEdit = (row) => {
     setFormData({
       counterFrameTypeId: row.counterFrameTypeId,
-      operatorTypeId: row.operatorTypeId,
+      machineTypeId: row.machineTypeId,
       capacityTypeId: row.capacityTypeId,
       personCapacityId: row.personCapacityId || "",
       weightId: row.weightId || "",
       price: row.price,
+      counterFrameName: row.counterFrameName,
     });
     setEditId(row.id);
   };
@@ -245,14 +285,14 @@ export default function CounterFrameType() {
       return;
     }
 
-    confirmDeleteWithToast(selected.frameTypeName, async () => {
+    // Use the new name field for display in the toast
+    confirmDeleteWithToast(selected.counterFrameName, async () => {
       try {
         await axiosInstance.delete(`${API_URL}/${id}`);
 
         toast.success("Counter Frame Type deleted");
 
         if (editId === id) {
-          setCounterFrameType("");
           setEditId(null);
         }
 
@@ -265,13 +305,15 @@ export default function CounterFrameType() {
       }
     });
   };
- 
+
+  // console.log("===========counterFrameTypes=============>", counterFrameTypes);
   const filteredList = counterFrameTypes.filter((item) => {
     const term = searchTerm.toLowerCase();
 
     return (
       item.counterFrameTypeName?.toLowerCase().includes(term) ||
-      item.operatorTypeName?.toLowerCase().includes(term) ||
+      item.counterFrameName?.toLowerCase().includes(term) ||
+      item.machineTypeName?.toLowerCase().includes(term) ||
       item.capacityTypeName?.toLowerCase().includes(term) ||
       item.personCapacityName?.toLowerCase().includes(term) ||
       item.weightName?.toLowerCase().includes(term) ||
@@ -306,7 +348,7 @@ export default function CounterFrameType() {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <ResponsiveForm
           onSubmit={handleSubmit}
-          columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"
+          columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
           className="mt-4"
         >
           <FormSelect
@@ -321,27 +363,21 @@ export default function CounterFrameType() {
             </option>
             {wireRopes.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.wireRopeType}
+                {type.wireRopeType}[{type.wireRopeSize} mm]
+                {type.machineTypeName}
               </option>
             ))}
           </FormSelect>
 
-          <FormSelect
-            value={formData.operatorTypeId || ""}
+          <FormInput
+            type="text"
+            placeholder="Enter Counter Frame Name"
+            value={formData.counterFrameName || ""}
             onChange={(e) =>
-              setFormData({ ...formData, operatorTypeId: e.target.value })
+              setFormData({ ...formData, counterFrameName: e.target.value })
             }
             required
-          >
-            <option value="" disabled>
-              Select Operator Type
-            </option>
-            {operators.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </FormSelect>
+          />
 
           {/* Capacity Type */}
           <FormSelect
@@ -420,8 +456,14 @@ export default function CounterFrameType() {
       <ReusableTable
         title="Counter Frame Type List"
         columns={[
-          { key: "counterFrameTypeName", label: "Counter Frame Type" },
-          { key: "operatorTypeName", label: "Operator" },
+          {
+            key: "counterFrameTypeName",
+            label: "Counter Frame Type",
+            render: (item) =>
+              `${item.counterFrameTypeName} [${item.wireRopeSize} mm]${item.wireRopeMachine}`,
+          },
+          { key: "counterFrameName", label: "Name" },
+          { key: "machineTypeName", label: "Machine Type" },
           { key: "capacityTypeName", label: "Capacity Type" },
           {
             key: "capacityValue",

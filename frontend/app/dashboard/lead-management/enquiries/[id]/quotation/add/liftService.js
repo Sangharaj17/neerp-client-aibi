@@ -535,7 +535,7 @@ export const fetchControlPanelTypes = async (liftType, capacityType, capacityVal
 export const fetchLOP = async (liftType, floor, setErrors) => {
   try {
     const res = await axiosInstance.get(`${API_ENDPOINTS.LOP_SUBTYPE}/search`, {
-      params: { operatorTypeId: liftType, floorId: (floor - 1) },
+      params: { operatorTypeId: liftType, floorId: (floor) },
     });
 
     const data = res.data?.data || [];
@@ -642,9 +642,9 @@ export function getOptionPrice(id, options, key = "id") {
   return 0;
 }
 
-export const fetchRopingTypePrice = async (ropingTypeId, capacityType, capacityValue, liftTypeId, setErrors) => {
-  if (!ropingTypeId || !capacityType || !capacityValue || !liftTypeId) {
-    const message = "Please select Roping Type, Capacity, and Lift Type to fetch the price.";
+export const fetchRopingTypePrice = async (ropingTypeId, capacityType, capacityValue, typeOfLiftId, setErrors) => {
+  if (!ropingTypeId || !capacityType || !capacityValue || !typeOfLiftId) {
+    const message = "Please select Roping Type, Capacity, and Machine Type to fetch the price.";
 
     if (setErrors) {
       // Set the specific warning message for missing input
@@ -663,27 +663,30 @@ export const fetchRopingTypePrice = async (ropingTypeId, capacityType, capacityV
         counterFrameTypeId: ropingTypeId,
         capacityTypeId: capacityType,
         capacityValue: capacityValue,
-        operatorTypeId: liftTypeId,
+        machineTypeId: typeOfLiftId,
       },
     });
 
     const data = res.data;
     let price = 0;
+    let name = "";
     let found = false;
 
     // Determine the price and whether a record was actually found
     if (Array.isArray(data)) {
       price = data.length > 0 ? data[0].price || 0 : 0;
+      name = data.length > 0 ? data[0].counterFrameName || "" : "";
       found = data.length > 0;
     } else if (data && typeof data === 'object') {
       price = data.price || 0;
+      name = data.counterFrameName || "";
       found = price > 0 || (data.price === 0 && 'price' in data); // Treat 0 as found if the key exists
     }
 
     if (!found) {
       const errorMessage = "No price found for the selected Roping Type criteria.";
       if (setErrors) setErrors((prev) => ({ ...prev, ropingTypePrice: errorMessage }));
-      return { price: 0, found: false, error: errorMessage };
+      return { price: 0, name: "", found: false, error: errorMessage };
     }
 
     // Clear existing error if we found a record
@@ -694,13 +697,13 @@ export const fetchRopingTypePrice = async (ropingTypeId, capacityType, capacityV
     });
 
     // Return both the price and a status
-    return { price, found, error: null };
+    return { price, name, found, error: null };
 
   } catch (err) {
     console.error("Error fetching roping type price", err);
     const message = "Failed to fetch roping type price";
     if (setErrors) setErrors((prev) => ({ ...prev, ropingTypePrice: message }));
-    return { price: 0, found: false, error: message };
+    return { price: 0, name: "", found: false, error: message };
   }
 };
 
@@ -899,7 +902,7 @@ export const fetchGuideRails = async (floors, operatorType, setErrors) => {
 
   try {
     // const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/${operatorType}/floor/${floors}`);
-     const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/floor/${floors}`);
+    const response = await axiosInstance.get(`${API_ENDPOINTS.GUIDE_RAIL}/floor/${floors}`);
     const guideRails = response.data || [];
 
     console.log("Fetched Guide Rails for floor", floors, guideRails);
@@ -1206,72 +1209,7 @@ export const PriceBelowSelect = ({
 
   const { totalPrice, breakdownParts, price1, price2, selectedName, newMaterial } = useMemo(() => {
     // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
-
-
-    // 🛑 FIX: If 'options' is missing AND it's not a special system (ARD/AIR), return early.
-    // We only proceed if it IS an ARD/AIR system or if options ARE present.
-    // if (!options && !isArdSystem && !isAirSystem) {
-    //     return {
-    //         totalPrice: priceVal || 0,
-    //         breakdownParts: [],
-    //         price1: 0,
-    //         price2: 0,
-    //         selectedName: "",
-    //         newMaterial: null,
-    //     };
-    // }
-
-    // if (isArdSystem) { console.log("----------ardamount-----", priceVal); }
-
-    // --- SPECIAL ARD SYSTEM LOGIC ---
-    // if (isArdSystem) {
-    //   // ARD is an input field, using formData.ardAmount for price
-    //   const ardMaterial = {
-    //     id: null,
-    //     leadId: formData.leadId,
-    //     quotationLiftDetailId: formData.quotLiftDetailId || null,
-    //     materialId: 0,
-    //     materialName: "ARD Amount",
-    //     quantity: 1,
-    //     price: priceVal,
-    //     operatorType: formData.liftType,
-    //     materialType: "ARD",
-    //   };
-
-    //   // return {
-    //   //   totalPrice: priceVal,
-    //   //   breakdownParts: [],
-    //   //   price1: 0,
-    //   //   price2: 0,
-    //   //   selectedName: "ARD Amount",
-    //   //   newMaterial: ardMaterial // <-- Return the constructed object
-    //   // };
-    // }
-    // --- END ARD SYSTEM LOGIC ---
-
-    // console.log(options, "------", !options, "=====options========>", options);
     if (!options) {
-      // if (isArdSystem) {
-      //   const ardMaterial = {
-      //     id: null,
-      //     leadId: formData.leadId,
-      //     quotationLiftDetailId: formData.quotLiftDetailId || null,
-      //     materialId: 0,
-      //     materialName: "ARD Amount",
-      //     quantity: 1,
-      //     price: priceVal,
-      //     operatorType: formData.liftType,
-      //     materialType: "ARD",
-      //   };
-      //   return {
-      //     totalPrice: priceVal,
-      //     breakdownParts: [],
-      //     price1: 0,
-      //     price2: 0,
-      //     selectedName: "ARD Amount",
-      //     newMaterial: ardMaterial // <-- Return the constructed object
-      //   };
-      // } else {
       return {
         totalPrice: priceVal || 0,
         breakdownParts: [],
@@ -1280,7 +1218,6 @@ export const PriceBelowSelect = ({
         selectedName: "",
         newMaterial: null,
       };
-      // }
     }
     const totalOpenings = Number(formData.openings) || 0;
     const splitCount = Number(formData.landingEntranceCount) || 0;
@@ -1308,7 +1245,16 @@ export const PriceBelowSelect = ({
     if (opt && formValue) {
       quantity = Number(opt.quantity || opt.wireRopeQty
       ) || 1;
-      selectedName = opt[nameKey] || opt.name || "";
+      // selectedName = opt[nameKey] || opt.name || "";
+      if (Array.isArray(nameKey)) {
+        selectedName = nameKey
+          .map(key => opt[key])
+          .filter(Boolean) // Remove null, undefined, or empty strings
+          .join(' / ');    // Join the available names with a separator
+      } else {
+        // Original logic for single key
+        selectedName = opt[nameKey] || opt.name || "";
+      }
     }
 
     let finalPrice = priceVal || 0;
@@ -1322,7 +1268,7 @@ export const PriceBelowSelect = ({
       // Try to find if an Air System material already exists
       const existingIndex = existingMaterials.findIndex(
         (item) =>
-          item.materialType?.toLowerCase().includes("Air System".toLowerCase()) 
+          item.materialType?.toLowerCase().includes("Air System".toLowerCase())
       );
 
       console.log("----In AIr--existingIndex-----", existingIndex);
@@ -1337,6 +1283,7 @@ export const PriceBelowSelect = ({
         quotationLiftDetailId: existing.quotationLiftDetailId,
         materialId: materialId ?? existing.materialId,
         materialName: selectedName || existing.materialName || "Air System",
+        matrialDisplayName: selectedName || existing.materialName || "Air System",
         quantity: 1,
         quantityUnit: existing.quantityUnit || "",
         price: finalPrice ?? existing.price ?? 0,
@@ -1387,8 +1334,28 @@ export const PriceBelowSelect = ({
 
         quantity = finalGuideRailQty || 0;
       }
-    } 
+    }
     // -------------------------
+
+    // --- LOP TYPE LOGIC: unitPrice * noOfStops ---
+    else if (setPrice === "lopTypePrice") {
+      if (opt && noOfStops > 0) {
+        const unitPrice = unitOf(opt);
+
+        // Use noOfStops as the quantity/multiplier
+        const count = noOfStops;
+
+        price1 = unitPrice * count;
+
+        breakdownParts.push(
+          `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+        );
+
+        quantity = count;
+      }
+    }
+
+    // ---------------------------------------------
 
     // ✅ Default single price (for other non-split items)
     else if (
@@ -1396,8 +1363,8 @@ export const PriceBelowSelect = ({
       setPrice !== "landingEntrancePrice1" &&
       setPrice !== "landingEntrancePrice2"
     ) {
-       if(setPrice="airSystemPrice"){
-console.log("=====airSystemPrice====>",opt);
+      if (setPrice == "airSystemPrice") {
+        console.log("=====airSystemPrice====>", opt);
       }
       // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
       // const opt = findOpt(sid);
@@ -1480,7 +1447,7 @@ console.log("=====airSystemPrice====>",opt);
         item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
     );
 
-console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+    console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
     console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
     // ✅ Build newMaterial with existing id (if found)
     const newMaterial = {
@@ -1489,6 +1456,7 @@ console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>
       quotationLiftDetailId: formData.quotLiftDetailId || null,
       materialId: materialId,          // ID of the selected option
       materialName: selectedName,
+      matrialDisplayName: selectedName,
       quantity: quantity,
       quantityUnit: itemUnit,
       price: totalPrice,               // The total calculated price

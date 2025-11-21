@@ -491,11 +491,34 @@ export default function OtherMaterialPage() {
 
   const transformed = useMemo(() => {
     return otherMaterials
-      .filter((t) =>
-        t?.otherMaterialMainName
-          ?.toLowerCase()
-          .includes(typeSearch.toLowerCase())
-      )
+      .filter((t) => {
+        // Convert the search term to lowercase once
+        const searchLower = typeSearch.toLowerCase();
+
+        // Define the fields to search across
+        const fieldsToSearch = [
+          t.otherMaterialMainName,
+          t.otherMaterialName,
+          t.otherMaterialDisplayName,
+          t.machineRoomName,
+          t.capacityTypeName,
+          t.floorsLabel,
+          t.quantityUnit,
+          // Add capacity value checks
+          t.capacityTypeName === "Person" ? t.personCapacityName : null,
+          t.capacityTypeName === "Weight" ? t.weightName : null,
+          // Add quantity (converted to string)
+          String(t.quantity),
+        ];
+
+        // Check if any field includes the search term
+        return fieldsToSearch.some((field) => {
+          if (field) {
+            return String(field).toLowerCase().includes(searchLower);
+          }
+          return false;
+        });
+      })
       .map((item) => ({
         ...item,
         operatorTypeName: item.operatorTypeName || "N/A",
@@ -600,29 +623,31 @@ export default function OtherMaterialPage() {
       }
 
       const duplicate = otherMaterials.some((m) => {
-        let baseCondition = (
+        let baseCondition =
           m.id !== editId &&
           m.otherMaterialMainId === parseInt(form.otherMaterialMainId, 10) &&
           parseInt(m.capacityTypeId) === parseInt(form.capacityTypeId) &&
           parseInt(m[selectedCapacityKey]) ===
-            parseInt(form[selectedCapacityKey])
-        );
+            parseInt(form[selectedCapacityKey]);
 
         // Add Operator and Floor checks ONLY if NOT Machines
         if (!isMachines) {
-            baseCondition = baseCondition && 
-              parseInt(m.operatorTypeId) === parseInt(form.operatorTypeId) &&
-              m.floorsLabel?.trim() ===
-              floors.find((f) => f.id === parseInt(form.floor))?.floorName
+          baseCondition =
+            baseCondition &&
+            parseInt(m.operatorTypeId) === parseInt(form.operatorTypeId) &&
+            m.floorsLabel?.trim() ===
+              floors.find((f) => f.id === parseInt(form.floor))?.floorName;
         }
 
         return baseCondition;
       });
 
       if (duplicate) {
-       let errorMsg = "Duplicate material is not allowed for the same capacity combination.";
+        let errorMsg =
+          "Duplicate material is not allowed for the same capacity combination.";
         if (!isMachines) {
-             errorMsg = "Duplicate material is not allowed for the same floor/operator/capacity combination.";
+          errorMsg =
+            "Duplicate material is not allowed for the same floor/operator/capacity combination.";
         }
         toast.error(errorMsg);
         return;
@@ -678,8 +703,8 @@ export default function OtherMaterialPage() {
         ? { [capacityMeta.formKey]: parseInt(form[capacityMeta.formKey], 10) }
         : {}),
       ...(form.liftType ? { machineRoomId: parseInt(form.liftType, 10) } : {}),
-      ...((isOthers && !isMachines && form.floor) 
-        ? { floorsId: parseInt(form.floor, 10) } 
+      ...(isOthers && !isMachines && form.floor
+        ? { floorsId: parseInt(form.floor, 10) }
         : {}),
     };
 
@@ -1092,10 +1117,9 @@ export default function OtherMaterialPage() {
             onChange={(e) => setForm({ ...form, quantity: e.target.value })}
             // required
             disabled={form.quantityDisabled}
-          />          
+          />
           {/* Quantity Unit */}
           <FormInput
-            type="number"
             placeholder="Enter Unit (Set / Nos / Pair)"
             value={form.quantityUnit}
             onChange={(e) => setForm({ ...form, quantityUnit: e.target.value })}

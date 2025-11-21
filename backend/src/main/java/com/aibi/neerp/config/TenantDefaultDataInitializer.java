@@ -526,6 +526,7 @@ public class TenantDefaultDataInitializer {
                 OtherMaterial truffing = OtherMaterial.builder()
                         .otherMaterialMain(truffingMain)
                         .otherMaterialName("Truffing")
+                        .otherMaterialDisplayName("TRUFFING PLASTIC G+2")
                         .quantity("1")
                         .price(100) // default price
                         .build();

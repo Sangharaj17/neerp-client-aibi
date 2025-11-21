@@ -14,7 +14,9 @@ import { fieldLabels } from "../liftService";
 
 export default function QuotationAddPage() {
   // const { id, tenant } = useParams();
-  const { tenant, id, combinedEnquiryId } = useParams();
+  // const { tenant, id, combinedEnquiryId } = useParams();
+
+  const { id, combinedEnquiryId } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -46,11 +48,14 @@ export default function QuotationAddPage() {
   const [lifts, setLifts] = useState([]);
   const [initialOptions, setInitialOptions] = useState({});
 
+  const tenant = localStorage.getItem("tenant");
+
   const lead_Id = id;
 
   const [userId, setUserId] = useState(0);
   useEffect(() => {
     const storedId = localStorage.getItem(`${tenant}_userId`);
+    console.log(tenant,",,,,,,,,,,,,,,,,,,,,",storedId);
     if (storedId) setUserId(storedId);
   }, [id]);
 
@@ -608,6 +613,7 @@ export default function QuotationAddPage() {
     //       liftQuotationNo: data.liftQuotationNo || `QUOT-${combinedEnquiryId}-${liftId}`, // Use data.quotationId
     //       quotationMainId: quotationMainId || null,
 
+    console.log(quotationMainId +"----quotationMainId------------userId---"+ userId);
     if (!quotationMainId || !userId) {
       toast.error("Quotation ID or UserId is missing. Cannot save.", { id: TOAST_ID });
       return;
