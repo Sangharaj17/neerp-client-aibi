@@ -7,6 +7,7 @@ import initStatesAndCities from '@/utils/InitStatesAndCities';
 import axiosInstance from "@/utils/axiosInstance";
 import axiosAdmin from "@/utils/axiosAdmin";
 import Input from '@/components/UI/Input';
+import SetupScreen from '@/components/SetupScreen';
 
 export default function LoginForm({ tenant, clientName: initialClientName = '' }) {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [clientName, setClientName] = useState(initialClientName);
+  const [showSetup, setShowSetup] = useState(false);
+  const [isFirstTime, setIsFirstTime] = useState(false);
 
   useEffect(() => {
     // Fetch client configuration
@@ -38,6 +41,47 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
     }
   }, [tenant]);
 
+  const handleSetupComplete = async () => {
+    console.log('[Login] Setup complete, attempting login...');
+    setShowSetup(false);
+    setLoading(true);
+
+    try {
+      // Retry login after setup is complete
+      const loginRes = await axiosInstance.post(
+        "/api/login",
+        { email, password },
+        {
+          headers: { "X-Tenant": tenant },
+          withCredentials: true,
+        }
+      );
+
+      if (loginRes.data) {
+        const { clientId, username, userEmail, token, clientName, userId } = loginRes.data;
+        localStorage.setItem("tenant", tenant);
+        localStorage.setItem(`${tenant}_clientId`, clientId);
+        localStorage.setItem(`${tenant}_username`, username);
+        localStorage.setItem(`${tenant}_userEmail`, userEmail);
+        localStorage.setItem(`${tenant}_userId`, userId);
+        localStorage.setItem(`${tenant}_token`, token);
+        localStorage.setItem(`${tenant}_clientName`, clientName);
+
+        try {
+          await initStatesAndCities();
+        } catch (err) {
+          console.error("Login error (await initStatesAndCities()):", err);
+        }
+
+        router.push(`/dashboard/dashboard-data`);
+      }
+    } catch (err) {
+      console.error('[Login] Retry login after setup failed:', err);
+      setFormError('Setup complete! Please try logging in again.');
+      setLoading(false);
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setFormError('');
@@ -56,69 +100,12 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
       );
 
       if (res.status === 202 || res.data?.requiresInitialization) {
-        // Initialization needed - poll silently in background
-        const start = Date.now();
-        const maxWaitTime = 120000; // 2 minutes
-        let lastStatus = null;
-
-        while (Date.now() - start < maxWaitTime) {
-          await new Promise(r => setTimeout(r, 2000));
-          try {
-            const st = await axiosInstance.get('/api/tenants/init-status', {
-              headers: { 'X-Tenant': tenant },
-              withCredentials: true
-            });
-            lastStatus = st.data;
-            console.log('Initialization status:', st.data);
-
-            if (st.data?.initialized === true) {
-              // Retry login automatically after initialization
-              try {
-                const loginRes = await axiosInstance.post(
-                  "/api/login",
-                  { email, password },
-                  {
-                    headers: {
-                      "X-Tenant": tenant,
-                    },
-                    withCredentials: true,
-                  }
-                );
-                if (loginRes.data) {
-                  const { clientId, username, userEmail, token, clientName, userId } = loginRes.data;
-                  localStorage.setItem("tenant", tenant);
-                  localStorage.setItem(`${tenant}_clientId`, clientId);
-                  localStorage.setItem(`${tenant}_username`, username);
-                  localStorage.setItem(`${tenant}_userEmail`, userEmail);
-                  localStorage.setItem(`${tenant}_userId`, userId);
-                  localStorage.setItem(`${tenant}_token`, token);
-                  localStorage.setItem(`${tenant}_clientName`, clientName);
-                  try {
-                    await initStatesAndCities();
-                  } catch (err) {
-                    console.error("Login error (await initStatesAndCities()):", err);
-                  }
-                  router.push(`/dashboard/dashboard-data`);
-                  return;
-                }
-              } catch (retryErr) {
-                console.error("Retry login error:", retryErr);
-                setFormError(retryErr.response?.data?.error || retryErr.response?.data?.message || "Setup complete! Please try logging in again.");
-                setLoading(false);
-                return;
-              }
-            }
-          } catch (pollErr) {
-            console.warn("Polling error (will retry):", pollErr.response?.data || pollErr.message);
-            // Continue polling unless it's a critical error
-          }
-        }
+        // Initialization needed - show setup screen
+        console.log('[Login] Setup required, showing setup screen...');
+        setIsFirstTime(res.data?.isFirstTime || false);
+        setShowSetup(true);
         setLoading(false);
-        const timeoutError = new Error(
-          lastStatus?.message ||
-          'Initialization is taking longer than expected. Please try again in a few moments.'
-        );
-        throw timeoutError;
+        return;
       }
 
       if (res.data) {
@@ -192,6 +179,11 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
       setLoading(false);
     }
   };
+
+  // If setup is required, show setup screen
+  if (showSetup) {
+    return <SetupScreen tenant={tenant} onComplete={handleSetupComplete} isFirstTime={isFirstTime} />;
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col p-4">

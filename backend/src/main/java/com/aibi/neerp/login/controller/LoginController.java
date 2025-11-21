@@ -117,42 +117,77 @@ public class LoginController {
         // ✅ Check if schema initialization is needed
         // This will handle both first-time setup and incremental updates
         System.out.println("[Login] Checking if schema is initialized...");
+        System.out.println("[Login] Current TenantContext before init check: " + TenantContext.getTenantId());
+
         boolean needsFullInit = !tenantSchemaInitializer.isInitialized();
         System.out.println("[Login] Schema initialization needed: " + needsFullInit);
-        
+
+        // Check if there's already an initialization in progress
+        var existingStatus = statusTracker.getStatus(domainNm);
+        if (existingStatus != null && !existingStatus.isCompleted()) {
+            System.out.println("[Login] Initialization already in progress for tenant: " + domainNm);
+            return ResponseEntity.accepted().body(Map.of(
+                "requiresInitialization", true,
+                "message", "System is updating. Please wait...",
+                "currentStep", existingStatus.getCurrentStep(),
+                "progress", existingStatus.getProgress()
+            ));
+        }
+
+        // If first-time initialization OR if schema updates are needed, run async
+        // For first-time: Full schema + data setup
+        // For existing: Schema updates + missing data (still can take time)
         if (needsFullInit) {
-            // First-time setup: Run initialization in a separate thread to avoid blocking
-            final String tenantIdForThread = domainNm; // Capture for thread
+            System.out.println("[Login] First-time initialization required - running in background");
+
+            // Mark initialization as started
+            statusTracker.updateStatus(domainNm, "starting", 0, "Starting system setup...");
+
+            // Run initialization in separate thread with proper tenant context
+            final String tenantIdForThread = domainNm;
+            final Client clientForThread = client;
             new Thread(() -> {
                 try {
+                    // CRITICAL: Set tenant context in this thread
                     TenantContext.setTenantId(tenantIdForThread);
+                    System.out.println("[Login-Async] TenantContext set in background thread: " + TenantContext.getTenantId());
+
+                    // Ensure datasource is available in this thread
+                    dataSourceConfig.addDataSource(tenantIdForThread, clientForThread);
+
+                    // Run full initialization
                     tenantSchemaInitializer.initializeIfRequired(tenantIdForThread);
+                    System.out.println("[Login-Async] ✅ Background initialization completed for tenant: " + tenantIdForThread);
                 } catch (Exception e) {
-                    System.err.println("Error during async initialization: " + e.getMessage());
+                    System.err.println("[Login-Async] ❌ Background initialization failed: " + e.getMessage());
                     e.printStackTrace();
+                    statusTracker.updateStatus(tenantIdForThread, "error", 0, "Setup failed: " + e.getMessage());
                 } finally {
                     TenantContext.clear();
                 }
             }).start();
+
             return ResponseEntity.accepted().body(Map.of(
-                    "requiresInitialization", true,
-                    "message", "Initializing tenant database. Please wait..."
+                "requiresInitialization", true,
+                "message", "Please wait, your system is being set up for the first time...",
+                "isFirstTime", true
             ));
         } else {
-            // Schema exists: Run data initialization synchronously with timeout
-            // This ensures default data is inserted before login proceeds
-            System.out.println("[Login] Schema exists, ensuring default data is initialized for tenant: " + domainNm);
+            // For existing tenants: Run schema/data check synchronously but quickly
+            // This is fast because it only checks and inserts missing data
+            System.out.println("[Login] Running quick schema/data check for existing tenant: " + domainNm);
+            System.out.println("[Login] TenantContext is set to: " + TenantContext.getTenantId());
+
             try {
-                // Run synchronously - should be fast if data already exists (idempotent checks)
-                System.out.println("[Login] Running data initialization synchronously...");
+                // Run synchronously - should be fast (< 2 seconds)
                 tenantSchemaInitializer.initializeIfRequired(domainNm);
-                System.out.println("[Login] ✅ Data initialization completed for tenant: " + domainNm);
+                System.out.println("[Login] ✅ Schema/data check completed for tenant: " + domainNm);
             } catch (Exception e) {
-                // Log error but don't block login - data init errors shouldn't prevent login
-                System.err.println("[Login] ⚠️ Warning: Error during data initialization for tenant " + domainNm + ": " + e.getMessage());
-                System.err.println("[Login] Login will proceed, but default data may be missing. Check logs for details.");
+                // For existing tenants, log warning but allow login to proceed
+                System.err.println("[Login] ⚠️ Warning: Error during data check for tenant " + domainNm + ": " + e.getMessage());
+                System.err.println("[Login] Login will proceed, but some updates may be missing.");
                 e.printStackTrace();
-                // Continue with login - user can manually trigger data init later if needed
+                // Continue with login
             }
         }
 
