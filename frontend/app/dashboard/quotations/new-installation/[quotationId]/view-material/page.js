@@ -9,53 +9,6 @@ import { getTenant } from '@/utils/tenant';
 import { getQuotationById } from "@/services/quotationApi";
 import { formatDateIN, formatCurrency } from "@/utils/common";
 
-// --- IMPORTANT: These constants are duplicated for initial calculation.
-// --- In a real app, you'd import these from a central config/data file.
-const VENDORS = [
-  { id: 1, name: "Vendor A" },
-  { id: 2, name: "Vendor B" },
-  { id: 3, name: "Vendor C" },
-];
-
-const allMaterials = [
-  { id: 1, name: "LANDING LOCK SET...", prices: { default: 3000, "1": 2900, "2": 3100 } },
-  { id: 2, name: "CARGET ANGLE ONLY...", prices: { default: 1125, "1": 1100, "3": 1150 } },
-  { id: 3, name: "CAR & COUNTER WEIGHT...", prices: { default: 40312.5, "2": 39500 } },
-  { id: 4, name: "MAGNET SQR SET", prices: { default: 279 } },
-  { id: 5, name: "DOOR FRAME", prices: { default: 5000, "1": 4900, "3": 5100 } },
-  { id: 6, name: "CABIN WALLS", prices: { default: 15000, "2": 14500 } },
-  { id: 7, name: "CEILING LIGHTS", prices: { default: 800 } },
-  { id: 8, name: "FLOORING TILES", prices: { default: 1200, "1": 1180 } },
-  { id: 9, name: "BUTTON PANEL", prices: { default: 2500, "3": 2600 } },
-  { id: 10, name: "ROPES", prices: { default: 7000, "2": 6900 } },
-  { id: 11, name: "CONTROLLER", prices: { default: 18000, "1": 17500 } },
-  { id: 12, name: "SAFETY GEAR", prices: { default: 3500 } },
-  { id: 13, name: "BUFFER", prices: { default: 900, "3": 880 } },
-  { id: 14, name: "GUIDE RAILS", prices: { default: 6000, "2": 5900 } },
-  { id: 15, name: "MOTOR", prices: { default: 25000, "1": 24000, "3": 25500 } },
-  { id: 16, name: "DOOR SAFETY SENSOR ONLY FOR AUTOMATIC LIFT", prices: { default: 7500 } },
-  { id: 17, name: "FINAL LIMIT CAMP 10FT", prices: { default: 1250 } },
-  { id: 18, name: "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX", prices: { default: 3750 } },
-  { id: 19, name: "PENCIL READ", prices: { default: 1000 } },
-  { id: 20, name: "TARMİNAL PATA WITH G. CLIP BIG AND HARDWARE", prices: { default: 1128 } },
-  { id: 21, name: "WIRE TIE", prices: { default: 125 } },
-  { id: 22, name: "GEAR OIL 90 NO", prices: { default: 938 } },
-  { id: 23, name: "COTTON WEASTE 1 KG", prices: { default: 125 } },
-  { id: 24, name: "EARTH - WIRE BIG 3 KG GALVENISE", prices: { default: 125 } },
-  { id: 25, name: "EARTHING BRACKET", prices: { default: 125 } },
-  { id: 26, name: "CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE", prices: { default: 40312.5 } },
-  { id: 27, name: "CABLE HENGER YELLOW", prices: { default: 564 } },
-  { id: 28, name: "MAGNET SQR SET", prices: { default: 465 } },
-  { id: 29, name: "PIT SWITCH BOX", prices: { default: 376 } },
-  { id: 30, name: "TARMİNAL SWITCH O/S TYPE", prices: { default: 2250 } },
-  { id: 31, name: "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)", prices: { default: 875 } },
-  { id: 32, name: "GREACE", prices: { default: 125 } },
-  { id: 33, name: "CWT GUIDE CLIP SMALL WITH HARDWARE", prices: { default: 0 } },
-  { id: 34, name: "EARTH - WIRE SMALL Â 0.5 MM", prices: { default: 406 } },
-  { id: 35, name: "HARDWARE WITH FASTNER For G+4", prices: { default: 8500 } },
-];
-// --- End of duplicated constants ---
-
 export default function ViewMaterialPage() {
   const tenant = getTenant();
   const params = useParams();
@@ -346,8 +299,8 @@ export default function ViewMaterialPage() {
             <InfoBox label="Site Name" value={quotationData.siteName} icon={<Truck className="w-4 h-4" />} />
             <InfoBox label="Quotation No." value={quotationData.quotationNo} icon={<List className="w-4 h-4" />} />
             <InfoBox label="Order Date" value={formatDateIN(quotationData.leadDate)} icon={<CalendarCheck className="w-4 h-4" />} />
-            <InfoBox label="Customer Address" value="Mumbai" />
-            <InfoBox label="Site Address" value="Navi Mumbai" />
+            <InfoBox label="Customer Address" value={quotationData.customerAddr || ""} />
+            <InfoBox label="Site Address" value={quotationData.siteAddr || ""} />
             <InfoBox label="Floor Designations" value={floorDesignationsString || 'N/A'} icon={<Building className="w-4 h-4" />} />
           </div>
         </div>
