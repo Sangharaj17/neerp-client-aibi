@@ -11,6 +11,18 @@ export const formatDate = (dateString) => {
     }
 };
 
+export const formatDateIN = (isoString) => {
+    if (!isoString) return 'N/A';
+    try {
+        // Creates a Date object from the ISO string
+        const date = new Date(isoString);
+        // Formats the date to a localized string (e.g., "11/19/2025")
+        return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch (e) {
+        return isoString.split('T')[0] || 'Invalid Date';
+    }
+}
+
 
 function formatDateTime(dateStr) {
   if (!dateStr) return "";

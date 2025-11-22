@@ -252,7 +252,7 @@ export default function QuotationList() {
 
             <TableHeader
               keys={[
-                { key: "sr", label: "Sr.No" },
+                { key: "id", label: "Sr.No" },
                 { key: "quotationDate", label: "Date" },
                 { key: "customerName", label: "Customer" },
                 { key: "siteName", label: "Site" },

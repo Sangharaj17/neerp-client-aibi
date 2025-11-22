@@ -8,58 +8,102 @@ const VENDORS = [
 ];
 
 // MODIFIED: allMaterials now includes vendor-specific prices or a default price
-const allMaterials = [
-  { id: 1, name: "LANDING LOCK SET...", prices: { default: 3000, "1": 2900, "2": 3100 } }, // Vendor A (id:1) might give a discount, Vendor B (id:2) slightly higher
-  { id: 2, name: "CARGET ANGLE ONLY...", prices: { default: 1125, "1": 1100, "3": 1150 } }, // Vendor C (id:3) is a bit more expensive
-  { id: 3, name: "CAR & COUNTER WEIGHT...", prices: { default: 40312.5, "2": 39500 } }, // Only Vendor B has a special price
-  { id: 4, name: "MAGNET SQR SET", prices: { default: 279 } }, // No vendor specific price
-  { id: 5, name: "DOOR FRAME", prices: { default: 5000, "1": 4900, "3": 5100 } },
-  { id: 6, name: "CABIN WALLS", prices: { default: 15000, "2": 14500 } },
-  { id: 7, name: "CEILING LIGHTS", prices: { default: 800 } },
-  { id: 8, name: "FLOORING TILES", prices: { default: 1200, "1": 1180 } },
-  { id: 9, name: "BUTTON PANEL", prices: { default: 2500, "3": 2600 } },
-  { id: 10, name: "ROPES", prices: { default: 7000, "2": 6900 } },
-  { id: 11, name: "CONTROLLER", prices: { default: 18000, "1": 17500 } },
-  { id: 12, name: "SAFETY GEAR", prices: { default: 3500 } },
-  { id: 13, name: "BUFFER", prices: { default: 900, "3": 880 } },
-  { id: 14, name: "GUIDE RAILS", prices: { default: 6000, "2": 5900 } },
-  { id: 15, name: "MOTOR", prices: { default: 25000, "1": 24000, "3": 25500 } },
-  // NEW MATERIALS ADDED FROM THE IMAGE
-  { id: 16, name: "DOOR SAFETY SENSOR ONLY FOR AUTOMATIC LIFT", prices: { default: 7500 } },
-  { id: 17, name: "FINAL LIMIT CAMP 10FT", prices: { default: 1250 } },
-  { id: 18, name: "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX", prices: { default: 3750 } },
-  { id: 19, name: "PENCIL READ", prices: { default: 1000 } },
-  { id: 20, name: "TARMİNAL PATA WITH G. CLIP BIG AND HARDWARE", prices: { default: 1128 } },
-  { id: 21, name: "WIRE TIE", prices: { default: 125 } },
-  { id: 22, name: "GEAR OIL 90 NO", prices: { default: 938 } },
-  { id: 23, name: "COTTON WEASTE 1 KG", prices: { default: 125 } },
-  { id: 24, name: "EARTH - WIRE BIG 3 KG GALVENISE", prices: { default: 125 } },
-  { id: 25, name: "EARTHING BRACKET", prices: { default: 125 } },
-  { id: 26, name: "CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE", prices: { default: 40312.5 } },
-  { id: 27, name: "CABLE HENGER YELLOW", prices: { default: 564 } },
-  { id: 28, name: "MAGNET SQR SET", prices: { default: 465 } },
-  { id: 29, name: "PIT SWITCH BOX", prices: { default: 376 } },
-  { id: 30, name: "TARMİNAL SWITCH O/S TYPE", prices: { default: 2250 } },
-  { id: 31, name: "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)", prices: { default: 875 } },
-  { id: 32, name: "GREACE", prices: { default: 125 } },
-  { id: 33, name: "CWT GUIDE CLIP SMALL WITH HARDWARE", prices: { default: 0 } },
-  { id: 34, name: "EARTH - WIRE SMALL Â 0.5 MM", prices: { default: 406 } },
-  { id: 35, name: "HARDWARE WITH FASTNER For G+4", prices: { default: 8500 } },
-];
+// const allMaterials = [
+//   { id: 1, name: "LANDING LOCK SET...", prices: { default: 3000, "1": 2900, "2": 3100 } }, // Vendor A (id:1) might give a discount, Vendor B (id:2) slightly higher
+//   { id: 2, name: "CARGET ANGLE ONLY...", prices: { default: 1125, "1": 1100, "3": 1150 } }, // Vendor C (id:3) is a bit more expensive
+//   { id: 3, name: "CAR & COUNTER WEIGHT...", prices: { default: 40312.5, "2": 39500 } }, // Only Vendor B has a special price
+//   { id: 4, name: "MAGNET SQR SET", prices: { default: 279 } }, // No vendor specific price
+//   { id: 5, name: "DOOR FRAME", prices: { default: 5000, "1": 4900, "3": 5100 } },
+//   { id: 6, name: "CABIN WALLS", prices: { default: 15000, "2": 14500 } },
+//   { id: 7, name: "CEILING LIGHTS", prices: { default: 800 } },
+//   { id: 8, name: "FLOORING TILES", prices: { default: 1200, "1": 1180 } },
+//   { id: 9, name: "BUTTON PANEL", prices: { default: 2500, "3": 2600 } },
+//   { id: 10, name: "ROPES", prices: { default: 7000, "2": 6900 } },
+//   { id: 11, name: "CONTROLLER", prices: { default: 18000, "1": 17500 } },
+//   { id: 12, name: "SAFETY GEAR", prices: { default: 3500 } },
+//   { id: 13, name: "BUFFER", prices: { default: 900, "3": 880 } },
+//   { id: 14, name: "GUIDE RAILS", prices: { default: 6000, "2": 5900 } },
+//   { id: 15, name: "MOTOR", prices: { default: 25000, "1": 24000, "3": 25500 } },
+//   // NEW MATERIALS ADDED FROM THE IMAGE
+//   { id: 16, name: "DOOR SAFETY SENSOR ONLY FOR AUTOMATIC LIFT", prices: { default: 7500 } },
+//   { id: 17, name: "FINAL LIMIT CAMP 10FT", prices: { default: 1250 } },
+//   { id: 18, name: "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX", prices: { default: 3750 } },
+//   { id: 19, name: "PENCIL READ", prices: { default: 1000 } },
+//   { id: 20, name: "TARMİNAL PATA WITH G. CLIP BIG AND HARDWARE", prices: { default: 1128 } },
+//   { id: 21, name: "WIRE TIE", prices: { default: 125 } },
+//   { id: 22, name: "GEAR OIL 90 NO", prices: { default: 938 } },
+//   { id: 23, name: "COTTON WEASTE 1 KG", prices: { default: 125 } },
+//   { id: 24, name: "EARTH - WIRE BIG 3 KG GALVENISE", prices: { default: 125 } },
+//   { id: 25, name: "EARTHING BRACKET", prices: { default: 125 } },
+//   { id: 26, name: "CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE", prices: { default: 40312.5 } },
+//   { id: 27, name: "CABLE HENGER YELLOW", prices: { default: 564 } },
+//   { id: 28, name: "MAGNET SQR SET", prices: { default: 465 } },
+//   { id: 29, name: "PIT SWITCH BOX", prices: { default: 376 } },
+//   { id: 30, name: "TARMİNAL SWITCH O/S TYPE", prices: { default: 2250 } },
+//   { id: 31, name: "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)", prices: { default: 875 } },
+//   { id: 32, name: "GREACE", prices: { default: 125 } },
+//   { id: 33, name: "CWT GUIDE CLIP SMALL WITH HARDWARE", prices: { default: 0 } },
+//   { id: 34, name: "EARTH - WIRE SMALL Â 0.5 MM", prices: { default: 406 } },
+//   { id: 35, name: "HARDWARE WITH FASTNER For G+4", prices: { default: 8500 } },
+// ];
 
-export default function BillOfMaterialModal({ liftId, onClose }) {
-  const [rows, setRows] = useState(
-    allMaterials.map((item) => ({
-      ...item,
-      qty: 1,
-      selected: true, // Default to selected
+export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
+  console.log("--------liftData-------->", liftData);
+
+  // const [rows, setRows] = useState(
+  //   allMaterials.map((item) => ({
+  //     ...item,
+  //     qty: 1,
+  //     selected: true, // Default to selected
+  //     vendorId: "",
+  //   }))
+  // );
+
+  const initialRows = (() => {
+    if (!liftData) return [];
+
+    // 1. Materials from the 'selectedMaterials' array (using 'materials' based on your previous data)
+    const materialArrayRows = (liftData.materials || liftData.selectedMaterials || []).map(item => ({
+      id: item.id, // Primary unique ID for the row
+      name: item.materialName || item.materialDisplayName,
+      qty: item.quantity || 1,
+      // Map the single price into the expected 'prices' structure
+      prices: { default: item.price || 0 }, 
+      selected: true,
       vendorId: "",
-    }))
-  );
+      materialId: item.materialId, // Original material definition ID
+      materialType: item.materialDisplayName,
+    }));
+
+    // 2. Additional specific material fields from liftData
+    const additionalRows = [];
+
+    // --- Guide Rail Item ---
+    if (liftData.guideRailName && liftData.guideRailPrice) {
+      additionalRows.push({
+        // Use a unique placeholder ID (e.g., negative ID or based on liftId/field name)
+        // If 'liftData.guideRailId' exists, use it. Otherwise, use a synthetic ID.
+        id: liftData.guideRailId || `guide-rail-${liftData.id}`, 
+        name: liftData.guideRailName,
+        qty: liftData.guideRailQuantity || 1, // Assume 1 if quantity field is missing
+        prices: { default: liftData.guideRailPrice },
+        selected: true,
+        vendorId: "",
+        materialId: liftData.guideRailMaterialId || null, // Optional
+        materialType: 'GuideRail',
+      });
+    }
+
+    // 3. Combine and return the full list
+    return materialArrayRows.concat(additionalRows);
+
+  })();
+
+  const [rows, setRows] = useState(initialRows);
   const [globalSelectedVendorId, setGlobalSelectedVendorId] = useState("");
 
-  const [gstPercentage, setGstPercentage] = useState(18);
-  const [loadPercentage, setLoadPercentage] = useState(20);
+  const [gstPercentage, setGstPercentage] = useState(liftData?.tax || 18);
+  const [loadPercentage, setLoadPercentage] = useState(liftData?.loadPerAmt || 20);
   const [customerStandard, setCustomerStandard] = useState("MEDIUM");
 
   const allSelected = rows.length > 0 && rows.every((item) => item.selected);
@@ -68,23 +112,33 @@ export default function BillOfMaterialModal({ liftId, onClose }) {
   const selectAllRef = useRef(null);
 
   const getItemPrice = (item) => {
-    const originalMaterial = allMaterials.find(mat => mat.id === item.id);
-    if (!originalMaterial || !originalMaterial.prices) {
-      return 0;
+    // 1. Check if the row object itself has the 'prices' structure (which we mapped from 'item.price')
+    if (item.prices) {
+      // If a vendor is selected, try to find that price, otherwise use the default (which is item.price)
+      return item.prices[item.vendorId] || item.prices.default || 0;
     }
-    return originalMaterial.prices[item.vendorId] || originalMaterial.prices.default || 0;
+
+    // 2. Fallback: This path is for compatibility with the old logic if needed, 
+    // but should be avoided if liftData is the single source of truth.
+    const originalMaterial = allMaterials.find(mat => mat.id === item.materialId);
+    if (originalMaterial && originalMaterial.prices) {
+      return originalMaterial.prices[item.vendorId] || originalMaterial.prices.default || 0;
+    }
+
+    return 0;
   };
 
-  const amount = rows.reduce((sum, item) => {
-    if (item.selected) {
-      return sum + getItemPrice(item) * item.qty;
-    }
-    return sum;
-  }, 0);
+  // const amount = rows.reduce((sum, item) => {
+  //   if (item.selected) {
+  //     return sum + getItemPrice(item) * item.qty;
+  //   }
+  //   return sum;
+  // }, 0);
 
-  const gstAmount = amount * (gstPercentage / 100);
-  const loadAmount = amount * (loadPercentage / 100);
-  const finalAmount = amount + gstAmount + loadAmount;
+  const amount = liftData?.totalAmountWithoutGST || 0;
+  const gstAmount = liftData?.totalAmountWithoutLoad || amount * (gstPercentage / 100);
+  const loadAmount = liftData?.totalAmount || gstAmount * (loadPercentage / 100);
+  const finalAmount = liftData?.totalAmount || (amount + gstAmount + loadAmount);
 
   useEffect(() => {
     if (selectAllRef.current) {
@@ -239,85 +293,105 @@ export default function BillOfMaterialModal({ liftId, onClose }) {
         </div>
 
         {/* --- New Summary/Calculation Section --- */}
-        <div className="pt-4 mt-4 border-t grid grid-cols-2 gap-y-2 gap-x-4 text-sm flex-shrink-0"> {/* flex-shrink-0 ensures it doesn't shrink */}
-          {/* Amount */}
-          <div className="flex gap-2 items-center col-span-2 sm:col-span-1">
-            <label className="font-semibold">Amount:</label>
-            <input
-              type="text"
-              readOnly
-              value={amount.toFixed(2)}
-              className="border-0 bg-gray-50 p-1 w-32 text-left"
-            />
-          </div>
+        {/* --- New Summary/Calculation Section --- */}
+        <div className="pt-4 mt-4 border-t grid grid-cols-2 gap-y-2 gap-x-4 text-sm flex-shrink-0">
 
-          {/* GST % */}
-          {/* <div className="flex justify-between items-center col-span-2 sm:col-span-1">
-            <label htmlFor="gst-percent" className="font-semibold">GST %:</label>
-            <input
-              id="gst-percent"
-              type="number"
-              value={gstPercentage}
-              onChange={(e) => setGstPercentage(Number(e.target.value))}
-              className="border rounded p-1 w-32 text-right"
-            />
-          </div> */}
-
-          {/* GST Amount */}
-          <div className="flex gap-2 items-center col-span-2 sm:col-span-1">
-            <label className="font-semibold">GST Amount:</label>
-            <input
-              type="text"
-              readOnly
-              value={gstAmount.toFixed(2)}
-              className="border-0 bg-gray-50 p-1 w-32 text-left"
-            />
-          </div>
-
-          {/* Final Amount */}
-          <div className="flex gap-2 items-center col-span-2 sm:col-span-1">
-            <label className="font-semibold">Final Amount:</label>
-            <input
-              type="text"
-              readOnly
-              value={finalAmount.toFixed(2)}
-              className="border-0 bg-gray-50 p-1 w-32 text-left font-bold text-blue-700"
-            />
-          </div>
-
-          {/* Customer Standard */}
-          <div className="flex gap-2 items-center col-span-2 sm:col-span-1">
-            <label className="font-semibold">Customer Standard:</label>
+          {/* 2. Customer Standard (Optional, using current state) */}
+          <div className="flex justify-between items-center col-span-2 sm:col-span-1">
+            <label className="font-semibold text-gray-700">Customer Standard:</label>
             <input
               type="text"
               readOnly
               value={customerStandard}
-              className="border-0 bg-gray-50 p-1 w-32 text-left"
+              className="border-0 bg-gray-100 p-1 w-32 text-right"
             />
           </div>
 
-          {/* Load % */}
-          <div className="flex gap-2 items-center col-span-2 sm:col-span-1">
-            <label htmlFor="load-percent" className="font-semibold">Load %:</label>
-            <input
-              id="load-percent"
-              type="number"
-              value={loadPercentage}
-              onChange={(e) => setLoadPercentage(Number(e.target.value))}
-              className="border rounded p-1 w-32 text-left"
-            />
-          </div>
-
-          {/* Load Amount */}
-          <div className="flex gap-2 items-center col-span-2 sm:col-span-1">
-            <label className="font-semibold">Load Amount:</label>
+          {/* 1. Basic Material Amount (totalAmountWithoutGST) */}
+          <div className="flex justify-between items-center col-span-2 sm:col-span-1">
+            <label className="font-semibold text-gray-700">Basic Material Amount (Excl. GST):</label>
             <input
               type="text"
               readOnly
-              value={loadAmount.toFixed(2)}
-              className="border-0 bg-gray-50 p-1 w-32 text-left"
+              // 🚨 Display the material amount calculated from the table
+              value={`₹${amount.toFixed(2)}`}
+              className="border-0 bg-gray-100 p-1 w-32 text-right font-bold text-gray-800"
             />
           </div>
+
+
+
+          <hr className="col-span-2 border-gray-300 my-1" />
+
+          {/* 3. GST % (Editable input reflects the rate from liftData) */}
+          <div className="flex justify-between items-center col-span-2 sm:col-span-1">
+            <label htmlFor="gst-percent" className="font-semibold text-orange-600">GST Rate %:</label>
+            <div className="flex items-center gap-1">
+              <input
+                id="gst-percent"
+                type="number"
+                readOnly
+                value={gstPercentage}
+                // onChange={(e) => setGstPercentage(Number(e.target.value))}
+                className="border-0 bg-orange-50 p-1 w-32 text-right font-bold text-orange-700"
+              />
+              <span className="text-lg font-bold">%</span>
+            </div>
+          </div>
+
+          {/* 4. GST Amount (Calculated based on Amount * GST %) */}
+          <div className="flex justify-between items-center col-span-2 sm:col-span-1">
+            <label className="font-semibold text-orange-600">GST Amount:</label>
+            <input
+              type="text"
+              readOnly
+              value={`₹${gstAmount.toFixed(2)}`}
+              className="border-0 bg-orange-50 p-1 w-32 text-right font-bold text-orange-700"
+            />
+          </div>
+
+          <hr className="col-span-2 border-gray-300 my-1" />
+
+          {/* 5. Load % (Editable input reflects the rate from liftData) */}
+          <div className="flex justify-between items-center col-span-2 sm:col-span-1">
+            <label htmlFor="load-percent" className="font-semibold text-red-600">Load Rate %:</label>
+            <div className="flex items-center gap-1">
+              <input
+                id="load-percent"
+                type="number"
+                readOnly
+                value={loadPercentage}
+                // onChange={(e) => setLoadPercentage(Number(e.target.value))}
+                className="border-0 bg-red-50 p-1 w-32 text-right font-bold text-red-700"
+              />
+              <span className="text-lg font-bold">%</span>
+            </div>
+          </div>
+
+          {/* 6. Load Amount (Calculated based on Amount * Load %) */}
+          <div className="flex justify-between items-center col-span-2 sm:col-span-1">
+            <label className="font-semibold text-red-600">Load Amount:</label>
+            <input
+              type="text"
+              readOnly
+              value={`₹${loadAmount.toFixed(2)}`}
+              className="border-0 bg-red-50 p-1 w-32 text-right font-bold text-red-700"
+            />
+          </div>
+
+          <hr className="col-span-2 border-blue-500 my-2" />
+
+          {/* 7. Final Amount (Amount + GST Amount + Load Amount) */}
+          <div className="flex justify-between items-center col-span-2">
+            <label className="font-extrabold text-2xl text-blue-900">Final Quotation Amount:</label>
+            <input
+              type="text"
+              readOnly
+              value={`₹${finalAmount.toFixed(2)}`}
+              className="border-0 bg-blue-100 p-1 w-48 text-right font-extrabold text-2xl text-blue-900"
+            />
+          </div>
+
         </div>
 
         <div className="flex justify-end pt-4 flex-shrink-0"> {/* flex-shrink-0 */}
