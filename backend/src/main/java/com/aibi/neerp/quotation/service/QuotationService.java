@@ -800,13 +800,13 @@ public class QuotationService {
             for (SelectedMaterialRequestDTO materialDTO : dto.getSelectedMaterials()) {
                 // NOTE: The helper method MUST be updated to accept QuotationLiftDetail (entity)
                 // as the parent instead of QuotationMain.
-                if(materialDTO.getMaterialName().equals("PVC MAT")){
-                    System.out.println("_____materialDTO___________>>>>>>>"+materialDTO);
+                if (materialDTO.getMaterialName().equals("PVC MAT")) {
+                    System.out.println("_____materialDTO___________>>>>>>>" + materialDTO);
                 }
                 SelectedQuotationMaterial material = mapSelectedMaterialDTOToEntity(materialDTO, entity);
 
-                if(materialDTO.getMaterialName().equals("PVC MAT")){
-                    System.out.println("_____SelectedQuotationMaterial___________>>>>>>>"+material);
+                if (materialDTO.getMaterialName().equals("PVC MAT")) {
+                    System.out.println("_____SelectedQuotationMaterial___________>>>>>>>" + material);
                 }
 
                 incomingSelectedMaterials.add(material);
@@ -985,6 +985,13 @@ public class QuotationService {
 //    }
     private QuotationMainResponseDTO mapQuotationEntityToResponseDTO(QuotationMain entity) {
         QuotationMainResponseDTO dto = new QuotationMainResponseDTO();
+
+        final Optional<NewLeads> leadOpt = Optional.ofNullable(entity.getLead());
+        final Optional<Employee> createdByOpt = Optional.ofNullable(entity.getCreatedBy());
+        final Optional<Employee> finalizedByOpt = Optional.ofNullable(entity.getFinalizedBy());
+        final Optional<Employee> deletedByOpt = Optional.ofNullable(entity.getDeletedBy());
+        final Optional<CombinedEnquiry> combinedEnquiryOpt = Optional.ofNullable(entity.getCombinedEnquiry());
+
         dto.setId(entity.getId());
         dto.setQuotationNo(entity.getQuotationNo());
         dto.setQuotationDate(entity.getQuotationDate());
@@ -994,36 +1001,46 @@ public class QuotationService {
         dto.setRemarks(entity.getRemarks());
 
         // --- Lead / Enquiry ---
-        dto.setLeadId(entity.getLead() != null ? entity.getLead().getLeadId() : null);
+        dto.setLeadId(leadOpt.map(NewLeads::getLeadId).orElse(null));
         dto.setLeadTypeId(entity.getLeadTypeId());
         dto.setLeadDate(entity.getLeadDate());
-        dto.setCombinedEnquiryId(entity.getCombinedEnquiry() != null ? entity.getCombinedEnquiry().getId() : null);
+        dto.setCombinedEnquiryId(combinedEnquiryOpt.map(CombinedEnquiry::getId).orElse(null));
         dto.setEnquiryTypeId(entity.getEnquiryTypeId());
 
         // --- Customer / Site ---
         dto.setCustomerName(entity.getCustomerName());
+        dto.setCustomerName2(leadOpt.map(NewLeads::getCustomerName2).orElse(null));
+//        dto.setCustomerName(leadOpt.map(NewLeads::getCustomer1Contact).orElse(entity.getCustomerName()));
         dto.setCustomerId(entity.getCustomerId());
-        dto.setCustomerAdder(entity.getLead() != null ? entity.getLead().getAddress() : null);
-        dto.setCustomerStd(entity.getLead() != null ? entity.getLead().getStatus() : null);
+        dto.setCustomerAdder(leadOpt.map(NewLeads::getAddress).orElse(null));
+        dto.setCustomerStd(leadOpt.map(NewLeads::getStatus).orElse(null)); // Assuming Status field holds the STD code
+        dto.setContactNumber(leadOpt.map(NewLeads::getContactNo).orElse(null));
+        dto.setContactNumber1(leadOpt.map(NewLeads::getCustomer1Contact).orElse(null));
+        dto.setContactNumber2(leadOpt.map(NewLeads::getCustomer2Contact).orElse(null));
+        dto.setSalutations1(leadOpt.map(NewLeads::getSalutations).orElse(null));
+        dto.setSalutations2(leadOpt.map(NewLeads::getSalutations2).orElse(null));
 
         dto.setSiteName(entity.getSiteName());
         dto.setSiteId(entity.getSiteId());
-        dto.setSiteAdder(entity.getLead() != null ? entity.getLead().getSiteAddress() : null);
-
-        dto.setSiteName(entity.getSiteName());
-        dto.setSiteId(entity.getSiteId());
+        dto.setSiteAdder(leadOpt.map(NewLeads::getSiteAddress).orElse(null));
 
         // --- Created / Approved ---
-        dto.setCreatedByEmployeeId(entity.getCreatedBy() != null ? entity.getCreatedBy().getEmployeeId() : null);
-        dto.setCreatedByEmployeeName(entity.getCreatedBy() != null ? entity.getCreatedBy().getEmployeeName() : null);
+        dto.setCreatedByEmployeeId(createdByOpt.map(Employee::getEmployeeId).orElse(null));
+        dto.setCreatedByEmployeeName(createdByOpt.map(Employee::getEmployeeName).orElse(null));
+        dto.setEmployeeContactNumber(createdByOpt.map(Employee::getContactNumber).orElse(null));
+        dto.setEmployeeRoleId(createdByOpt.map(Employee::getEmployeeId).orElse(null));
+        dto.setEmployeeRoleName(createdByOpt.map(Employee::getEmployeeName).orElse(null));
+
+
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setIsFinalized(entity.getIsFinalized());
-        dto.setFinalizedByEmployeeId(entity.getFinalizedBy() != null ? entity.getFinalizedBy().getEmployeeId() : null);
-        dto.setFinalizedByEmployeeName(entity.getFinalizedBy() != null ? entity.getFinalizedBy().getEmployeeName() : null);
+        dto.setFinalizedByEmployeeId(finalizedByOpt.map(Employee::getEmployeeId).orElse(null));
+        dto.setFinalizedByEmployeeName(finalizedByOpt.map(Employee::getEmployeeName).orElse(null));
+
         dto.setFinalizedAt(entity.getFinalizedAt());
-        dto.setIsDeleted(entity.getIsFinalized());
-        dto.setDeletedByEmployeeId(entity.getDeletedBy() != null ? entity.getDeletedBy().getEmployeeId() : null);
-        dto.setDeletedByEmployeeName(entity.getDeletedBy() != null ? entity.getDeletedBy().getEmployeeName() : null);
+        dto.setIsDeleted(entity.getIsDeleted());
+        dto.setDeletedByEmployeeId(deletedByOpt.map(Employee::getEmployeeId).orElse(null));
+        dto.setDeletedByEmployeeName(deletedByOpt.map(Employee::getEmployeeName).orElse(null));
         dto.setDeletedAt(entity.getDeletedAt());
 
         // --- Lift Details ---

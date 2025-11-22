@@ -31,6 +31,14 @@ public class QuotationMainResponseDTO {
     private Integer customerId;
     private String customerAdder;
     private String customerStd;
+    private String contactNumber;
+    private String contactNumber1;
+    private String salutations1;
+
+    private String customerName2;
+    private String contactNumber2;
+    private String salutations2;
+
     private String siteName;
     private Integer siteId;
     private String siteAdder;
@@ -38,6 +46,10 @@ public class QuotationMainResponseDTO {
     // 🔹 Created / Approved info
     private Integer createdByEmployeeId;
     private String createdByEmployeeName;
+    private String employeeContactNumber;
+    private Integer employeeRoleId;
+    private String employeeRoleName;
+
     private LocalDateTime createdAt;
     private Boolean isFinalized;
     private Integer finalizedByEmployeeId;
