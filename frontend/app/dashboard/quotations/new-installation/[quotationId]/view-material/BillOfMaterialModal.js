@@ -79,20 +79,20 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
     const additionalRows = [];
 
     // --- Guide Rail Item ---
-    if (liftData.guideRailName && liftData.guideRailPrice) {
-      additionalRows.push({
-        // Use a unique placeholder ID (e.g., negative ID or based on liftId/field name)
-        // If 'liftData.guideRailId' exists, use it. Otherwise, use a synthetic ID.
-        id: liftData.guideRailId || `guide-rail-${liftData.id}`, 
-        name: liftData.guideRailName,
-        qty: liftData.guideRailQuantity || 1, // Assume 1 if quantity field is missing
-        prices: { default: liftData.guideRailPrice },
-        selected: true,
-        vendorId: "",
-        materialId: liftData.guideRailMaterialId || null, // Optional
-        materialType: 'GuideRail',
-      });
-    }
+    // if (liftData.guideRailName && liftData.guideRailPrice) {
+    //   additionalRows.push({
+    //     // Use a unique placeholder ID (e.g., negative ID or based on liftId/field name)
+    //     // If 'liftData.guideRailId' exists, use it. Otherwise, use a synthetic ID.
+    //     id: liftData.guideRailId || `guide-rail-${liftData.id}`, 
+    //     name: liftData.guideRailName,
+    //     qty: liftData.guideRailQuantity || 1, // Assume 1 if quantity field is missing
+    //     prices: { default: liftData.guideRailPrice },
+    //     selected: true,
+    //     vendorId: "",
+    //     materialId: liftData.guideRailMaterialId || null, // Optional
+    //     materialType: 'GuideRail',
+    //   });
+    // }
 
     // 3. Combine and return the full list
     return materialArrayRows.concat(additionalRows);
