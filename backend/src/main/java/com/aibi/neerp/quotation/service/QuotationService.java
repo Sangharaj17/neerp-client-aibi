@@ -1003,6 +1003,13 @@ public class QuotationService {
         // --- Customer / Site ---
         dto.setCustomerName(entity.getCustomerName());
         dto.setCustomerId(entity.getCustomerId());
+        dto.setCustomerAdder(entity.getLead() != null ? entity.getLead().getAddress() : null);
+        dto.setCustomerStd(entity.getLead() != null ? entity.getLead().getStatus() : null);
+
+        dto.setSiteName(entity.getSiteName());
+        dto.setSiteId(entity.getSiteId());
+        dto.setSiteAdder(entity.getLead() != null ? entity.getLead().getSiteAddress() : null);
+
         dto.setSiteName(entity.getSiteName());
         dto.setSiteId(entity.getSiteId());
 
@@ -1278,8 +1285,12 @@ public class QuotationService {
                 // Customer & Site
                 .customerName(entity.getCustomerName())
                 .customerId(entity.getCustomerId())
+//                .customerAdder(entity.getLead() != null ? entity.getLead().getAddress() : null)
+//                .customerStd(entity.getLead() != null ? entity.getLead().getStatus() : null)
+
                 .siteName(entity.getSiteName())
                 .siteId(entity.getSiteId())
+//                .siteAdder(entity.getLead() != null ? entity.getLead().getSiteAddress() : null)
 
                 // Created / Approved info
                 .createdByEmployeeId(createdBy != null ? createdBy.getEmployeeId() : null)

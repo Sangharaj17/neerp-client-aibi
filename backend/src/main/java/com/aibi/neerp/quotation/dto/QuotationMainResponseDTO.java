@@ -29,8 +29,11 @@ public class QuotationMainResponseDTO {
     // 🔹 Customer & Site
     private String customerName;
     private Integer customerId;
+    private String customerAdder;
+    private String customerStd;
     private String siteName;
     private Integer siteId;
+    private String siteAdder;
 
     // 🔹 Created / Approved info
     private Integer createdByEmployeeId;

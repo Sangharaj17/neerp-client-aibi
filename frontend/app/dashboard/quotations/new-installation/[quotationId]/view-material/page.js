@@ -299,8 +299,8 @@ export default function ViewMaterialPage() {
             <InfoBox label="Site Name" value={quotationData.siteName} icon={<Truck className="w-4 h-4" />} />
             <InfoBox label="Quotation No." value={quotationData.quotationNo} icon={<List className="w-4 h-4" />} />
             <InfoBox label="Order Date" value={formatDateIN(quotationData.leadDate)} icon={<CalendarCheck className="w-4 h-4" />} />
-            <InfoBox label="Customer Address" value={quotationData.customerAddr || ""} />
-            <InfoBox label="Site Address" value={quotationData.siteAddr || ""} />
+            <InfoBox label="Customer Address" value={quotationData.customerAdder || ""} />
+            <InfoBox label="Site Address" value={quotationData.siteAdder || ""} />
             <InfoBox label="Floor Designations" value={floorDesignationsString || 'N/A'} icon={<Building className="w-4 h-4" />} />
           </div>
         </div>

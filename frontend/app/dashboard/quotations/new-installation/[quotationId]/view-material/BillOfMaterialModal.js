@@ -7,57 +7,12 @@ const VENDORS = [
   { id: 3, name: "Vendor C" },
 ];
 
-// MODIFIED: allMaterials now includes vendor-specific prices or a default price
-// const allMaterials = [
-//   { id: 1, name: "LANDING LOCK SET...", prices: { default: 3000, "1": 2900, "2": 3100 } }, // Vendor A (id:1) might give a discount, Vendor B (id:2) slightly higher
-//   { id: 2, name: "CARGET ANGLE ONLY...", prices: { default: 1125, "1": 1100, "3": 1150 } }, // Vendor C (id:3) is a bit more expensive
-//   { id: 3, name: "CAR & COUNTER WEIGHT...", prices: { default: 40312.5, "2": 39500 } }, // Only Vendor B has a special price
-//   { id: 4, name: "MAGNET SQR SET", prices: { default: 279 } }, // No vendor specific price
-//   { id: 5, name: "DOOR FRAME", prices: { default: 5000, "1": 4900, "3": 5100 } },
-//   { id: 6, name: "CABIN WALLS", prices: { default: 15000, "2": 14500 } },
-//   { id: 7, name: "CEILING LIGHTS", prices: { default: 800 } },
-//   { id: 8, name: "FLOORING TILES", prices: { default: 1200, "1": 1180 } },
-//   { id: 9, name: "BUTTON PANEL", prices: { default: 2500, "3": 2600 } },
-//   { id: 10, name: "ROPES", prices: { default: 7000, "2": 6900 } },
-//   { id: 11, name: "CONTROLLER", prices: { default: 18000, "1": 17500 } },
-//   { id: 12, name: "SAFETY GEAR", prices: { default: 3500 } },
-//   { id: 13, name: "BUFFER", prices: { default: 900, "3": 880 } },
-//   { id: 14, name: "GUIDE RAILS", prices: { default: 6000, "2": 5900 } },
-//   { id: 15, name: "MOTOR", prices: { default: 25000, "1": 24000, "3": 25500 } },
-//   // NEW MATERIALS ADDED FROM THE IMAGE
-//   { id: 16, name: "DOOR SAFETY SENSOR ONLY FOR AUTOMATIC LIFT", prices: { default: 7500 } },
-//   { id: 17, name: "FINAL LIMIT CAMP 10FT", prices: { default: 1250 } },
-//   { id: 18, name: "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX", prices: { default: 3750 } },
-//   { id: 19, name: "PENCIL READ", prices: { default: 1000 } },
-//   { id: 20, name: "TARMİNAL PATA WITH G. CLIP BIG AND HARDWARE", prices: { default: 1128 } },
-//   { id: 21, name: "WIRE TIE", prices: { default: 125 } },
-//   { id: 22, name: "GEAR OIL 90 NO", prices: { default: 938 } },
-//   { id: 23, name: "COTTON WEASTE 1 KG", prices: { default: 125 } },
-//   { id: 24, name: "EARTH - WIRE BIG 3 KG GALVENISE", prices: { default: 125 } },
-//   { id: 25, name: "EARTHING BRACKET", prices: { default: 125 } },
-//   { id: 26, name: "CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE", prices: { default: 40312.5 } },
-//   { id: 27, name: "CABLE HENGER YELLOW", prices: { default: 564 } },
-//   { id: 28, name: "MAGNET SQR SET", prices: { default: 465 } },
-//   { id: 29, name: "PIT SWITCH BOX", prices: { default: 376 } },
-//   { id: 30, name: "TARMİNAL SWITCH O/S TYPE", prices: { default: 2250 } },
-//   { id: 31, name: "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)", prices: { default: 875 } },
-//   { id: 32, name: "GREACE", prices: { default: 125 } },
-//   { id: 33, name: "CWT GUIDE CLIP SMALL WITH HARDWARE", prices: { default: 0 } },
-//   { id: 34, name: "EARTH - WIRE SMALL Â 0.5 MM", prices: { default: 406 } },
-//   { id: 35, name: "HARDWARE WITH FASTNER For G+4", prices: { default: 8500 } },
-// ];
-
 export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
   console.log("--------liftData-------->", liftData);
 
-  // const [rows, setRows] = useState(
-  //   allMaterials.map((item) => ({
-  //     ...item,
-  //     qty: 1,
-  //     selected: true, // Default to selected
-  //     vendorId: "",
-  //   }))
-  // );
+  const decodeMaterialName = (name) => {
+    return name ? name.replace(/&amp;/g, '&') : '';
+  };
 
   const initialRows = (() => {
     if (!liftData) return [];
@@ -65,14 +20,14 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
     // 1. Materials from the 'selectedMaterials' array (using 'materials' based on your previous data)
     const materialArrayRows = (liftData.materials || liftData.selectedMaterials || []).map(item => ({
       id: item.id, // Primary unique ID for the row
-      name: item.materialName || item.materialDisplayName,
+      name: decodeMaterialName(item.materialDisplayName || item.materialName),
       qty: item.quantity || 1,
       // Map the single price into the expected 'prices' structure
-      prices: { default: item.price || 0 }, 
+      prices: { default: item.price || 0 },
       selected: true,
       vendorId: "",
       materialId: item.materialId, // Original material definition ID
-      materialType: item.materialDisplayName,
+      materialType: item.materialType,
     }));
 
     // 2. Additional specific material fields from liftData
