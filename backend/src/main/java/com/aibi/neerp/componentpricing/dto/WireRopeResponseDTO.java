@@ -9,10 +9,12 @@ public class WireRopeResponseDTO {
     private Integer id;
     private Integer wireRopeTypeId;
     private String wireRopeTypeName;
-    private Integer operatorElevatorId;
-    private String operatorElevatorName;
+    private String wireRopeName;
+    private Integer machineTypeId;
+    private String machineTypeName;
     private Integer floorId;
     private String floorName;
     private Integer wireRopeQty;
     private Integer price;
+    private Double wireRopeSize;
 }

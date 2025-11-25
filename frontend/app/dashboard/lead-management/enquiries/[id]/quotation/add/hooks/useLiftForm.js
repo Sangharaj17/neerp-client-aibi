@@ -92,13 +92,42 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       //   ) ??
       //   "",
 
+      // capacityValue:
+      //   lift.data?.capacityValue ??
+      //   (
+      //     lift.capacityTypeId === 1 || lift.capacityType === 1
+      //       ? (lift.personCapacityId ?? (typeof lift.personCapacity === "object" ? lift.personCapacity?.id : lift.personCapacity))
+      //       : (lift.weightId ?? (typeof lift.weight === "object" ? lift.weight?.id : lift.weight))
+      //   ) ??
+      //   "",
+
       capacityValue:
+        // 1. Prefer the explicit capacityValue if it exists
         lift.data?.capacityValue ??
+        // 2. Determine capacity based on capacityType/capacityTypeId
         (
+          // Check if capacity type is 'Person' (assuming ID 1)
           lift.capacityTypeId === 1 || lift.capacityType === 1
-            ? (lift.personCapacityId ?? (typeof lift.personCapacity === "object" ? lift.personCapacity?.id : lift.personCapacity))
-            : (lift.weightId ?? (typeof lift.weight === "object" ? lift.weight?.id : lift.weight))
+            ? (
+              // Use personCapacityId, or if personCapacity is an object, use its id, otherwise use personCapacity itself
+              lift.personCapacityId ??
+              (typeof lift.personCapacity === "object" ? lift.personCapacity?.id : lift.personCapacity)
+            )
+            : (
+              // Use weightId, or if weight is an object, use its id, otherwise use weight itself
+              lift.weightId ??
+              (typeof lift.weight === "object" ? lift.weight?.id : lift.weight)
+            )
         ) ??
+        // 3. Final Fallback (Simplified logic based on the intent of the broken third section)
+        // NOTE: If you need to check lift.capacityTerm?.id, you should check lift.data.capacityTerm, 
+        // but the final part of your original expression was syntactically impossible to fix directly.
+        (
+          lift.capacityTerm?.id === 1 // Assuming lift.capacityTerm is a safe object
+            ? lift.personCapacity?.id ?? lift.personCapacity
+            : lift.weight?.id ?? lift.weight
+        ) ??
+        // 4. Default to empty string
         "",
 
       stops: lift.data?.stops ?? safeNumber(initialStops),
@@ -379,7 +408,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       totalAmountWithoutGST: lift.data?.totalAmountWithoutGST ?? 0,
       totalAmountWithoutLoad: lift.data?.totalAmountWithoutLoad ?? 0,
       liftRate: lift.data?.liftRate ?? 0,
-      isLiftRateManual: false,
+      isLiftRateManual: lift.data?.isLiftRateManual ?? false,
       commercialTotal: lift.data?.commercialTotal ?? lift.data?.total_amt_commercial ?? 0,
       commercialTaxAmount: lift.data?.commercialTaxAmount ?? lift.data?.tax_amount ?? 0,
       commercialFinalAmount: lift.data?.commercialFinalAmount ?? lift.data?.final_amt ?? 0,
@@ -1006,7 +1035,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       }
 
       if (name === "liftRate") {
-        isLiftRateManual: true;
+        updated.isLiftRateManual = true;
       }
 
       // ✅ Validation: Car Internal Depth must be < Shaft Depth
@@ -1048,6 +1077,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
           quotationLiftDetailId: prev.quotationId,
           materialId: 0, // Because this is user-entered, not from API
           materialName: "Manual ARD Amount",
+          materialDisplayName: "Manual ARD Amount",
           quantity: 1,
           quantityUnit: "",
           price: ardValue,
@@ -1159,7 +1189,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       //...rest
     } = formData;
 
-      const tabKeys = {
+    const tabKeys = {
       tab1: [
         "cabinPrice",
         "lightFittingPrice",

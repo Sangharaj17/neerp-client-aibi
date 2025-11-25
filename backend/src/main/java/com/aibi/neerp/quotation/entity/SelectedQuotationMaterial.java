@@ -41,6 +41,9 @@ public class SelectedQuotationMaterial {
     @Column(name = "material_type", length = 255, nullable = false)
     private String materialType;
 
+    @Column(name = "material_display_name", length = 255)
+    private String materialDisplayName;
+
     // Use Double for calculations instead of String (as in your DB schema)
     @Column(name = "quantity", nullable = false)
     private Double quantity;

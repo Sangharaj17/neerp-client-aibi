@@ -14,10 +14,13 @@ import { fieldLabels } from "../liftService";
 
 export default function QuotationAddPage() {
   // const { id, tenant } = useParams();
-  const { tenant, id, combinedEnquiryId } = useParams();
+  // const { tenant, id, combinedEnquiryId } = useParams();
+
+  const { id, combinedEnquiryId } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const [tenant, setTenant] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [previewData, setPreviewData] = useState(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -50,8 +53,17 @@ export default function QuotationAddPage() {
 
   const [userId, setUserId] = useState(0);
   useEffect(() => {
-    const storedId = localStorage.getItem(`${tenant}_userId`);
-    if (storedId) setUserId(storedId);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const storedTenant = localStorage.getItem("tenant");
+      if (storedTenant) {
+        setTenant(storedTenant);
+        // Also load userId here since you need tenant for the key
+        const storedUserId = localStorage.getItem(`${storedTenant}_userId`);
+        if (storedUserId) {
+          setUserId(storedUserId);
+        }
+      }
+    }
   }, [id]);
 
 
@@ -360,23 +372,23 @@ export default function QuotationAddPage() {
     console.log("previous lift :", lift);
     console.log("Saving lift:", liftId, "with new data:", data);
 
-    if(lift.data!=null){
-    console.log("previous lift selected materials:", lift.data.selectedMaterials);
+    if (lift.data != null) {
+      console.log("previous lift selected materials:", lift.data.selectedMaterials);
     }
 
     console.log("New lift selected materials:", data.selectedMaterials);
 
-    const liftDetailId = lift.id || null; 
-     console.log("liftDetailId:", liftDetailId);
+    const liftDetailId = lift.id || null;
+    console.log("liftDetailId:", liftDetailId);
 
     const mappedSelectedMaterials = Array.isArray(data.selectedMaterials)
-        ? data.selectedMaterials.map(material => ({
-            ...material,
-            // 💡 Set the ID of the parent lift detail here:
-            id: liftDetailId === null ? null : material.id,
-            quotationLiftDetailId: liftDetailId, 
-          }))
-        : [];
+      ? data.selectedMaterials.map(material => ({
+        ...material,
+        // 💡 Set the ID of the parent lift detail here:
+        id: liftDetailId === null ? null : material.id,
+        quotationLiftDetailId: liftDetailId,
+      }))
+      : [];
 
     console.log("New lift selected materials 22222222222:", mappedSelectedMaterials);
 
@@ -608,6 +620,7 @@ export default function QuotationAddPage() {
     //       liftQuotationNo: data.liftQuotationNo || `QUOT-${combinedEnquiryId}-${liftId}`, // Use data.quotationId
     //       quotationMainId: quotationMainId || null,
 
+    console.log(quotationMainId + "----quotationMainId------------userId---" + userId);
     if (!quotationMainId || !userId) {
       toast.error("Quotation ID or UserId is missing. Cannot save.", { id: TOAST_ID });
       return;
@@ -936,7 +949,7 @@ export default function QuotationAddPage() {
       // This will only succeed after 'lifts' has been updated by setLifts
       const targetLiftData = lifts.find(l => l.enquiryId === modalEnquiryId);
 
-      console.log("Before open the modal lift data:======>",targetLiftData);
+      console.log("Before open the modal lift data:======>", targetLiftData);
       if (targetLiftData) {
         // 3. Open the modal with the found data
         openModal(targetLiftData);
@@ -1405,9 +1418,9 @@ export default function QuotationAddPage() {
                   {/* Dynamic Status Display */}
                   {/* Determine status based on isFinalized and isSaved */}
                   {(() => {
-                    console.log("Lift status check:", lift);
+                    // console.log("Lift status check:", lift);
                     const { isSaved, isFinalized, fullyFilled, id } = lift;
-                    console.log("..............isSaved:", isSaved, "isFinalized:", isFinalized, "fullyFilled:", fullyFilled, "id:", id);
+                    // console.log("..............isSaved:", isSaved, "isFinalized:", isFinalized, "fullyFilled:", fullyFilled, "id:", id);
 
                     let statusText = "⚠️ Incomplete";
                     let statusClass = "bg-red-100 text-red-700";

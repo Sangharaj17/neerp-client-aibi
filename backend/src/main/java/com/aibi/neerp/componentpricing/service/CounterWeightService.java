@@ -45,8 +45,8 @@ public class CounterWeightService {
         entity.setCounterWeightName(dto.getCounterWeightName().trim());
         entity.setCounterWeightType(counterWeightTypeRepository.findById(Long.valueOf(dto.getCounterWeightTypeId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Counter Weight Type not found")));
-        entity.setOperatorType(operatorElevatorRepository.findById(dto.getOperatorTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator Type not found")));
+//        entity.setOperatorType(operatorElevatorRepository.findById(dto.getOperatorTypeId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator Type not found")));
         entity.setFloors(floorRepository.findById(Long.valueOf(dto.getFloorsId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found")));
         entity.setPrice(dto.getPrice());
@@ -66,8 +66,8 @@ public class CounterWeightService {
         entity.setCounterWeightName(dto.getCounterWeightName().trim());
         entity.setCounterWeightType(counterWeightTypeRepository.findById(Long.valueOf(dto.getCounterWeightTypeId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Counter Weight Type not found")));
-        entity.setOperatorType(operatorElevatorRepository.findById(dto.getOperatorTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator Type not found")));
+//        entity.setOperatorType(operatorElevatorRepository.findById(dto.getOperatorTypeId())
+//                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator Type not found")));
         entity.setFloors(floorRepository.findById(Long.valueOf(dto.getFloorsId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Floor not found")));
         entity.setPrice(dto.getPrice());
@@ -97,8 +97,8 @@ public class CounterWeightService {
                 .counterWeightName(entity.getCounterWeightName() != null ? Encode.forHtml(entity.getCounterWeightName()) : null)
                 .counterWeightTypeId(Math.toIntExact(entity.getCounterWeightType().getId()))
                 .counterWeightTypeName(entity.getCounterWeightType().getName())
-                .operatorTypeId(entity.getOperatorType().getId())
-                .operatorTypeName(entity.getOperatorType().getName())
+//                .operatorTypeId(entity.getOperatorType().getId())
+//                .operatorTypeName(entity.getOperatorType().getName())
                 .floorId(entity.getFloors().getId())
                 .floorName(entity.getFloors().getFloorName())
                 .price(entity.getPrice())
@@ -116,21 +116,23 @@ public class CounterWeightService {
                 .collect(Collectors.toList());
     }
 
-    public List<CounterWeightResponseDTO> findByOperatorTypeAndFloor(Long operatorId, Long floorId) {
-        log.info("Fetching Counter Weights for operator {} and Floor ID {}", operatorId, floorId);
-
-
-        List<CounterWeight> entities = repository.findByOperatorType_IdAndFloors_Id(operatorId, floorId);
-
-        // Map entities to DTOs (assuming you have a proper mapping function/tool)
-        return entities.stream()
-                .map(this::mapToResponse) // Placeholder for your mapping logic
-                .collect(Collectors.toList());
-
-//        return repository.findByOperatorType_IdAndFloors_Id(operatorId, floorId);
-//                .stream()
-//                .sorted(Comparator.comparing(CounterWeight::getId))
-//                .map(this::mapToResponse)
+//    public List<CounterWeightResponseDTO> findByOperatorTypeAndFloor(Long operatorId, Long floorId) {
+//        log.info("Fetching Counter Weights for operator {} and Floor ID {}", operatorId, floorId);
+//
+//
+//        List<CounterWeight> entities = repository.findByOperatorType_IdAndFloors_Id(operatorId, floorId);
+//
+//        // Map entities to DTOs (assuming you have a proper mapping function/tool)
+//        return entities.stream()
+//                .map(this::mapToResponse) // Placeholder for your mapping logic
 //                .collect(Collectors.toList());
-    }
+//
+////        return repository.findByOperatorType_IdAndFloors_Id(operatorId, floorId);
+////                .stream()
+////                .sorted(Comparator.comparing(CounterWeight::getId))
+////                .map(this::mapToResponse)
+////                .collect(Collectors.toList());
+//    }
+
+
 }

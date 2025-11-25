@@ -48,10 +48,10 @@ public class CounterFrameController {
             @RequestParam Integer counterFrameTypeId,
             @RequestParam Integer capacityTypeId,
             @RequestParam Integer capacityValue,
-            @RequestParam Integer operatorTypeId) {
+            @RequestParam Integer machineTypeId) {
 
         return ResponseEntity.ok(
-                service.search(counterFrameTypeId, capacityTypeId, capacityValue, operatorTypeId)
+                service.search(counterFrameTypeId, capacityTypeId, capacityValue, machineTypeId)
         );
     }
 

@@ -6,9 +6,9 @@ import { toast } from "react-hot-toast";
 // export const calculateLiftMaterialPrices = async ({ liftType, capacityType, capacityValue, typeOfLift, cabinType }) => {
 export const calculateLiftMaterialPrices = async ({ liftType, capacityType, capacityValue, typeOfLift, floors, leadID, existingItem, existingArd, existingArdAmount, setErrors }) => {
   try {
-console.log("==========existingArdAmount====2222========>",existingArdAmount);
+    console.log("==========existingArdAmount====2222========>", existingArdAmount);
     const [ardResult, machineResult, cabinPrice] = await Promise.all([
-      fetchArdPrice(liftType, capacityType, capacityValue, leadID, existingArd,existingArdAmount, setErrors),
+      fetchArdPrice(liftType, capacityType, capacityValue, leadID, existingArd, existingArdAmount, setErrors),
       fetchMachinePrice(liftType, capacityType, capacityValue, typeOfLift, floors, leadID, existingItem, setErrors),
       //fetchCabinPrice(cabinType, capacityType, capacityValue),
     ]);
@@ -142,6 +142,7 @@ const calculateTruffingPrice = async (floors, setErrors) => {
         // id, leadId, quotationLiftDetailId will be set in fetchFloorPrices
         materialId: material.id,
         materialName: material.otherMaterialName,
+        materialDisplayName: material.otherMaterialDisplayName || material.otherMaterialName,
         quantity: quantity,
         quantityUnit: "",
         price: truffingPrice,
@@ -245,27 +246,27 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
     );
 
     const apiRes = res.data;
-    console.log("==========existingArdAmount============>",existingArdAmount);
-    console.log(existingArd,"===apiRes= ard==>", apiRes);
+    console.log("==========existingArdAmount============>", existingArdAmount);
+    console.log(existingArd, "===apiRes= ard==>", apiRes);
 
     if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
       const ard = apiRes.data[0];
       const newCalculatedPrice = ard.price || 0; // Price calculated from API
 
-        // --- 🎯 New Logic to Preserve Existing Price ---
-        let finalPrice = newCalculatedPrice;
+      // --- 🎯 New Logic to Preserve Existing Price ---
+      let finalPrice = newCalculatedPrice;
 
-        if (
-            // existingArd && 
-            // existingArd.materialId === ard.id && // Ensure material ID matches the API result
-            // existingArd.price > 0 
-            existingArdAmount > 0 && existingArdAmount!=newCalculatedPrice
-        ) {
-            // If the material is the same and a price already exists (from the copy), use it.
-            // This preserves manually entered/copied prices.
-            // finalPrice = existingArd.price; 
-            finalPrice = existingArdAmount; 
-        }
+      if (
+        // existingArd && 
+        // existingArd.materialId === ard.id && // Ensure material ID matches the API result
+        // existingArd.price > 0 
+        existingArdAmount > 0 && existingArdAmount != newCalculatedPrice
+      ) {
+        // If the material is the same and a price already exists (from the copy), use it.
+        // This preserves manually entered/copied prices.
+        // finalPrice = existingArd.price; 
+        finalPrice = existingArdAmount;
+      }
 
       // 1. Create the ARD material object
       const ardMaterial = {
@@ -273,9 +274,11 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
 
         leadId: existingArd?.leadId || leadID || null,
         quotationLiftDetailId: existingArd?.quotationLiftDetailId || null,
-        
+
         materialId: ard.id,
         materialName: ard.ardDevice, // Assuming the name field is ardDeviceName
+
+        materialDisplayName: ard.ardDevice,
         quantity: 1, // ARD is typically a quantity of 1
         quantityUnit: "",
         price: finalPrice,
@@ -314,18 +317,32 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
 const fetchMachinePrice = async (liftType, capacityType, capacityValue, typeOfLift, floors, leadID, existingItem, setErrors) => {
   try {
 
+    // const res = await axiosInstance.get(
+    //   API_ENDPOINTS.OTHER_MATERIAL + "/searchMachineByLiftType_Operator_Capacity_Floors",
+    //   {
+    //     params: {
+    //       operatorId: liftType,
+    //       capacityTypeId: capacityType,
+    //       capacityValueId: capacityValue,
+    //       typeOfLift: typeOfLift,
+    //       floors: floors,
+    //     },
+    //   }
+    // );
+
+
     const res = await axiosInstance.get(
-      API_ENDPOINTS.OTHER_MATERIAL + "/searchMachineByLiftType_Operator_Capacity_Floors",
+      API_ENDPOINTS.OTHER_MATERIAL + "/searchMachineByCapacity_LiftType_MainType",
       {
         params: {
-          operatorId: liftType,
           capacityTypeId: capacityType,
           capacityValueId: capacityValue,
           typeOfLift: typeOfLift,
-          floors: floors,
+          materialMainType: "Machines",
         },
       }
     );
+
 
     const apiRes = res.data;
     console.log("===apiRes=other material==>", apiRes);
@@ -347,6 +364,8 @@ const fetchMachinePrice = async (liftType, capacityType, capacityValue, typeOfLi
         quotationLiftDetailId: existingItem?.quotationLiftDetailId || null,
         materialId: machine.id,
         materialName: machine.otherMaterialName,
+        materialDisplayName: machine.otherMaterialDisplayName || machine.otherMaterialName,
+        // materialName: machine.otherMaterialName +" / "+ machine.otherMaterialDisplayName,
         quantity: machine.quantity,
         quantityUnit: "",
         price: (machine.quantity * machine.price) || 0,
@@ -410,6 +429,7 @@ const fetchHarnessPrice = async (floorDesignations, setErrors) => {
         // id, leadId, quotationLiftDetailId will be set in fetchFloorPrices
         materialId: material.id,
         materialName: material.name, // Assuming the name field is harnessName
+        materialDisplayName: material.name,
         quantity: 1, // Assuming quantity is 1 for harness
         quantityUnit: "",
         price: price,
@@ -521,8 +541,9 @@ const fetchGovernorRopePriceByNm = async (floorDesignations, setErrors) => {
       const governorMaterial = {
         materialId: material.id,
         materialName: material.governorName,
+        materialDisplayName: material.governorName,
         quantity: material.quantity,
-        quantityUnit: "",
+        quantityUnit: "mtrs",
         price: material.quantity * material.price,
         materialType: "Governor",
       };

@@ -7,14 +7,18 @@ import lombok.Data;
 @Builder
 public class CounterFrameResponseDTO {
     private Integer id;
+    private String counterFrameName;
     private Integer price;
 
     // Related names for frontend display
     private Integer counterFrameTypeId;
     private String counterFrameTypeName; // from WireRope
 
-    private Integer operatorTypeId;
-    private String operatorTypeName;
+    private String wireRopeMachine;
+    private Double wireRopeSize;
+
+    private Integer machineTypeId;
+    private String machineTypeName;
 
     private Integer capacityTypeId;
     private String capacityTypeName;

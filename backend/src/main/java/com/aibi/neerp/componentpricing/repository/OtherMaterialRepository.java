@@ -70,6 +70,29 @@ public interface OtherMaterialRepository extends JpaRepository<OtherMaterial, In
             @Param("mainType") String mainType
     );
 
+
+    /**
+     * Searches for OtherMaterial records based on capacity type, capacity value,
+     * machine room, and material main type, ignoring operator and floor constraints.
+     */
+    @Query("""
+                SELECT o 
+                FROM OtherMaterial o 
+                WHERE o.capacityType.id = :capacityTypeId
+                  AND (
+                        (:capacityTypeId = 1 AND o.personCapacity.id = :capacityValueId)
+                     OR (:capacityTypeId = 2 AND o.weight.id = :capacityValueId)
+                  )
+                  AND o.machineRoom.id = :machineRoomId
+                  AND LOWER(o.otherMaterialMain.materialMainType) = LOWER(:mainType)
+            """)
+    List<OtherMaterial> findByCapacityTypeIdAndCapacityValueAndMachineRoomIdAndMainType(
+            @Param("capacityTypeId") Integer capacityTypeId,
+            @Param("capacityValueId") Integer capacityValueId,
+            @Param("machineRoomId") Integer machineRoomId,
+            @Param("mainType") String mainType
+    );
+
     Optional<OtherMaterial> findByOtherMaterialMain_MaterialMainType(String materialMainType);
 
     List<OtherMaterial> findByOtherMaterialMainId(Long otherMaterialMainId);

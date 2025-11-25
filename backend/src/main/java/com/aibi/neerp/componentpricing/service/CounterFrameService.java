@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -24,24 +23,32 @@ public class CounterFrameService {
     private final CapacityTypeRepository capacityTypeRepository;
     private final PersonCapacityRepository personCapacityRepository;
     private final WeightRepository weightRepository;
-    private final OperatorElevatorRepository operatorElevatorRepository;
+    // --- REPLACED OperatorElevatorRepository with TypeOfLiftRepository ---
+    private final TypeOfLiftRepository typeOfLiftRepository;
+    // private final OperatorElevatorRepository operatorElevatorRepository;
+    // ---------------------------------------------------------------------
 
     @Transactional(readOnly = true)
     public List<CounterFrameResponseDTO> findAll() {
-        log.info("Fetching all CounterFrame records");
-        return repository.findAll().stream()
+        log.info("Fetching all CounterFrame records sorted by machine type name");
+
+        // --- CHANGED sort property ---
+        return repository.findAllByOrderByMachineType_LiftTypeNameAsc()
+                .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public ApiResponse<CounterFrameResponseDTO> create(CounterFrameRequestDTO dto) {
-        log.info("Creating CounterFrame with typeId={}, capacityTypeId={}, operatorTypeId={}",
-                dto.getCounterFrameTypeId(), dto.getCapacityTypeId(), dto.getOperatorTypeId());
+        log.info("Creating CounterFrame with typeId={}, capacityTypeId={}, machineTypeId={}", // <--- CHANGED log
+                dto.getCounterFrameTypeId(), dto.getCapacityTypeId(), dto.getMachineTypeId());
 
         CounterFrameType entity = new CounterFrameType();
+
         entity.setCounterFrameType(wireRopeTypeRepository.findById(Long.valueOf(dto.getCounterFrameTypeId()))
-                .orElseThrow(() -> new ResourceNotFoundException("Wire Rope not found")));
+                .orElseThrow(() -> new ResourceNotFoundException("Wire Rope with ID " + dto.getCounterFrameTypeId() + " not found.")));
+
         entity.setCapacityType(capacityTypeRepository.findById(dto.getCapacityTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("Capacity Type not found")));
         if (dto.getPersonCapacityId() != null) {
@@ -52,8 +59,11 @@ public class CounterFrameService {
             entity.setWeight(weightRepository.findById(dto.getWeightId())
                     .orElseThrow(() -> new ResourceNotFoundException("Weight not found")));
         }
-        entity.setOperatorElevator(operatorElevatorRepository.findById(dto.getOperatorTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator not found")));
+        // --- CHANGED to TypeOfLift ---
+        entity.setMachineType(typeOfLiftRepository.findById(dto.getMachineTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Machine Type not found")));
+        // -----------------------------
+        entity.setCounterFrameName(dto.getCounterFrameName());
         entity.setPrice(dto.getPrice());
 
         CounterFrameType saved = repository.save(entity);
@@ -83,8 +93,11 @@ public class CounterFrameService {
         } else {
             entity.setWeight(null);
         }
-        entity.setOperatorElevator(operatorElevatorRepository.findById(dto.getOperatorTypeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Operator Elevator not found")));
+        // --- CHANGED to TypeOfLift ---
+        entity.setMachineType(typeOfLiftRepository.findById(dto.getMachineTypeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Machine Type not found")));
+        // -----------------------------
+        entity.setCounterFrameName(dto.getCounterFrameName());
         entity.setPrice(dto.getPrice());
 
         CounterFrameType updated = repository.save(entity);
@@ -104,19 +117,21 @@ public class CounterFrameService {
     public List<CounterFrameResponseDTO> search(Integer counterFrameTypeId,
                                                 Integer capacityTypeId,
                                                 Integer capacityValue,
-                                                Integer operatorTypeId) {
-        log.info("Searching CounterFrame by counterFrameTypeId={}, capacityTypeId={}, capacityValue={}, operatorTypeId={}",
-                counterFrameTypeId, capacityTypeId, capacityValue, operatorTypeId);
+                                                Integer machineTypeId) { // <--- CHANGED parameter name
+        log.info("Searching CounterFrame by counterFrameTypeId={}, capacityTypeId={}, capacityValue={}, machineTypeId={}", // <--- CHANGED log
+                counterFrameTypeId, capacityTypeId, capacityValue, machineTypeId);
 
         List<CounterFrameType> results;
 
         if (capacityTypeId == 1) { // Person Capacity
-            results = repository.findByCounterFrameType_IdAndCapacityType_IdAndPersonCapacity_IdAndOperatorElevator_Id(
-                    counterFrameTypeId, capacityTypeId, capacityValue, operatorTypeId
+            // --- CHANGED Repository Method ---
+            results = repository.findByCounterFrameType_IdAndCapacityType_IdAndPersonCapacity_IdAndMachineType_Id(
+                    counterFrameTypeId, capacityTypeId, capacityValue, machineTypeId
             );
         } else if (capacityTypeId == 2) { // Weight
-            results = repository.findByCounterFrameType_IdAndCapacityType_IdAndWeight_IdAndOperatorElevator_Id(
-                    counterFrameTypeId, capacityTypeId, capacityValue, operatorTypeId
+            // --- CHANGED Repository Method ---
+            results = repository.findByCounterFrameType_IdAndCapacityType_IdAndWeight_IdAndMachineType_Id(
+                    counterFrameTypeId, capacityTypeId, capacityValue, machineTypeId
             );
         } else {
             throw new IllegalArgumentException("Invalid capacityTypeId: " + capacityTypeId);
@@ -129,17 +144,21 @@ public class CounterFrameService {
     private CounterFrameResponseDTO mapToResponse(CounterFrameType entity) {
         return CounterFrameResponseDTO.builder()
                 .id(entity.getId())
+                .counterFrameName(entity.getCounterFrameName())
                 .price(entity.getPrice())
                 .counterFrameTypeId(Math.toIntExact(entity.getCounterFrameType().getId()))
                 .counterFrameTypeName(entity.getCounterFrameType().getWireRopeType())
+                .wireRopeMachine(entity.getCounterFrameType().getMachineType().getLiftTypeName())
+                .wireRopeSize(entity.getCounterFrameType().getWireRopeSize())
                 .capacityTypeId(entity.getCapacityType().getId())
                 .capacityTypeName(entity.getCapacityType().getType())
                 .personCapacityId(entity.getPersonCapacity() != null ? entity.getPersonCapacity().getId() : null)
                 .personCapacityName(entity.getPersonCapacity() != null ? entity.getPersonCapacity().getDisplayName() : null)
                 .weightId(entity.getWeight() != null ? entity.getWeight().getId() : null)
                 .weightName(entity.getWeight() != null ? entity.getWeight().getWeightValue() +" "+entity.getWeight().getUnit().getUnitName() : null)
-                .operatorTypeId(entity.getOperatorElevator().getId())
-                .operatorTypeName(entity.getOperatorElevator().getName())
+                // --- CHANGED Mapping ---
+                .machineTypeId(entity.getMachineType().getId())
+                .machineTypeName(entity.getMachineType().getLiftTypeName())
                 .build();
     }
 }

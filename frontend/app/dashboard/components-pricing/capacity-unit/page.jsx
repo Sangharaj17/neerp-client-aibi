@@ -2,7 +2,7 @@
 
 import toast from "react-hot-toast";
 import React, { useState, useEffect } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 
@@ -13,78 +13,30 @@ const API = {
   personCapacity: API_ENDPOINTS.PERSON_CAPACITY,
 };
 
-const defaultWeightsData = [
-  { unitId: 1, weightValue: 100, capacityTypeId: 2 }, // Example: 100Kg
-  { unitId: 1, weightValue: 150, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 200, capacityTypeId: 2 }, // Example: 500Kg
-  { unitId: 1, weightValue: 250, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 300, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 500, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 750, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 1000, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 1500, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 2000, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 2500, capacityTypeId: 2 },
-  { unitId: 1, weightValue: 3000, capacityTypeId: 2 },
+const getDefaultWeightsData = (unitId, capacityTypeId) => [
+  { unitId, weightValue: 100, capacityTypeId },
+  { unitId, weightValue: 150, capacityTypeId },
+  { unitId, weightValue: 200, capacityTypeId },
+  { unitId, weightValue: 250, capacityTypeId },
+  { unitId, weightValue: 300, capacityTypeId },
+  { unitId, weightValue: 500, capacityTypeId },
+  { unitId, weightValue: 750, capacityTypeId },
+  { unitId, weightValue: 1000, capacityTypeId },
+  { unitId, weightValue: 1500, capacityTypeId },
+  { unitId, weightValue: 2000, capacityTypeId },
+  { unitId, weightValue: 2500, capacityTypeId },
+  { unitId, weightValue: 3000, capacityTypeId },
 ];
 
-const defaultPersonCapsData = [
-  {
-    personCount: 4,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  }, // Assuming Person Cap Type ID is 1
-  {
-    personCount: 5,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
-  {
-    personCount: 6,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
-  {
-    personCount: 8,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
-  {
-    personCount: 10,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
-  {
-    personCount: 13,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
-  {
-    personCount: 15,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
-  {
-    personCount: 20,
-    label: "Persons",
-    individualWeight: 68,
-    unitId: 1,
-    capacityTypeId: 1,
-  },
+const getDefaultPersonCapsData = (unitId, capacityTypeId) => [
+  { personCount: 4, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 5, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 6, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 8, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 10, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 13, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 15, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
+  { personCount: 20, label: "Persons", individualWeight: 68, unitId, capacityTypeId },
 ];
 
 export default function UnitCapacityCrud() {
@@ -92,8 +44,8 @@ export default function UnitCapacityCrud() {
   const [capacityTypes, setCapacityTypes] = useState([]);
   const [weight, setWeight] = useState([]);
   const [personCaps, setPersonCaps] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isDuplicate, setIsDuplicate] = useState(false);
-  const [isPersonDuplicate, setIsPersonDuplicate] = useState(false);
   const [search, setSearch] = useState({
     unit: "",
     type: "",
@@ -116,7 +68,7 @@ export default function UnitCapacityCrud() {
     editId: null,
     weightUnit: "",
     weightValue: "",
-    weightCapType: 2, // If needed, capacityType for Kg
+    weightCapType: "",
   });
 
   const [personForm, setPersonForm] = useState({
@@ -135,11 +87,19 @@ export default function UnitCapacityCrud() {
     setCapacityTypeForm({ editId: null, type: "" });
 
   const resetWeightForm = () => {
+    const normalize = (str) => str?.toLowerCase().replace(/\s/g, "");
+    const kgUnit = units.find(
+      (u) => normalize(u.unitName) === "kg" || normalize(u.unitName) === "kgs"
+    );
+    const weightCapType = capacityTypes.find(
+      (ct) => normalize(ct.type) === "weight" || normalize(ct.type) === "kg"
+    );
+
     setWeightForm({
       editId: null,
-      weightUnit: "",
+      weightUnit: kgUnit?.id || "",
       weightValue: "",
-      weightCapType: 2, // Kg CapacityType (id = 2)
+      weightCapType: weightCapType?.id || "",
     });
   };
 
@@ -176,7 +136,7 @@ export default function UnitCapacityCrud() {
     }
 
     const kgsType = capacityTypes.find(
-      (ct) => normalize(ct.type) === "kgs" || normalize(ct.type) === "kg"
+      (ct) => normalize(ct.type) === "weight" || normalize(ct.type) === "kg"
     );
 
     if (kgUnit || kgsType) {
@@ -191,9 +151,9 @@ export default function UnitCapacityCrud() {
   useEffect(() => {
     const duplicate = weight.some(
       (w) =>
-        +w.unit === +weightForm.weightUnit &&
+        +w.unitId === +weightForm.weightUnit &&
         +w.weightValue === +weightForm.weightValue &&
-        +w.capacityType === +weightForm.weightCapType
+        +w.capacityTypeId === +weightForm.weightCapType
     );
 
     setIsDuplicate(duplicate);
@@ -206,35 +166,25 @@ export default function UnitCapacityCrud() {
   }, [personForm.personName, personForm.personCount]);
 
   const fetchAll = async () => {
-    // const [u, t, k, p] = await Promise.all([
-    //   fetch(API.unit, { headers: getTenantHeaders() })
-    //     .then((r) => r.json())
-    //     .then((r) => r.data || []),
+    setLoading(true);
+    try {
+      const [u, t, k, p] = await Promise.all([
+        fetchDataArray(API.unit),
+        fetchDataArray(API.capacityType),
+        fetchDataArray(API.weight),
+        fetchDataArray(API.personCapacity),
+      ]);
 
-    //   fetch(API.capacityType, { headers: getTenantHeaders() })
-    //     .then((r) => r.json())
-    //     .then((r) => r.data || []),
-
-    //   fetch(API.kgs, { headers: getTenantHeaders() })
-    //     .then((r) => r.json())
-    //     .then((r) => r.data || []),
-
-    //   fetch(API.personCapacity, { headers: getTenantHeaders() })
-    //     .then((r) => r.json())
-    //     .then((r) => r.data || []),
-    // ]);
-
-    const [u, t, k, p] = await Promise.all([
-      fetchDataArray(API.unit),
-      fetchDataArray(API.capacityType),
-      fetchDataArray(API.weight),
-      fetchDataArray(API.personCapacity),
-    ]);
-
-    setUnits(Array.isArray(u) ? u : []);
-    setCapacityTypes(Array.isArray(t) ? t : []);
-    setWeight(Array.isArray(k) ? k : []);
-    setPersonCaps(Array.isArray(p) ? p : []);
+      setUnits(Array.isArray(u) ? u : []);
+      setCapacityTypes(Array.isArray(t) ? t : []);
+      setWeight(Array.isArray(k) ? k : []);
+      setPersonCaps(Array.isArray(p) ? p : []);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -243,20 +193,18 @@ export default function UnitCapacityCrud() {
 
   const postData = async (endpoint, data, editId = null, onSuccessReset) => {
     if (endpoint === "personCapacity") {
-      // Check for a duplicate here before any network request is made
       const duplicate = personCaps.some(
         (p) =>
           +p.personCount === +data.personCount &&
           p.label?.toLowerCase() === data.label?.toLowerCase() &&
           +p.individualWeight === +data.individualWeight &&
           +p.unitId === +data.unitId &&
-          // Exclude the current item when updating to allow for self-matches
           p.id !== editId
       );
 
       if (duplicate) {
         toast.error("This entry is a duplicate of an existing record.");
-        return; // Stop the function from proceeding
+        return;
       }
     }
 
@@ -264,7 +212,6 @@ export default function UnitCapacityCrud() {
     const url = editId ? `${API[endpoint]}/${editId}` : API[endpoint];
 
     const toastId = toast.loading(editId ? "Updating..." : "Adding...");
-    console.log("==data==>", data);
     try {
       let res;
 
@@ -277,8 +224,6 @@ export default function UnitCapacityCrud() {
       }
 
       const result = res.data;
-
-      // const result = null;
 
       if (!result || result.success === false) {
         throw new Error(
@@ -301,11 +246,14 @@ export default function UnitCapacityCrud() {
   };
 
   const deleteData = async (endpoint, id) => {
+    if (!confirm("Are you sure you want to delete this item?")) {
+      return;
+    }
+
     const toastId = toast.loading("Deleting...");
     try {
       await axiosInstance.delete(`${API[endpoint]}/${id}`);
 
-      // Reset the correct form if editing the deleted item
       if (endpoint === "unit" && unitForm.editId === id) resetUnitForm();
       if (endpoint === "capacityType" && capacityTypeForm.editId === id)
         resetCapacityTypeForm();
@@ -322,720 +270,675 @@ export default function UnitCapacityCrud() {
     }
   };
 
-  // useEffect(() => {
-  //   const duplicate = personCaps.some(
-  //     (p) =>
-  //       // Check for same personCount
-  //       +p.personCount === +personForm.personCount &&
-  //       // Check for same personLabel (case-insensitive)
-  //       p.label?.toLowerCase() === personForm.personLabel?.toLowerCase() &&
-  //       // Check for same personWeight
-  //       +p.individualWeight === +personForm.personWeight &&
-  //       // Check for same personUnit
-  //       +p.unitId === +personForm.personUnit &&
-  //       // EXCLUDE the current item from the check when editing
-  //       p.id !== personForm.editId
-  //   );
-  //   setIsPersonDuplicate(duplicate);
-  // }, [personForm, personCaps]);
-
   const addDefaultWeights = async () => {
-    // const defaultUnitId =
-    //   units.find((u) => u.unitName.toLowerCase().includes("kg"))?.id || 1;
-    // const defaultCapTypeId =
-    //   capacityTypes.find(
-    //     (c) =>
-    //       c.type.toLowerCase().includes("weight") ||
-    //       c.type.toLowerCase().includes("kgs")
-    //   )?.id || 2;
+    const toastId = toast.loading("Adding default weights...");
 
-    const dataToPost = defaultWeightsData.map((d) => ({
-      unitId: d.unitId, // Use dynamically found or fallback
-      weightValue: d.weightValue,
-      capacityTypeId: d.capacityTypeId, // Use dynamically found or fallback
-    }));
-
-    for (const data of dataToPost) {
-      // Prevent duplicate addition before postData does its check
-      const isAlreadyExisting = weight.some(
-        (w) =>
-          +w.unitId === +data.unitId &&
-          +w.weightValue === +data.weightValue &&
-          +w.capacityTypeId === +data.capacityTypeId
+    try {
+      // Find the Kg unit
+      const normalize = (str) => str?.toLowerCase().replace(/\s/g, "");
+      const kgUnit = units.find(
+        (u) => normalize(u.unitName) === "kg" || normalize(u.unitName) === "kgs"
       );
 
-      if (!isAlreadyExisting) {
-        // Note: postData is not designed for batch success logging,
-        // but we call it iteratively here.
-        await postData(
-          "weight",
-          data,
-          null,
-          () => {} // Don't reset form for batch
-        );
+      // Find the Weight capacity type
+      const weightCapType = capacityTypes.find(
+        (ct) => normalize(ct.type) === "weight" || normalize(ct.type) === "kg"
+      );
+
+      if (!kgUnit) {
+        toast.error("Please create a 'Kg' unit first", { id: toastId });
+        return;
       }
+
+      if (!weightCapType) {
+        toast.error("Please ensure 'Weight' capacity type exists", { id: toastId });
+        return;
+      }
+
+      const dataToPost = getDefaultWeightsData(kgUnit.id, weightCapType.id);
+      let addedCount = 0;
+
+      for (const data of dataToPost) {
+        const isAlreadyExisting = weight.some(
+          (w) =>
+            +w.unitId === +data.unitId &&
+            +w.weightValue === +data.weightValue &&
+            +w.capacityTypeId === +data.capacityTypeId
+        );
+
+        if (!isAlreadyExisting) {
+          try {
+            await axiosInstance.post(API.weight, data);
+            addedCount++;
+          } catch (error) {
+            console.error(`Failed to add weight ${data.weightValue}:`, error);
+          }
+        }
+      }
+
+      await fetchAll();
+
+      if (addedCount > 0) {
+        toast.success(`Added ${addedCount} default weight(s)`, { id: toastId });
+      } else {
+        toast.success("All default weights already exist", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Error adding default weights:", error);
+      toast.error("Failed to add default weights", { id: toastId });
     }
-    // Final fetch after all posts are done (postData already does fetchAll() on success,
-    // but a final one ensures the latest state is captured)
-    fetchAll();
   };
 
   const addDefaultPersonCaps = async () => {
-    const defaultUnitId =
-      units.find((u) => u.unitName.toLowerCase().includes("kg"))?.id || 1;
-    const defaultCapTypeId =
-      capacityTypes.find((c) => c.type.toLowerCase().includes("person"))?.id ||
-      1;
+    const toastId = toast.loading("Adding default person capacities...");
 
-    const dataToPost = defaultPersonCapsData.map((d) => ({
-      personCount: d.personCount,
-      label: d.label,
-      individualWeight: d.individualWeight,
-      unitId: d.unitId,
-      capacityTypeId: d.capacityTypeId,
-    }));
-
-    for (const data of dataToPost) {
-      // PostData has a duplicate check for personCapacity, so we can rely on that.
-      await postData(
-        "personCapacity",
-        data,
-        null,
-        () => {} // Don't reset form for batch
+    try {
+      const normalize = (str) => str?.toLowerCase().replace(/\s/g, "");
+      const kgUnit = units.find(
+        (u) => normalize(u.unitName) === "kg" || normalize(u.unitName) === "kgs"
       );
+      const personCapType = capacityTypes.find(
+        (ct) => normalize(ct.type) === "person" || normalize(ct.type) === "persons"
+      );
+
+      if (!kgUnit) {
+        toast.error("Please create a 'Kg' unit first", { id: toastId });
+        return;
+      }
+
+      if (!personCapType) {
+        toast.error("Please ensure 'Person' capacity type exists", { id: toastId });
+        return;
+      }
+
+      const dataToPost = getDefaultPersonCapsData(kgUnit.id, personCapType.id);
+      let addedCount = 0;
+
+      for (const data of dataToPost) {
+        const isDuplicate = personCaps.some(
+          (p) =>
+            +p.personCount === +data.personCount &&
+            p.label?.toLowerCase() === data.label?.toLowerCase() &&
+            +p.individualWeight === +data.individualWeight &&
+            +p.unitId === +data.unitId
+        );
+
+        if (!isDuplicate) {
+          try {
+            await axiosInstance.post(API.personCapacity, data);
+            addedCount++;
+          } catch (error) {
+            console.error(`Failed to add person capacity ${data.personCount}:`, error);
+          }
+        }
+      }
+
+      await fetchAll();
+
+      if (addedCount > 0) {
+        toast.success(`Added ${addedCount} default person capacit${addedCount > 1 ? 'ies' : 'y'}`, { id: toastId });
+      } else {
+        toast.success("All default person capacities already exist", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Error adding default person capacities:", error);
+      toast.error("Failed to add default person capacities", { id: toastId });
     }
-    fetchAll();
   };
 
   return (
-    <div className="space-y-10 p-6 w-full min-h-screen">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Units */}
-        <Section title="Units" searchKey="unit" setSearch={setSearch}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[1400px] mx-auto p-8">
 
-              // Unit name/desc validation
-              const isNumeric = (value) => /^\d+$/.test(value);
-              if (isNumeric(unitForm.unit) || isNumeric(unitForm.unitDesc)) {
-                toast.error(
-                  "Unit Name and Description should be strings, not numbers."
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">Capacity & Unit Management</h1>
+          <p className="text-sm text-neutral-500 mt-1">Manage units, capacity types, weights, and person capacities</p>
+        </div>
+
+        {/* Units and Capacity Types Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Units Section */}
+          <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white">
+            <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-medium text-neutral-900">Units</h2>
+                <input
+                  type="text"
+                  placeholder="Search units..."
+                  value={search.unit}
+                  onChange={(e) => setSearch((prev) => ({ ...prev, unit: e.target.value }))}
+                  className="h-8 w-48 rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="p-6">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+
+                  const isNumeric = (value) => /^\d+$/.test(value);
+                  if (isNumeric(unitForm.unit) || isNumeric(unitForm.unitDesc)) {
+                    toast.error("Unit Name and Description must be text, not numbers");
+                    return;
+                  }
+
+                  postData(
+                    "unit",
+                    { unitName: unitForm.unit, description: unitForm.unitDesc },
+                    unitForm.editId,
+                    resetUnitForm
+                  );
+                }}
+                className={`flex gap-2 flex-wrap p-4 rounded-lg mb-4 ${
+                  unitForm.editId ? "bg-amber-50 border border-amber-200" : "bg-neutral-50"
+                }`}
+              >
+                <input
+                  value={unitForm.unit}
+                  onChange={(e) => setUnitForm({ ...unitForm, unit: e.target.value })}
+                  required
+                  placeholder="Unit Name"
+                  className="h-9 flex-1 min-w-[150px] rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+                <input
+                  value={unitForm.unitDesc}
+                  onChange={(e) => setUnitForm({ ...unitForm, unitDesc: e.target.value })}
+                  required
+                  placeholder="Description"
+                  className="h-9 flex-1 min-w-[150px] rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+                {unitForm.editId ? (
+                  <>
+                    <button
+                      type="submit"
+                      className="h-9 px-4 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
+                    >
+                      Update
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetUnitForm}
+                      className="h-9 px-4 rounded-lg bg-neutral-400 text-white text-sm font-medium hover:bg-neutral-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="submit"
+                    className="h-9 px-4 rounded-lg bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors"
+                  >
+                    <Plus className="inline-block w-4 h-4 mr-1" />
+                    Add
+                  </button>
+                )}
+              </form>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-neutral-50 border-b border-neutral-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">#</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-neutral-100">
+                    {units
+                      .filter((u) => u.unitName?.toLowerCase().includes(search.unit.toLowerCase()))
+                      .map((u, i) => (
+                        <tr key={u.id} className="hover:bg-neutral-50 transition-colors">
+                          <td className="px-4 py-3 text-neutral-600">{i + 1}</td>
+                          <td className="px-4 py-3 font-medium text-neutral-900">{u.unitName}</td>
+                          <td className="px-4 py-3 text-neutral-600">{u.description}</td>
+                          <td className="px-4 py-3">
+                            {u.id === 1 && u.unitName === "Kg" ? (
+                              <span className="text-xs text-neutral-400 italic">System default</span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() =>
+                                    setUnitForm({
+                                      editId: u.id,
+                                      unit: u.unitName,
+                                      unitDesc: u.description,
+                                    })
+                                  }
+                                  className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
+                                >
+                                  Edit
+                                </button>
+                                <span className="text-neutral-300">·</span>
+                                <button
+                                  onClick={() => deleteData("unit", u.id)}
+                                  className="text-xs text-red-600 hover:text-red-700 transition-colors"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Capacity Types Section */}
+          <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white">
+            <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-medium text-neutral-900">Capacity Types</h2>
+                <input
+                  type="text"
+                  placeholder="Search types..."
+                  value={search.type}
+                  onChange={(e) => setSearch((prev) => ({ ...prev, type: e.target.value }))}
+                  className="h-8 w-48 rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                <p className="text-sm text-blue-800">
+                  Capacity types are system-defined and cannot be edited. They include "Person" and "Weight".
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-neutral-50 border-b border-neutral-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">#</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-neutral-100">
+                    {capacityTypes
+                      .filter((t) => t.type.toLowerCase().includes(search.type.toLowerCase()))
+                      .map((t, i) => (
+                        <tr key={t.id} className="hover:bg-neutral-50 transition-colors">
+                          <td className="px-4 py-3 text-neutral-600">{i + 1}</td>
+                          <td className="px-4 py-3 font-medium text-neutral-900">{t.type}</td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-50 text-green-700">
+                              Active
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Weight Capacity Section */}
+        <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white mb-6">
+          <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-medium text-neutral-900">Weight Capacity</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={addDefaultWeights}
+                  className="h-9 px-4 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
+                >
+                  Add Defaults
+                </button>
+                <input
+                  type="text"
+                  placeholder="Search weights..."
+                  value={search.weight}
+                  onChange={(e) => setSearch((prev) => ({ ...prev, weight: e.target.value }))}
+                  className="h-8 w-48 rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                if (isNaN(weightForm.weightValue) || weightForm.weightValue === "") {
+                  toast.error("Weight value must be a number");
+                  return;
+                }
+
+                if (!weightForm.weightUnit) {
+                  toast.error("Please select a unit");
+                  return;
+                }
+
+                if (!weightForm.weightCapType) {
+                  toast.error("Please ensure capacity types are initialized. Try refreshing the page.");
+                  return;
+                }
+
+                postData(
+                  "weight",
+                  {
+                    unitId: weightForm.weightUnit,
+                    weightValue: +weightForm.weightValue,
+                    capacityTypeId: weightForm.weightCapType,
+                  },
+                  weightForm.editId,
+                  resetWeightForm
                 );
-                return;
-              }
-
-              postData(
-                "unit",
-                { unitName: unitForm.unit, description: unitForm.unitDesc },
-                unitForm.editId,
-                resetUnitForm
-              );
-            }}
-            // className="flex flex-wrap gap-3 items-center mb-4"
-            className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
-              unitForm.editId ? "bg-yellow-50" : "bg-gray-100"
-            }`}
-          >
-            <input
-              value={unitForm.unit}
-              onChange={(e) =>
-                setUnitForm({ ...unitForm, unit: e.target.value })
-              }
-              required
-              placeholder="Unit Name"
-              className="border px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              value={unitForm.unitDesc}
-              onChange={(e) =>
-                setUnitForm({ ...unitForm, unitDesc: e.target.value })
-              }
-              required
-              placeholder="Unit Description"
-              className="border px-2 py-1 rounded-md rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {unitForm.editId ? (
-              <>
+              }}
+              className={`flex gap-2 flex-wrap p-4 rounded-lg mb-4 ${
+                weightForm.editId ? "bg-amber-50 border border-amber-200" : "bg-neutral-50"
+              }`}
+            >
+              <select
+                value={weightForm.weightUnit}
+                onChange={(e) => setWeightForm({ ...weightForm, weightUnit: e.target.value })}
+                className="h-9 rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              >
+                <option value="">Select Unit</option>
+                {units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.unitName}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={weightForm.weightValue}
+                onChange={(e) => setWeightForm({ ...weightForm, weightValue: e.target.value })}
+                type="number"
+                placeholder="Weight Value"
+                className="h-9 flex-1 min-w-[150px] rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              />
+              {weightForm.editId ? (
+                <>
+                  <button
+                    type="submit"
+                    disabled={isDuplicate}
+                    className={`h-9 px-4 rounded-lg text-white text-sm font-medium transition-colors ${
+                      isDuplicate ? "bg-neutral-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+                    }`}
+                  >
+                    Update
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetWeightForm}
+                    className="h-9 px-4 rounded-lg bg-neutral-400 text-white text-sm font-medium hover:bg-neutral-500 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
                 <button
                   type="submit"
-                  className="bg-green-600 text-white px-4 py-1 rounded-md hover:bg-green-700 transition"
+                  disabled={isDuplicate}
+                  className={`h-9 px-4 rounded-lg text-white text-sm font-medium transition-colors ${
+                    isDuplicate ? "bg-neutral-400 cursor-not-allowed" : "bg-neutral-900 hover:bg-neutral-800"
+                  }`}
                 >
-                  Update
+                  <Plus className="inline-block w-4 h-4 mr-1" />
+                  Add
                 </button>
+              )}
+              {isDuplicate && (
+                <p className="text-xs text-red-600 w-full">
+                  This weight already exists for the selected unit and type
+                </p>
+              )}
+            </form>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-neutral-50 border-b border-neutral-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Unit</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Weight</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Capacity Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-neutral-100">
+                  {weight
+                    .filter((k) => `${k.weightValue}`.includes(search.weight))
+                    .map((k, i) => (
+                      <tr key={k.id} className="hover:bg-neutral-50 transition-colors">
+                        <td className="px-4 py-3 text-neutral-600">{i + 1}</td>
+                        <td className="px-4 py-3 text-neutral-900">
+                          {units.find((u) => u.id === k.unitId)?.unitName || "-"}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-neutral-900">{k.weightValue}</td>
+                        <td className="px-4 py-3 text-neutral-600">
+                          {capacityTypes.find((c) => c.id === k.capacityTypeId)?.type || "-"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                setWeightForm({
+                                  editId: k.id,
+                                  weightUnit: k.unitId,
+                                  weightValue: k.weightValue,
+                                  weightCapType: k.capacityTypeId,
+                                })
+                              }
+                              className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <span className="text-neutral-300">·</span>
+                            <button
+                              onClick={() => deleteData("weight", k.id)}
+                              className="text-xs text-red-600 hover:text-red-700 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Person Capacity Section */}
+        <div className="border border-neutral-200 rounded-lg overflow-hidden bg-white">
+          <div className="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-medium text-neutral-900">Person Capacity</h2>
+              <div className="flex items-center gap-3">
                 <button
-                  type="button"
-                  onClick={resetUnitForm}
-                  className="bg-gray-400 text-white px-4 py-1 rounded-md hover:bg-gray-500 transition"
+                  onClick={addDefaultPersonCaps}
+                  className="h-9 px-4 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors"
                 >
-                  Cancel
+                  Add Defaults
                 </button>
-              </>
-            ) : (
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700 transition"
+                <input
+                  type="text"
+                  placeholder="Search persons..."
+                  value={search.person}
+                  onChange={(e) => setSearch((prev) => ({ ...prev, person: e.target.value }))}
+                  className="h-8 w-48 rounded-lg border border-neutral-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+
+                if (
+                  isNaN(personForm.personCount) ||
+                  (!personForm.personWeight && isNaN(68)) ||
+                  !isNaN(personForm.personLabel)
+                ) {
+                  toast.error("Count and Weight must be numbers. Label must be text");
+                  return;
+                }
+
+                const finalWeight = personForm.personWeight || 68;
+
+                postData(
+                  "personCapacity",
+                  {
+                    personCount: +personForm.personCount,
+                    label: personForm.personLabel,
+                    individualWeight: +finalWeight,
+                    unitId: personForm.personUnit,
+                    capacityTypeId: personForm.personCapType,
+                  },
+                  personForm.editId,
+                  resetPersonForm
+                );
+              }}
+              className={`flex gap-2 flex-wrap p-4 rounded-lg mb-4 ${
+                personForm.editId ? "bg-amber-50 border border-amber-200" : "bg-neutral-50"
+              }`}
+            >
+              <input
+                type="number"
+                value={personForm.personCount}
+                onChange={(e) => setPersonForm({ ...personForm, personCount: e.target.value })}
+                placeholder="Count"
+                className="h-9 w-24 rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              />
+              <input
+                value={personForm.personLabel ?? ""}
+                onChange={(e) => setPersonForm({ ...personForm, personLabel: e.target.value })}
+                placeholder="Label"
+                className="h-9 flex-1 min-w-[100px] rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              />
+              <input
+                type="number"
+                value={personForm.personWeight}
+                onChange={(e) => setPersonForm({ ...personForm, personWeight: e.target.value })}
+                placeholder="Weight (default: 68)"
+                className="h-9 w-40 rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+              />
+              <select
+                value={personForm.personUnit}
+                onChange={(e) => setPersonForm({ ...personForm, personUnit: e.target.value })}
+                className="h-9 rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
               >
-                Add
-              </button>
-            )}
-          </form>
-
-          <Table
-            headers={["#", "Name", "Description", "Actions"]}
-            rows={(Array.isArray(units) ? units : [])
-              .filter((u) =>
-                u.unitName?.toLowerCase().includes(search.unit.toLowerCase())
-              )
-              .map((u, i) => [
-                i + 1,
-                u.unitName,
-                u.description,
-                <div className="flex gap-2 justify-center">
-                  {u.id === 1 && u.unitName === "Kg" ? (
-                    <span className="text-gray-500 text-sm italic">
-                      Not editable or deletable
-                    </span>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() =>
-                          setUnitForm({
-                            ...unitForm,
-                            editId: u.id,
-                            unit: u.unitName,
-                            unitDesc: u.description,
-                          })
-                        }
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Edit"
-                      >
-                        <Pencil
-                          size={16}
-                          className="text-blue-500 cursor-pointer hover:text-blue-700"
-                        />
-                      </button>
-                      <button
-                        onClick={() => deleteData("unit", u.id)}
-                        className="text-red-600 hover:text-red-800"
-                        title="Delete"
-                      >
-                        <Trash2
-                          size={16}
-                          className="text-red-400 cursor-pointer hover:text-red-700"
-                        />
-                      </button>
-                    </>
-                  )}
-                </div>,
-              ])}
-          />
-        </Section>
-
-        {/* Capacity Types */}
-        <Section title="Capacity Types" searchKey="type" setSearch={setSearch}>
-          {/* <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              postData(
-                "capacityType",
-                { type: capacityTypeForm.type },
-                capacityTypeForm.editId,
-                resetCapacityTypeForm
-              );
-            }}
-            className="flex gap-2"
-          >
-            <input
-              value={capacityTypeForm.type}
-              onChange={(e) =>
-                setCapacityTypeForm({
-                  ...capacityTypeForm,
-                  type: e.target.value,
-                })
-              }
-              placeholder="Type (Kg, Persons)"
-              required
-              className="border px-2 py-1 rounded-md"
-            />
-            {capacityTypeForm.editId ? (
-              <>
-                <button type="submit" 
-      className="bg-green-600 text-white px-4 py-1 rounded-md hover:bg-green-700"
-    >Update</button>
-                <button type="button" onClick={resetCapacityTypeForm}
-      className="bg-gray-400 text-white px-4 py-1 rounded-md hover:bg-gray-500"
-    >
-                  Cancel
+                <option value="">Select Unit</option>
+                {units.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.unitName}
+                  </option>
+                ))}
+              </select>
+              {personForm.editId ? (
+                <>
+                  <button
+                    type="submit"
+                    className="h-9 px-4 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition-colors"
+                  >
+                    Update
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetPersonForm}
+                    className="h-9 px-4 rounded-lg bg-neutral-400 text-white text-sm font-medium hover:bg-neutral-500 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="submit"
+                  className="h-9 px-4 rounded-lg bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors"
+                >
+                  <Plus className="inline-block w-4 h-4 mr-1" />
+                  Add
                 </button>
-              </>
-            ) : (
-              <button type="submit"
-    className="bg-blue-600 text-white px-4 py-1 rounded-md hover:bg-blue-700"
-  >Add</button>
-            )}
-          </form> */}
-          <Table
-            //headers={["#", "Type", "Actions"]}
-            headers={["#", "Type"]}
-            rows={capacityTypes
-              .filter((t) =>
-                t.type.toLowerCase().includes(search.type.toLowerCase())
-              )
-              .map((t, i) => [
-                i + 1,
-                t.type,
+              )}
+            </form>
 
-                // <div className="flex gap-2 justify-center">
-                //   <button
-                //     onClick={() =>
-                //       setCapacityTypeForm({
-                //         ...capacityTypeForm,
-                //         editId: t.id,
-                //         type: t.type,
-                //       })
-                //     }
-                //     className="text-blue-600 hover:text-blue-800"
-                //     title="Edit"
-                //   >
-                //     <Pencil size={16} />
-                //   </button>
-                //   <button
-                //     onClick={() => deleteData("capacityType", t.id)}
-                //     className="text-red-600 hover:text-red-800"
-                //     title="Delete"
-                //   >
-                //     <Trash2 size={16} />
-                //   </button>
-                // </div>,
-              ])}
-          />
-        </Section>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-neutral-50 border-b border-neutral-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Count</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Label</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Individual Weight</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Unit</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Capacity Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Total Weight</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-neutral-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-neutral-100">
+                  {personCaps
+                    .filter((p) => p.label.toLowerCase().includes(search.person.toLowerCase()))
+                    .map((p, i) => (
+                      <tr key={p.id} className="hover:bg-neutral-50 transition-colors">
+                        <td className="px-4 py-3 text-neutral-600">{i + 1}</td>
+                        <td className="px-4 py-3 font-medium text-neutral-900">{p.personCount}</td>
+                        <td className="px-4 py-3 text-neutral-600">{p.label}</td>
+                        <td className="px-4 py-3 text-neutral-600">{p.individualWeight}</td>
+                        <td className="px-4 py-3 text-neutral-600">
+                          {units.find((u) => u.id === p.unitId)?.unitName || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-neutral-600">
+                          {capacityTypes.find((c) => c.id === p.capacityTypeId)?.type || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-neutral-900">{p.displayName}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() =>
+                                setPersonForm({
+                                  editId: p.id,
+                                  personCount: p.personCount,
+                                  personLabel: p.label,
+                                  personWeight: p.individualWeight,
+                                  personUnit: p.unitId,
+                                  personCapType: p.capacityTypeId,
+                                })
+                              }
+                              className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <span className="text-neutral-300">·</span>
+                            <button
+                              onClick={() => deleteData("personCapacity", p.id)}
+                              className="text-xs text-red-600 hover:text-red-700 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
-
-      {/* weight */}
-      <Section
-        title="Weight Capacity"
-        searchKey="weight"
-        setSearch={setSearch}
-        actionButton={
-          <button
-            onClick={addDefaultWeights}
-            className="bg-purple-600 text-white px-3 py-1 text-sm rounded-md hover:bg-purple-700 transition"
-            title="Add 100Kg, 250Kg, 500Kg defaults"
-          >
-            Add Default Weights
-          </button>
-        }
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-
-            if (
-              isNaN(weightForm.weightValue) ||
-              weightForm.weightValue === ""
-            ) {
-              toast.error("Weight value must be a number.");
-              return;
-            }
-
-            postData(
-              "weight",
-              {
-                unitId: weightForm.weightUnit || 1,
-                weightValue: +weightForm.weightValue,
-                capacityTypeId: weightForm.weightCapType,
-                //capacity_type: kgsForm.kgsCapType,
-                //capacity_type: 2, // Kg CapacityType (id = 2)
-              },
-              weightForm.editId,
-              resetWeightForm
-            );
-          }}
-          className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
-            weightForm.editId ? "bg-yellow-50" : "bg-gray-100"
-          }`}
-        >
-          <select
-            value={weightForm.weightUnit}
-            onChange={(e) =>
-              setWeightForm({ ...weightForm, weightUnit: e.target.value })
-            }
-            className="border px-2 py-1"
-          >
-            <option value="">Select Unit</option>
-            {units.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.unitName}
-              </option>
-            ))}
-          </select>
-          <input
-            value={weightForm.weightValue}
-            onChange={(e) =>
-              setWeightForm({ ...weightForm, weightValue: e.target.value })
-            }
-            type="number"
-            placeholder="Weight Value"
-            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {/* <select
-            value={kgsForm.kgsCapType}
-            onChange={(e) =>
-              setKgsForm({ ...kgsForm, kgsCapType: e.target.value })
-            }
-            className="border px-2 py-1 rounded-md"
-          >
-            <option value="">Select Capacity Type</option>
-            {capacityTypes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.type}
-              </option>
-            ))}
-          </select> */}
-          {weightForm.editId ? (
-            <>
-              <button
-                disabled={isDuplicate}
-                className={`${
-                  isDuplicate ? "bg-gray-400" : "bg-green-600"
-                } text-white px-3 py-1 rounded-md hover:bg-green-700 transition`}
-              >
-                Update
-              </button>
-              <button
-                type="button"
-                onClick={resetWeightForm}
-                className="bg-gray-400 text-white px-3 py-1 rounded-md hover:bg-gray-500 transition"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              disabled={isDuplicate}
-              className={`${
-                isDuplicate ? "bg-gray-400" : "bg-blue-600"
-              } text-white px-3 py-1 rounded-md hover:bg-blue-70 transition`}
-            >
-              Add
-            </button>
-          )}
-          {isDuplicate && (
-            <p className="text-red-500 text-sm mt-1">
-              This weight already exists for the selected unit and type.
-            </p>
-          )}
-        </form>
-
-        <div className="max-h-[200px] overflow-y-auto rounded">
-          <Table
-            headers={["#", "Unit", "Weight", "Capacity Type", "Actions"]}
-            rows={weight
-              .filter((k) => `${k.weightValue}`.includes(search.weight))
-              .map((k, i) => [
-                i + 1,
-                units.find((u) => u.id === k.unitId)?.unitName || "-",
-                k.weightValue,
-                capacityTypes.find((c) => c.id === k.capacityTypeId)?.type ||
-                  "-",
-                <div className="flex gap-2 justify-left">
-                  <button
-                    onClick={() =>
-                      setWeightForm({
-                        editId: k.id,
-                        weightUnit: k.unitId,
-                        weightValue: k.weightValue,
-                        weightCapType: k.capacityTypeId,
-                      })
-                    }
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Edit"
-                  >
-                    <Pencil
-                      size={16}
-                      className="text-blue-500 cursor-pointer hover:text-blue-700"
-                    />
-                  </button>
-                  <button
-                    onClick={() => deleteData("weight", k.id)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Delete"
-                  >
-                    <Trash2
-                      size={16}
-                      className="text-red-400 cursor-pointer hover:text-red-700"
-                    />
-                  </button>
-                </div>,
-              ])}
-          />
-        </div>
-      </Section>
-
-      {/* Person Capacity */}
-      <Section
-        title="Person Capacity"
-        searchKey="person"
-        setSearch={setSearch} // Pass the new button via a prop
-        actionButton={
-          <button
-            onClick={addDefaultPersonCaps}
-            className="bg-purple-600 text-white px-3 py-1 text-sm rounded-md hover:bg-purple-700 transition"
-            title="Add 2, 4, 6 Person defaults"
-          >
-            Add Default Persons
-          </button>
-        }
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-
-            if (
-              isNaN(personForm.personCount) ||
-              (!personForm.personWeight && isNaN(68)) || // fallback will be 68
-              !isNaN(personForm.personLabel)
-            ) {
-              toast.error(
-                "Count and Weight must be numbers. Name must be a string."
-              );
-              return;
-            }
-
-            const finalWeight = personForm.personWeight || 68;
-
-            postData(
-              "personCapacity",
-              {
-                personCount: +personForm.personCount,
-                label: personForm.personLabel,
-                individualWeight: +finalWeight,
-                unitId: personForm.personUnit,
-                capacityTypeId: personForm.personCapType,
-              },
-              personForm.editId,
-              resetPersonForm
-            );
-          }}
-          className={`flex gap-2 flex-wrap p-2 rounded-md shadow-lg ${
-            personForm.editId ? "bg-yellow-50" : "bg-gray-100"
-          }`}
-        >
-          <input
-            type="number"
-            value={personForm.personCount}
-            onChange={(e) =>
-              setPersonForm({ ...personForm, personCount: e.target.value })
-            }
-            placeholder="Count"
-            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            value={personForm.personLabel ?? ""}
-            onChange={(e) =>
-              setPersonForm({ ...personForm, personLabel: e.target.value })
-            }
-            placeholder="Name"
-            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <input
-            type="number"
-            value={personForm.personWeight}
-            onChange={(e) =>
-              setPersonForm({ ...personForm, personWeight: e.target.value })
-            }
-            placeholder="Number to calculate weight(68)"
-            className="border px-2 py-1 rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <select
-            value={personForm.personUnit}
-            onChange={(e) =>
-              setPersonForm({ ...personForm, personUnit: e.target.value })
-            }
-            className="border px-2 py-1 rounded-md"
-          >
-            <option value="">Unit</option>
-            {units.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.unitName}
-              </option>
-            ))}
-          </select>
-          {/* <select
-            value={personForm.personCapType}
-            onChange={(e) =>
-              setPersonForm({ ...personForm, personCapType: e.target.value })
-            }
-            className="border px-2 py-1"
-          >
-            <option value="">Capacity Type</option>
-            {capacityTypes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.type}
-              </option>
-            ))}
-          </select> */}
-          {personForm.editId ? (
-            <>
-              <button
-                type="submit"
-                className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 transition"
-                //disabled={isPersonDuplicate}
-              >
-                Update
-              </button>
-              <button
-                type="button"
-                onClick={resetPersonForm}
-                className="bg-gray-400 text-white px-3 py-1 rounded-md hover:bg-gray-500 transition"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              type="submit"
-              className={`bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition`}
-              // className={`${
-              //   isPersonDuplicate ? "bg-gray-400" : "bg-blue-600"
-              // } text-white px-3 py-1 rounded`}
-              //disabled={isPersonDuplicate}
-            >
-              Add
-            </button>
-          )}
-        </form>
-        <div className="max-h-[200px] overflow-y-auto rounded">
-          <Table
-            headers={[
-              "#",
-              "Count (Persons)",
-              "Label",
-              "Individual Weight (Kg)",
-              "Unit",
-              "Capacity Type",
-              "Combined Weight",
-              "Actions",
-            ]}
-            rows={personCaps
-              .filter((p) =>
-                p.label.toLowerCase().includes(search.person.toLowerCase())
-              )
-              .map((p, i) => [
-                i + 1,
-                p.personCount,
-                p.label,
-                p.individualWeight,
-                units.find((u) => u.id === p.unitId)?.unitName || "-",
-                capacityTypes.find((c) => c.id === p.capacityTypeId)?.type ||
-                  "-",
-                p.displayName,
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={() =>
-                      setPersonForm({
-                        editId: p.id,
-                        personCount: p.personCount,
-                        personLabel: p.label,
-                        personWeight: p.individualWeight,
-                        personUnit: p.unitId,
-                        personCapType: p.capacityTypeId,
-                      })
-                    }
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Edit"
-                  >
-                    <Pencil
-                      size={16}
-                      className="text-blue-500 cursor-pointer hover:text-blue-700"
-                    />
-                  </button>
-                  <button
-                    onClick={() => deleteData("personCapacity", p.id)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Delete"
-                  >
-                    <Trash2
-                      size={16}
-                      className="text-red-400 cursor-pointer hover:text-red-700"
-                    />
-                  </button>
-                </div>,
-              ])}
-          />
-        </div>
-      </Section>
     </div>
   );
 }
-
-function Section({ title, children, searchKey, setSearch, actionButton }) {
-  return (
-    <div className="space-y-2 rounded-2xl p-4 bg-white rounded shadow-lg border border-gray-400">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-blue-700">
-          {title}
-        </h2>
-        <div className="flex gap-2 items-center">
-          {actionButton}
-          <input
-            type="text"
-            placeholder="Search..."
-            onChange={(e) =>
-              setSearch((prev) => ({ ...prev, [searchKey]: e.target.value }))
-            }
-            className="border px-2 py-1 text-sm w-48 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        {/* <input
-          type="text"
-          placeholder="Search..."
-          onChange={(e) =>
-            setSearch((prev) => ({ ...prev, [searchKey]: e.target.value }))
-          }
-          className="border px-2 py-1 text-sm w-48  rounded-md  rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        /> */}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// function Table({ headers, rows }) {
-//   return (
-//     <div className="overflow-x-auto">
-//       <table className="min-w-full text-sm border">
-//         <thead className="bg-gray-100">
-//           <tr>
-//             {headers.map((h, i) => (
-//               <th key={i} className="border px-2 py-1">
-//                 {h}
-//               </th>
-//             ))}
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {rows.map((row, ri) => (
-//             <tr key={ri} className="border-t">
-//               {row.map((cell, ci) => (
-//                 <td key={ci} className="px-2 py-1 text-center">
-//                   {cell}
-//                 </td>
-//               ))}
-//             </tr>
-//           ))}
-//         </tbody>
-//       </table>
-//     </div>
-//   );
-// }
 
 export async function fetchDataArray(url) {
   try {
     const res = await axiosInstance.get(url);
-    // Handle both ApiResponse format (res.data.data) and direct array format (res.data)
     if (Array.isArray(res.data?.data)) {
       return res.data.data;
     } else if (Array.isArray(res.data)) {
@@ -1043,43 +946,7 @@ export async function fetchDataArray(url) {
     }
     return [];
   } catch (error) {
-    console.error(
-      "Error fetching data:",
-      error.response?.data || error.message
-    );
+    console.error("Error fetching data:", error.response?.data || error.message);
     return [];
   }
 }
-
-const Table = ({ headers, rows }) => {
-  return (
-    <table className="min-w-full text-sm text-left border-separate border-spacing-0">
-      <thead>
-        <tr>
-          {headers.map((header, index) => (
-            <th
-              key={index}
-              className="sticky top-0 bg-blue-100 z-10 px-4 py-2 border-b border-gray-200"
-            >
-              {header}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, rowIndex) => (
-          <tr key={rowIndex} className="even:bg-gray-50">
-            {row.map((cell, cellIndex) => (
-              <td
-                key={cellIndex}
-                className="px-4 py-2 border-b border-gray-100"
-              >
-                {cell}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-};

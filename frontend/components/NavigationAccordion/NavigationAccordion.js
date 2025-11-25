@@ -168,8 +168,8 @@ const NavigationAccordion = () => {
         { title: 'Assign Role', href: '/dashboard/user-resource/assign-role' },
         { title: 'Change Password', href: '/dashboard/user-resource/change-password' },
         // Configuration
-        { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
-        { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
+        // { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
+        // { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
         // Attendance & time
         // { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
         // { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
@@ -194,8 +194,8 @@ const NavigationAccordion = () => {
       submenu: [
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
-        { title: 'Activity List', href: `/dashboard/lead-management/activity-list` },
-        { title: 'List All Mail To Lead', href: `/dashboard/lead-management/mail-to-lead` },
+        // { title: 'Activity List', href: `/dashboard/lead-management/activity-list` },
+        // { title: 'List All Mail To Lead', href: `/dashboard/lead-management/mail-to-lead` },
         { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` }
 
       ]
@@ -248,18 +248,18 @@ const NavigationAccordion = () => {
 
       ]
     },
-    {
-      id: 'accounts',
-      title: 'Accounts',
-      icon: DollarSign,
-      hasSubmenu: true,
-      submenu: [
-        { title: 'Chart of Accounts', href: '/accounts/chart' },
-        { title: 'Transactions', href: '/accounts/transactions' },
-        { title: 'Reports', href: '/accounts/reports' },
-        { title: 'Settings', href: '/accounts/settings' }
-      ]
-    },
+    // {
+    //   id: 'accounts',
+    //   title: 'Accounts',
+    //   icon: DollarSign,
+    //   hasSubmenu: true,
+    //   submenu: [
+    //     { title: 'Chart of Accounts', href: '/accounts/chart' },
+    //     { title: 'Transactions', href: '/accounts/transactions' },
+    //     { title: 'Reports', href: '/accounts/reports' },
+    //     { title: 'Settings', href: '/accounts/settings' }
+    //   ]
+    // },
      {
       id: 'settings',
       title: 'settings',

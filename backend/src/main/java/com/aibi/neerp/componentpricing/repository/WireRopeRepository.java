@@ -9,5 +9,7 @@ import java.util.List;
 public interface WireRopeRepository extends JpaRepository<WireRope, Integer> {
     List<WireRope> findByFloor_Id(Long floorId);
 
-    List<WireRope> findByFloor_IdAndOperatorElevator_Id(Long floorId, Long operatorTypeId);
+    //    List<WireRope> findByFloor_IdAndOperatorElevator_Id(Long floorId, Long operatorTypeId);
+    List<WireRope> findByFloor_IdAndMachineType_Id(Long floorId, Integer machineTypeId);
+
 }

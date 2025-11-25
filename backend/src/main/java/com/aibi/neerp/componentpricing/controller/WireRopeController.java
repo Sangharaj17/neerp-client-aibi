@@ -53,12 +53,14 @@ public class WireRopeController {
         return ResponseEntity.ok(wireRopeService.findByFloorId(floorId));
     }
 
-    @GetMapping("/floor/{floorId}/operator/{operatorTypeId}")
-    public ResponseEntity<List<WireRopeResponseDTO>> getWireRopesByFloorAndOperator(
+    @GetMapping("/floor/{floorId}/machine/{machineTypeId}")
+    public ResponseEntity<List<WireRopeResponseDTO>> getWireRopesByFloorAndMachineType(
             @PathVariable Long floorId,
-            @PathVariable Long operatorTypeId) {
-        log.info("API Call: Get WireRopes by Floor ID {} and Operator Type ID {}", floorId, operatorTypeId);
-        return ResponseEntity.ok(wireRopeService.findByFloorAndOperator(floorId, operatorTypeId));
+            @PathVariable Integer machineTypeId) { // Changed type from Long to Integer to match TypeOfLift/DTO
+
+        log.info("API Call: Get WireRopes by Floor ID {} and Machine Type ID {}", floorId, machineTypeId);
+
+        return ResponseEntity.ok(wireRopeService.findByFloorAndMachineType(floorId, machineTypeId));
     }
 
 

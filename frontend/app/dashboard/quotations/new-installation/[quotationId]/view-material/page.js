@@ -1,297 +1,487 @@
-// ViewMaterialPage.jsx
 "use client";
-import { useState, useEffect } from "react";
-import { Calendar } from "lucide-react";
-import Link from "next/link";
-import BillOfMaterialModal from "./BillOfMaterialModal";
+import { useState, useEffect, useMemo } from "react";
 import { useParams } from 'next/navigation';
+import { Truck, DollarSign, List, CalendarCheck, Building } from "lucide-react";
+import Link from "next/link";
+import { toast } from "react-hot-toast";
+import BillOfMaterialModal from "./BillOfMaterialModal";
 import { getTenant } from '@/utils/tenant';
+import { getQuotationById } from "@/services/quotationApi";
+import { formatDateIN, formatCurrency } from "@/utils/common";
 
-// --- IMPORTANT: These constants are duplicated for initial calculation.
-// --- In a real app, you'd import these from a central config/data file.
-const VENDORS = [
-  { id: 1, name: "Vendor A" },
-  { id: 2, name: "Vendor B" },
-  { id: 3, name: "Vendor C" },
-];
-
-const allMaterials = [
-  { id: 1, name: "LANDING LOCK SET...", prices: { default: 3000, "1": 2900, "2": 3100 } },
-  { id: 2, name: "CARGET ANGLE ONLY...", prices: { default: 1125, "1": 1100, "3": 1150 } },
-  { id: 3, name: "CAR & COUNTER WEIGHT...", prices: { default: 40312.5, "2": 39500 } },
-  { id: 4, name: "MAGNET SQR SET", prices: { default: 279 } },
-  { id: 5, name: "DOOR FRAME", prices: { default: 5000, "1": 4900, "3": 5100 } },
-  { id: 6, name: "CABIN WALLS", prices: { default: 15000, "2": 14500 } },
-  { id: 7, name: "CEILING LIGHTS", prices: { default: 800 } },
-  { id: 8, name: "FLOORING TILES", prices: { default: 1200, "1": 1180 } },
-  { id: 9, name: "BUTTON PANEL", prices: { default: 2500, "3": 2600 } },
-  { id: 10, name: "ROPES", prices: { default: 7000, "2": 6900 } },
-  { id: 11, name: "CONTROLLER", prices: { default: 18000, "1": 17500 } },
-  { id: 12, name: "SAFETY GEAR", prices: { default: 3500 } },
-  { id: 13, name: "BUFFER", prices: { default: 900, "3": 880 } },
-  { id: 14, name: "GUIDE RAILS", prices: { default: 6000, "2": 5900 } },
-  { id: 15, name: "MOTOR", prices: { default: 25000, "1": 24000, "3": 25500 } },
-  { id: 16, name: "DOOR SAFETY SENSOR ONLY FOR AUTOMATIC LIFT", prices: { default: 7500 } },
-  { id: 17, name: "FINAL LIMIT CAMP 10FT", prices: { default: 1250 } },
-  { id: 18, name: "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX", prices: { default: 3750 } },
-  { id: 19, name: "PENCIL READ", prices: { default: 1000 } },
-  { id: 20, name: "TARMİNAL PATA WITH G. CLIP BIG AND HARDWARE", prices: { default: 1128 } },
-  { id: 21, name: "WIRE TIE", prices: { default: 125 } },
-  { id: 22, name: "GEAR OIL 90 NO", prices: { default: 938 } },
-  { id: 23, name: "COTTON WEASTE 1 KG", prices: { default: 125 } },
-  { id: 24, name: "EARTH - WIRE BIG 3 KG GALVENISE", prices: { default: 125 } },
-  { id: 25, name: "EARTHING BRACKET", prices: { default: 125 } },
-  { id: 26, name: "CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE", prices: { default: 40312.5 } },
-  { id: 27, name: "CABLE HENGER YELLOW", prices: { default: 564 } },
-  { id: 28, name: "MAGNET SQR SET", prices: { default: 465 } },
-  { id: 29, name: "PIT SWITCH BOX", prices: { default: 376 } },
-  { id: 30, name: "TARMİNAL SWITCH O/S TYPE", prices: { default: 2250 } },
-  { id: 31, name: "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)", prices: { default: 875 } },
-  { id: 32, name: "GREACE", prices: { default: 125 } },
-  { id: 33, name: "CWT GUIDE CLIP SMALL WITH HARDWARE", prices: { default: 0 } },
-  { id: 34, name: "EARTH - WIRE SMALL Â 0.5 MM", prices: { default: 406 } },
-  { id: 35, name: "HARDWARE WITH FASTNER For G+4", prices: { default: 8500 } },
-];
-// --- End of duplicated constants ---
-
-export default function ViewMaterialPage(params) {
+export default function ViewMaterialPage() {
   const tenant = getTenant();
-  const { quotationId } = useParams();
+  const params = useParams();
+  const quotationMainId = params.quotationId;
 
-  const [lifts, setLifts] = useState([
-    { id: 1, totalAmount: 0, gstAmount: 0, loadAmount: 0, finalAmount: 0 },
-    { id: 2, totalAmount: 0, gstAmount: 0, loadAmount: 0, finalAmount: 0 },
-    { id: 3, totalAmount: 0, gstAmount: 0, loadAmount: 0, finalAmount: 0 },
-  ]);
-  const [bomPopup, setBomPopup] = useState({ open: false, liftId: null });
+  const [quotationData, setQuotationData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [lifts, setLifts] = useState([])
+
+  const [bomPopup, setBomPopup] = useState({ open: false, liftId: null, liftData: null });
   const [overallGstPercentage, setOverallGstPercentage] = useState(18);
 
-  // Helper function to calculate a single lift's default amounts
-  const calculateDefaultLiftAmounts = () => {
-    // This logic mimics the initial calculation in BillOfMaterialModal
-    const initialRows = allMaterials.map((item) => ({
-      ...item,
-      qty: 1,
-      selected: true,
-      vendorId: "", // Default to no specific vendor, use default price
-    }));
 
-    // Helper function (copied from BillOfMaterialModal)
-    const getItemPrice = (item) => {
-      const originalMaterial = allMaterials.find(mat => mat.id === item.id);
-      if (!originalMaterial || !originalMaterial.prices) {
-        return 0;
-      }
-      return originalMaterial.prices[item.vendorId] || originalMaterial.prices.default || 0;
-    };
-
-    const defaultAmount = initialRows.reduce((sum, item) => {
-      if (item.selected) {
-        return sum + getItemPrice(item) * item.qty;
-      }
-      return sum;
-    }, 0);
-
-    const defaultGstPercentage = 18; // Default GST from BillOfMaterialModal
-    const defaultLoadPercentage = 20; // Default Load from BillOfMaterialModal
-
-    const defaultGstAmount = defaultAmount * (defaultGstPercentage / 100);
-    const defaultLoadAmount = defaultAmount * (defaultLoadPercentage / 100);
-    const defaultFinalAmount = defaultAmount + defaultGstAmount + defaultLoadAmount;
-
-    return {
-      totalAmount: defaultAmount, // This is the base material amount
-      gstAmount: defaultGstAmount,
-      loadAmount: defaultLoadAmount,
-      finalAmount: defaultFinalAmount, // This includes the lift's individual GST and Load
-      liftGstPercentage: defaultGstPercentage,
-      liftLoadPercentage: defaultLoadPercentage,
-    };
-  };
-
-  // useEffect to calculate default amounts for all lifts on initial load
   useEffect(() => {
-    const defaultAmounts = calculateDefaultLiftAmounts();
-    setLifts((prevLifts) =>
-      prevLifts.map((lift) => ({
-        ...lift,
-        ...defaultAmounts, // Apply the calculated default amounts to each lift
-      }))
-    );
-  }, []);
+    // Ensure we have a valid ID to fetch
+    if (!quotationMainId) {
+      toast.error("Missing quotation ID.");
+      setError("Missing quotation ID.");
+      return;
+    }
+
+    const fetchQuotationData = async () => {
+      // 1. Set Loading State
+      setLoading(true);
+
+      // 2. Show Loading Toast and capture its ID for dismissal/update
+      let fetchToastId = toast.loading(`Loading Quotation #${quotationMainId}...`);
+
+      try {
+        const response = await getQuotationById(quotationMainId);
+
+        if (response.success) {
+          const quotationData = response.data;
+
+          setQuotationData(quotationData);
+          setLifts(quotationData.liftDetails);
+          toast.success(`Quotation ${quotationData.quotationNo || quotationMainId} loaded successfully!`, {
+            id: fetchToastId,
+          });
+
+        } else {
+          setError(response.message || 'Failed to retrieve quotation details.');
+
+          toast.error(response.message || 'Failed to retrieve quotation details.', {
+            id: fetchToastId,
+          });
+        }
+
+      } catch (err) {
+        setError(err.message || 'An unexpected error occurred during fetch.');
+
+        console.error('Unexpected error during fetch process:', err);
+
+        toast.error('An unexpected error occurred. Please try again.', {
+          id: fetchToastId,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuotationData();
+
+  }, [quotationMainId]);
+
+  // // Helper function to calculate a single lift's default amounts
+  // const calculateDefaultLiftAmounts = () => {
+  //   // This logic mimics the initial calculation in BillOfMaterialModal
+  //   const initialRows = allMaterials.map((item) => ({
+  //     ...item,
+  //     qty: 1,
+  //     selected: true,
+  //     vendorId: "", // Default to no specific vendor, use default price
+  //   }));
+
+  //   // Helper function (copied from BillOfMaterialModal)
+  //   const getItemPrice = (item) => {
+  //     const originalMaterial = allMaterials.find(mat => mat.id === item.id);
+  //     if (!originalMaterial || !originalMaterial.prices) {
+  //       return 0;
+  //     }
+  //     return originalMaterial.prices[item.vendorId] || originalMaterial.prices.default || 0;
+  //   };
+
+  //   const defaultAmount = initialRows.reduce((sum, item) => {
+  //     if (item.selected) {
+  //       return sum + getItemPrice(item) * item.qty;
+  //     }
+  //     return sum;
+  //   }, 0);
+
+  //   const defaultGstPercentage = 18; // Default GST from BillOfMaterialModal
+  //   const defaultLoadPercentage = 20; // Default Load from BillOfMaterialModal
+
+  //   const defaultGstAmount = defaultAmount * (defaultGstPercentage / 100);
+  //   const defaultLoadAmount = defaultAmount * (defaultLoadPercentage / 100);
+  //   const defaultFinalAmount = defaultAmount + defaultGstAmount + defaultLoadAmount;
+
+  //   return {
+  //     totalAmount: defaultAmount, // This is the base material amount
+  //     gstAmount: defaultGstAmount,
+  //     loadAmount: defaultLoadAmount,
+  //     finalAmount: defaultFinalAmount, // This includes the lift's individual GST and Load
+  //     liftGstPercentage: defaultGstPercentage,
+  //     liftLoadPercentage: defaultLoadPercentage,
+  //   };
+  // };
+
+  // // useEffect to calculate default amounts for all lifts on initial load
+  // useEffect(() => {
+  //   const defaultAmounts = calculateDefaultLiftAmounts();
+  //   setLifts((prevLifts) =>
+  //     prevLifts.map((lift) => ({
+  //       ...lift,
+  //       ...defaultAmounts, // Apply the calculated default amounts to each lift
+  //     }))
+  //   );
+  // }, []);
 
   // Function to update a specific lift's amounts after modal close
   const handleBomClose = (data) => {
-    setLifts((prevLifts) =>
-      prevLifts.map((lift) =>
-        lift.id === bomPopup.liftId
-          ? {
-              ...lift,
-              totalAmount: data.amount, // Base material amount from modal
-              gstAmount: data.gstAmount,
-              loadAmount: data.loadAmount,
-              finalAmount: data.finalAmount, // Final amount from modal (materials + modal's GST + modal's Load)
-              liftGstPercentage: data.gstPercentage,
-              liftLoadPercentage: data.loadPercentage,
-            }
-          : lift
-      )
-    );
-    setBomPopup({ open: false, liftId: null });
+    // setLifts((prevLifts) =>
+    //   prevLifts.map((lift) =>
+    //     lift.id === bomPopup.liftId
+    //       ? {
+    //         ...lift,
+    //         totalAmount: data.amount, // Base material amount from modal
+    //         gstAmount: data.gstAmount,
+    //         loadAmount: data.loadAmount,
+    //         finalAmount: data.finalAmount, // Final amount from modal (materials + modal's GST + modal's Load)
+    //         liftGstPercentage: data.gstPercentage,
+    //         liftLoadPercentage: data.loadPercentage,
+    //       }
+    //       : lift
+    //   )
+    // );
+    setBomPopup({ open: false, liftId: null, liftData: null });
   };
 
-  // Calculate the overall sum of 'Final Amount' from all lifts for 'Overall Material Amount'
-  // This matches your expectation that 275387.28 is the base for overall GST.
-  const overallTotalMaterialAmount = lifts.reduce(
-    (sum, lift) => sum + lift.finalAmount, // <--- CHANGED THIS TO sum + lift.finalAmount
-    0
-  );
+  const {
+    overallTotalMaterialAmount,
+    overallTotalGstAmount,
+    overallTotalLoadAmount,
+    amountIncludingGST,
+    gstBreakdown,
+    loadBreakdown,
+    floorDesignationsString,
+    headerSummaryString,
+  } = useMemo(() => {
 
-  // Calculate the overall GST Amount based on overallGstPercentage
-  const overallGstAmount =
-    overallTotalMaterialAmount * (overallGstPercentage / 100);
+    // --- Step 1: Initialize Accumulators ---
+    let baseMaterialTotal = 0;
+    let totalGstAmount = 0;
+    let totalLoadAmount = 0;
 
-  // Calculate the overall Final Amount
-  const overallFinalAmount = overallTotalMaterialAmount + overallGstAmount;
+    const gstBreakdown = {};
+    const loadBreakdown = {};
+    // String accumulator for floor designations
+    const uniqueFloorDesignations = new Set();
+    const uniqueLiftTypes = new Set();
+    const uniqueLiftModelTypes = new Set();
+    const uniqueTital = new Set();
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-      <div className="flex items-center justify-between sticky top-0 bg-white z-10 pb-2 border-b">
-        <h1 className="text-2xl font-bold">Bill Of Material</h1>
-        {/* CORRECTED LINK HERE */}
-        <Link
-          href={`/dashboard/quotations/new-installation`}
-          className="text-sm bg-sky-100 hover:bg-sky-200 text-sky-700 font-medium px-4 py-2 rounded"
-        >
-          ⬅ Back To List
-        </Link>
-      </div>
+    // --- Step 2: Iterate and Calculate ---
+    lifts.forEach((lift, index) => {
+      const baseAmount = lift.totalAmountWithoutGST || 0;
+      const taxRate = lift.tax || 0;
+      const loadRate = lift.loadPerAmt || 0;
 
-      <div className="text-xl text-center font-semibold text-gray-800">
-        G+5 GEARED Manual Elevator
-      </div>
+      // 1. Accumulate Base Material Total
+      baseMaterialTotal += baseAmount;
 
-      <div className="grid md:grid-cols-3 gap-x-8 gap-y-3 bg-gray-50 p-4 rounded shadow-sm text-sm">
-        <div>
-          <strong>Customer Name:</strong> MR.PRAYUSH
+      // 2. Calculate GST Amount (if not already calculated in lift.gstAmount)
+      const liftGstAmount = baseAmount * (taxRate / 100);
+      totalGstAmount += liftGstAmount;
+
+      // 3. Accumulate Load Amount (Use the provided amount from lift data)
+      const liftLoadAmount = lift.loadAmt || 0;
+      totalLoadAmount += liftLoadAmount;
+
+      // 4. Build GST Breakdown
+      const currentGstTotal = gstBreakdown[taxRate] || 0;
+      gstBreakdown[taxRate] = currentGstTotal + liftGstAmount;
+
+      // 5. Build Load Breakdown (if different rates exist)
+      const currentLoadTotal = loadBreakdown[loadRate] || 0;
+      loadBreakdown[loadRate] = currentLoadTotal + liftLoadAmount;
+
+      if (lift.floorDesignations) {
+        // liftFloorDetails.push(`Lift ${index + 1}: ${lift.floorDesignations}`);
+        uniqueFloorDesignations.add(lift.floorDesignations);
+      }
+
+      if (lift.liftTypeName) {
+        uniqueLiftTypes.add(lift.liftTypeName);
+      }
+
+      if (lift.typeOfLiftName) {
+        uniqueLiftModelTypes.add(lift.typeOfLiftName);
+      }
+
+      uniqueTital.add(lift.floorDesignations + " " + lift.liftTypeName + " " + lift.typeOfLiftName)
+
+    });
+
+    // 6. Calculate Amount including GST (Total Material + Total GST)
+    const amountInclGST = baseMaterialTotal + totalGstAmount;
+
+    // Join the parts into a single string for display
+    const finalDesignationsString = Array.from(uniqueFloorDesignations).join(', ');
+    const liftTypeString = Array.from(uniqueLiftTypes).join(' & '); // Join Lift Types (e.g., Passenger & Goods)
+    const liftModelTypeString = Array.from(uniqueLiftModelTypes).join(', '); // Join Model Types (e.g., MRL, Hydraulic)
+
+    // Combine all strings into a descriptive header
+    let summaryParts = [];
+    if (liftTypeString) {
+      // Example: "Passenger & Goods Lifts"
+      summaryParts.push(`${liftTypeString} Lifts`);
+    } else {
+      summaryParts.push("Lift Quotation");
+    }
+
+    if (liftModelTypeString) {
+      // Example: " (MRL, Hydraulic)"
+      summaryParts.push(`(${liftModelTypeString})`);
+    }
+
+    if (finalDesignationsString) {
+      // Example: " for floors G+29, B+1"
+      summaryParts.push(`for floors ${finalDesignationsString}`);
+    }
+
+    // Join with spaces to create the final sentence/header
+    const headerSummaryString = summaryParts.join(' ');
+
+    return {
+      overallTotalMaterialAmount: baseMaterialTotal,
+      overallTotalGstAmount: totalGstAmount,
+      overallTotalLoadAmount: totalLoadAmount,
+      amountIncludingGST: amountInclGST,
+      gstBreakdown: gstBreakdown,
+      loadBreakdown: loadBreakdown,
+      floorDesignationsString: finalDesignationsString,
+      headerSummaryString: headerSummaryString,
+    };
+  }, [lifts]);
+
+  // Overall Final Amount is now: Material + GST + Load
+  const overallFinalAmount = amountIncludingGST + overallTotalLoadAmount;
+
+  if (loading) return <div className="p-4 text-center text-blue-600">Loading quotation data...</div>;
+  if (error) return <div className="p-4 text-center text-red-600">Error: {error}</div>;
+
+  if (quotationData) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 space-y-5">
+
+        {/* {error && (
+        <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg mb-4">
+          <p className="font-bold">Data Error:</p>
+          <p>{error}</p>
         </div>
-        <div>
-          <strong>Site Name:</strong> BRAMAHA site Navi Mumbai
-        </div>
-        <div>
-          <strong>Quotation No.:</strong> PEPL-2
-        </div>
-        <div>
-          <strong>Customer Address:</strong> Mumbai
-        </div>
-        <div>
-          <strong>Site Address:</strong> Navi Mumbai
-        </div>
-        <div>
-          <strong>Floor Designations:</strong> G+29
-        </div>
-      </div>
+      )} */}
 
-      <div className="flex items-center gap-4">
-        <label className="font-medium text-sm">Order Date*</label>
-        <div className="flex items-center border px-2 py-1 rounded text-sm">
-          <input
-            type="date"
-            className="outline-none"
-            defaultValue="2025-07-25"
-          />
-          <Calendar className="w-4 h-4 text-gray-500 ml-2" />
-        </div>
-      </div>
-
-      <div>
-        <div className="my-6 space-y-3">
-          {lifts.map((lift) => (
-            <div
-              key={lift.id}
-              className="flex items-center justify-between border rounded p-2 shadow-md bg-white w-3/4 mx-auto"
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-lg">Lift {lift.id}</span>
-                <span className="text-gray-600 text-sm">
-                  (Total: ₹{lift.finalAmount.toFixed(2)})
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  className="bg-sky-600 text-white px-3 py-1 rounded"
-                  onClick={() => setBomPopup({ open: true, liftId: lift.id })}
-                >
-                  Bill of Material
-                </button>
-              </div>
-            </div>
-          ))}
+        {/* HEADER AND BACK BUTTON */}
+        <div className="flex items-center justify-between sticky top-0 bg-white z-20 pb-4 ">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+            <List className="w-8 h-8 text-blue-600" /> Bill Of Material
+          </h1>
+          <Link
+            href={`/dashboard/quotations/new-installation`}
+            className="flex items-center space-x-1 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold px-4 py-2 rounded-lg transition duration-150 ease-in-out shadow-sm"
+          >
+            <span className="text-xl">⟵</span> <span>Back To List</span>
+          </Link>
         </div>
 
-        {/* Overall Total and GST Section */}
-        <div className="border-t pt-4 mt-6 space-y-3">
-          <h2 className="text-xl font-bold text-center">Overall Project Summary</h2>
+        {/* LIFT SUMMARY & ORDER INFO (Elevated Card) - Integrated Order Date/Quotation No */}
+        <div className="bg-white p-6 rounded-xl bg-gray-200 shadow-lg border border-gray-400 space-y-6">
+          <div className="text-2xl text-center font-bold text-blue-700">
+            {/* {floorDesignationsString || 'N/A'} GEARED Manual Elevator */}
+            {headerSummaryString || 'Quotation Material Summary'}
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-x-8 gap-y-3 bg-gray-50 p-4 rounded shadow-sm text-sm">
-            {/* Overall Total Amount */}
-            <div className="flex items-center gap-2">
-              <label className="font-semibold">Overall Material Amount:</label>
-              <input
-                type="text"
-                readOnly
-                value={overallTotalMaterialAmount.toFixed(2)}
-                className="border-0 bg-transparent p-1 w-32 text-left font-bold"
-              />
-            </div>
-
-            {/* Overall GST % */}
-            <div className="flex gap-2 items-center">
-              <label htmlFor="overall-gst-percent" className="font-semibold">
-                Overall GST %:
-              </label>
-              <input
-                id="overall-gst-percent"
-                type="number"
-                value={overallGstPercentage}
-                onChange={(e) =>
-                  setOverallGstPercentage(Number(e.target.value))
-                }
-                className="border rounded p-1 w-32 text-right"
-              />
-            </div>
-
-            {/* Overall GST Amount */}
-            <div className="flex gap-2 items-center">
-              <label className="font-semibold">Overall GST Amount:</label>
-              <input
-                type="text"
-                readOnly
-                value={overallGstAmount.toFixed(2)}
-                className="border-0 bg-transparent p-1 w-32 text-left"
-              />
-            </div>
-
-            {/* Overall Final Amount */}
-            <div className="flex gap-2 items-center">
-              <label className="font-semibold">Overall Final Amount:</label>
-              <input
-                type="text"
-                readOnly
-                value={overallFinalAmount.toFixed(2)}
-                className="border-0 bg-transparent p-1 w-32 text-left font-bold text-lg text-blue-700"
-              />
-            </div>
+          <div className="grid md:grid-cols-4 gap-x-10 gap-y-4 text-sm text-gray-600">
+            <InfoBox label="Customer Name" value={quotationData.customerName} icon={<List className="w-4 h-4" />} />
+            <InfoBox label="Site Name" value={quotationData.siteName} icon={<Truck className="w-4 h-4" />} />
+            <InfoBox label="Quotation No." value={quotationData.quotationNo} icon={<List className="w-4 h-4" />} />
+            <InfoBox label="Order Date" value={formatDateIN(quotationData.leadDate)} icon={<CalendarCheck className="w-4 h-4" />} />
+            <InfoBox label="Customer Address" value={quotationData.customerAdder || ""} />
+            <InfoBox label="Site Address" value={quotationData.siteAdder || ""} />
+            <InfoBox label="Floor Designations" value={floorDesignationsString || 'N/A'} icon={<Building className="w-4 h-4" />} />
           </div>
         </div>
 
+        {/* MAIN CONTENT GRID: Lifts (Left) and Summary (Right) */}
+        <div className="grid lg:grid-cols-4 gap-20 pt-4">
+
+          {/* 1. LIFT OVERVIEW SECTION (Left Column - 2/3 width) */}
+          <div className="lg:col-span-2 space-y-6">
+            <h2 className="text-xl font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+              <List className="w-5 h-5" /> Individual Lift Breakdown
+            </h2>
+
+            {lifts.map((lift) => (
+              <div
+                key={lift.id}
+                className="flex items-center justify-between border border-gray-200 rounded-xl p-4 shadow-md bg-white w-full transition duration-300 hover:shadow-lg hover:border-blue-400"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span className="font-bold text-xl text-blue-600">Lift {lift.id}</span>
+                  <span className="text-gray-500 text-sm font-medium ml-4">
+                    Final Price: <span className="text-xl font-semibold text-green-700">{formatCurrency(lift.totalAmount).toLocaleString()}</span>
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition duration-150 ease-in-out shadow-lg shadow-blue-300/50"
+                    onClick={() => {
+                      // Find the specific lift object to pass to the modal
+                      const selectedLift = lifts.find(l => l.id === lift.id);
+
+                      // Pass the entire data object to the state
+                      setBomPopup({ open: true, liftId: lift.id, liftData: selectedLift });
+                    }}
+                  >
+                    Bill of Material
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 2. OVERALL PROJECT SUMMARY (Right Column - 1/3 width, Highlighted) */}
+          <div className="lg:col-span-2 space-y-6">
+            <h2 className="text-xl font-bold text-center text-gray-800 border-b pb-2 flex items-center justify-center gap-2">
+              <DollarSign className="w-5 h-5" /> Project Summary
+            </h2>
+
+            <div className="bg-blue-50 border border-blue-200 p-6 rounded-xl shadow-xl space-y-4 sticky top-20">
+
+              {/* 1. Basic Amount (Total Material Excl. GST) */}
+              <SummaryLine
+                label="Basic Material Amount (Excl. GST)"
+                value={`${formatCurrency(overallTotalMaterialAmount).toLocaleString()}`}
+                className="font-extrabold text-lg text-gray-800"
+              />
+
+              <hr className="border-blue-200" />
+
+              {/* 2. GST Rate Breakdown: (MAPPING REMAINS THE SAME) */}
+              <div className="space-y-2">
+                <label className="text-gray-700 font-semibold text-base block mb-2">
+                  {Object.keys(gstBreakdown).length > 1 ? 'Individual GST Rate Breakdown:' : 'GST Amount Detail:'}
+                </label>
+
+                {Object.keys(gstBreakdown).map(rate => (
+                  <div key={rate} className="flex justify-between items-center text-sm ml-4 p-2 bg-white rounded-md border border-gray-200 shadow-sm">
+                    <span className="font-medium text-gray-600">GST @ {rate}%</span>
+                    <span className="font-bold text-orange-600">
+                      {formatCurrency(gstBreakdown[rate]).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* 3. GST Amount */}
+              {/* 🚨 Only show the 'Total GST Amount' line if there are multiple rates to sum up */}
+              {Object.keys(gstBreakdown).length > 1 && (
+                <>
+                  <hr className="border-blue-200 mt-2" /> {/* Optional separator */}
+                  <SummaryLine
+                    label="3. Total GST Amount"
+                    value={`${formatCurrency(overallTotalGstAmount).toLocaleString()}`}
+                    className="text-xl text-orange-600 font-bold"
+                  />
+                </>
+              )}
+              {/* <SummaryLine
+                label="Total GST Amount"
+                value={`${formatCurrency(overallTotalGstAmount).toLocaleString()}`}
+                className="text-xl text-orange-600 font-bold"
+              /> */}
+
+              {/* 4. Amount Including GST (Basic + GST Amount) */}
+              <SummaryLine
+                label="Amount Including GST (Total)"
+                // 🚨 USING calculated amountIncludingGST
+                value={`${formatCurrency(amountIncludingGST).toLocaleString()}`}
+                className="font-bold text-xl text-gray-700"
+              />
+
+              <hr className="border-blue-200 mt-4" />
+
+              {/* 5. Load/Margin % Breakdown (NEW SECTION) */}
+              <div className="space-y-2">
+                <label className="text-gray-700 font-semibold text-base block mb-2">
+                  {/* Change label based on the number of unique rates */}
+                  {Object.keys(loadBreakdown).length > 1 ? 'Individual Load Rate Breakdown:' : 'Load Amount Detail:'}
+                </label>
+
+                {/* Map through the calculated breakdown object */}
+                {Object.keys(loadBreakdown).map(rate => (
+                  <div key={rate} className="flex justify-between items-center text-sm ml-4 p-2 bg-white rounded-md border border-gray-200 shadow-sm">
+                    <span className="font-medium text-gray-600">Load @ {rate}%</span>
+                    <span className="font-bold text-red-600">
+                      {formatCurrency(loadBreakdown[rate]).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* 6. Load Amount */}
+              {/* 🚨 Only show the 'Total Load/Margin Amount' line if there are multiple rates to sum up */}
+              {Object.keys(loadBreakdown).length > 1 && (
+                <SummaryLine
+                  label="Total Load/Margin Amount"
+                  // Using calculated overallTotalLoadAmount
+                  value={`${formatCurrency(overallTotalLoadAmount).toLocaleString()}`}
+                  className="text-xl text-red-600 font-bold"
+                />
+              )}
+
+              {/* 7. Final Quotation Amount (Grand Total) */}
+              <div className="border-t-2 border-blue-700 pt-4 mt-4 bg-blue-100 p-2 rounded-lg">
+                <SummaryLine
+                  label="Final Quotation Amount"
+                  // 🚨 USING calculated overallFinalAmount
+                  value={`${formatCurrency(overallFinalAmount).toLocaleString()}`}
+                  className="font-extrabold text-4xl text-blue-900"
+                />
+              </div>
+            </div>
+          </div>
+
+        </div> {/* End Main Content Grid */}
+
+
+        {/* MODAL */}
         {bomPopup.open && (
           <BillOfMaterialModal
             liftId={bomPopup.liftId}
+            liftData={bomPopup.liftData}
             onClose={handleBomClose}
           />
         )}
       </div>
-    </div>
-  );
+    );
+
+  }
+
+  // Fallback if data is null after loading (e.g., initial null state)
+  return <div className="p-4 text-center text-gray-500">No quotation data available.</div>;
 }
+
+// Helper component for structured info display
+const InfoBox = ({ label, value, icon }) => (
+  <div className="flex items-center gap-2">
+    <div className="text-blue-500">{icon}</div>
+    <div>
+      <strong className="text-gray-900 block font-medium">{label}:</strong>
+      <span className="text-gray-600">{value}</span>
+    </div>
+  </div>
+);
+
+// Helper component for summary lines
+const SummaryLine = ({ label, value, className = '' }) => (
+  <div className="flex justify-between items-center">
+    <label className="text-gray-700 font-medium">{label}</label>
+    <div className={`text-right ${className}`}>
+      {value}
+    </div>
+  </div>
+);

@@ -46,6 +46,7 @@ export default function FastenerPage() {
       label: "Floor",
       sortable: true,
       editable: false,
+      render: (item) => `${item.floorId} (${item.floorName})`,
     },
     {
       key: "price",
@@ -237,7 +238,7 @@ export default function FastenerPage() {
             </option>
             {floors.map((type) => (
               <option key={type.id} value={type.id}>
-                {type.floorName}
+                {type.id} ({type.floorName})
               </option>
             ))}
           </FormSelect>

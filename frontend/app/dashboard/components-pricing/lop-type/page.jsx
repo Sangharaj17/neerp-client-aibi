@@ -665,6 +665,7 @@ export default function LopTypeAndSubType() {
           onSearchChange={setSubSearch}
           pageSize={10}
           height="250px"
+          combineActions={false}
           loading={loading}
         />
       </div>

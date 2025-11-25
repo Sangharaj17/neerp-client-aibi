@@ -129,85 +129,6 @@ export default function LiftModal({ lift, onClose, onSave }) {
     "liftRate",
   ];
 
-  // const tabFields = {
-  //   0: [
-  //     // Lift Specification
-  //     "liftType",
-  //     "capacityType",
-  //     "capacityValue",
-  //     "stops",
-  //     "floors",
-  //     "openings",
-  //     "floorDesignations",
-  //     "carTravel",
-  //     "speed",
-  //     "cabinType",
-  //     "lightFitting", //------
-  //     "cabinFlooring", //------
-  //     "cabinCeiling", //------
-  //     "airSystem",
-  //     "carEntrance",
-  //     "carEntranceSubType",
-  //     "landingEntranceSubType1",
-  //     //"landingEntranceSubType2",
-  //   ],
-  //   1: [
-  //     // Cabin Design
-  //     //"technicalSpec1",
-  //     // "controlPanelType",
-  //     //"controlPanelMake",
-  //     // "wiringHarness",
-  //     // "guideRail",
-  //     // "bracketType",
-  //     // "ropingType",
-  //     // "lopType",
-  //     // "copType",
-  //     // "overhead",
-  //     // "operationType", //------
-  //     // "machineRoomDepth",
-  //     // "machineRoomWidth",
-  //     // "shaftWidth",
-  //     // "shaftDepth",
-  //     // "carInternalWidth",
-  //     // "carInternalDepth",
-  //     // "carInternalHeight", //------
-  //   ],
-  //   2: [
-  //     // Features
-  //     // "vfdMainDrive",
-  //     // "doorOperator",
-  //     // "mainMachineSet",
-  //     // "carRails",
-  //     // "counterWeightRails",
-  //     // "wireRope",
-  //     // "warrantyPeriod",
-  //   ],
-  //   3: [
-  //     // Commercial Terms
-  //     "liftRate",
-  //     "liftQuantity",
-  //     // "pwdIncludeExclude",
-  //     "pwdAmount",
-  //     // "scaffoldingIncludeExclude",
-  //     // "bambooScaffolding",
-  //     // "ardAmount",
-  //     // "overloadDevice",
-  //     // "transportCharges",
-  //     // "otherCharges",
-  //     // "powerBackup",
-  //     // "fabricatedStructure",
-  //     // "installationAmount",
-  //     // "electricalWork",
-  //     // "ibeamChannel",
-  //     // "duplexSystem",
-  //     // "telephonicIntercom",
-  //     // "gsmIntercom",
-  //     // "numberLockSystem",
-  //     // "thumbLockSystem",
-  //     // "totalAmount",
-  //   ],
-  // };
-
   const tabFields = {
     0: [
       // Lift Specification
@@ -387,7 +308,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
       0
     );
 
-
+    console.log("---liftRatePriceKeys--------------", liftRatePriceKeys);
+    console.log("---****************------------");
     console.log(liftRateTotal, "---priceKeys--------------", priceKeys);
     const adjustedPriceKeys1 = priceKeys.filter(
       (key) => !liftRatePriceKeys.includes(key)
@@ -434,29 +356,50 @@ export default function LiftModal({ lift, onClose, onSave }) {
       Number(formData.thumbLockSystem || 0) * liftQuantity +
       Number(formData.installationAmount || 0) * liftQuantity;
 
-    const totalWithLiftRate = liftRateTotal + total;
+    // const totalWithLiftRate = liftRateTotal + total;
+    const totalWithLiftRateWithoutGST = total;//-lift rate included in total by priceKey
+   
     // ✅ Floating Tax Calculations (keep decimals)
     const commercialTaxAmount = (commercialTotal * taxRate) / 100;
     const commercialFinalAmount = commercialTotal + commercialTaxAmount;
 
-    const totalIncludingTax = totalWithLiftRate + (totalWithLiftRate * taxRate) / 100;
+    const totalIncludingTax = totalWithLiftRateWithoutGST + (totalWithLiftRateWithoutGST * taxRate) / 100;
 
     const loadPerAmtPer = Number(formData.loadPerAmt || 0);
     const loadAmt = (totalIncludingTax * loadPerAmtPer) / 100;
 
-    // ✅ Keep two decimal places (convert back to number)
-    setFormData((prev) => ({
-      ...prev,
-      totalAmountWithoutGST: parseFloat(totalWithLiftRate.toFixed(2)),
-      totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
-      // (formData.totalAmount + formData.loadAmt).toFixed(2)
-      totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
-      loadAmt: parseFloat(loadAmt.toFixed(2)),
-      liftRate: parseFloat(liftRateTotal.toFixed(2)),
-      commercialTotal: parseFloat(commercialTotal.toFixed(2)),
-      commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
-      commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
-    }));
+    // // ✅ Keep two decimal places (convert back to number)
+    // setFormData((prev) => ({
+    //   ...prev,
+    //   totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
+    //   totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
+    //   // (formData.totalAmount + formData.loadAmt).toFixed(2)
+    //   totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
+    //   loadAmt: parseFloat(loadAmt.toFixed(2)),
+    //   liftRate: parseFloat(liftRateTotal.toFixed(2)),
+    //   commercialTotal: parseFloat(commercialTotal.toFixed(2)),
+    //   commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
+    //   commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
+    // }));
+
+    setFormData((prev) => {
+        const updates = {
+            ...prev,
+            totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
+            totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
+            totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
+            loadAmt: parseFloat(loadAmt.toFixed(2)),
+            commercialTotal: parseFloat(commercialTotal.toFixed(2)),
+            commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
+            commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
+        };
+
+        if (!prev.isLiftRateManual) {
+            updates.liftRate = parseFloat(liftRateTotal.toFixed(2));
+        }
+
+        return updates;
+    });
 
     console.log("Total (with decimals):", total.toFixed(2));
     console.log("Total incl. GST:", totalIncludingTax.toFixed(2));
@@ -691,12 +634,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
   const loadWireRope = async () => {
     if (formData.floors) {
       try {
-        const wireRopes = await fetchWireRopes(formData.floors, formData.liftType, setErrors);
+        const wireRopes = await fetchWireRopes(formData.floors, formData.typeOfLift, setErrors);
 
         if (wireRopes.length === 0) {
           toast.error("No wire ropes available for the selected floor");
         }
-        console.log("wireRopes==========>", wireRopes);
+        console.log(formData.floors, "-------", formData.liftType, "wireRopes==========>", wireRopes);
         setInitialOptions((prev) => ({
           ...prev,
           wireRopes: wireRopes,
@@ -1115,6 +1058,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
             quotationLiftDetailId: quotLiftDetailId || null,
             materialId: fastener.id,
             materialName: fastener.fastenerName,
+            materialDisplayName: fastener.fastenerName,
             quantity: 1,
             quantityUnit: "Set",
             price: fastener.price || 0,
@@ -1250,7 +1194,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
       cabinPrice: 0,
       //cabinSubType: "",
       // airSystem: "",
-      airSystemPrice: 0,
+      // airSystemPrice: 0,
     }));
 
     loadCabinSubTypes();
@@ -1297,60 +1241,77 @@ export default function LiftModal({ lift, onClose, onSave }) {
     }
   };
 
-  const loadOtherMaterialsOld = async () => {
-    if (!formData.liftType) return; // wait until operatorId is selected
+  //   const loadOtherMaterialsOld = async () => {
+  //     if (!formData.liftType) return; // wait until operatorId is selected
 
-    try {
-      const materials = await fetchOtherMaterialExcludeOthers(formData.liftType, setErrors);
+  //     try {
+  //       const materials = await fetchOtherMaterialExcludeOthers(formData.liftType, setErrors);
 
-      console.log("Fetched Other Materials:", materials);
+  //       console.log("Fetched Other Materials:", materials);
 
-      // ✅ Separate materials based on main type
-      const defaultMaterials = materials.filter(
-        (item) =>
-          item.otherMaterialMainName &&
-          item.otherMaterialMainName.toLowerCase() === "CommonPrice"
-      );
-      console.log("Fetched CommonPrice:", defaultMaterials);
+  //       const noOfStops = parseFloat(formData.stops) || 1;
 
-      const operatorMaterials = materials.filter(
-        (item) =>
-          item.otherMaterialMainName &&
-          item.otherMaterialMainName.toLowerCase() === "ManualPrice"
-      );
-      console.log("Fetched ManualPrice:", operatorMaterials);
+  //       // ✅ Separate materials based on main type
+  //       const defaultMaterials = materials.filter(
+  //         (item) =>
+  //           item.otherMaterialMainName &&
+  //           item.otherMaterialMainName.toLowerCase() === "CommonPrice"
+  //       );
+  //       console.log(noOfStops,"Fetched CommonPrice:", defaultMaterials);
 
-      // ✅ Calculate total (sum of quantity × price)
-      const commonPrice = defaultMaterials.reduce((acc, item) => {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.price) || 0;
-        return acc + qty * price;
-      }, 0);
+  //       const operatorMaterials = materials.filter(
+  //         (item) =>
+  //           item.otherMaterialMainName &&
+  //           item.otherMaterialMainName.toLowerCase() === "ManualPrice"
+  //       );
+  //       console.log("Fetched ManualPrice:", operatorMaterials);
 
-      const manualPrice = operatorMaterials.reduce((acc, item) => {
-        const qty = parseFloat(item.quantity) || 0;
-        const price = parseFloat(item.price) || 0;
-        return acc + qty * price;
-      }, 0);
+  //       // ✅ Calculate total (sum of quantity × price) - COMMON PRICE
+  //       const commonPrice = defaultMaterials.reduce((acc, item) => {
+  //         const qty = parseFloat(item.quantity) || 0;
+  //         const price = parseFloat(item.price) || 0;
+  //         let itemTotal = qty * price; // Default calculation
 
-      setManualDetails(operatorMaterials);
-      setCommonDetails(defaultMaterials);
+  //         // 👇 NEW LOGIC: Apply additional multiplier if it's "Magnet SQR Material"
+  //         if (item.otherMaterialName && item.otherMaterialName.toLowerCase() === "magnet sqr material") {
+  //             itemTotal = itemTotal * noOfStops;
+  //         }
 
-      console.log("🧮 Manual Price (Default):", manualPrice);
-      console.log("🧮 Common Price (DefaultOperator):", commonPrice);
+  //         return acc + itemTotal;
+  //       }, 0);
 
-      // ✅ Update form data
-      setFormData((prev) => ({
-        ...prev,
-        manualDetails: operatorMaterials,
-        commonDetails: defaultMaterials,
-        manualPrice,
-        commonPrice,
-      }));
-    } catch (err) {
-      console.error("Error fetching Other Materials (excluding Others)", err);
-    }
-  };
+  //       // ✅ Calculate total (sum of quantity × price) - MANUAL PRICE
+  //       const manualPrice = operatorMaterials.reduce((acc, item) => {
+  //         const qty = parseFloat(item.quantity) || 0;
+  //         const price = parseFloat(item.price) || 0;
+  //         let itemTotal = qty * price; // Default calculation
+
+  //         // 👇 NEW LOGIC: Apply additional multiplier if it's "Magnet SQR Material"
+  //         if (item.otherMaterialName && item.otherMaterialName.toLowerCase() === "magnet sqr material") {
+  //             itemTotal = itemTotal * noOfStops;
+  //         }
+
+  //         return acc + itemTotal;
+  //       }, 0);
+
+  //       setManualDetails(operatorMaterials);
+  //       setCommonDetails(defaultMaterials);
+
+  //       console.log("🧮 Manual Price (Default):", manualPrice);
+  //       console.log("🧮 Common Price (DefaultOperator):", commonPrice);
+
+  //       // ✅ Update form data
+  //       setFormData((prev) => ({
+  //         ...prev,
+  //         manualDetails: operatorMaterials,
+  //         commonDetails: defaultMaterials,
+  //         manualPrice,
+  //         commonPrice,
+  //       }));
+  //     } catch (err) {
+  //       console.error("Error fetching Other Materials (excluding Others)", err);
+  //     }
+  //   };
 
   const loadOtherMaterials = useCallback(async () => {
     if (!formData.liftType) return; // wait until operatorId (liftType) is selected
@@ -1359,6 +1320,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
     const existingSelectedMaterials = formData.selectedMaterials || [];
     const leadId = formData.leadId;
     const quotLiftDetailId = formData.quotationId;
+    const noofStops = Number(formData.stops) || 1;
 
     try {
       // ✅ Fetch all OtherMaterials (irrespective of operator)
@@ -1392,13 +1354,57 @@ export default function LiftModal({ lift, onClose, onSave }) {
       console.log("Fetched ManualPrice (filtered by operator):", manualDetails);
       console.log("Fetched Others:", otherDetails);
 
+
+      console.log("noofStops:", noofStops);
       // ✅ Calculate totals
       const calcTotal = (list) =>
-        list.reduce((acc, item) => {
+        list.reduce((acc, item, index) => {
           const qty = parseFloat(item.quantity) || 0;
           const price = parseFloat(item.price) || 0;
-          return acc + qty * price;
+          const itemName = item.otherMaterialName || 'Unknown Material';
+          const isMagnetSqr = itemName.toLowerCase() === "magnet sqr material";
+
+          // console.log(`--- Item ${index + 1}: ${itemName} ---`);
+          // console.log(`[Input] Quantity (qty): ${qty}`);
+          // console.log(`[Input] Unit Price (price): ${price}`);
+          // console.log(`[Input] Accumulator (acc): ${acc.toFixed(2)}`);
+
+          let calculatedPrice = price * qty;
+
+          // Apply special rule here for Magnet SQR Material total calculation
+          if (isMagnetSqr) {
+            // console.log(`[Debug] Magnet SQR detected. Stops multiplier (noofStops): ${noofStops}`);
+
+            // Re-calculate with the multiplier
+            calculatedPrice = price * qty * noofStops;
+
+            // console.log(calculatedPrice.toFixed(2), "---------otherMaterialName--------", itemName.toLowerCase());
+          }
+
+          // --- STEP 2: Log calculated price and new accumulator ---
+          const newAccumulator = acc + calculatedPrice;
+          // console.log(`[Output] Calculated Item Total: ${calculatedPrice.toFixed(2)}`);
+          // console.log(`[Output] New Accumulator: ${newAccumulator.toFixed(2)}`);
+
+          return newAccumulator;
         }, 0);
+      // const calcTotal = (list) =>
+      //   list.reduce((acc, item) => {
+      //     const qty = parseFloat(item.quantity) || 0;
+      //     const price = parseFloat(item.price) || 0;
+      //     // return acc + qty * price;
+
+      //     let calculatedPrice = price * qty;
+
+
+      //     // Apply special rule here for Magnet SQR Material total calculation
+      //     if (item.otherMaterialName?.toLowerCase() === "magnet sqr material") {
+      //       calculatedPrice = price * qty * noofStops;
+      //       console.log(calculatedPrice, "---------otherMaterialName--------", item.otherMaterialName?.toLowerCase());
+      //     }
+
+      //     return acc + calculatedPrice;
+      //   }, 0); 
 
       const commonPrice = calcTotal(commonDetails);
       const manualPrice = calcTotal(manualDetails);
@@ -1428,9 +1434,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
         const itemPrice = Number(item.price) || 0;
         const itemQuantity = Number(item.quantity) || 0;
-        const itemTotalPrize = itemPrice * itemQuantity; // 75 * 4 = 300
+        let itemTotalPrize = itemPrice * itemQuantity; // 75 * 4 = 300
         const itemQuantityUnit = item.quantityUnit ? item.quantityUnit : "";
         const finalQunatity = itemQuantity;
+
+        if (item.otherMaterialName?.toLowerCase() === "magnet sqr material") {
+            itemTotalPrize = itemPrice * itemQuantity * noofStops;
+        }
 
         return {
           // Use the database ID if it exists, otherwise null for a new insert
@@ -1439,6 +1449,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
           quotationLiftDetailId: quotLiftDetailId || null, // to be set later
           materialId: item.id,
           materialName: item.otherMaterialName,
+          materialDisplayName: item.otherMaterialDisplayName || item.otherMaterialName || "",
+          // materialName: item.otherMaterialName +" / "+ item.otherMaterialDisplayName,
           quantity: finalQunatity,
           quantityUnit: itemQuantityUnit,
           price: itemTotalPrize || 0,
@@ -2150,7 +2162,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
     formData,
     ropingTypePrice,
     wireRopePrice, // Assuming this is the price for the actual rope
-    selectedRope // The object from initialOptions.wireRopes
+    selectedRope, // The object from initialOptions.wireRopes
+    counterFrameRopeName
   ) => {
     const updatedMaterials = [...prevSelectedMaterials];
 
@@ -2158,15 +2171,17 @@ export default function LiftModal({ lift, onClose, onSave }) {
     const ropingMaterialType = "RopingType"; // Use a specific type for the price
     const ropingIndex = updatedMaterials.findIndex(item => item.materialType === ropingMaterialType);
 
+    console.log("================>",selectedRope)
     if (ropingTypePrice > 0 && selectedRope) {
       const newRopingMaterial = {
         id: ropingIndex !== -1 ? updatedMaterials[ropingIndex].id : null,
         leadId: formData.leadId,
         quotationLiftDetailId: formData.quotationId,
         materialId: selectedRope.id,
-        materialName: selectedRope.wireRopeTypeName + " (Mechanism/RopingType)", // Differentiate the name
+        materialName: "Mechanism/RopingType", // Differentiate the name
+        materialDisplayName: selectedRope.wireRopeTypeName+ " | " +counterFrameRopeName,
         quantity: 1,
-        quantityUnit: "",
+        quantityUnit: "Set",
         price: ropingTypePrice,
         operatorType: formData.liftType,
         materialType: ropingMaterialType,
@@ -2194,11 +2209,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
         leadId: formData.leadId,
         quotationLiftDetailId: formData.quotationId,
         materialId: selectedRope.id,
-        materialName: selectedRope.wireRopeTypeName + " (Rope/Wire Roping)", // Differentiate the name
+        materialName: "Rope/Wire Roping", // Differentiate the name
         // quantity: formData.floors, // Placeholder for calculated rope quantity
+        materialDisplayName: selectedRope.wireRopeTypeName + " | " + selectedRope.wireRopeName,
         quantity: selectedRope.wireRopeQty,
-        quantityUnit: "",
-        price: wireRopePrice * selectedRope.wireRopeQty,
+        quantityUnit: "mtrs",
+        // price: wireRopePrice * selectedRope.wireRopeQty,
+        price: wireRopePrice,
         operatorType: formData.liftType,
         materialType: wireRopeMaterialType,
       };
@@ -2326,12 +2343,24 @@ export default function LiftModal({ lift, onClose, onSave }) {
         ropeTypeId,
         formData.capacityType,
         formData.capacityValue,
-        formData.liftType,
+        formData.typeOfLift,
         setErrors
       ).then((result) => {
+        console.log(ropeTypeId, "-----selectedRope-------", selectedRope);
         console.log("-----internalCalculation-------", result);
         const ropingPrice = result.price;
+        const counterFrameRopeName = result.name;
         const message = "No price set";
+
+        let newOverloadDeviceValue = formData.overloadDevice; // Default to current value
+        if (selectedRope && selectedRope.wireRopeTypeName) {
+          const ropingName = selectedRope.wireRopeTypeName;
+          if (ropingName.includes("1:1")) {
+            newOverloadDeviceValue = 9000;
+          } else if (ropingName.includes("2:1")) {
+            newOverloadDeviceValue = 13500;
+          }
+        }
 
         if (ropingPrice === 0) {
           // Set the error if the price is exactly 0
@@ -2361,12 +2390,14 @@ export default function LiftModal({ lift, onClose, onSave }) {
             prev, // Pass the previous form data (which includes leadId, quotationId)
             ropingPrice,
             currentWireRopePrice,
-            selectedRope
+            selectedRope,
+            counterFrameRopeName
           );
 
           return {
             ...prev,
             ropingTypePrice: ropingPrice,
+            overloadDevice: newOverloadDeviceValue,
             selectedMaterials: updatedSelectedMaterials, // Save the merged list
           };
         });
@@ -2708,47 +2739,91 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
 
   // ------------------------ helper function to populate dropdown of makes or manufactures-----------------------------------
-  const getComponentData = (manufacturers, componentId, fallbackLabel = "") => {
-    const filtered = manufacturers.filter((m) => m.componentId === componentId);
+
+  const getComponentData = (manufacturers, componentNameToSearch, fallbackLabel = "") => {
+    const filtered = manufacturers.filter((m) => m.componentName === componentNameToSearch);
     const componentName = filtered[0]?.componentName || fallbackLabel;
     return { componentName, data: filtered };
   };
 
   const { componentName: vfdLabel, data: vfdManufacturers } = getComponentData(
     initialOptions.manufacturers,
-    4,
+    "VFD - Main Drive",
     "VFD - Main Drive" // fallback if not found
   );
 
   const { componentName: doorOperatorLabel, data: doorOperatorManufacturers } = getComponentData(
     initialOptions.manufacturers,
-    12,
+    "Door Operator",
     "Door Operator" // fallback if not found
   );
 
   const { componentName: mainMachineSetLabel, data: mainMachineSetManufacturers } = getComponentData(
     initialOptions.manufacturers,
-    5,
+    "Main Machine Set",
     "Main Machine Set" // fallback if not found
   );
 
   const { componentName: carRailsLabel, data: carRailsManufacturers } = getComponentData(
     initialOptions.manufacturers,
-    6,
+    "Car Rails",
     "Car Rails" // fallback if not found
   );
 
   const { componentName: counterWeightRailsLabel, data: counterWeightRailsManufacturers } = getComponentData(
     initialOptions.manufacturers,
-    7,
+    "Counter Weight Rails",
     "Counter Weight Rails" // fallback if not found
   );
 
   const { componentName: wireRopeLabel, data: wireRopeManufacturers } = getComponentData(
     initialOptions.manufacturers,
-    8,
+    "Wire Rope",
     "Wire Rope" // fallback if not found
   );
+
+
+  // const getComponentData = (manufacturers, componentId, fallbackLabel = "") => {
+  //   const filtered = manufacturers.filter((m) => m.componentId === componentId);
+  //   const componentName = filtered[0]?.componentName || fallbackLabel;
+  //   return { componentName, data: filtered };
+  // };
+
+  // const { componentName: vfdLabel, data: vfdManufacturers } = getComponentData(
+  //   initialOptions.manufacturers,
+  //   4,
+  //   "VFD - Main Drive" // fallback if not found
+  // );
+
+  // const { componentName: doorOperatorLabel, data: doorOperatorManufacturers } = getComponentData(
+  //   initialOptions.manufacturers,
+  //   12,
+  //   "Door Operator" // fallback if not found
+  // );
+
+  // const { componentName: mainMachineSetLabel, data: mainMachineSetManufacturers } = getComponentData(
+  //   initialOptions.manufacturers,
+  //   5,
+  //   "Main Machine Set" // fallback if not found
+  // );
+
+  // const { componentName: carRailsLabel, data: carRailsManufacturers } = getComponentData(
+  //   initialOptions.manufacturers,
+  //   6,
+  //   "Car Rails" // fallback if not found
+  // );
+
+  // const { componentName: counterWeightRailsLabel, data: counterWeightRailsManufacturers } = getComponentData(
+  //   initialOptions.manufacturers,
+  //   7,
+  //   "Counter Weight Rails" // fallback if not found
+  // );
+
+  // const { componentName: wireRopeLabel, data: wireRopeManufacturers } = getComponentData(
+  //   initialOptions.manufacturers,
+  //   8,
+  //   "Wire Rope" // fallback if not found
+  // );
   //------------------------------------------------------------------
 
   // const normalizeValue = (val) => {
@@ -3463,7 +3538,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   formData={formData}
 
                   // --- Crucial Props for Display Control ---
-                  showPrice={false} // Disable price calculation and display
+                  // showPrice={false} // Disable price calculation and display
                 />
               </div>
 
@@ -3592,6 +3667,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   setPrice="landingEntrancePrice1"
 
                   setName="landingEntranceSubType1Name" // Field to store the name
+                  // nameKey={["landingDoorTypeName", "name"]}
                   itemMainName="Landing Entrance 1"     // MaterialType name for newMaterial object
                   // ✅ Set the unit
                   itemUnit="Opening"
@@ -3958,7 +4034,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
                   {initialOptions.bracketTypes.map((opt) => (
                     <option key={opt.id} value={opt.id}>
-                      {opt.bracketTypeName} [{opt.floorName}]
+                      {opt.bracketTypeName} [{opt.carBracketSubType}]
                     </option>
                   ))}
                 </Select>
@@ -3978,7 +4054,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   formValue={formData.bracketType}
                   setPrice="bracketTypePrice"
                   setName="bracketTypeName"
-                  nameKey="bracketTypeName"
+                  // nameKey="bracketTypeName"
+                  nameKey={["bracketTypeName", "carBracketSubType"]}
                   itemMainName="Bracket Type"
                   itemUnit="Set"
                   lead_id={formData.leadId}
@@ -4005,7 +4082,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   {formData.capacityType && formData.capacityValue && (
                     initialOptions.wireRopes.map((opt) => (
                       <option key={opt.id} value={opt.id}>
-                        {opt.wireRopeTypeName} [{opt.floorName}]
+                        {opt.wireRopeTypeName} [{opt.wireRopeName}]
                       </option>
                     ))
 
@@ -5204,6 +5281,46 @@ export default function LiftModal({ lift, onClose, onSave }) {
                 <h3 className="text-sm font-bold mb-2 text-green-700">Common Price Breakdown</h3>
                 {commonDetails.length > 0 ? (
                   <ul className="list-disc list-inside space-y-1 max-h-60 overflow-y-auto">
+                    {commonDetails.map((item, i) => {
+                      const qty = parseFloat(item.quantity) || 0;
+                      const price = parseFloat(item.price) || 0;
+                      const noofStops = Number(formData.stops) || 1; // Assuming formData.stops is available
+
+                      const isMagnetSqr = item.otherMaterialName?.toLowerCase() === "magnet sqr material";
+
+                      let itemTotal = qty * price;
+
+                      // Apply the special rule for total calculation
+                      if (isMagnetSqr) {
+                        itemTotal = price * qty * noofStops;
+                      }
+
+                      return (
+                        <li key={i} className="text-xs">
+                          <span className="font-semibold">{item.otherMaterialName}</span>
+                          — ₹{price} × {qty}
+
+                          {/* Conditional Display: Show Stops multiplier OR Quantity Unit */}
+                          {isMagnetSqr
+                            ? ` × ${noofStops} Stops` // Display stops for Magnet SQR Material
+                            : ` ${item.quantityUnit || ''}` // Display the standard unit (Set, Nos, Pair)
+                          }
+
+                          = ₹
+                          {/* Display the final calculated total */}
+                          {itemTotal.toFixed(2)}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <p className="text-gray-500 text-xs">No materials found.</p>
+                )}
+              </SmallPopover>
+              {/* <SmallPopover>
+                <h3 className="text-sm font-bold mb-2 text-green-700">Common Price Breakdown</h3>
+                {commonDetails.length > 0 ? (
+                  <ul className="list-disc list-inside space-y-1 max-h-60 overflow-y-auto">
                     {commonDetails.map((item, i) => (
                       <li key={i} className="text-xs">
                         <span className="font-semibold">{item.otherMaterialName}</span> — ₹{item.price} × {item.quantity} = ₹
@@ -5214,7 +5331,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
                 ) : (
                   <p className="text-gray-500 text-xs">No materials found.</p>
                 )}
-              </SmallPopover>
+              </SmallPopover> */}
             </div>
 
             {/* Other */}
@@ -5444,6 +5561,54 @@ export default function LiftModal({ lift, onClose, onSave }) {
             <h3 className="text-lg font-bold mb-3 text-green-700">Common Price Breakdown</h3>
             {commonDetails.length > 0 ? (
               <ul className="space-y-2 max-h-60 overflow-y-auto">
+                {commonDetails.map((item, index) => {
+                  const qty = parseFloat(item.quantity) || 0;
+                  const price = parseFloat(item.price) || 0;
+                  // Calculate noofStops here (assuming formData.stops is available)
+                  const noofStops = Number(formData.stops) || 1;
+
+                  let itemTotal = qty * price;
+
+
+                  console.log("********item****1111****", item);
+                  // Apply the special rule: price = qty * item price * formData.noof stops
+                  if (item.otherMaterialName?.toLowerCase() === "magnet sqr material") {
+                    itemTotal = price * qty * noofStops;
+                    console.log("********item********", item);
+                    console.log(itemTotal, "---------otherMaterialName--------", item.otherMaterialName?.toLowerCase()); // Keep console log if needed for debugging
+                  }
+
+                  return (
+                    <li key={index} className="text-sm">
+                      <span className="font-semibold">{item.otherMaterialName}</span>
+                      {/* Display calculation summary */}
+                      — {qty} × ₹{price}
+                      {item.otherMaterialName?.toLowerCase() === "magnet sqr material" && ` × Stops (${noofStops})`}
+                      = ₹
+                      {/* Display the calculated total */}
+                      {itemTotal.toFixed(2)}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-600">No items found</p>
+            )}
+            <button
+              onClick={() => setShowCommonDetails(false)}
+              className="mt-4 bg-green-600 text-white px-4 py-1 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {/* {showCommonDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-5 w-96">
+            <h3 className="text-lg font-bold mb-3 text-green-700">Common Price Breakdown</h3>
+            {commonDetails.length > 0 ? (
+              <ul className="space-y-2 max-h-60 overflow-y-auto">
                 {commonDetails.map((item, index) => (
                   <li key={index} className="text-sm">
                     <span className="font-semibold">{item.otherMaterialName}</span> — {item.quantity} × ₹{item.price} = ₹
@@ -5462,7 +5627,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
             </button>
           </div>
         </div>
-      )}
+      )} */}
 
       <>
         {isInitialLoad && <FullScreenLoader />}
