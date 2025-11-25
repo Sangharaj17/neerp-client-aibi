@@ -8,6 +8,9 @@ import { toast } from 'react-hot-toast';
 import { Loader2, FileText, RefreshCw, ThumbsUp, ThumbsDown, Mail, Eye, Pencil, Trash2 } from 'lucide-react';
 import AmcRenewalQuotationView from './AmcRenewalQuotationView';
 import { AlignJustify } from 'lucide-react';
+import ActionModal from '../AMC/ActionModal';
+import AmcQuotationPdfSettingPreviewAndPrint from './pdf/AmcQuotationPdfSettingPreviewAndPrint';
+
 
 export default function AMCRenewalQuotationList() {
   const router = useRouter();
@@ -228,6 +231,14 @@ const fetchQuotations = async () => {
     }
   };
 
+  const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
+    const [isWithLetterHead, setIsWithLetterHead] = useState(false);
+        const [siteName,setSiteName] = useState('');
+    
+  
+     const [renewalQuaId, setRenewalQuaId] = useState(null);
+  
+
   return (
     <div className="min-h-screen">
       <Head>
@@ -341,12 +352,26 @@ const fetchQuotations = async () => {
                     <td className="px-2 py-2">{q.amcPeriod || '-'}</td>
                     <td className="px-2 py-2">{q.forecastMonth || '-'}</td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() => generatePDF(q.id, true)} className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
+                      <button onClick={() =>{
+                        setIsWithLetterHead(true);
+                        setRenewalQuaId(q.id);
+                        setSiteName(q.siteName);
+                         //generatePDF(q.id, true)
+                      }
+                      } className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
                         <FileText className="w-4 h-4" />
                       </button>
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() => generatePDF(q.id, false)} className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
+                      <button onClick={() => 
+                       {
+                       // generatePDF(q.id, false);
+                       setIsWithoutLetterhead(true);
+                        setRenewalQuaId(q.id);
+                        setSiteName(q.siteName);
+                      }
+
+                      } className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
                         <FileText className="w-4 h-4" />
                       </button>
                     </td>
@@ -488,6 +513,27 @@ const fetchQuotations = async () => {
           </div>
         </div>
       )}
+
+ {/* Action Modal */}
+        <ActionModal
+          isOpen={isWithoutLetterhead || isWithLetterHead}
+          onCancel={()=>{
+            setIsWithoutLetterhead(false);
+            setIsWithLetterHead(false);
+          }}
+          title="Generate AMC Renewal Quotation PDF"
+          
+        >
+           <AmcQuotationPdfSettingPreviewAndPrint 
+           renewalQuaId = {renewalQuaId} 
+           siteName={siteName}
+             isWithoutLetterhead={isWithoutLetterhead}
+           isWithLetterHead={isWithLetterHead}
+           />
+  
+        </ActionModal>
+
+
     </div>
   );
 }

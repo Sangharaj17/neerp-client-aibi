@@ -6,6 +6,8 @@ import axiosInstance from "@/utils/axiosInstance";
 import { Loader2, FileText, RefreshCw, ThumbsUp, ThumbsDown, Mail, Eye } from "lucide-react";
 import { AlignJustify } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import ActionModal from "../AMC/ActionModal";
+import AmcQuotationPdfSettingPreviewAndPrint from "./pdf/AmcQuotationPdfSettingPreviewAndPrint";
 
 import AmcQuotationView from "./AmcQuotationView";
 
@@ -91,6 +93,13 @@ export default function RevisedQuotationList({ quotationId }) {
        // setLoading(false);
       }
     };
+
+    const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
+  const [isWithLetterHead, setIsWithLetterHead] = useState(false);
+    const [siteName,setSiteName] = useState('');
+  
+   const [amcRevisedQuotationId, setRevisedAmcQuotationId] = useState(false);
+
 
   return (
     <div className="min-h-screen">
@@ -181,7 +190,13 @@ export default function RevisedQuotationList({ quotationId }) {
                     {/* Generate PDF */}
                     <td className="px-2 py-2 text-center">
                       <button
-                        onClick={() => generatePDF(q.id, true)}
+                        onClick={() =>{
+setSiteName(q.siteName);
+                        setIsWithLetterHead(true);
+                        setRevisedAmcQuotationId(q.id);
+                         //generatePDF(q.id, true)
+                      }}
+
                         className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded"
                       >
                         {loadingBtn === `pdf-${q.id}-true` ? (
@@ -193,7 +208,13 @@ export default function RevisedQuotationList({ quotationId }) {
                     </td>
                     <td className="px-2 py-2 text-center">
                       <button
-                        onClick={() => generatePDF(q.id, false)}
+
+                       onClick={() =>{
+                          setSiteName(q.siteName);
+                        setIsWithoutLetterhead(true);
+                        setRevisedAmcQuotationId(q.id);
+                         //generatePDF(q.id, true)
+                      }}                        
                         className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded"
                       >
                         {loadingBtn === `pdf-${q.id}-false` ? (
@@ -263,6 +284,25 @@ export default function RevisedQuotationList({ quotationId }) {
             </table>
           )}
         </div>
+
+          {/* Action Modal */}
+                <ActionModal
+                  isOpen={isWithoutLetterhead || isWithLetterHead}
+                  onCancel={()=>{
+                    setIsWithoutLetterhead(false);
+                    setIsWithLetterHead(false);
+                  }}
+                  title="Generate AMC Quotation PDF"
+                  
+                >
+                   <AmcQuotationPdfSettingPreviewAndPrint 
+                   revisedQuotationId = {amcRevisedQuotationId} 
+                   siteName={siteName}
+                     isWithoutLetterhead={isWithoutLetterhead}
+           isWithLetterHead={isWithLetterHead}
+                   />
+          
+                </ActionModal>
 
         
       </main>

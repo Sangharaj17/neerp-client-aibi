@@ -267,6 +267,7 @@ const NavigationAccordion = () => {
       hasSubmenu: true,
       submenu: [
         { title: 'Company Setting', href: '/dashboard/settings' },
+         { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
       ]
     }
   ];

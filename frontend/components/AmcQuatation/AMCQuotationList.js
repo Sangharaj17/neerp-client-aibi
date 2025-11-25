@@ -9,6 +9,9 @@ import { Loader2, FileText, RefreshCw, ThumbsUp, ThumbsDown, Mail, Eye, Pencil, 
 import AmcQuotationView from './AmcQuotationView';
 import { AlignJustify } from 'lucide-react';
 
+import ActionModal from '../AMC/ActionModal';
+import AmcQuotationPdfSettingPreviewAndPrint from './pdf/AmcQuotationPdfSettingPreviewAndPrint';
+
 export default function AMCQuotationList() {
   const router = useRouter();
   const [quotations, setQuotations] = useState([]);
@@ -228,6 +231,14 @@ const fetchQuotations = async () => {
     }
   };
 
+  const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
+  const [isWithLetterHead, setIsWithLetterHead] = useState(false);
+  const [siteName,setSiteName] = useState('');
+
+   const [amcQuotationId, setAmcQuotationId] = useState(null);
+
+
+
   return (
     <div className="min-h-screen">
       <Head>
@@ -341,12 +352,26 @@ const fetchQuotations = async () => {
                     <td className="px-2 py-2">{q.amcPeriod || '-'}</td>
                     <td className="px-2 py-2">{q.forecastMonth || '-'}</td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() => generatePDF(q.id, true)} className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
+                      <button onClick={() =>{
+                        setSiteName(q.siteName);
+                        setIsWithLetterHead(true);
+                        setAmcQuotationId(q.id);
+                         //generatePDF(q.id, true)
+                      }
+                      } className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
                         <FileText className="w-4 h-4" />
                       </button>
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() => generatePDF(q.id, false)} className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
+                      <button onClick={() => 
+                       {
+                       // generatePDF(q.id, false);
+                       setSiteName(q.siteName);
+                       setIsWithoutLetterhead(true);
+                        setAmcQuotationId(q.id);
+                      }
+
+                      } className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
                         <FileText className="w-4 h-4" />
                       </button>
                     </td>
@@ -476,6 +501,29 @@ const fetchQuotations = async () => {
       {/* Confirm Delete Modal */}
       <ConfirmDeleteModal isOpen={modalOpen} onCancel={handleCancel} onConfirm={handleConfirmDeleteAmcQuotation} />
 
+
+  
+        {/* Action Modal */}
+        <ActionModal
+          isOpen={isWithoutLetterhead || isWithLetterHead}
+          onCancel={()=>{
+            setIsWithoutLetterhead(false);
+            setIsWithLetterHead(false);
+          }}
+          title="Generate AMC Quotation PDF"
+          
+        >
+           <AmcQuotationPdfSettingPreviewAndPrint 
+           amcQuotationId = {amcQuotationId} 
+           siteName={siteName}
+           isWithoutLetterhead={isWithoutLetterhead}
+           isWithLetterHead={isWithLetterHead}
+           />
+  
+        </ActionModal>
+    
+    
+    
       {/* Quotation View Modal */}
       {selectedQuotationId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">

@@ -140,6 +140,14 @@ public class AmcQuotationPdfController {
         return ResponseEntity.ok(data);
     }
     
+    @GetMapping("/headings-with-contents")
+    public ResponseEntity<List<AmcQuotationPdfHeadingWithContentsDto>> getHeadingsWithContents() {
+        List<AmcQuotationPdfHeadingWithContentsDto> response =
+        		service.amcQuotationPdfHeadingWithContentsDtos();
+
+        return ResponseEntity.ok(response);
+    }
+    
 
 
 }

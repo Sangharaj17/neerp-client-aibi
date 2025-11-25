@@ -3,6 +3,7 @@ package com.aibi.neerp.amc.quatation.pdf.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,8 @@ import com.aibi.neerp.amc.quatation.pdf.dto.BankDetails;
 import com.aibi.neerp.amc.quatation.pdf.dto.ContractTypeOfPricingData;
 import com.aibi.neerp.amc.quatation.pdf.dto.LetterDetails;
 import com.aibi.neerp.amc.quatation.pdf.dto.LiftPricingData;
+import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
+import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcCombinedQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
@@ -35,6 +38,9 @@ import com.aibi.neerp.amc.quatation.renewal.entity.AmcRenewalQuotation;
 import com.aibi.neerp.amc.quatation.renewal.entity.RevisedRenewalAmcQuotation;
 import com.aibi.neerp.amc.quatation.renewal.repository.AmcRenewalQuotationRepository;
 import com.aibi.neerp.amc.quatation.renewal.repository.RevisedRenewalAmcQuotationRepository;
+import com.aibi.neerp.config.DataSourceConfig;
+import com.aibi.neerp.config.TenantContext;
+import com.aibi.neerp.config.TenantDefaultDataInitializer;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.Enquiry;
@@ -49,9 +55,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Transactional
+@Slf4j
 public class AmcQuotationPdfService {
 
     private final AmcQuotationPdfHeadingsRepository headingsRepo;
@@ -63,15 +71,19 @@ public class AmcQuotationPdfService {
     
     private final AmcRenewalQuotationRepository amcRenewalQuotationRepository;
     private final RevisedRenewalAmcQuotationRepository revisedRenewalAmcQuotationRepository;
-
-    public AmcQuotationPdfService(
+    
+    private final AmcJobsService amcJobsService;
+    
+    
+     public AmcQuotationPdfService(
             AmcQuotationPdfHeadingsRepository headingsRepo,
             AmcQuotationPdfHeadingsContentsRepository contentsRepo,
             CompanySettingRepository companySettingRepository,
             AmcQuotationRepository amcQuotationRepository,
             RevisedAmcQuotationRepository revisedAmcQuotationRepository,
             AmcRenewalQuotationRepository amcRenewalQuotationRepository,
-            RevisedRenewalAmcQuotationRepository revisedRenewalAmcQuotationRepository
+            RevisedRenewalAmcQuotationRepository revisedRenewalAmcQuotationRepository,
+            AmcJobsService amcJobsService
     ) {
         this.headingsRepo = headingsRepo;
         this.contentsRepo = contentsRepo;
@@ -80,6 +92,7 @@ public class AmcQuotationPdfService {
         this.revisedAmcQuotationRepository = revisedAmcQuotationRepository;
         this.amcRenewalQuotationRepository = amcRenewalQuotationRepository;
         this.revisedRenewalAmcQuotationRepository = revisedRenewalAmcQuotationRepository;
+        this.amcJobsService = amcJobsService;
     }
 
 
@@ -191,93 +204,197 @@ public class AmcQuotationPdfService {
 
         return dto;
     }
-
-    // --------------------------------------------------------------------------
-    // BATCH UPDATE (MULTIPLE HEADINGS + MULTIPLE CONTENTS)
-    // --------------------------------------------------------------------------
-    @Transactional
+    
     public void updateMultipleHeadingsAndContents(List<AmcQuotationPdfHeadingWithContentsDto> list) {
+
+        // 1️⃣ DELETE removed contents
+        deleteRemovedContents(list);
+
+        // 2️⃣ UPDATE existing contents
+        updateExistingContents(list);
+
+        // 3️⃣ ADD new contents
+        addNewContents(list);
+    }
+    
+    private void deleteRemovedContents(List<AmcQuotationPdfHeadingWithContentsDto> list) {
 
         for (AmcQuotationPdfHeadingWithContentsDto hdto : list) {
 
-            // -------------------------------
-            // 1️⃣ Update Heading
-            // -------------------------------
+            List<AmcQuotationPdfHeadingsContents> existingContents =
+                    contentsRepo.findByAmcQuotationPdfHeadingsId(hdto.getId());
+
+            Set<Integer> uiIds = hdto.getContents() == null
+                    ? Collections.emptySet()
+                    : hdto.getContents().stream()
+                    .filter(c -> c.getId() != null)
+                    .map(AmcQuotationPdfHeadingsContentsDto::getId)
+                    .collect(Collectors.toSet());
+
+            for (AmcQuotationPdfHeadingsContents oldContent : existingContents) {
+                if (!uiIds.contains(oldContent.getId())) {
+                    contentsRepo.delete(oldContent);   // DELETE only here
+                }
+            }
+        }
+    }
+
+    private void updateExistingContents(List<AmcQuotationPdfHeadingWithContentsDto> list) {
+
+        for (AmcQuotationPdfHeadingWithContentsDto hdto : list) {
+
             AmcQuotationPdfHeadings heading = headingsRepo.findById(hdto.getId())
                     .orElseThrow(() -> new RuntimeException("Heading not found: " + hdto.getId()));
 
+            // update heading
             heading.setHeadingName(hdto.getHeadingName());
             headingsRepo.save(heading);
 
-            // -------------------------------
-            // 2️⃣ Load Existing Contents
-            // -------------------------------
+            if (hdto.getContents() == null) continue;
+
             List<AmcQuotationPdfHeadingsContents> existingContents =
-                    contentsRepo.findByAmcQuotationPdfHeadingsId(heading.getId());
+                    contentsRepo.findByAmcQuotationPdfHeadingsId(hdto.getId());
 
             Map<Integer, AmcQuotationPdfHeadingsContents> existingMap =
                     existingContents.stream()
                             .collect(Collectors.toMap(AmcQuotationPdfHeadingsContents::getId, c -> c));
 
-            Set<Integer> updatedIds = new HashSet<>();
+            for (AmcQuotationPdfHeadingsContentsDto cdto : hdto.getContents()) {
 
-            // -------------------------------
-            // 3️⃣ Handle New + Updated Contents
-            // -------------------------------
-            if (hdto.getContents() != null) {
+                if (cdto.getId() != null) { // only UPDATE
 
-                for (AmcQuotationPdfHeadingsContentsDto cdto : hdto.getContents()) {
+                    AmcQuotationPdfHeadingsContents existing = existingMap.get(cdto.getId());
+                    if (existing == null) continue;
 
-                    if (cdto.getId() == null) {
-                        // ⭐ NEW CONTENT
-                        AmcQuotationPdfHeadingsContents newContent = new AmcQuotationPdfHeadingsContents();
+                    existing.setContentData(cdto.getContentData());
 
-                        newContent.setContentData(cdto.getContentData());
-
-                        // picture handling
-                        if (cdto.getPicture() != null && !cdto.getPicture().isBlank()) {
-                            newContent.setPicture(normalizePicture(cdto.getPicture()));
-                        }
-
-                        newContent.setAmcQuotationPdfHeadings(heading);
-                        contentsRepo.save(newContent);
-
-                    } else {
-                        // ⭐ UPDATE CONTENT
-                        AmcQuotationPdfHeadingsContents existing =
-                                existingMap.get(cdto.getId());
-
-                        if (existing == null) {
-                            throw new RuntimeException("Content not found: " + cdto.getId());
-                        }
-
-                        existing.setContentData(cdto.getContentData());
-
-                        // picture handling (UPDATE)
-                        if (cdto.getPicture() != null && !cdto.getPicture().isBlank()) {
-                            existing.setPicture(normalizePicture(cdto.getPicture())); // replace
-                        } else {
-                            // keep existing picture (do nothing)
-                        }
-
-                        existing.setAmcQuotationPdfHeadings(heading);
-                        contentsRepo.save(existing);
-
-                        updatedIds.add(cdto.getId());
+                    if (cdto.getPicture() != null && !cdto.getPicture().isBlank()) {
+                        existing.setPicture(normalizePicture(cdto.getPicture()));
                     }
-                }
-            }
 
-            // -------------------------------
-            // 4️⃣ DELETE Removed Contents
-            // -------------------------------
-            for (AmcQuotationPdfHeadingsContents oldContent : existingContents) {
-                if (!updatedIds.contains(oldContent.getId())) {
-                    contentsRepo.delete(oldContent);
+                    contentsRepo.save(existing);
                 }
             }
         }
     }
+    
+    private void addNewContents(List<AmcQuotationPdfHeadingWithContentsDto> list) {
+
+        for (AmcQuotationPdfHeadingWithContentsDto hdto : list) {
+
+            AmcQuotationPdfHeadings heading = headingsRepo.findById(hdto.getId())
+                    .orElseThrow(() -> new RuntimeException("Heading not found: " + hdto.getId()));
+
+            if (hdto.getContents() == null) continue;
+
+            for (AmcQuotationPdfHeadingsContentsDto cdto : hdto.getContents()) {
+
+                if (cdto.getId() == null) {  // only NEW contents
+
+                    AmcQuotationPdfHeadingsContents newContent = new AmcQuotationPdfHeadingsContents();
+                    newContent.setContentData(cdto.getContentData());
+
+                    if (cdto.getPicture() != null && !cdto.getPicture().isBlank()) {
+                        newContent.setPicture(normalizePicture(cdto.getPicture()));
+                    }
+
+                    newContent.setAmcQuotationPdfHeadings(heading);
+
+                    contentsRepo.save(newContent);  // INSERT only here
+                }
+            }
+        }
+    }
+
+
+
+
+    // --------------------------------------------------------------------------
+    // BATCH UPDATE (MULTIPLE HEADINGS + MULTIPLE CONTENTS)
+    // --------------------------------------------------------------------------
+//    @Transactional
+//    public void updateMultipleHeadingsAndContents(List<AmcQuotationPdfHeadingWithContentsDto> list) {
+//
+//        for (AmcQuotationPdfHeadingWithContentsDto hdto : list) {
+//
+//            // -------------------------------
+//            // 1️⃣ Update Heading
+//            // -------------------------------
+//            AmcQuotationPdfHeadings heading = headingsRepo.findById(hdto.getId())
+//                    .orElseThrow(() -> new RuntimeException("Heading not found: " + hdto.getId()));
+//
+//            heading.setHeadingName(hdto.getHeadingName());
+//            headingsRepo.save(heading);
+//
+//            // -------------------------------
+//            // 2️⃣ Load Existing Contents
+//            // -------------------------------
+//            List<AmcQuotationPdfHeadingsContents> existingContents =
+//                    contentsRepo.findByAmcQuotationPdfHeadingsId(heading.getId());
+//
+//            Map<Integer, AmcQuotationPdfHeadingsContents> existingMap =
+//                    existingContents.stream()
+//                            .collect(Collectors.toMap(AmcQuotationPdfHeadingsContents::getId, c -> c));
+//
+//            Set<Integer> updatedIds = new HashSet<>();
+//
+//            // -------------------------------
+//            // 3️⃣ Handle New + Updated Contents
+//            // -------------------------------
+//            if (hdto.getContents() != null) {
+//
+//                for (AmcQuotationPdfHeadingsContentsDto cdto : hdto.getContents()) {
+//
+//                    if (cdto.getId() == null) {
+//                        // ⭐ NEW CONTENT
+//                        AmcQuotationPdfHeadingsContents newContent = new AmcQuotationPdfHeadingsContents();
+//
+//                        newContent.setContentData(cdto.getContentData());
+//
+//                        // picture handling
+//                        if (cdto.getPicture() != null && !cdto.getPicture().isBlank()) {
+//                            newContent.setPicture(normalizePicture(cdto.getPicture()));
+//                        }
+//
+//                        newContent.setAmcQuotationPdfHeadings(heading);
+//                        contentsRepo.save(newContent);
+//
+//                    } else {
+//                        // ⭐ UPDATE CONTENT
+//                        AmcQuotationPdfHeadingsContents existing =
+//                                existingMap.get(cdto.getId());
+//
+//                        if (existing == null) {
+//                            throw new RuntimeException("Content not found: " + cdto.getId());
+//                        }
+//
+//                        existing.setContentData(cdto.getContentData());
+//
+//                        // picture handling (UPDATE)
+//                        if (cdto.getPicture() != null && !cdto.getPicture().isBlank()) {
+//                            existing.setPicture(normalizePicture(cdto.getPicture())); // replace
+//                        } else {
+//                            // keep existing picture (do nothing)
+//                        }
+//
+//                        existing.setAmcQuotationPdfHeadings(heading);
+//                        contentsRepo.save(existing);
+//
+//                        updatedIds.add(cdto.getId());
+//                    }
+//                }
+//            }
+//
+//            // -------------------------------
+//            // 4️⃣ DELETE Removed Contents
+//            // -------------------------------
+//            for (AmcQuotationPdfHeadingsContents oldContent : existingContents) {
+//                if (!updatedIds.contains(oldContent.getId())) {
+//                    contentsRepo.delete(oldContent);
+//                }
+//            }
+//        }
+//    }
     
     private String normalizePicture(String pic) {
 
@@ -292,13 +409,21 @@ public class AmcQuotationPdfService {
         return "data:image/png;base64," + pic.trim();
     }
     
+    
     public List<AmcQuotationPdfHeadingWithContentsDto> getAllHeadingsWithContents() {
+   
+        log.info("📌 getAllHeadingsWithContents() called");
 
         List<AmcQuotationPdfHeadings> headings = headingsRepo.findAll();
+        log.info("Total headings fetched: {}", headings.size());
+        
+        System.out.println("size of heading are "+headings.size());
 
         List<AmcQuotationPdfHeadingWithContentsDto> result = new ArrayList<>();
 
         for (AmcQuotationPdfHeadings heading : headings) {
+
+            log.debug("Processing heading -> ID: {}, Name: {}", heading.getId(), heading.getHeadingName());
 
             AmcQuotationPdfHeadingWithContentsDto dto =
                     new AmcQuotationPdfHeadingWithContentsDto();
@@ -306,19 +431,22 @@ public class AmcQuotationPdfService {
             dto.setId(heading.getId());
             dto.setHeadingName(heading.getHeadingName());
 
-            // Get contents for this heading
+            // Fetch contents for this heading
             List<AmcQuotationPdfHeadingsContents> contents =
                     contentsRepo.findByAmcQuotationPdfHeadingsId(heading.getId());
-            
-           
+
+            log.debug("Contents fetched for heading ID {}: {}", heading.getId(), contents.size());
 
             List<AmcQuotationPdfHeadingsContentsDto> contentDtoList = contents.stream()
-                    .map(c -> new AmcQuotationPdfHeadingsContentsDto(
-                            c.getId(),
-                            c.getContentData(),
-                            c.getPicture(),
-                            heading.getId()
-                    ))
+                    .map(c -> {
+                        log.trace("Mapping content -> ID: {}", c.getId());
+                        return new AmcQuotationPdfHeadingsContentsDto(
+                                c.getId(),
+                                c.getContentData(),
+                                c.getPicture(),
+                                heading.getId()
+                        );
+                    })
                     .collect(Collectors.toList());
 
             dto.setContents(contentDtoList);
@@ -326,8 +454,12 @@ public class AmcQuotationPdfService {
             result.add(dto);
         }
 
+        System.out.println("✔ getAllHeadingsWithContents() completed. Total DTOs: {}"+ result.size());
+        log.info("✔ getAllHeadingsWithContents() completed. Total DTOs: {}", result.size());
+
         return result;
     }
+
     
     private String getForCustomerSealAndSignatureLogo(
             List<AmcQuotationPdfHeadingWithContentsDto> list) {
@@ -358,12 +490,23 @@ public class AmcQuotationPdfService {
         // heading not found
         return "";
     }
+    
+    public List<AmcQuotationPdfHeadingWithContentsDto> amcQuotationPdfHeadingWithContentsDtos(){
+    	
+    	List<AmcQuotationPdfHeadingWithContentsDto> amcQuotationPdfHeadingWithContentsDtos = 
+    			getAllHeadingsWithContents();
+    	
+    	return amcQuotationPdfHeadingWithContentsDtos;
+    	
+    }
 
     
     public AmcQuotationPdfGetData amcQuotationPdfGetData(Integer amcQuatationId,
 														    Integer revisedQuatationId,
 														    Integer renewalQuaId,
 														    Integer revisedRenewalId) {
+    	
+    	
     	
     	AmcQuotationPdfGetData amcQuotationPdfGetData = 
     			new AmcQuotationPdfGetData();
@@ -387,6 +530,9 @@ public class AmcQuotationPdfService {
     	String refNo = "";
     	 LocalDate quotationDate = null;
     	 String company_name = "";
+    	 String company_person_name = "";
+    	 String makeOfElevators = "";
+    	 List<LiftData> liftSpecifications = null;
     	
     	// this details for to letter details
     	 String to;
@@ -410,7 +556,12 @@ public class AmcQuotationPdfService {
     	
     	if(amcQuatationId!=null) {
     		amcQuotation = amcQuotationRepository.findById(amcQuatationId).get();
+    		makeOfElevators = amcQuotation.getMakeOfElevator().getName();
+
     		combinedEnquiry = amcQuotation.getCombinedEnquiry();
+    		
+    		liftSpecifications = amcJobsService.buildLiftData(combinedEnquiry);
+    		
     		sitename = combinedEnquiry.getSiteName();
     		String startDate = amcQuotation.getFromDate().toString();
     		String endDate = amcQuotation.getToDate().toString();
@@ -429,31 +580,47 @@ public class AmcQuotationPdfService {
     				
     		typeOfContract = amcQuotation.getTypeContract();
     		
+    		System.out.println(typeOfContract+" typeOfContract is this");
     		
-    		String allContractTypes [] = typeOfContract.split(",");
-    		contractTypes  = allContractTypes ;
     		
-    		for(int i=0;i<allContractTypes.length;i++) {
-    			
-    			String contractTypeName = allContractTypes[i];
-    			
-    			if(contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
-    				
-    				priceOfContract = " "+amcQuotation.getIsFinalOrdinary().doubleValue();
-    				
-    			}else if(contractTypeName.equalsIgnoreCase("Comprehensive")) {
-    				priceOfContract = " "+amcQuotation.getIsFinalComp().doubleValue();
+    		String[] allContractTypes = typeOfContract.split(",");
+    		contractTypes = allContractTypes;
+    		
+    		StringBuilder priceBuilder = new StringBuilder();
+    		
 
-    			}else {
-    				priceOfContract = " "+amcQuotation.getIsFinalSemiComp().doubleValue();
+    		for (int i = 0; i < allContractTypes.length; i++) {
 
-    			}
+    		    String contractTypeName = allContractTypes[i].trim();
+    		    double price = 0;
+
+    		    if (contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
+    		        price = amcQuotation.getIsFinalOrdinary().doubleValue();
+    		    } else if (contractTypeName.equalsIgnoreCase("Comprehensive")) {
+    		        price = amcQuotation.getIsFinalComp().doubleValue();
+    		    } else {
+    		        price = amcQuotation.getIsFinalSemiComp().doubleValue();
+    		    }
+
+    		    // Append with comma separation
+    		    if (priceBuilder.length() > 0) {
+    		        priceBuilder.append(", ");
+    		    }
+    		    priceBuilder.append(price);
     		}
+
+    		 priceOfContract = priceBuilder.toString();
+
     		
     	}else if(revisedQuatationId!=null) {
     		revisedAmcQuotation = revisedAmcQuotationRepository.findById(revisedQuatationId).get();
     		
+    		makeOfElevators = revisedAmcQuotation.getMakeOfElevator().getName();
+
+    		
     		combinedEnquiry = revisedAmcQuotation.getCombinedEnquiry(); 
+    		liftSpecifications = amcJobsService.buildLiftData(combinedEnquiry);
+
     		sitename = combinedEnquiry.getSiteName();
     		String startDate = revisedAmcQuotation.getFromDate().toString();
     		String endDate = revisedAmcQuotation.getToDate().toString();
@@ -472,30 +639,43 @@ public class AmcQuotationPdfService {
     		
     		typeOfContract = revisedAmcQuotation.getTypeContract();
     		
-            String allContractTypes [] = typeOfContract.split(",");
-            contractTypes  = allContractTypes ;
+    		String[] allContractTypes = typeOfContract.split(",");
     		
-    		for(int i=0;i<allContractTypes.length;i++) {
-    			
-    			String contractTypeName = allContractTypes[i];
-    			
-    			if(contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
-    				
-    				priceOfContract = " "+revisedAmcQuotation.getIsFinalOrdinary().doubleValue();
-    				
-    			}else if(contractTypeName.equalsIgnoreCase("Comprehensive")) {
-    				priceOfContract = " "+revisedAmcQuotation.getIsFinalComp().doubleValue();
+    		contractTypes = allContractTypes;
 
-    			}else {
-    				priceOfContract = " "+revisedAmcQuotation.getIsFinalSemiComp().doubleValue();
+    		StringBuilder priceBuilder = new StringBuilder();
 
-    			}
+    		for (int i = 0; i < allContractTypes.length; i++) {
+
+    		    String contractTypeName = allContractTypes[i].trim();
+    		    double price = 0;
+
+    		    if (contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
+    		        price = revisedAmcQuotation.getIsFinalOrdinary().doubleValue();
+    		    } else if (contractTypeName.equalsIgnoreCase("Comprehensive")) {
+    		        price = revisedAmcQuotation.getIsFinalComp().doubleValue();
+    		    } else {
+    		        price = revisedAmcQuotation.getIsFinalSemiComp().doubleValue();
+    		    }
+
+    		    if (priceBuilder.length() > 0) {
+    		        priceBuilder.append(", ");
+    		    }
+    		    priceBuilder.append(price);
     		}
+
+    		 priceOfContract = priceBuilder.toString();
+
     		
     	}else if(renewalQuaId!=null) {
     		amcRenewalQuotation = amcRenewalQuotationRepository.findById(renewalQuaId).get();
+    		
+    		makeOfElevators = amcRenewalQuotation.getMakeOfElevator().getName();
+
 
     		combinedEnquiry = amcRenewalQuotation.getCombinedEnquiry();
+    		liftSpecifications = amcJobsService.buildLiftData(combinedEnquiry);
+
     		sitename = combinedEnquiry.getSiteName();
     		String startDate = amcRenewalQuotation.getFromDate().toString();
     		String endDate = amcRenewalQuotation.getToDate().toString();
@@ -515,31 +695,42 @@ public class AmcQuotationPdfService {
     		
     		typeOfContract = amcRenewalQuotation.getTypeContract();
     		
-            String allContractTypes [] = typeOfContract.split(",");
-            contractTypes  = allContractTypes ;
-    		
-    		for(int i=0;i<allContractTypes.length;i++) {
-    			
-    			String contractTypeName = allContractTypes[i];
-    			
-    			if(contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
-    				
-    				priceOfContract = " "+amcRenewalQuotation.getIsFinalOrdinary().doubleValue();
-    				
-    			}else if(contractTypeName.equalsIgnoreCase("Comprehensive")) {
-    				priceOfContract = " "+amcRenewalQuotation.getIsFinalComp().doubleValue();
+    		String[] allContractTypes = typeOfContract.split(",");
+    		contractTypes = allContractTypes;
 
-    			}else {
-    				priceOfContract = " "+amcRenewalQuotation.getIsFinalSemiComp().doubleValue();
+    		StringBuilder priceBuilder = new StringBuilder();
 
-    			}
+    		for (int i = 0; i < allContractTypes.length; i++) {
+
+    		    String contractTypeName = allContractTypes[i].trim();
+    		    double price = 0;
+
+    		    if (contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
+    		        price = amcRenewalQuotation.getIsFinalOrdinary().doubleValue();
+    		    } else if (contractTypeName.equalsIgnoreCase("Comprehensive")) {
+    		        price = amcRenewalQuotation.getIsFinalComp().doubleValue();
+    		    } else {
+    		        price = amcRenewalQuotation.getIsFinalSemiComp().doubleValue();
+    		    }
+
+    		    if (priceBuilder.length() > 0) {
+    		        priceBuilder.append(", ");
+    		    }
+    		    priceBuilder.append(price);
     		}
+
+    		 priceOfContract = priceBuilder.toString();
+
     		
     		
      	}else if(revisedRenewalId!=null) {
      		revisedRenewalAmcQuotation = revisedRenewalAmcQuotationRepository.findById(revisedRenewalId).get();
      		
+    		makeOfElevators = revisedRenewalAmcQuotation.getMakeOfElevator().getName();
+
      		combinedEnquiry = revisedRenewalAmcQuotation.getCombinedEnquiry();
+    		liftSpecifications = amcJobsService.buildLiftData(combinedEnquiry);
+
     		sitename = combinedEnquiry.getSiteName();
     		String startDate = revisedRenewalAmcQuotation.getFromDate().toString();
     		String endDate = revisedRenewalAmcQuotation.getToDate().toString();
@@ -559,31 +750,40 @@ public class AmcQuotationPdfService {
     		
     		typeOfContract = revisedRenewalAmcQuotation.getTypeContract();
     		
-            String allContractTypes [] = typeOfContract.split(",");
-            contractTypes  = allContractTypes ;
-    		
-    		for(int i=0;i<allContractTypes.length;i++) {
-    			
-    			String contractTypeName = allContractTypes[i];
-    			
-    			if(contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
-    				
-    				priceOfContract = " "+revisedRenewalAmcQuotation.getIsFinalOrdinary().doubleValue();
-    				
-    			}else if(contractTypeName.equalsIgnoreCase("Comprehensive")) {
-    				priceOfContract = " "+revisedRenewalAmcQuotation.getIsFinalComp().doubleValue();
+    		String[] allContractTypes = typeOfContract.split(",");
+    		contractTypes = allContractTypes;
 
-    			}else {
-    				priceOfContract = " "+revisedRenewalAmcQuotation.getIsFinalSemiComp().doubleValue();
+    		StringBuilder priceBuilder = new StringBuilder();
 
-    			}
+    		for (int i = 0; i < allContractTypes.length; i++) {
+
+    		    String contractTypeName = allContractTypes[i].trim();
+    		    double price = 0;
+
+    		    if (contractTypeName.equalsIgnoreCase("Non-Comprehensive")) {
+    		        price = revisedRenewalAmcQuotation.getIsFinalOrdinary().doubleValue();
+    		    } else if (contractTypeName.equalsIgnoreCase("Comprehensive")) {
+    		        price = revisedRenewalAmcQuotation.getIsFinalComp().doubleValue();
+    		    } else {
+    		        price = revisedRenewalAmcQuotation.getIsFinalSemiComp().doubleValue();
+    		    }
+
+    		    if (priceBuilder.length() > 0) {
+    		        priceBuilder.append(", ");
+    		    }
+    		    priceBuilder.append(price);
     		}
+
+    		 priceOfContract = priceBuilder.toString();
+
     		
     		
      	}
     	
+    	amcQuotationPdfGetData.setMakeOfElavators(makeOfElevators); 
+    	amcQuotationPdfGetData.setLiftSpecifications(liftSpecifications);
     	
-    	
+        
     	to = sitename;
     	attentionPerson = nameOfPerson;
     	phone = mobileNo;
@@ -625,8 +825,11 @@ public class AmcQuotationPdfService {
     	amcQuotationPdfGetData.setBankDetails(bankDetails);  
     	
     	company_name = companySetting.getCompanyName();
+    	company_person_name = companySetting.getCompanyOwnerName();
     	
     	amcQuotationPdfGetData.setCompany_name(company_name);
+    	amcQuotationPdfGetData.setCompany_person_name(company_person_name);
+    			
     	amcQuotationPdfGetData.setRefNo(refNo);
     	amcQuotationPdfGetData.setQuotationDate(quotationDate);
     	

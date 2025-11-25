@@ -8,6 +8,9 @@ import { AlignJustify } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 
 import AmcRenewalQuotationView from "./AmcRenewalQuotationView";
+import ActionModal from '../AMC/ActionModal';
+import AmcQuotationPdfSettingPreviewAndPrint from './pdf/AmcQuotationPdfSettingPreviewAndPrint';
+
 
 import toast from "react-hot-toast";
 
@@ -92,6 +95,14 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
        // setLoading(false);
       }
     };
+
+     const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
+        const [isWithLetterHead, setIsWithLetterHead] = useState(false);
+
+                const [siteName,setSiteName] = useState('');
+        
+      
+         const [revisedRenewalId, setRevisedRenewalId] = useState(null);
 
   return (
     <div className="min-h-screen">
@@ -182,7 +193,13 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
                     {/* Generate PDF */}
                     <td className="px-2 py-2 text-center">
                       <button
-                        onClick={() => generatePDF(q.id, true)}
+                        onClick={() =>{
+                        setIsWithLetterHead(true);
+                        setRevisedRenewalId(q.id);
+                        setSiteName(q.siteName);
+                         //generatePDF(q.id, true)
+                      }
+                      } 
                         className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded"
                       >
                         {loadingBtn === `pdf-${q.id}-true` ? (
@@ -194,7 +211,15 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
                     </td>
                     <td className="px-2 py-2 text-center">
                       <button
-                        onClick={() => generatePDF(q.id, false)}
+                       onClick={() => 
+                       {
+                       // generatePDF(q.id, false);
+                       setIsWithoutLetterhead(true);
+                        setRevisedRenewalId(q.id);
+                        setSiteName(q.siteName);
+                      }
+
+                      }
                         className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded"
                       >
                         {loadingBtn === `pdf-${q.id}-false` ? (
@@ -279,6 +304,26 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
                 </div>
               </div>
             )}
+
+       {/* Action Modal */}
+               <ActionModal
+                 isOpen={isWithoutLetterhead || isWithLetterHead}
+                 onCancel={()=>{
+                   setIsWithoutLetterhead(false);
+                   setIsWithLetterHead(false);
+                 }}
+                 title="Generate AMC Renewal Quotation PDF"
+                 
+               >
+                  <AmcQuotationPdfSettingPreviewAndPrint 
+                  revisedRenewalId = {revisedRenewalId} 
+                  siteName={siteName}
+                    isWithoutLetterhead={isWithoutLetterhead}
+           isWithLetterHead={isWithLetterHead}
+                  />
+         
+               </ActionModal>
+
     </div>
   );
 }
