@@ -188,15 +188,11 @@ export const generatePdfWithOutLetterhead = async (quotationMainId, onStart, onC
                     )
                     .join(''); 
 
-                element.innerHTML += `
-                    <div style="page-break-before: always;"></div>
-                    
-                    ${allLiftDetailsHTML}
-                    
-                    `;                
-                element.innerHTML += `
-                    </div>
+        element.innerHTML += `                    
+                    ${allLiftDetailsHTML}                    
+                    `;      
 
+        element.innerHTML += `
             <div style="page-break-before: always; page-break-after: always; padding-bottom: 10mm;">
                 ${getHeader()}
                 <p style="margin-bottom: 0;">CLIENT NAME: ${quotationData.customerName}</p>
@@ -365,8 +361,8 @@ export const generatePdfWithOutLetterhead = async (quotationMainId, onStart, onC
                     <p style="margin: 0;">B-307, Shubham Heights, S. No. 22/1/B1, Pimple Saudagar, Pune 411027</p>
                     <p style="margin: 0;">020-27279009/7276266662 | www.vertexelevators.in | vertexelevators.india@gmail.com</p>
                 </div>
-            </div>
-        `;
+            </div>`
+            ;
 
         const opt = {
             margin: [50, 15, 40, 15], // Top, Left, Bottom, Right margins in mm

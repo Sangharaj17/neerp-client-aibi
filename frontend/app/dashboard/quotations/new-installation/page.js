@@ -21,6 +21,7 @@ import { toast } from "react-hot-toast";
 import { confirmActionWithToast } from "@/components/UI/toastUtils";
 import { deleteQuotationApi, getPagewiseQuotations, finalizeQuotation } from "@/services/quotationApi";
 import { formatDate, formatCurrency } from "@/utils/common";
+import { generatePdf } from "@/utils/generatePdf"
 import { generatePdfWithLetterhead } from "@/utils/pdfGeneratorWithHead";
 import { generatePdfWithOutLetterhead } from "@/utils/pdfGeneratorWithoutHead";
 import { getTenant } from "@/utils/tenant";
@@ -115,7 +116,7 @@ export default function QuotationList() {
 
   // --- PDF generation handlers ---
 
-  const handlePdfGeneration = (generatorFunction, row) => {
+  const handlePdfGeneration = (generatorFunction, includeLetterhead, row) => {
     // Only start if not already loading
     if (isPdfLoading) return;
 
@@ -123,7 +124,7 @@ export default function QuotationList() {
     const onComplete = () => setIsPdfLoading(false);
 
     // Pass the row data and the handlers to the utility function
-    generatorFunction(row.id, onStart, onComplete);
+    generatorFunction(row.id, includeLetterhead, onStart, onComplete);
   };
 
   const handleFinalize = (quotationId, quotationNo) => {
@@ -317,7 +318,7 @@ export default function QuotationList() {
                       <Download
                         className="h-5 w-5 text-green-600 hover:text-green-700 mx-auto transition"
                         title="Download PDF With Letterhead"
-                        onClick={() => handlePdfGeneration(generatePdfWithLetterhead, row)}
+                        onClick={() => handlePdfGeneration(generatePdf, true, row)}
                       />
                     </td>
 
@@ -326,7 +327,7 @@ export default function QuotationList() {
                       <FileSignature
                         className="h-5 w-5 text-cyan-500 hover:text-cyan-700 mx-auto cursor-pointer transition"
                         title="Download PDF Without Letterhead"
-                        onClick={() => handlePdfGeneration(generatePdfWithOutLetterhead, row)}
+                        onClick={() => handlePdfGeneration(generatePdf, false, row)}
                       />
                     </td>
 
