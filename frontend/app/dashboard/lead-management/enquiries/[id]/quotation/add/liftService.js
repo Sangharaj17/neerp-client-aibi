@@ -2,6 +2,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 import { useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
+import { showErrorToast } from "@/components/UI/toastUtils";
 
 
 export const clearError = (setErrors, field) => {
@@ -1087,7 +1088,7 @@ export const fetchLoads = async (setErrors) => {
 
     // ⚠️ If no data found
     const message = apiRes.message || "No load setting found.";
-    toast.warning(message);
+    showErrorToast(message);
 
     if (setErrors)
       setErrors((prev) => ({ ...prev, loadPerAmt: message }));
@@ -1096,7 +1097,7 @@ export const fetchLoads = async (setErrors) => {
   } catch (error) {
     console.error("Error fetching load:", error);
     const message = "Failed to fetch load. Please check server or tenant.";
-    toast.error(message);
+    showErrorToast(message);
 
     if (setErrors)
       setErrors((prev) => ({ ...prev, loadPerAmt: message }));
@@ -1806,6 +1807,55 @@ export const handleRefresh = async (
 //   );
 // };
 
+
+export const fetchTax = async (setErrors) => {
+  try {
+    const res = await axiosInstance.get(
+      "/api/v1/settings/COMPANY_SETTINGS_1/NI-quot-tax",
+      {
+        headers: { "X-Tenant": localStorage.getItem("tenant") },
+      }
+    );
+
+    const apiRes = res.data;
+    console.log("===apiRes Tax===>", apiRes);
+
+    // Check APIResponse format
+    if (!apiRes.success || apiRes.data === null || apiRes.data === undefined) {
+      const message = apiRes.message || "No tax setting found.";
+
+      if (setErrors) {
+        setErrors((prev) => ({ ...prev, tax: message }));
+      }
+      // toast.warning(message);
+      showErrorToast(message);
+      return 0;
+    }
+
+    const taxAmount = apiRes.data;
+
+    // Clear previous errors
+    if (setErrors) {
+      setErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.tax;
+        return updated;
+      });
+    }
+
+    return taxAmount;
+  } catch (error) {
+    console.error("Error fetching tax:", error);
+    const message = "Failed to fetch tax. Please check company settings.";
+
+    if (setErrors) {
+      setErrors((prev) => ({ ...prev, tax: message }));
+    }
+
+    showErrorToast(message);
+    return 0;
+  }
+};
 
 
 

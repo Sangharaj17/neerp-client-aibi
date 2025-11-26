@@ -82,3 +82,23 @@ export const confirmActionWithToast = (
     { duration: 3000 }
   );
 };
+
+
+
+let errorToastCount = 0;
+const MAX_ERROR_TOASTS = 4;
+
+export const showErrorToast = (msg) => {
+  if (errorToastCount >= MAX_ERROR_TOASTS) return;
+
+  errorToastCount++;
+
+  const id = toast.error(msg, {
+    duration: 4000,
+    onClose: () => {
+      errorToastCount--;
+    }
+  });
+
+  return id;
+};

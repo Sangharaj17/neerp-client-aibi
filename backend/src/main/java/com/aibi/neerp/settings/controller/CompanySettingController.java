@@ -2,6 +2,7 @@
 
 package com.aibi.neerp.settings.controller;
 
+import com.aibi.neerp.componentpricing.payload.ApiResponse;
 import com.aibi.neerp.settings.dto.CompanySettingDTO;
 import com.aibi.neerp.settings.service.CompanySettingService;
 
@@ -62,7 +63,33 @@ public class CompanySettingController {
 
         return ResponseEntity.ok(response);
     }
-    
-    
-    
+
+    @GetMapping("/{refName}/NI-quot-tax")
+    public ResponseEntity<ApiResponse<Double>> getNI_QuotTax(@PathVariable String refName) {
+
+        Double tax = service.getCompanyNI_QuotTax(refName);
+
+        if (tax == null) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(
+                            false,
+                            "Tax not found for company settings",
+                            null
+                    ));
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Tax fetched successfully",
+                        tax
+                )
+        );
+    }
+
+
+
+
+
 }

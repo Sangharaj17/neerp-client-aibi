@@ -382,7 +382,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       gsmIntercom: lift.data?.gsmIntercom ?? 0,
       numberLockSystem: lift.data?.numberLockSystem ?? 0,
       thumbLockSystem: lift.data?.thumbLockSystem ?? 0,
-      tax: lift.data?.tax ?? 18, // Default to 18% if not provided
+      tax: lift.data?.tax ?? 0, // Default to 18% if not provided
       loadPerAmt: lift.data?.loadPerAmt ?? 0,
       loadAmt: lift.data?.loadAmt ?? 0,
 

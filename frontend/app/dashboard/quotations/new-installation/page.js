@@ -327,12 +327,19 @@ export default function QuotationList() {
                           <RotateCcw className="h-5 w-5 text-gray-400 mx-auto" />
                         </span>
                       ) : (
+                        // <Link
+                        //   href={`/dashboard/quotations/new-installation/${row.id}/revision`}
+                        //   title="Create Revision of this Draft Quotation"
+                        // >
+                        //   <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
+                        // </Link>
                         <Link
-                          href={`/dashboard/quotations/new-installation/${row.id}/revision`}
+                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=revision`}
                           title="Create Revision of this Draft Quotation"
                         >
                           <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
                         </Link>
+
                       )}
                     </td>
 
@@ -370,7 +377,7 @@ export default function QuotationList() {
                         </span>
                       ) : (
                         <Link
-                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}`}
+                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=edit`}
                           title="Edit Quotation"
                         >
                           <Pencil className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
@@ -380,13 +387,24 @@ export default function QuotationList() {
 
                     {/* 7. Delete */}
                     <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleDeleteQuotation(row.id, row.quotationNo)}
-                        title="Delete Quotation"
-                        className="mx-auto"
-                      >
-                        <Trash2 className="h-5 w-5 text-red-600 hover:text-red-800 mx-auto transition" />
-                      </button>
+                      {row.isFinalized ? (
+                        <span
+                          title="Quotation is Finalized and cannot be delete"
+                          className="cursor-not-allowed inline-block"
+                        >
+                          <Trash2 className="h-5 w-5 text-gray-400 mx-auto" />
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteQuotation(row.id, row.quotationNo)}
+                          title="Delete Quotation"
+                          className="mx-auto"
+                        >
+                          <Trash2 className="h-5 w-5 text-red-600 hover:text-red-800 mx-auto transition" />
+                        </button>
+                      )}
+
+
                     </td>
 
                     {/* 8. Status (Is Final) */}

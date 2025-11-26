@@ -155,4 +155,9 @@ public class CompanySettingService {
         return entity;
     }
 
+    public Double getCompanyNI_QuotTax(String refName) {
+        return repository.findById(refName)
+                .map(CompanySetting::getGstRateNewInstallationTotalPercentage)
+                .orElse(null);
+    }
 }
