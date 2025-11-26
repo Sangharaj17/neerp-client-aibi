@@ -115,6 +115,29 @@ export default function QuotationList() {
   }, [quotations, searchQuery]);
 
   // --- PDF generation handlers ---
+  const getTenantId = () => {
+    // Implement your logic to retrieve the active tenant ID
+    return localStorage.getItem("tenant") || "default-tenant";
+  };
+
+  const generatePDF = (quotationMainId, includeLetterhead) => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+      console.error("Tenant ID not available.");
+      // toast.error("Tenant configuration missing.");
+      return;
+    }
+
+    // Call the new backend API route
+    const apiUrl = `/api/pdf-generation?quotationId=${quotationMainId}&includeLetterhead=${includeLetterhead}&tenant=${tenantId}`;
+
+    // Trigger the PDF download/view in a new tab
+    window.open(apiUrl, '_blank');
+
+    // Optional: Add a toast notification for the user
+    // toast.info("PDF generation started in the background...");
+  };
+
 
   const handlePdfGeneration = (generatorFunction, includeLetterhead, row) => {
     // Only start if not already loading
@@ -318,7 +341,7 @@ export default function QuotationList() {
                       <Download
                         className="h-5 w-5 text-green-600 hover:text-green-700 mx-auto transition"
                         title="Download PDF With Letterhead"
-                        onClick={() => handlePdfGeneration(generatePdf, true, row)}
+                        onClick={() => generatePDF(row.id, true)}
                       />
                     </td>
 
@@ -327,7 +350,7 @@ export default function QuotationList() {
                       <FileSignature
                         className="h-5 w-5 text-cyan-500 hover:text-cyan-700 mx-auto cursor-pointer transition"
                         title="Download PDF Without Letterhead"
-                        onClick={() => handlePdfGeneration(generatePdf, false, row)}
+                        onClick={() => generatePDF(row.id, false, row)}
                       />
                     </td>
 

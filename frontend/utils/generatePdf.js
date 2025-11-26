@@ -4,6 +4,16 @@ import { getQuotationById, getFeatureNameMap } from "@/services/quotationApi";
 import { generateLiftTable, generateStandardFeaturesTable, generateScopeOfWorkHtml, generateLiftPriceRow, generateCombinedLiftPriceTable, generateProposalTermsHtml, generateTermsAndConditionsHtml } from "@/utils/pdfElementCreations";
 import { formatDate } from "@/utils/common";
 
+
+// Function to check if a file path is an image extension
+const isImagePath = (path) => {
+  if (!path) return false;
+  const lowerCasePath = path.toLowerCase();
+  // Includes jpeg, jpg, png, webp, gif, etc.
+  return /\.(jpe?g|png|gif|webp)$/i.test(lowerCasePath);
+};
+
+
 /**
  * Robust PDF generator using jsPDF + html2canvas.
  * - Cover (full page image) -> no header/footer/watermark
@@ -88,9 +98,13 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
     // Your environment will transform these local paths into accessible URLs.
     const COVER_IMG = '/images/cover_page.png';
     const BACK_IMG = '/images/backpage_page.png';
-    const HEADER_IMG = '/images/header.png';
-    const FOOTER_IMG = '/images/footer.png';
-    const WATERMARK_IMG = '/images/watermark.png';
+    const LETTERHEAD_SOURCE = '/images/letterhead_full.png';
+
+    // const HEADER_IMG = '/images/header.png';
+    // const FOOTER_IMG = '/images/footer.png';
+    // const WATERMARK_IMG = '/images/watermark.png';
+
+
 
     // imports
     const [{ jsPDF }, html2canvas] = await Promise.all([
@@ -117,59 +131,53 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
     const pxPerMm = 3.7795275591; // 1 mm ~ 3.7795 px (approx at 96 DPI). We'll override via html2canvas scale.
     const targetDpiScale = 2; // 2x for crisp images
 
-    // helper: create an element used for html2canvas rendering
-    const renderHtmlToPdfPage = async (htmlString, options = {}) => {
-      // options: { fullPageImage: boolean } - if fullPageImage true, we render with no margins and size = A4
-      const wrapper = document.createElement('div');
-      // apply styles so wrapper has exact A4 px dimensions for html2canvas
-      const mmToPx = mm => Math.round(mm * pxPerMm * targetDpiScale);
-      wrapper.style.width = `${mmToPx(A4_WIDTH_MM)}px`;
-      wrapper.style.height = `${mmToPx(A4_HEIGHT_MM)}px`;
-      wrapper.style.boxSizing = 'border-box';
-      wrapper.style.background = options.background || '#ffffff';
-      wrapper.style.position = 'relative';
-      wrapper.style.overflow = 'hidden';
+
+    const renderHtmlToPdfPage = async (htmlString) => {
+      const wrapper = document.createElement("div");
+
+      wrapper.style.width = "800px";
+      wrapper.style.position = "absolute";
+      wrapper.style.left = "-99999px";
       wrapper.innerHTML = htmlString;
 
-      // append to DOM (offscreen) so fonts/images can load
-      wrapper.style.position = 'fixed';
-      wrapper.style.left = '-9999px';
-      wrapper.style.top = '0';
       document.body.appendChild(wrapper);
 
-      // wait a tick to let images start loading
       await new Promise(r => setTimeout(r, 50));
 
-      // use html2canvas with high scale for quality
       const canvas = await html2canvas(wrapper, {
-        scale: targetDpiScale,
+        scale: 2,
         useCORS: true,
-        allowTaint: false,
         logging: false,
-        imageTimeout: 15000,
-        // ensure we render full element
-        width: wrapper.offsetWidth,
-        height: wrapper.offsetHeight,
-        windowWidth: wrapper.offsetWidth,
-        windowHeight: wrapper.offsetHeight
       });
 
-      // clean up
       document.body.removeChild(wrapper);
 
-      // convert to dataURL
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-      return { dataUrl, canvasWidth: canvas.width, canvasHeight: canvas.height };
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      return { imgData, imgWidth, imgHeight, heightLeft, position, pageHeight };
     };
 
-    // helper: add image dataURL as a full A4 page in PDF. If not first page, addPage first.
-    const addJpgToPdfFullPage = (dataUrl, pageIndex) => {
-      // if (pageIndex > 0) pdf.addPage();
-      // jsPDF addImage expects dimensions in units (mm)
+    const addMultipage = (pdf, page) => {
       pdf.addPage();
-      pdf.addImage(dataUrl, 'JPEG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+      pdf.addImage(page.imgData, "JPEG", 0, page.position, page.imgWidth, page.imgHeight);
+
+      page.heightLeft -= page.pageHeight;
+
+      while (page.heightLeft > 0) {
+        pdf.addPage();
+        page.position = page.heightLeft - page.imgHeight;
+        pdf.addImage(page.imgData, "JPEG", 0, page.position, page.imgWidth, page.imgHeight);
+        page.heightLeft -= page.pageHeight;
+      }
     };
+    
 
     // 1) Render COVER full-page image (no header/footer/watermark)
     if (includeLetterhead) {
@@ -179,37 +187,31 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
           <img src="${COVER_IMG}" style="width:100%; height:100%; object-fit:cover; display:block;" />
         </div>
       `;
-      const { dataUrl } = await renderHtmlToPdfPage(coverHtml, { background: '#ffffff' });
-      // pageIndex = 0 = first page
-      addJpgToPdfFullPage(dataUrl, 0);
+      const coverPage = await renderHtmlToPdfPage(coverHtml);
+      addMultipage(pdf, coverPage);
     }
 
     // Prepare a function to build inner page HTML (header + watermark + content + footer)
     const buildInnerPageHtml = (contentHtml) => {
       // Define the content area margins dynamically
-      const HEADER_HEIGHT_MM = 40; // Space reserved for the header
-      const FOOTER_HEIGHT_MM = 28; // Space reserved for the footer
-      const DEFAULT_MARGIN_MM = 10; // Margin when letterhead is excluded
+      const TOP_MARGIN = '50mm';
+      const BOTTOM_MARGIN = '30mm';
+      const DEFAULT_MARGIN = '10mm';
 
-      // Set top margin: 40mm if letterhead is included, 10mm otherwise
-      const topMargin = includeLetterhead ? `${HEADER_HEIGHT_MM}mm` : `${DEFAULT_MARGIN_MM}mm`;
+      let letterheadLayerHtml = '';
+      const isImageLetterhead = isImagePath(LETTERHEAD_SOURCE);
 
-      // Set bottom margin: 28mm if letterhead is included, 10mm otherwise
-      const bottomMargin = includeLetterhead ? `${FOOTER_HEIGHT_MM}mm` : `${DEFAULT_MARGIN_MM}mm`;
+      if (includeLetterhead && isImageLetterhead) {
+        letterheadLayerHtml = `
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; z-index: 1;">
+                <img src="${LETTERHEAD_SOURCE}" style="width:100%; height:100%; object-fit:cover; display:block;" />
+            </div>
+        `;
+      }
 
-      // Conditional HTML for Header
-      const headerHtml = includeLetterhead ? `
-        <div style="position: absolute; top: 0; left: 0; right: 0; height: ${HEADER_HEIGHT_MM}mm; overflow: hidden;">
-            <img src="${HEADER_IMG}" style="width:100%; height:100%; object-fit:cover; display:block;" />
-        </div>
-    ` : '';
-
-      // Conditional HTML for Footer
-      const footerHtml = includeLetterhead ? `
-        <div style="position: absolute; bottom: 0; left: 0; right: 0; height: ${FOOTER_HEIGHT_MM}mm; overflow: hidden;">
-            <img src="${FOOTER_IMG}" style="width:100%; height:100%; object-fit:cover; display:block;" />
-        </div>
-    ` : '';
+      // Set dynamic margins for the content div
+      // const contentTopMargin = includeLetterhead ? TOP_MARGIN : DEFAULT_MARGIN;
+      // const contentBottomMargin = includeLetterhead ? BOTTOM_MARGIN : DEFAULT_MARGIN;
 
       // Use inline styles; images loaded from local paths.
       return `
@@ -233,20 +235,13 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
           color: #000;
         ">
 
-          ${headerHtml}
-            
-          ${footerHtml}
-
-          <!-- WATERMARK centered (behind content) -->
-          <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0.12; z-index: 1; pointer-events: none;">
-            <img src="${WATERMARK_IMG}" style="width:60%; height:auto; display:block;" />
-          </div>
+          ${letterheadLayerHtml}
 
           <!-- CONTENT area: leave margins for header/footer -->
           <div style="
             position: absolute;
-            top: 40mm;
-            bottom: 28mm;
+            top: ${TOP_MARGIN};
+            bottom: ${BOTTOM_MARGIN};
 
             /* SET YOUR LEFT/RIGHT MARGINS HERE */
             padding-left: 15mm;
@@ -254,12 +249,15 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
 
             box-sizing: border-box;
             overflow: hidden;
+            z-index: 2; /* Ensure content is above the background image */
           ">
 
             <!-- INNER CONTENT (scaling only) -->
             <div style="
               /* transform: scale(1.08); */
               transform-origin: top left;
+              margin-top: ${TOP_MARGIN};
+              margin-bottom: ${BOTTOM_MARGIN};
             ">
             ${contentHtml}
           </div>
@@ -270,7 +268,7 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
     // 2) Render Body page (inner page index 1)
     {
       const bodyContent = `
-        <div style="font-size:26pt; line-height:1.4; margin-top:20%;">
+        <div style="font-size:26pt; line-height:1.4;">
           <table style="width:100%; border-collapse: collapse; margin-bottom:16mm;">
             <tr>
               <td style="text-align:left;"><strong>REF.NO: ${refName}/${financialYear}/${monthName}/${quotationNo}</strong></td>
@@ -315,8 +313,8 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
       `;
 
       const innerHtml = buildInnerPageHtml(bodyContent);
-      const { dataUrl } = await renderHtmlToPdfPage(innerHtml);
-      addJpgToPdfFullPage(dataUrl, pdf.getNumberOfPages()); // add second page (pageIndex = 1)
+      const bodyPage = await renderHtmlToPdfPage(innerHtml);
+      addMultipage(pdf, bodyPage);
     }
 
     // 3) Render each lift page (each a separate page)
@@ -343,8 +341,8 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
             `;
 
         let innerHtml = buildInnerPageHtml(liftTableHtml);
-        const { dataUrl: liftDataUrl } = await renderHtmlToPdfPage(innerHtml); // Using distinct name 'liftDataUrl'
-        addJpgToPdfFullPage(liftDataUrl, pdf.getNumberOfPages()); // Adds the first page for this lift
+        const liftPage = await renderHtmlToPdfPage(innerHtml);
+        addMultipage(pdf, liftPage);
 
 
         // --- B. STANDARD FEATURES PAGE (IF DATA EXISTS) ---
@@ -381,9 +379,8 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
 
           // Render and add the Features Page
           innerHtml = buildInnerPageHtml(featuresHtmlContent);
-          const { dataUrl: featuresDataUrl } = await renderHtmlToPdfPage(innerHtml);
-          // Pass the extracted string to the PDF helper
-          addJpgToPdfFullPage(featuresDataUrl, pdf.getNumberOfPages()); // Adds the SECOND page for this lift
+          const featuresPage = await renderHtmlToPdfPage(innerHtml);
+          addMultipage(pdf, featuresPage);
         }
 
       }
@@ -431,8 +428,8 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
       );
 
       const innerHtml = buildInnerPageHtml(scopeHtml);
-      const { dataUrl } = await renderHtmlToPdfPage(innerHtml);
-      addJpgToPdfFullPage(dataUrl, pdf.getNumberOfPages());
+      const scopePage = await renderHtmlToPdfPage(innerHtml);
+      addMultipage(pdf, scopePage);
     }
 
 
@@ -454,8 +451,8 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
       const tncHtml = generateTermsAndConditionsHtml(tncContent);
 
       const innerHtml = buildInnerPageHtml(tncHtml);
-      const { dataUrl } = await renderHtmlToPdfPage(innerHtml);
-      addJpgToPdfFullPage(dataUrl, pdf.getNumberOfPages());
+      const tncPage = await renderHtmlToPdfPage(innerHtml);
+      addMultipage(pdf, tncPage);
     }
 
     // 7) Back cover (final page) - no header/footer/watermark
@@ -465,8 +462,8 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
           <img src="${BACK_IMG}" style="width:100%; height:100%; object-fit:cover; display:block;" />
         </div>
       `;
-      const { dataUrl } = await renderHtmlToPdfPage(backHtml);
-      addJpgToPdfFullPage(dataUrl, pdf.getNumberOfPages());
+      const backPage = await renderHtmlToPdfPage(backHtml);
+      addMultipage(pdf, backPage);
     }
 
     // PDF is built. Now save + open in new tab.

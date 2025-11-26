@@ -69,10 +69,17 @@ export const getExistingLifts = async (leadId, combinedEnquiryId) => {
  * @param {number} quotationId - The ID of the quotation
  * @returns {Promise<ApiResponse<QuotationMainResponseDTO>>}
  */
-export const getQuotationById = async (quotationId) => {
+export const getQuotationById = async (quotationId, tenantId) => {
   try {
+    const headers = {};
+    // 🚨 CRITICAL CHANGE: If tenantId is provided, set the X-Tenant header explicitly.
+    if (tenantId) {
+      headers["X-Tenant"] = tenantId;
+    }
+
     const response = await axiosInstance.get(
-      `${API_ENDPOINTS.QUOTATIONS}/${quotationId}`
+      `${API_ENDPOINTS.QUOTATIONS}/${quotationId}`,
+      { headers: headers } // Pass the dynamic headers to the request
     );
     return response.data;
   } catch (err) {
@@ -165,10 +172,21 @@ export const deleteQuotationApi = async (quotationId, employeeId) => {
  * Fetches all features and converts them into a Map for fast ID-to-Name lookup.
  * @returns {Promise<Map<number, string>>} A Map where keys are feature IDs and values are feature names.
  */
-export const getFeatureNameMap = async () => {
+export const getFeatureNameMap = async (tenantId) => {
   try {
+    const headers = {};
+    // 🚨 CRITICAL CHANGE: If tenantId is provided, set the X-Tenant header explicitly.
+    if (tenantId) {
+      headers["X-Tenant"] = tenantId;
+    }
+
     // Assuming API_FEATURES is defined and axiosInstance is available
-    const response = await axiosInstance.get(API_ENDPOINTS.FEATURES);
+    // const response = await axiosInstance.get(API_ENDPOINTS.FEATURES);
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.FEATURES}`,
+      { headers: headers } // Pass the dynamic headers to the request
+    );
+
     const allFeatures = response.data; // Adjust based on your API response structure (e.g., if data is wrapped)
 
     // Ensure response.data.data is an array before mapping

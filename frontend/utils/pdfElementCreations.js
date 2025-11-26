@@ -33,14 +33,6 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
     landingEntranceSubType2_toFloor,
     landingEntranceCount,
     lopTypeName,
-    stdFeatureIds,
-    vfdMainDriveName,
-    controlPanelMakeName,
-    doorOperatorName,
-    mainMachineSetName,
-    carRailsName,
-    wireRopeName,
-    wiringHarnessName,
   } = liftDetail;
 
 
@@ -58,33 +50,24 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
     <style>
         /* BASE STYLE: Smaller font for readability, 14pt looks good for scaling */
         .lift-spec-table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
             border: 1px solid #999;
-            font-family:Roboto, 'Segoe UI', Calibri, Arial, sans-serif;  /* Use a clean font */
-            font-size: 18pt; /* Adjusted base font size */
             line-height: 1.25; /* Adjusted line height for tighter spacing */
         }
 
         /* Default style for all TH and TD cells */
         .lift-spec-table th, .lift-spec-table td {
             border: 1px solid #ccc;
-            /* Standard padding (Top/Bottom 4px, Left/Right 10px) */
-            padding: 0px 10px 20px 10px; 
             vertical-align: top; /* Ensures text starts high */
-            word-wrap: break-word; 
+            word-wrap: break-word;   
         }
 
-        /* Style for the blue/light gray header/separator rows */
+        /* Style for the light gray header/separator rows */
         .lift-spec-table .group-header {
             background: #f2f2f2;
             font-weight: bold;
             text-align: left;
-            /* Slightly more padding for separators (Top/Bottom 6px) */
-            
-            padding: 0px 10px 20px 10px; 
-            font-size: 20pt; /* Match base font size */
+            font-size: 12pt; /* Match base font size */            
+            padding-left: 10px;
         }
 
         /* Style for the main, title header row (e.g., TECHNICAL SPECIFICATION SHEET) */
@@ -93,23 +76,21 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
             color: #003f7d;
             font-weight: bold;
             text-align: center;
-            font-size: 20pt; /* Slightly larger font for the title header */
-            padding: -6px 2px 10px 10px;
+            font-size: 17pt; /* Slightly larger font for the title header */
         }
         
         /* Style for the Client/Ref cells (multi-line row) */
         .client-ref-row td {
             /* T R B L - use slightly more top/bottom padding for the multi-line row */
-            padding: 8px 10px;
+            padding: 5px 5px 5px 5px;
             font-weight: 600;
             text-transform: uppercase;
             vertical-align: top;
-            
-            padding: 0px 10px 20px 10px;
+            font-size: 10pt;
         }
         .client-ref-row b {
             /* Ensure the labels are bold */
-            font-weight: 900;
+            font-weight: 800;
         }
 
         /* Style for the row label (left column) */
@@ -225,10 +206,12 @@ function row(label, value) {
   // and applies the specific width and the row-label class.
   return `
         <tr>
-            <td class="row-label" style="padding: 0px 10px 20px 40px">
+            <td class="row-label" style="padding: 5px 5px 5px 20px;           
+            font-size: 10pt; ">
                 ${label}
             </td>
-            <td style="padding: 0px 10px 20px 10px">
+            <td style="padding: 5px 5px 5px 10px;           
+            font-size: 10pt; ">
                 ${value}
             </td>
         </tr>
@@ -265,15 +248,14 @@ export const generateStandardFeaturesTable = (stdFeatureIds, featureNameMap, doo
       table-layout: fixed;
 			border-collapse: collapse; 
 			border: 1px solid black; /* Full table border */
-      margin: 20% auto auto 10%; /* T R B L */
+      margin: 5% auto auto 5%; /* T R B L */
 			/* margin: 0 auto; */ /* Center the table */
-			font-size: 20pt;
-      font-family:Roboto, 'Segoe UI', Calibri, Arial, sans-serif;
+			font-size: 15pt;
 		'>
 			<tr style='border: 1px solid black; '>
 				<th colspan="2" style="
 					border: 1px solid black; 
-					padding: 5px 10px 20px 10px; 
+					padding: 5px 10px 5px 10px; 
 					background-color: #f0f0f0; 
 					text-align: center;
 					/* Ensure border is visible even with collapse */
@@ -301,7 +283,7 @@ export const generateStandardFeaturesTable = (stdFeatureIds, featureNameMap, doo
       // Explicitly setting width to 50% here
       html += `
 				<td style='border: 0px; width:50%; vertical-align: middle;'>
-					<ul style='margin: 0; margin-left:10px; padding: 20px;'><li style='line-height: 1.2; vertical-align: middle;'> ${feature}</li></ul>
+					<ul style='margin: 0; margin-left:10px; padding: 5px; padding-left:20px;'><li style='line-height: 1.2; vertical-align: middle;'> ${feature}</li></ul>
 				</td>
 				`;
     } else {
@@ -359,27 +341,26 @@ const generateComponentsTable = (vfdMainDriveName,
   let html = `
   
     <p style="
-			font-size: 20pt; 
+			font-size: 15pt; 
 			font-weight: normal; 
 			text-align: left; 
 			width: 85%; 
-			margin: 10% auto auto 10%; /* T R B L */
-			font-family:Roboto, 'Segoe UI', Calibri, Arial, sans-serif;
+			margin: 5% auto auto 5%; /* T R B L */
 		">We will provide you following company's parts for elevator.</p>
     
     <table style="
       width: 85%;
       border-collapse: collapse;
-      margin: 2% auto auto 10%; /* T R B L */
-      font-size: 20pt;
+      margin: 2% auto auto 8%; /* T R B L */
+      font-size: 12pt;
       font-family: Roboto, 'Segoe UI', Calibri, Arial, sans-serif;
       border: 1px solid black; 
     ">
       <thead>
         <tr style="background:#d0e3ff; border:1px solid #000;">
-          <th style="padding:12px; padding-bottom:20px; border:1px solid #000; width:10%;">SR</th>
-          <th style="padding:12px; padding-bottom:20px; border:1px solid #000; width:50%;">COMPONENT NAME</th>
-          <th style="padding:12px; padding-bottom:20px; border:1px solid #000; width:40%;">COMPANY MAKE</th>
+          <th style="padding:12px;  border:1px solid #000; width:10%;">SR</th>
+          <th style="padding:12px;  border:1px solid #000; width:50%;">COMPONENT NAME</th>
+          <th style="padding:12px;  border:1px solid #000; width:40%;">COMPANY MAKE</th>
         </tr>
       </thead>
       <tbody>
@@ -388,9 +369,9 @@ const generateComponentsTable = (vfdMainDriveName,
   components.forEach(item => {
     html += `
       <tr>
-        <td style="padding:10px; padding-bottom:20px; border:1px solid #999; text-align:center;">${item.sr}</td>
-        <td style="padding:10px; padding-bottom:20px; border:1px solid #999;">${item.name}</td>
-        <td style="padding:10px; padding-bottom:20px; border:1px solid #999;">${item.make}</td>
+        <td style="padding:10px;  border:1px solid #999; text-align:center;">${item.sr}</td>
+        <td style="padding:10px;  border:1px solid #999;">${item.name}</td>
+        <td style="padding:10px;  border:1px solid #999;">${item.make}</td>
       </tr>
     `;
   });
@@ -434,7 +415,7 @@ export const generateScopeOfWorkHtml = (scopeOfWorkContent, liftScopeData = [], 
     liftSpecificItemsCompanyScope += `
       
 
-      <ul style="padding-left:20px; font-size:20pt; line-height:1.5;">
+      <ul style="padding-left:22px; font-size:15pt; line-height:1.5;">
         <li>Comprehensive service during the warranty period of 
           <strong><u>${d.warranty_period} Month.</u></strong>
         </li>
@@ -476,13 +457,13 @@ export const generateScopeOfWorkHtml = (scopeOfWorkContent, liftScopeData = [], 
   const defaultContent = `
         <div style="width: 100%; margin-top:5%; ">
 
-            <h1 style="font-size: 32pt; font-weight: bold; margin-bottom: 10px; text-align: left; color: #00bcd4;">SCOPE OF WORK</h1>
+            <h1 style="font-weight: bold; margin-bottom: 10px; text-align: left; color: #00bcd4;">SCOPE OF WORK</h1>
 
-            <div style="font-size: 22pt; line-height: 1.5;">
+            <div style="font-size: 15pt; line-height: 1.5;">
                 <!-- This content should come from quotationData.scopeOfWorkContent or similar DB field -->
                 <p><strong>Company’s scope</strong> of work related to elevators works <strong>includes:</strong></p>
 
-                <ul style="padding-left: 20px;">
+                <ul style="padding-left: 22px;">
                     <li>Supply of the Elevators as per specification agreed.</li>
 
                     <li>Installation, testing & commissioning of the elevators.</li>
@@ -491,10 +472,10 @@ export const generateScopeOfWorkHtml = (scopeOfWorkContent, liftScopeData = [], 
                  ${liftSpecificItemsCompanyScope}
             </div>
 
-            <div style="font-size: 22pt; line-height: 1.5; margin-top:2%; ">
+            <div style="font-size: 15pt; line-height: 1.5; margin-top:2%; ">
                 <p><strong>Customer’s scope</strong> of related to elevators works <strong>excluded:</strong></p>
 
-                <ul style="padding-left: 20px;">
+                <ul style="padding-left: 22px;">
                     <li>All civil & whitewash leakages proofing etc required for elevator installation.</li>
 
                     <li>Dismantling, all electrical works required for elevator installation.</li>
@@ -510,11 +491,11 @@ export const generateScopeOfWorkHtml = (scopeOfWorkContent, liftScopeData = [], 
 
                 ${liftPriceTables}
             </div>
-            <p style='background-color:#FFFF00; font-size: 20pt; padding-bottom:10px;'><strong>Note </strong>: Quotation is valid for 3 Months.</p> 
+            <p style='background-color:#FFFF00; font-size: 15pt; padding-bottom:10px;'><strong>Note </strong>: Quotation is valid for 3 Months.</p> 
 
-            <h1 style="font-size: 32pt; font-weight: bold; margin-bottom: 30px; margin-top:1%; text-align: left; color: #00bcd4;">PAYMENT TERMS: </h1>
+            <h1 style="font-weight: bold; margin-bottom: 30px; margin-top:1%; text-align: left; color: #00bcd4;">PAYMENT TERMS: </h1>
 
-            <div style="font-size: 20pt; line-height: 1.5;">
+            <div style="font-size: 15pt; line-height: 1.5;">
                 <!-- This content should come from quotationData.scopeOfWorkContent or similar DB field -->
                 <ul>
 
@@ -550,7 +531,7 @@ export const generateCombinedLiftPriceTable = (
       <table style="
         width: 100%; 
         border-collapse: collapse; 
-        font-size: 18pt; 
+        font-size: 13pt; 
         margin-top: 30px;">
 
         <!-- HEADER ROW (ONLY ONCE) -->
@@ -622,47 +603,44 @@ export const generateLiftPriceRow = (lift) => {
 export const generateTermsAndConditionsHtml = (tncContent) => {
   // FIX: Apply 90% width and auto-margin to the main container inside this function
   const defaultContent = `
-      <div style="font-size: 24px; margin-top:10%;">  
-        <h1 style="font-size: 32pt; font-weight: bold; margin-bottom: 5%; text-align: center;; color: #00bcd4;">TERMS AND CONDITION</h1>
-
-        <table style='font-size:24px' width='100%' >
+        <h1 style="font-weight: semibold; text-align: center;; color: #00bcd4;">TERMS AND CONDITION</h1>
+        <table style='font-size:10px' width='100%'  >
         <tr>
-        <td style='border: 0px; width:50%; padding-right:2%; font-size:24px;text-align: justify;'>
-        <p style='text-align: justify; font-size:24px'><strong>1.Taxes and Duties</strong>
+        <td style='border: 0px; width:50%; padding-right:2%; text-align: justify; font-size:14px;>
+        <p style='text-align: justify; '><strong>1.Taxes and Duties</strong>
         <br>Quoted price is exclusive of all taxes. ANY TAXES & DUTIES ARE EXTRA.
-        </p><br>
-        <p style='text-align: justify; font-size:24px'><strong>2. Delivery and Installation:</strong>
+        </p>
+        <p style='text-align: justify; '><strong>2. Delivery and Installation:</strong>
         <br><b>A. Delivery</b><br>Delivery of material will be 8 weeks for the elevators from the release for ordering of materials, approval of GAD , technical specification, and full compliance of contractual payment terms whichever is later
             <ul>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Availability of 'A' Form Documents from Client for Submission to PWD/ Inspection Authorities.</li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Availability of M/c Room Roof Slab with Enclosed Wall Plastering (Only for MR jobs).</li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Plastering of Lift shaft walls (If enclosure walls are in Brick).</li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Scaffolding Erected in lift shaft as per Prime Drawing.</li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Roof Slab ready with Hoisting 'I' Beams grouted and Finished on the front and Back Wall. (Only for MRL jobs)</li>
+                <li style='list-style-type:number;text-align:justify;'>Availability of 'A' Form Documents from Client for Submission to PWD/ Inspection Authorities.</li>
+                <li style='list-style-type:number;text-align:justify;'>Availability of M/c Room Roof Slab with Enclosed Wall Plastering (Only for MR jobs).</li>
+                <li style='list-style-type:number;text-align:justify;'>Plastering of Lift shaft walls (If enclosure walls are in Brick).</li>
+                <li style='list-style-type:number;text-align:justify;'>Scaffolding Erected in lift shaft as per Prime Drawing.</li>
+                <li style='list-style-type:number;text-align:justify;'>Roof Slab ready with Hoisting 'I' Beams grouted and Finished on the front and Back Wall. (Only for MRL jobs)</li>
             </ul>
-        </p><br>
-        <p style='text-align: justify; font-size:24px'><strong>B. Installation:</strong><br>
+        </p>
+        <p style='text-align: justify; '><strong>B. Installation:</strong><br>
         Installation will be completed in 8 weeks from the date of start of Installation work at site.<br>
         We shall start Installation work at site on compliance of following 2 conditions:
           <ul>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Completion of all technical activities at site as per the Check list   enclosed (Annexure).</li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Fulfillment of Payment Terms against Intimation of material Ready at warehouse. </li>
+                <li style='list-style-type:number;text-align:justify;'>Completion of all technical activities at site as per the Check list   enclosed (Annexure).</li>
+                <li style='list-style-type:number;text-align:justify;'>Fulfillment of Payment Terms against Intimation of material Ready at warehouse. </li>
           </ul>    
 
         </p>
-        <br>
-        <p style='text-align: justify; font-size:24px'><strong>3. Right to Use:</strong><br>
+        <p style='text-align: justify; '><strong>3. Right to Use:</strong><br>
         You are not entitled to use the elevator under any of the following circumstances
           <ul>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Any usage of our elevator, for any purpose whatsoever before the formal handover to you.</li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Without making the full and final payment. </li>
-                <li style='list-style-type:number;text-align:justify;font-size:24px'>Any unauthorized use or attempt of unauthorized use shall render the warranty and free maintenance period null and void. </li>
+                <li style='list-style-type:number;text-align:justify;'>Any usage of our elevator, for any purpose whatsoever before the formal handover to you.</li>
+                <li style='list-style-type:number;text-align:justify;'>Without making the full and final payment. </li>
+                <li style='list-style-type:number;text-align:justify;'>Any unauthorized use or attempt of unauthorized use shall render the warranty and free maintenance period null and void. </li>
           </ul>    
         </p>
         </td>
 
-        <td style='border: 0px; width:50%; padding-left:2%; font-size:24px; text-align: justify;'>
-        <p style='text-align: justify; font-size:24px'><br>
+        <td style='border: 0px; width:50%; padding-left:2%; ; text-align: justify; font-size:14px;'>
+        <p style='text-align: justify; '>
         <b>4.Warranty</b><br>
         The warranty is for a period of 12 months from date of the physical completion of installation. The warranty covers component defects and does not intend to cover at any time any damages caused by vandalism, negligence, rain, theft, fire, riots, acts of nature and God, absence of stable and permanent power supply.<br><br>
         <b>5.Free Maintenance</b><br>
@@ -674,6 +652,7 @@ export const generateTermsAndConditionsHtml = (tncContent) => {
         </p>
         </td>
         </tr>
+      </table>
     `;
   return tncContent || defaultContent;
 };
