@@ -69,10 +69,17 @@ export const getExistingLifts = async (leadId, combinedEnquiryId) => {
  * @param {number} quotationId - The ID of the quotation
  * @returns {Promise<ApiResponse<QuotationMainResponseDTO>>}
  */
-export const getQuotationById = async (quotationId) => {
+export const getQuotationById = async (quotationId, tenantId) => {
   try {
+    const headers = {};
+    // 🚨 CRITICAL CHANGE: If tenantId is provided, set the X-Tenant header explicitly.
+    if (tenantId) {
+      headers["X-Tenant"] = tenantId;
+    }
+
     const response = await axiosInstance.get(
-      `${API_ENDPOINTS.QUOTATIONS}/${quotationId}`
+      `${API_ENDPOINTS.QUOTATIONS}/${quotationId}`,
+      { headers: headers } // Pass the dynamic headers to the request
     );
     return response.data;
   } catch (err) {
@@ -104,7 +111,11 @@ export const getAllQuotations = async () => {
  * Fetches paginated QuotationMain records.
  * @returns {Promise<ApiResponse<PaginationResponse<QuotationMainResponseDTO>>>}
  */
-export const getPagewiseQuotations = async (page = 0, size = 10, sort = "id") => {
+export const getPagewiseQuotations = async (
+  page = 0,
+  size = 10,
+  sort = "id"
+) => {
   try {
     const response = await axiosInstance.get(
       `${API_ENDPOINTS.QUOTATIONS}/pagination-quotations-without-lifts`,
@@ -157,3 +168,50 @@ export const deleteQuotationApi = async (quotationId, employeeId) => {
   }
 };
 
+/**
+ * Fetches all features and converts them into a Map for fast ID-to-Name lookup.
+ * @returns {Promise<Map<number, string>>} A Map where keys are feature IDs and values are feature names.
+ */
+export const getFeatureNameMap = async (tenantId) => {
+  try {
+    const headers = {};
+    // 🚨 CRITICAL CHANGE: If tenantId is provided, set the X-Tenant header explicitly.
+    if (tenantId) {
+      headers["X-Tenant"] = tenantId;
+    }
+
+    // Assuming API_FEATURES is defined and axiosInstance is available
+    // const response = await axiosInstance.get(API_ENDPOINTS.FEATURES);
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.FEATURES}`,
+      { headers: headers } // Pass the dynamic headers to the request
+    );
+
+    const allFeatures = response.data; // Adjust based on your API response structure (e.g., if data is wrapped)
+
+    // Ensure response.data.data is an array before mapping
+    if (!Array.isArray(allFeatures)) {
+      console.error("FEATURES did not return an array:", allFeatures);
+      return new Map();
+    }
+
+    // Convert the array into a Map for fast lookup (ID -> Name)
+    const featureNameMap = new Map(allFeatures.map((f) => [f.id, f.name]));
+
+    return featureNameMap;
+  } catch (err) {
+    console.error("❌ Error fetching all features:", err);
+    // Return an empty Map on failure to prevent the main function from crashing
+    return new Map();
+  }
+};
+
+export const fetchComponents = async () => {
+  try {
+    const res = await axiosInstance.get(API_ENDPOINTS.COMPONENT);
+    return res.data || [];
+  } catch (err) {
+    console.error("Error fetching components:", err);
+    return { success: false, message: "Error fetching components.", data: [] };
+  }
+};

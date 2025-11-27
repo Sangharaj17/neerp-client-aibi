@@ -16,9 +16,11 @@ export default function QuotationAddPage() {
   // const { id, tenant } = useParams();
   // const { tenant, id, combinedEnquiryId } = useParams();
 
-  const { id, combinedEnquiryId } = useParams();
+  const { id, combinedEnquiryId, } = useParams();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  const action = searchParams.get("action");
 
   const [tenant, setTenant] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -217,12 +219,52 @@ export default function QuotationAddPage() {
     }
   };
 
+
+  const fetchRevision = async () => {
+    toast.success("Loaded revision data.");
+    // try {
+    //   const revisionData = await getRevisionData(lead_Id, combinedEnquiryId);
+
+    //   console.log("Revision Data:", revisionData);
+
+    //   // Map into same lift structure as fetchExistingOrEnquiry()
+    //   const revisionLifts = revisionData.liftDetails.map(lift => ({
+    //     ...lift,
+    //     saved: true,
+    //     fullyFilled: true,
+    //     source: "revision",
+    //     quotationDate: formatLocalTime(new Date(lift.quotationDate || new Date()))
+    //   }));
+
+    //   setQuotationMainDetails(revisionData);
+    //   setLifts(revisionLifts);
+
+    //   toast.success("Loaded revision data.");
+    // } catch (err) {
+    //   console.error("Failed to load revision:", err);
+    //   toast.error("Unable to load revision data.");
+    // }
+  };
+
+
+  // useEffect(() => {
+  //   // Only run when both params are available (or at least one changes)
+  //   if (lead_Id && combinedEnquiryId) {
+  //     fetchExistingOrEnquiry();
+  //   }
+  // }, [lead_Id, combinedEnquiryId]);
+
   useEffect(() => {
-    // Only run when both params are available (or at least one changes)
-    if (lead_Id && combinedEnquiryId) {
-      fetchExistingOrEnquiry();
+    if (!lead_Id || !combinedEnquiryId) return;
+
+    if (action === "revision") {
+      fetchRevision();        // ⬅️ New function
+    } else {
+      fetchExistingOrEnquiry(); // Default = edit mode
     }
-  }, [lead_Id, combinedEnquiryId]);
+  }, [lead_Id, combinedEnquiryId, action]);
+
+
 
   useEffect(() => {
     console.log("=============lifts==============>", lifts);

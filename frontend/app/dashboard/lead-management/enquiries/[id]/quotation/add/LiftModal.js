@@ -3,6 +3,7 @@
 import React, { useCallback, useState, useMemo, useEffect } from "react";
 
 import toast from "react-hot-toast";
+import { showErrorToast } from "@/components/UI/toastUtils";
 import FullScreenLoader from "@/components/UI/FullScreenLoader";
 import Checkbox from "@/components/UI/Checkbox";
 import SmallPopover from "@/components/UI/SmallPopover";
@@ -11,7 +12,7 @@ import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 import { decodeHtmlEntities } from "@/utils/validation";
 import { calculateLiftMaterialPrices, calculateFloorPrices } from "@/utils/liftCalculations";
 import useLiftForm from "./hooks/useLiftForm";
-import { fetchCabinSubTypes, fetchCarEntranceTypes, fetchLandingEntranceSubType, fetchCarEntranceSubTypes, getOptionPrice, PriceBelowSelect, getLabel, fetchControlPanelTypes, fetchLOP, fetchCOP, fetchCapacityDimension, fetchRopingTypePrice, fetchFastner, fetchInstallationRule, calculateTotal, fetchOtherMaterialsByMainId, fetchOtherMaterialExcludeOthers, clearError, handleRefresh, fetchGuideRails, fetchBracketTypes, fetchWireRopes, fetchLoads } from "./liftService";
+import { fetchCabinSubTypes, fetchCarEntranceTypes, fetchLandingEntranceSubType, fetchCarEntranceSubTypes, getOptionPrice, PriceBelowSelect, getLabel, fetchControlPanelTypes, fetchLOP, fetchCOP, fetchCapacityDimension, fetchRopingTypePrice, fetchFastner, fetchInstallationRule, calculateTotal, fetchOtherMaterialsByMainId, fetchOtherMaterialExcludeOthers, clearError, handleRefresh, fetchGuideRails, fetchBracketTypes, fetchWireRopes, fetchLoads, fetchTax } from "./liftService";
 import { RefreshCcw } from "lucide-react";
 
 
@@ -31,6 +32,11 @@ export default function LiftModal({ lift, onClose, onSave }) {
   const includeExcludeOptions = ["Including", "Excluding"];
 
   const [selectedMaterials, setSelectedMaterials] = useState([]);
+
+
+  const hasErrors = Object.values(errors).some(
+    (msg) => typeof msg === "string" && msg.trim() !== ""
+  );
 
 
   useEffect(() => {
@@ -358,7 +364,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
     // const totalWithLiftRate = liftRateTotal + total;
     const totalWithLiftRateWithoutGST = total;//-lift rate included in total by priceKey
-   
+
     // ✅ Floating Tax Calculations (keep decimals)
     const commercialTaxAmount = (commercialTotal * taxRate) / 100;
     const commercialFinalAmount = commercialTotal + commercialTaxAmount;
@@ -383,22 +389,22 @@ export default function LiftModal({ lift, onClose, onSave }) {
     // }));
 
     setFormData((prev) => {
-        const updates = {
-            ...prev,
-            totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
-            totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
-            totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
-            loadAmt: parseFloat(loadAmt.toFixed(2)),
-            commercialTotal: parseFloat(commercialTotal.toFixed(2)),
-            commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
-            commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
-        };
+      const updates = {
+        ...prev,
+        totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
+        totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
+        totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
+        loadAmt: parseFloat(loadAmt.toFixed(2)),
+        commercialTotal: parseFloat(commercialTotal.toFixed(2)),
+        commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
+        commercialFinalAmount: parseFloat(commercialFinalAmount.toFixed(2)),
+      };
 
-        if (!prev.isLiftRateManual) {
-            updates.liftRate = parseFloat(liftRateTotal.toFixed(2));
-        }
+      if (!prev.isLiftRateManual) {
+        updates.liftRate = parseFloat(liftRateTotal.toFixed(2));
+      }
 
-        return updates;
+      return updates;
     });
 
     console.log("Total (with decimals):", total.toFixed(2));
@@ -1439,7 +1445,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         const finalQunatity = itemQuantity;
 
         if (item.otherMaterialName?.toLowerCase() === "magnet sqr material") {
-            itemTotalPrize = itemPrice * itemQuantity * noofStops;
+          itemTotalPrize = itemPrice * itemQuantity * noofStops;
         }
 
         return {
@@ -1887,14 +1893,38 @@ export default function LiftModal({ lift, onClose, onSave }) {
     return null; // If failed
   };
 
+
+  const loadTax = async (setFormData, setErrors) => {
+    const taxRate = await fetchTax(setErrors);
+
+    if (!isNaN(taxRate) && taxRate > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        tax: taxRate,
+      }));
+
+      return taxRate;
+    }
+
+    return null;
+  };
+
+
   useEffect(() => {
+    let ignore = false;
+
     const init = async () => {
+      if (ignore) return;
       await fetchOptions();
       await loadLoad(setFormData, setErrors);
+      await loadTax(setFormData, setErrors);
     };
 
-    init(); // Call the async function
+    init();
+
+    return () => { ignore = true };
   }, []);
+
 
 
   // useEffect(() => {
@@ -2171,7 +2201,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
     const ropingMaterialType = "RopingType"; // Use a specific type for the price
     const ropingIndex = updatedMaterials.findIndex(item => item.materialType === ropingMaterialType);
 
-    console.log("================>",selectedRope)
+    console.log("================>", selectedRope)
     if (ropingTypePrice > 0 && selectedRope) {
       const newRopingMaterial = {
         id: ropingIndex !== -1 ? updatedMaterials[ropingIndex].id : null,
@@ -2179,7 +2209,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         quotationLiftDetailId: formData.quotationId,
         materialId: selectedRope.id,
         materialName: "Mechanism/RopingType", // Differentiate the name
-        materialDisplayName: selectedRope.wireRopeTypeName+ " | " +counterFrameRopeName,
+        materialDisplayName: selectedRope.wireRopeTypeName + " | " + counterFrameRopeName,
         quantity: 1,
         quantityUnit: "Set",
         price: ropingTypePrice,
@@ -3537,8 +3567,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   setFormData={setFormData}
                   formData={formData}
 
-                  // --- Crucial Props for Display Control ---
-                  // showPrice={false} // Disable price calculation and display
+                // --- Crucial Props for Display Control ---
+                // showPrice={false} // Disable price calculation and display
                 />
               </div>
 
@@ -5173,19 +5203,30 @@ export default function LiftModal({ lift, onClose, onSave }) {
             </button>
             <button
               onClick={handleSave}
-              className="px-5 py-2 rounded-lg font-semibold 
-             bg-gradient-to-r from-emerald-500 to-green-600 
-             text-white hover:from-emerald-600 hover:to-green-700 
-             transition-all duration-200 shadow-md hover:shadow-lg 
-             focus:ring-2 focus:ring-green-300 focus:outline-none"
-            // className="px-5 py-2 rounded-lg font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md"
-            // disabled={Object.keys(incompleteTabs).length > 0 || Object.keys(errors).length > 0}
+              className="
+                px-5 py-2 rounded-lg font-semibold 
+                bg-gradient-to-r from-emerald-500 to-green-600 
+                text-white 
+                hover:from-emerald-600 hover:to-green-700 
+                transition-all duration-200 shadow-md hover:shadow-lg 
+                focus:ring-2 focus:ring-green-300 focus:outline-none
+
+                disabled:from-gray-400 disabled:to-gray-500 
+                disabled:text-gray-200
+                disabled:cursor-not-allowed
+                disabled:shadow-none
+              "
+              disabled={
+                Object.values(errors).some(
+                  (msg) => typeof msg === "string" && msg.trim() !== ""
+                ) && Object.keys(errors).length > 0
+              }
             >
               Draft
             </button>
+
           </div>
         </div>
-
 
         <div className="bg-gray-50 border-t border-gray-200 shadow-inner p-3 rounded-t-lg tracking-wide">
           {/* Header */}

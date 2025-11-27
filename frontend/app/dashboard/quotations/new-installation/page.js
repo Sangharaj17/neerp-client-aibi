@@ -21,6 +21,7 @@ import { toast } from "react-hot-toast";
 import { confirmActionWithToast } from "@/components/UI/toastUtils";
 import { deleteQuotationApi, getPagewiseQuotations, finalizeQuotation } from "@/services/quotationApi";
 import { formatDate, formatCurrency } from "@/utils/common";
+import { generatePdf } from "@/utils/generatePdf"
 import { generatePdfWithLetterhead } from "@/utils/pdfGeneratorWithHead";
 import { generatePdfWithOutLetterhead } from "@/utils/pdfGeneratorWithoutHead";
 import { getTenant } from "@/utils/tenant";
@@ -114,8 +115,31 @@ export default function QuotationList() {
   }, [quotations, searchQuery]);
 
   // --- PDF generation handlers ---
+  const getTenantId = () => {
+    // Implement your logic to retrieve the active tenant ID
+    return localStorage.getItem("tenant") || "default-tenant";
+  };
 
-  const handlePdfGeneration = (generatorFunction, row) => {
+  const generatePDF = (quotationMainId, includeLetterhead) => {
+    const tenantId = getTenantId();
+    if (!tenantId) {
+      console.error("Tenant ID not available.");
+      // toast.error("Tenant configuration missing.");
+      return;
+    }
+
+    // Call the new backend API route
+    const apiUrl = `/api/pdf-generation?quotationId=${quotationMainId}&includeLetterhead=${includeLetterhead}&tenant=${tenantId}`;
+
+    // Trigger the PDF download/view in a new tab
+    window.open(apiUrl, '_blank');
+
+    // Optional: Add a toast notification for the user
+    // toast.info("PDF generation started in the background...");
+  };
+
+
+  const handlePdfGeneration = (generatorFunction, includeLetterhead, row) => {
     // Only start if not already loading
     if (isPdfLoading) return;
 
@@ -123,7 +147,7 @@ export default function QuotationList() {
     const onComplete = () => setIsPdfLoading(false);
 
     // Pass the row data and the handlers to the utility function
-    generatorFunction(row.id, onStart, onComplete);
+    generatorFunction(row.id, includeLetterhead, onStart, onComplete);
   };
 
   const handleFinalize = (quotationId, quotationNo) => {
@@ -303,12 +327,19 @@ export default function QuotationList() {
                           <RotateCcw className="h-5 w-5 text-gray-400 mx-auto" />
                         </span>
                       ) : (
+                        // <Link
+                        //   href={`/dashboard/quotations/new-installation/${row.id}/revision`}
+                        //   title="Create Revision of this Draft Quotation"
+                        // >
+                        //   <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
+                        // </Link>
                         <Link
-                          href={`/dashboard/quotations/new-installation/${row.id}/revision`}
+                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=revision`}
                           title="Create Revision of this Draft Quotation"
                         >
                           <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
                         </Link>
+
                       )}
                     </td>
 
@@ -317,7 +348,7 @@ export default function QuotationList() {
                       <Download
                         className="h-5 w-5 text-green-600 hover:text-green-700 mx-auto transition"
                         title="Download PDF With Letterhead"
-                        onClick={() => handlePdfGeneration(generatePdfWithLetterhead, row)}
+                        onClick={() => generatePDF(row.id, true)}
                       />
                     </td>
 
@@ -326,7 +357,7 @@ export default function QuotationList() {
                       <FileSignature
                         className="h-5 w-5 text-cyan-500 hover:text-cyan-700 mx-auto cursor-pointer transition"
                         title="Download PDF Without Letterhead"
-                        onClick={() => handlePdfGeneration(generatePdfWithOutLetterhead, row)}
+                        onClick={() => generatePDF(row.id, false, row)}
                       />
                     </td>
 
@@ -346,7 +377,7 @@ export default function QuotationList() {
                         </span>
                       ) : (
                         <Link
-                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}`}
+                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=edit`}
                           title="Edit Quotation"
                         >
                           <Pencil className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
@@ -356,13 +387,24 @@ export default function QuotationList() {
 
                     {/* 7. Delete */}
                     <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleDeleteQuotation(row.id, row.quotationNo)}
-                        title="Delete Quotation"
-                        className="mx-auto"
-                      >
-                        <Trash2 className="h-5 w-5 text-red-600 hover:text-red-800 mx-auto transition" />
-                      </button>
+                      {row.isFinalized ? (
+                        <span
+                          title="Quotation is Finalized and cannot be delete"
+                          className="cursor-not-allowed inline-block"
+                        >
+                          <Trash2 className="h-5 w-5 text-gray-400 mx-auto" />
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteQuotation(row.id, row.quotationNo)}
+                          title="Delete Quotation"
+                          className="mx-auto"
+                        >
+                          <Trash2 className="h-5 w-5 text-red-600 hover:text-red-800 mx-auto transition" />
+                        </button>
+                      )}
+
+
                     </td>
 
                     {/* 8. Status (Is Final) */}
