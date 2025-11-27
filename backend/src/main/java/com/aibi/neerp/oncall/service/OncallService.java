@@ -21,6 +21,10 @@ import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.materialrepair.entity.MaterialQuotation;
 import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
 import com.aibi.neerp.amc.materialrepair.repository.WorkPeriodRepository;
+import com.aibi.neerp.amc.quatation.pdf.dto.AmcQuotationPdfHeadingWithContentsDto;
+import com.aibi.neerp.amc.quatation.pdf.dto.AmcQuotationPdfHeadingsContentsDto;
+import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsContentsRepository;
+import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
@@ -29,12 +33,14 @@ import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.leadmanagement.repository.CombinedEnquiryRepository;
 import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
 import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
+import com.aibi.neerp.modernization.dto.MaterialDetails;
 import com.aibi.neerp.oncall.dto.*;
 import com.aibi.neerp.oncall.entity.*;
 import com.aibi.neerp.oncall.repository.*;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 import com.aibi.neerp.settings.service.CompanySettingService;
+import com.aibi.neerp.util.AmountToWordsService;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +61,9 @@ public class OncallService {
     private final AmcJobsService amcJobsService;
     private final AmcInvoiceRepository invoiceRepository;
     private final AmcInvoiceService amcInvoiceService;
+    private final AmountToWordsService amountToWordsService;
+    private final AmcQuotationPdfHeadingsRepository amcQuotationPdfHeadingsRepository;
+    private final AmcQuotationPdfHeadingsContentsRepository amcQuotationPdfHeadingsContentsRepository;
 
     // --- CREATE OnCall Quotation with Details ---
     @Transactional
@@ -463,7 +472,117 @@ public class OncallService {
 
     
     
-    
+    public OncallQuotationPdfData getOncallQuotationPdfData(Integer id) {
+
+        OnCallQuotation oncall = onCallQuotationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Oncall quotation not found"));
+
+        OncallQuotationPdfData dto = new OncallQuotationPdfData();
+
+        // ==============================
+        // BASIC INFO
+        // ==============================
+        LocalDate quotationDate = oncall.getQuotationDate();
+        dto.setQuotationDate(quotationDate);
+
+        String year = String.valueOf(quotationDate.getYear());
+        String month = String.format("%02d", quotationDate.getMonthValue());
+        String refId = String.format("%04d", oncall.getId());
+
+        dto.setRefNo("ONC/" + year + "/" + month + "/" + refId);
+
+        // ==============================
+        // CUSTOMER + SITE
+        // ==============================
+        NewLeads lead = oncall.getLead();
+
+        dto.setSitename(lead.getSiteName());
+        dto.setSiteAddress(lead.getSiteAddress());
+        dto.setCustomerName(lead.getCustomerName());
+        dto.setCustomerNumber(lead.getContactNo());
+        dto.setCustomerAddress(lead.getAddress());
+
+        dto.setKindAttention("Mr. " + lead.getCustomerName() + " (" + lead.getContactNo() + ")");
+        dto.setSubject("Quotation for Lift Oncall Service.");
+
+        // ==============================
+        // COMPANY
+        // ==============================
+        String companyName = companySettingRepository.findAll().get(0).getCompanyName();
+        dto.setCompanyName(companyName);
+
+        // ==============================
+        // AMOUNT IN WORDS
+        // ==============================
+        dto.setAmountInWords(amountToWordsService.convertAmountToWords(
+                oncall.getAmountWithGst() != null ? oncall.getAmountWithGst() : BigDecimal.ZERO
+        ));
+
+        // ==============================
+        // PRICING
+        // ==============================
+        OncallQuotationPdfPrizingData pricing = new OncallQuotationPdfPrizingData();
+
+        List<MaterialDetails> materialDetails = oncall.getDetails()
+                .stream()
+                .map(d -> MaterialDetails.builder()
+                        .particulars(d.getMaterialName())
+                        .hsnSac(d.getHsn())
+                        .quantity(d.getQuantity())
+                        .rate(d.getRate())
+                        .per(d.getUom())
+                        .amount(d.getAmount())
+                        .build())
+                .toList();
+
+        pricing.setMaterialDetails(materialDetails);
+        pricing.setSubTotal(oncall.getSubtotal());
+        pricing.setGstPercentage(
+                oncall.getGstPercentage() != null ? oncall.getGstPercentage().doubleValue() : 0.0
+        );
+        pricing.setAmountWithGst(oncall.getAmountWithGst());
+        pricing.setGrandTotal(oncall.getAmountWithGst());
+
+        dto.setOncallQuotationPdfPrizingData(pricing);
+
+        // ==============================
+        // HEADINGS + CONTENTS (for Oncall)
+        // ==============================
+        List<AmcQuotationPdfHeadingWithContentsDto> headingDtos =
+                amcQuotationPdfHeadingsRepository.findAll()
+                        .stream()
+                        .filter(h -> h.getQuotationType().equalsIgnoreCase("Oncall") ||
+                                     h.getQuotationType().equalsIgnoreCase("Common"))
+                        .map(h -> {
+
+                            AmcQuotationPdfHeadingWithContentsDto headingDto =
+                                    new AmcQuotationPdfHeadingWithContentsDto();
+
+                            headingDto.setId(h.getId());
+                            headingDto.setHeadingName(h.getHeadingName());
+
+                            List<AmcQuotationPdfHeadingsContentsDto> contents =
+                                    amcQuotationPdfHeadingsContentsRepository.findAll()
+                                            .stream()
+                                            .filter(c -> c.getAmcQuotationPdfHeadings().getId().equals(h.getId()))
+                                            .map(c -> new AmcQuotationPdfHeadingsContentsDto(
+                                                    c.getId(),
+                                                    c.getContentData(),
+                                                    c.getPicture(),
+                                                    h.getId()
+                                            ))
+                                            .toList();
+
+                            headingDto.setContents(contents);
+                            return headingDto;
+                        })
+                        .toList();
+
+        dto.setOncallQuotationPdfHeadingWithContentsDtos(headingDtos);
+
+        return dto;
+    }
+
     
     
     

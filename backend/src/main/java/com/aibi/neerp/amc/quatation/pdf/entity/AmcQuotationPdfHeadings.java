@@ -21,5 +21,8 @@ public class AmcQuotationPdfHeadings {
 
     @Column(nullable = false)
     private String headingName;
+    
+    @Column(nullable = false)
+    private String quotationType;
 }
 

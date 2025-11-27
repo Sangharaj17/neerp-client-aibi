@@ -16,8 +16,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.aibi.neerp.modernization.dto.*;
 import com.aibi.neerp.modernization.entity.*;
@@ -26,6 +28,7 @@ import com.aibi.neerp.oncall.entity.OnCallQuotation;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 import com.aibi.neerp.settings.service.CompanySettingService;
+import com.aibi.neerp.util.AmountToWordsService;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -36,6 +39,11 @@ import com.aibi.neerp.amc.jobs.initial.dto.LiftData;
 import com.aibi.neerp.amc.jobs.initial.service.AmcJobsService;
 import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
 import com.aibi.neerp.amc.materialrepair.repository.WorkPeriodRepository;
+import com.aibi.neerp.amc.quatation.pdf.dto.AmcQuotationPdfHeadingWithContentsDto;
+import com.aibi.neerp.amc.quatation.pdf.dto.AmcQuotationPdfHeadingsContentsDto;
+import com.aibi.neerp.amc.quatation.pdf.entity.AmcQuotationPdfHeadings;
+import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsContentsRepository;
+import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
@@ -64,6 +72,12 @@ public class ModernizationService {
     private final AmcInvoiceRepository invoiceRepository;
     
     private final AmcInvoiceService amcInvoiceService;
+    
+    private final AmcQuotationPdfHeadingsRepository amcQuotationPdfHeadingsRepository;
+    private final AmcQuotationPdfHeadingsContentsRepository amcQuotationPdfHeadingsContentsRepository;
+    
+    private final AmountToWordsService amountToWordsService;
+    
 
     // --- CREATE Modernization with Details ---
     @Transactional
@@ -549,7 +563,120 @@ public class ModernizationService {
     }
 
 
-   
+    public ModernizatationQuotationPdfData getModernizatationQuotationPdfData(Integer id) {
+
+        Modernization modernization = modernizationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Modernization quotation not found"));
+
+        ModernizatationQuotationPdfData dto = new ModernizatationQuotationPdfData();
+
+        // ==============================
+        // BASIC INFO
+        // ==============================
+        LocalDate quotationDate = modernization.getQuotationDate();
+        dto.setQuotationDate(quotationDate);
+
+        String year = String.valueOf(quotationDate.getYear());
+        String month = String.format("%02d", quotationDate.getMonthValue());
+        String refId = String.format("%04d", modernization.getId());
+
+        dto.setRefNo("MOD/" + year + "/" + month + "/" + refId);
+
+        // ==============================
+        // CUSTOMER + SITE
+        // ==============================
+        NewLeads lead = modernization.getLead();
+
+        dto.setSitename(lead.getSiteName());
+        dto.setSiteAddress(lead.getSiteAddress());
+        dto.setCustomerName(lead.getCustomerName());
+        dto.setCustomerNumber(lead.getContactNo());
+        dto.setCustomerAddress(lead.getAddress());
+
+        dto.setKindAttention("Mr. " + lead.getCustomerName() + " (" + lead.getContactNo() + ")");
+        dto.setSubject("Quotation for Lift Modernization.");
+
+        // ==============================
+        // COMPANY
+        // ==============================
+        String companyName = companySettingRepository.findAll().get(0).getCompanyName();
+        dto.setCompanyName(companyName);
+
+        // ==============================
+        // AMOUNT IN WORDS
+        // ==============================
+        dto.setAmountInWords(amountToWordsService.convertAmountToWords(
+                modernization.getAmountWithGst() != null ? modernization.getAmountWithGst() : BigDecimal.ZERO
+        ));
+
+        // ==============================
+        // PRICING
+        // ==============================
+        ModernizationQuotationPdfPrizingData pricing = new ModernizationQuotationPdfPrizingData();
+
+        // 🔥 Correct mapping according to your entity ModernizationDetail
+        List<MaterialDetails> materialDetails = modernization.getDetails()
+                .stream()
+                .map(d -> MaterialDetails.builder()
+                        .particulars(d.getMaterialName())  // FIXED
+                        .hsnSac(d.getHsn())                // FIXED
+                        .quantity(d.getQuantity())
+                        .rate(d.getRate())
+                        .per(d.getUom())                   // FIXED
+                        .amount(d.getAmount())
+                        .build())
+                .toList();
+
+        pricing.setMaterialDetails(materialDetails);
+        pricing.setSubTotal(modernization.getSubtotal());
+        pricing.setGstPercentage(
+                modernization.getGstPercentage() != null ? modernization.getGstPercentage().doubleValue() : 0.0
+        );
+        pricing.setAmountWithGst(modernization.getAmountWithGst());
+        pricing.setGrandTotal(modernization.getAmountWithGst());
+
+        dto.setModernizationQuotationPdfPrizingData(pricing);
+
+        // ==============================
+        // HEADINGS + CONTENTS (for Modernization)
+        // ==============================
+        List<AmcQuotationPdfHeadingWithContentsDto> headingDtos =
+                amcQuotationPdfHeadingsRepository.findAll()
+                        .stream()
+                        .filter(h -> h.getQuotationType().equalsIgnoreCase("Modernization") || 
+                        		h.getQuotationType().equalsIgnoreCase("Common"))
+                        .map(h -> {
+
+                            AmcQuotationPdfHeadingWithContentsDto headingDto =
+                                    new AmcQuotationPdfHeadingWithContentsDto();
+
+                            headingDto.setId(h.getId());
+                            headingDto.setHeadingName(h.getHeadingName());
+
+                            List<AmcQuotationPdfHeadingsContentsDto> contents =
+                                    amcQuotationPdfHeadingsContentsRepository.findAll()
+                                            .stream()
+                                            .filter(c -> c.getAmcQuotationPdfHeadings().getId().equals(h.getId()))
+                                            .map(c -> new AmcQuotationPdfHeadingsContentsDto(
+                                                    c.getId(),
+                                                    c.getContentData(),
+                                                    c.getPicture(),
+                                                    h.getId()
+                                            ))
+                                            .toList();
+
+                            headingDto.setContents(contents);
+                            return headingDto;
+                        })
+                        .toList();
+
+        dto.setModernizationQuotationPdfHeadingWithContentsDtos(headingDtos);
+
+        return dto;
+    }
+
+
+
     
     
     

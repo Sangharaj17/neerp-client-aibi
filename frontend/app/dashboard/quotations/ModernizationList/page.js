@@ -14,6 +14,8 @@ import ActionModal from '@/components/AMC/ActionModal';
 import ModernizationEdit from '@/components/Modernization/ModernizationEdit';
 import ModernizationInvoicePrint from '@/components/Modernization/ModernizationInvoicePrint';
 
+import ModernizationQuotationPdfPreview from '@/components/Modernization/ModernizationQuotationPdfPreview';
+
 export default function ModernizationList() {
   const [records, setRecords] = useState([]);
   const [page, setPage] = useState(0);
@@ -187,6 +189,12 @@ export default function ModernizationList() {
     </div>
   );
 
+   const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
+    const [isWithLetterHead, setIsWithLetterHead] = useState(false);
+  
+     const [selectedModernizationId, setSelectedModernizationId] = useState(null);
+  
+
   // Modal Content (ViewDetailsModalContent) is the same
 
   const ViewDetailsModalContent = () => {
@@ -214,6 +222,7 @@ export default function ModernizationList() {
             <p className={`text-md font-bold ${colorClass}`}>{value || '-'}</p>
         </div>
     );
+    
 
 
     return (
@@ -427,62 +436,70 @@ export default function ModernizationList() {
                     </td>
 
                     {/* Actions Column (Unchanged) */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center space-x-3">
-                        <button 
-                            title="View" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('View', item.modernization.id)}
-                        >
-                            <FaEye size={16} />
-                        </button>
-                        <button 
-                            title="Edit" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('Edit', item.modernization.id)}
-                        >
-                            <FaEdit size={16} />
-                        </button>
-                        <div className="relative group">
-                            <button 
-                                title="Generate PDF" 
-                                className="text-sky-500 hover:text-sky-600 transition flex items-center"
-                            >
-                                <FaFilePdf size={16} />
-                            </button>
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 ease-in-out">
-                                <a 
-                                    href="#" 
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={(e) => { e.preventDefault(); handleAction('Generate PDF', item.modernization.id, null, 'Letter Head FT'); }}
-                                >
-                                    Letter Head FT
-                                </a>
-                                <a 
-                                    href="#" 
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={(e) => { e.preventDefault(); handleAction('Generate PDF', item.modernization.id, null, 'Letter Head FE'); }}
-                                >
-                                    Letter Head FE
-                                </a>
-                            </div>
-                        </div>
-                        <button 
-                            title="Send Mail" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('Send Mail', item.modernization.id)}
-                        >
-                            <FaEnvelope size={16} />
-                        </button>
-                        <button 
-                            title="Invoice" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('Invoice', item.modernization.id)}
-                        >
-                            <FaReceipt size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {/* Actions Column (Modified) */}
+<td className="px-6 py-4 whitespace-nowrap text-center">
+  <div className="flex items-center justify-center space-x-3">
+    <button 
+      title="View" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('View', item.modernization.id)}
+    >
+      <FaEye size={16} />
+    </button>
+    <button 
+      title="Edit" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('Edit', item.modernization.id)}
+    >
+      <FaEdit size={16} />
+    </button>
+    
+    {/* Separate Button for Letter Head FT */}
+    <button 
+      title="Generate PDF: Letter Head FT" 
+      className="text-sky-500 hover:text-sky-600 transition flex items-center"
+      onClick={() => {
+       // handleAction('Generate PDF', item.modernization.id, null, 'Letter Head FT')
+        setSelectedModernizationId(item.modernization.id);
+        setIsWithLetterHead(true);
+       }
+      }
+    >
+      <FaFilePdf size={16} />
+    </button>
+    
+    {/* Separate Button for Letter Head FE */}
+    <button 
+      title="Generate PDF: Letter Head FE" 
+      className="text-sky-500 hover:text-sky-600 transition flex items-center"
+      onClick={() => {
+       // handleAction('Generate PDF', item.modernization.id, null, 'Letter Head FE')
+        setSelectedModernizationId(item.modernization.id);
+        setIsWithoutLetterhead(true);
+        setIsWithLetterHead(false);
+      }
+      }
+    >
+      <FaFilePdf size={16} />
+    </button>
+    
+    <button 
+      title="Send Mail" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('Send Mail', item.modernization.id)}
+    >
+      <FaEnvelope size={16} />
+    </button>
+    <button 
+      title="Invoice" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('Invoice', item.modernization.id)}
+    >
+      <FaReceipt size={16} />
+    </button>
+  </div>
+</td>
+
                   </tr>
                 ))
               ) : (
@@ -571,6 +588,22 @@ export default function ModernizationList() {
       {/* --------------------------- */}
 
 
+  {/* Action Modal */}
+        <ActionModal
+          isOpen={isWithoutLetterhead || isWithLetterHead}
+          onCancel={()=>{
+            setIsWithoutLetterhead(false);
+            setIsWithLetterHead(false);
+          }}
+          title="Generate Modernization Quotation PDF"
+          
+        >
+           <ModernizationQuotationPdfPreview 
+          modernizationId={selectedModernizationId}
+             isWithLetterHead={isWithLetterHead}
+           />
+  
+        </ActionModal>
 
 
 

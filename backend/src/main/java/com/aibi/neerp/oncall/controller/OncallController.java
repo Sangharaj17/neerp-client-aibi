@@ -1,6 +1,8 @@
 package com.aibi.neerp.oncall.controller;
 
+import com.aibi.neerp.modernization.dto.ModernizatationQuotationPdfData;
 import com.aibi.neerp.oncall.dto.OncallQuotationInvoiceData;
+import com.aibi.neerp.oncall.dto.OncallQuotationPdfData;
 import com.aibi.neerp.oncall.dto.OncallRequestDto;
 import com.aibi.neerp.oncall.dto.OncallRequestDtoPreData;
 import com.aibi.neerp.oncall.dto.OncallResponseDto;
@@ -88,4 +90,17 @@ public class OncallController {
         OncallQuotationInvoiceData data = oncallService.getOnCallQuotationInvoiceData(onCallId);
         return ResponseEntity.ok(data);
     }
+    
+    
+    @GetMapping("/getOncallQuotationPdfData/{id}")
+    public ResponseEntity<OncallQuotationPdfData> getOncallQuotationPdfData(
+            @PathVariable Integer id) {
+
+        OncallQuotationPdfData oncallQuotationPdfData =
+        		oncallService.getOncallQuotationPdfData(id);
+
+        return ResponseEntity.ok(oncallQuotationPdfData);
+    }
+    
+    
 }

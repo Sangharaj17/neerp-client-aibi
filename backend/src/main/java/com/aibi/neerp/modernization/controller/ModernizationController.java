@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.aibi.neerp.amc.materialrepair.dto.MaterialRepairQuatationPdfData;
 import com.aibi.neerp.exception.ResourceNotFoundException;
+import com.aibi.neerp.modernization.dto.ModernizatationQuotationPdfData;
 import com.aibi.neerp.modernization.dto.ModernizationQuotationInvoiceData;
 import com.aibi.neerp.modernization.dto.ModernizationRequestDto;
 import com.aibi.neerp.modernization.dto.ModernizationRequestDtoPreData;
@@ -150,6 +151,16 @@ public class ModernizationController {
     public ResponseEntity<ModernizationQuotationInvoiceData> getModernizationInvoiceData(@PathVariable Integer id) {
         ModernizationQuotationInvoiceData data = modernizationService.getModernizationQuotationInvoiceData(id);
         return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/getModernizatationQuotationPdfData/{id}")
+    public ResponseEntity<ModernizatationQuotationPdfData> getModernizatationQuotationPdfData(
+            @PathVariable Integer id) {
+
+        ModernizatationQuotationPdfData modernizatationQuotationPdfData =
+                modernizationService.getModernizatationQuotationPdfData(id);
+
+        return ResponseEntity.ok(modernizatationQuotationPdfData);
     }
 
     

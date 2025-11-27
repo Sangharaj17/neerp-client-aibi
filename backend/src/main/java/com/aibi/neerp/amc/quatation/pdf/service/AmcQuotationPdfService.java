@@ -410,12 +410,27 @@ public class AmcQuotationPdfService {
     }
     
     
-    public List<AmcQuotationPdfHeadingWithContentsDto> getAllHeadingsWithContents() {
+    public List<AmcQuotationPdfHeadingWithContentsDto> getAllHeadingsWithContents(String forWhat) {
    
         log.info("📌 getAllHeadingsWithContents() called");
 
-        List<AmcQuotationPdfHeadings> headings = headingsRepo.findAll();
-        log.info("Total headings fetched: {}", headings.size());
+        List<AmcQuotationPdfHeadings> headings;
+
+        if (forWhat.equalsIgnoreCase("forSetting")) {
+            headings = headingsRepo.findAll();
+        } else {
+            headings = headingsRepo.findAll()
+                    .stream()
+                    .filter(h ->
+                            "AMC".equalsIgnoreCase(h.getQuotationType()) ||
+                            "Common".equalsIgnoreCase(h.getQuotationType())
+                    )
+                    .collect(Collectors.toList());
+        }
+
+        
+    
+    log.info("Total headings fetched: {}", headings.size());
         
         System.out.println("size of heading are "+headings.size());
 
@@ -494,7 +509,7 @@ public class AmcQuotationPdfService {
     public List<AmcQuotationPdfHeadingWithContentsDto> amcQuotationPdfHeadingWithContentsDtos(){
     	
     	List<AmcQuotationPdfHeadingWithContentsDto> amcQuotationPdfHeadingWithContentsDtos = 
-    			getAllHeadingsWithContents();
+    			getAllHeadingsWithContents("forSetting");
     	
     	return amcQuotationPdfHeadingWithContentsDtos;
     	
@@ -512,7 +527,7 @@ public class AmcQuotationPdfService {
     			new AmcQuotationPdfGetData();
     	
     	List<AmcQuotationPdfHeadingWithContentsDto> amcQuotationPdfHeadingWithContentsDtos = 
-    			getAllHeadingsWithContents();
+    			getAllHeadingsWithContents("forPdf");
     	
     	amcQuotationPdfGetData.setAmcQuotationPdfHeadingWithContentsDtos(amcQuotationPdfHeadingWithContentsDtos);
     	

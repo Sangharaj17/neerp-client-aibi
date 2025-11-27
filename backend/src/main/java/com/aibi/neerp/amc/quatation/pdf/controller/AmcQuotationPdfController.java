@@ -121,7 +121,7 @@ public class AmcQuotationPdfController {
     @GetMapping("/all")
     public ResponseEntity<List<AmcQuotationPdfHeadingWithContentsDto>> getAllHeadingsWithContents() {
         try {
-            return ResponseEntity.ok(service.getAllHeadingsWithContents());
+            return ResponseEntity.ok(service.getAllHeadingsWithContents(""));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);

@@ -12,6 +12,9 @@ import ActionModal from '@/components/AMC/ActionModal';
 import OncallEdit from '@/components/Oncall/OncallEdit'; 
 import OncallInvoicePrint from '@/components/Oncall/OncallInvoicePrint';
 
+import OncallQuotationPdfPreview from '@/components/Oncall/OncallQuotationPdfPreview';
+
+
 export default function OncallList() {
   const [records, setRecords] = useState([]);
   const [page, setPage] = useState(0);
@@ -33,6 +36,12 @@ export default function OncallList() {
   const [selectedIdForInvoice , setSelectedIdForInvoice] = useState(null);
   const [isInvoiceModalOpen , setIsInvoiceModalOpen] = useState(false);
   const [selectedIdForEdit , setSelectedIdForEdit] = useState(null);
+
+   const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
+    const [isWithLetterHead, setIsWithLetterHead] = useState(false);
+  
+     const [selectedOncallId, setSelectedOnCallId] = useState(null);
+  
 
   // Base API Path for Oncall
   const API_BASE_PATH = '/api/oncall'; 
@@ -322,6 +331,7 @@ export default function OncallList() {
     { label: 'Final', field: 'isFinal', align: 'center', sortable: true },
   ];
 
+   
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8">
@@ -428,62 +438,75 @@ export default function OncallList() {
                     </td>
 
                     {/* Actions Column - uses item.oncallDto.id */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center space-x-3">
-                        <button 
-                            title="View" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('View', item.oncallDto.id)}
-                        >
-                            <FaEye size={16} />
-                        </button>
-                        <button 
-                            title="Edit" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('Edit', item.oncallDto.id)}
-                        >
-                            <FaEdit size={16} />
-                        </button>
-                        <div className="relative group">
-                            <button 
-                                title="Generate PDF" 
-                                className="text-sky-500 hover:text-sky-600 transition flex items-center"
-                            >
-                                <FaFilePdf size={16} />
-                            </button>
-                            <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-200 ease-in-out">
-                                <a 
-                                    href="#" 
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={(e) => { e.preventDefault(); handleAction('Generate PDF', item.oncallDto.id, null, 'Letter Head FT'); }}
-                                >
-                                    Letter Head FT
-                                </a>
-                                <a 
-                                    href="#" 
-                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                    onClick={(e) => { e.preventDefault(); handleAction('Generate PDF', item.oncallDto.id, null, 'Letter Head FE'); }}
-                                >
-                                    Letter Head FE
-                                </a>
-                            </div>
-                        </div>
-                        <button 
-                            title="Send Mail" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('Send Mail', item.oncallDto.id)}
-                        >
-                            <FaEnvelope size={16} />
-                        </button>
-                        <button 
-                            title="Invoice" 
-                            className="text-sky-500 hover:text-sky-600 transition"
-                            onClick={() => handleAction('Invoice', item.oncallDto.id)}
-                        >
-                            <FaReceipt size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {/* Actions Column - uses item.oncallDto.id */}
+<td className="px-6 py-4 whitespace-nowrap text-center">
+  <div className="flex items-center justify-center space-x-3">
+    
+    {/* View */}
+    <button 
+      title="View" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('View', item.oncallDto.id)}
+    >
+      <FaEye size={16} />
+    </button>
+
+    {/* Edit */}
+    <button 
+      title="Edit" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('Edit', item.oncallDto.id)}
+    >
+      <FaEdit size={16} />
+    </button>
+
+    {/* PDF Button: Letter Head FT */}
+    <button
+      title="Generate PDF: Letter Head FT"
+      className="text-sky-500 hover:text-sky-600 transition flex items-center"
+      onClick={() => {
+        setSelectedOnCallId(item.oncallDto.id);
+        setIsWithLetterHead(true);
+        setIsWithoutLetterhead(false);
+      }}
+    >
+      <FaFilePdf size={16} />
+    </button>
+
+    {/* PDF Button: Letter Head FE */}
+    <button
+      title="Generate PDF: Letter Head FE"
+      className="text-sky-500 hover:text-sky-600 transition flex items-center"
+      onClick={() => {
+        setSelectedOnCallId(item.oncallDto.id);
+        setIsWithoutLetterhead(true);
+        setIsWithLetterHead(false);
+      }}
+    >
+      <FaFilePdf size={16} />
+    </button>
+
+    {/* Send Mail */}
+    <button 
+      title="Send Mail" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('Send Mail', item.oncallDto.id)}
+    >
+      <FaEnvelope size={16} />
+    </button>
+
+    {/* Invoice */}
+    <button 
+      title="Invoice" 
+      className="text-sky-500 hover:text-sky-600 transition"
+      onClick={() => handleAction('Invoice', item.oncallDto.id)}
+    >
+      <FaReceipt size={16} />
+    </button>
+
+  </div>
+</td>
+
                   </tr>
                 ))
               ) : (
@@ -577,6 +600,28 @@ export default function OncallList() {
         <OncallInvoicePrint invoiceId={selectedIdForInvoice}/>
       </ActionModal>
       {/* --------------------------- */}
+
+
+       {/* Action Modal */}
+              <ActionModal
+                isOpen={isWithoutLetterhead || isWithLetterHead}
+                onCancel={()=>{
+                  setIsWithoutLetterhead(false);
+                  setIsWithLetterHead(false);
+                }}
+                title="Generate Oncall Quotation PDF"
+                
+              >
+                 <OncallQuotationPdfPreview 
+                oncallId={selectedOncallId}
+                   isWithLetterHead={isWithLetterHead}
+                 />
+        
+              </ActionModal>
+
+
+
+
     </div>
   );
 }
