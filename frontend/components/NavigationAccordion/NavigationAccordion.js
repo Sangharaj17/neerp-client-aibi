@@ -168,13 +168,13 @@ const NavigationAccordion = () => {
         { title: 'Assign Role', href: '/dashboard/user-resource/assign-role' },
         { title: 'Change Password', href: '/dashboard/user-resource/change-password' },
         // Configuration
-        // { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
-        // { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
+        { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
+        { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
         // Attendance & time
-        // { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
-        // { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
-        // { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry' },
-        // { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list' },
+        { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
+        { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
+        { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry' },
+        { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list' },
         // { title: 'Attendance', href: '/dashboard/user-resource/attendance' }
       ]
     },
