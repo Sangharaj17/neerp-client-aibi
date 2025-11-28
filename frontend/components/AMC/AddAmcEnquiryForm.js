@@ -380,6 +380,21 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
   const transformLift = (lift, index) => {
     const repeatSetting = repeatSettings[index] || {}; // fallback if missing
+
+    //alert(floorOption.length);
+
+    let lessByOne = lift.noOfStops - 1;
+
+   // alert("noOfStops-1: " + lessByOne);
+
+     const selectedFloor = floorOption.find((opt) => {
+  const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
+  return num === Number(lessByOne);
+});
+
+let floorId = selectedFloor ? selectedFloor.id : null;
+
+
     return {
       leadId: lift.leadId,
       enquiryId: lift.enquiryId,
@@ -391,7 +406,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       capacityTermId: lift.capacityTermId,
       personCapacityId: lift.personCapacityId,
       weightId: lift.weightId,
-      noOfFloorsId: lift.noOfFloors,
+      noOfFloorsId: floorId,
       floorSelections: lift.floorSelections,
       floorsDesignation: lift.floorsDesignation,
       noOfStops: lift.noOfStops,
@@ -477,37 +492,12 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       updatedLifts[index][field] = value;
       const currentLift = updatedLifts[index];
 
-      // // Check if the changed field is 'noOfFloors'
-      // if (field === 'noOfFloors') {
-      //   // Find the floor option object that matches the selected value (ID)
-      //   const selectedFloor = floorOption.find(opt => String(opt.id) === value);
-
-      //   updatedLifts[index].floorsDesignation = selectedFloor?.name || '';
-      // }
-
       if (field === 'noOfFloors') {
-        const selectedFloor = floorOption.find(opt => String(opt.id) === value);
 
-        if (selectedFloor) {
-          currentLift.noOfStops = selectedFloor.id;
-          //currentLift.noOfOpenings = selectedFloor.id * 2;
-          currentLift.noOfOpenings = selectedFloor.id;
+        currentLift.noOfStops = value ? parseInt(value, 10) : 0;
+        currentLift.noOfOpenings = value ? parseInt(value, 10) : 0;
+        currentLift.floorsDesignation = value ? `G + ${parseInt(value, 10) - 1}` : '';
 
-          if (selectedFloor.id === 1) {
-            // For Floor 1, use its own name
-            currentLift.floorsDesignation = selectedFloor.name;
-          } else {
-            // Find the floor option with an ID one less than the selected one
-            const floorOneLess = floorOption.find(opt => opt.id === selectedFloor.id - 1);
-
-            // Use the name of that found option, or default to an empty string
-            currentLift.floorsDesignation = floorOneLess?.name || '';
-          }
-        } else {
-          currentLift.noOfStops = 0;
-          currentLift.noOfOpenings = 0;
-          currentLift.floorsDesignation = '';
-        }
       }
 
       // Handle floor selection changes
@@ -934,6 +924,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
               {/* No. of Stops */}
               <Select
+              disabled
                 label="No. of Stops *"
                 value={String(lift.noOfStops || "")}
                 onChange={(e) => handleLiftChange(index, "noOfStops", Number(e.target.value))}
@@ -948,6 +939,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
               {/* No. of Openings */}
               <Select
+              disabled
                 label="No. of Openings *"
                 value={String(lift.noOfOpenings || "")}
                 onChange={(e) => handleLiftChange(index, "noOfOpenings", Number(e.target.value))}

@@ -37,6 +37,14 @@ export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action
   };
   const [combinedEnqId, setCombinedEnqId] = useState(null);
 
+  const getLiftNoByFloorDesignation = (designation) => {
+    const parts = designation.split('+');
+    if (parts.length !== 2) return null;
+    const numberPart = parts[1].trim();
+    const number = parseInt(numberPart, 10);
+    return isNaN(number) ? null : number + 1; // since G is ground (0)
+
+  }
 
   useEffect(() => {
     const rawCombined = sessionStorage.getItem('combinedEnquiry');
@@ -79,7 +87,7 @@ export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action
       capacityTermId: enquiry.capacityTerm?.id || '',
       personCapacityId: enquiry.personCapacity?.id || '',
       weightId: enquiry.weight?.id || '',
-      noOfFloors: enquiry.noOfFloors?.id || '',
+      noOfFloors: getLiftNoByFloorDesignation(enquiry.noOfFloors.name) || '',
       floorsDesignation: enquiry.floorsDesignation || '',
       noOfStops: enquiry.noOfStops || '',
       noOfOpenings: enquiry.noOfOpenings || '',
@@ -300,6 +308,17 @@ console.log(options);
 
   const transformLift = (lift, index) => {
     const repeatSetting = repeatSettings[index] || {}; // fallback if missing
+    let lessByOne = lift.noOfStops - 1;
+
+   // alert("noOfStops-1: " + lessByOne);
+
+     const selectedFloor = floorOption.find((opt) => {
+  const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
+  return num === Number(lessByOne);
+});
+
+let floorId = selectedFloor ? selectedFloor.id : null;
+
     return {
       leadId: lift.leadId,
       enquiryId: lift.enquiryId,
@@ -311,7 +330,7 @@ console.log(options);
       capacityTermId: lift.capacityTermId,
       personCapacityId: lift.personCapacityId,
       weightId: lift.weightId,
-      noOfFloorsId: lift.noOfFloors,
+      noOfFloorsId: floorId,
       floorSelections: lift.floorSelections,
       floorsDesignation: lift.floorsDesignation,
       noOfStops: lift.noOfStops,
@@ -388,6 +407,41 @@ console.log(options);
     setForm((prevForm) => {
       const updatedLifts = [...prevForm.lifts];
       updatedLifts[index][field] = value;
+
+
+      const currentLift = updatedLifts[index];
+
+      if (field === 'noOfFloors') {
+
+        currentLift.noOfStops = value ? parseInt(value, 10) : 0;
+        currentLift.noOfOpenings = value ? parseInt(value, 10) : 0;
+        currentLift.floorsDesignation = value ? `G + ${parseInt(value, 10) - 1}` : '';
+
+      }
+
+      // Handle floor selection changes
+      if (field === "floorSelections") {
+        const newSelections = value;
+
+        // Update lift selections
+        currentLift.floorSelections = newSelections;
+
+        const stopNo = (Number(currentLift.noOfFloors) || 0) + newSelections.length;
+        currentLift.noOfStops = stopNo
+        //currentLift.noOfOpenings = Number(currentLift.noOfStops) * 2;
+        currentLift.noOfOpenings = stopNo;
+
+        // console.log("No. of Floors selected:", currentLift.noOfFloors);
+        // console.log("Checkboxes selected:", newSelections.length);
+        // console.log("Total Stops:", currentLift.noOfStops);
+        // console.log("Total Openings:", currentLift.noOfOpenings);
+
+        // Trigger re-render by updating the whole lifts array in state
+        const updatedLifts = [...prevForm.lifts];
+        updatedLifts[index] = { ...currentLift };
+      }
+
+
 
       const syncDependents = (sourceIndex) => {
         Object.entries(repeatSettings).forEach(([repeatIndexStr, settings]) => {
@@ -830,7 +884,7 @@ console.log(options);
               }
               <Select
                 label="No. of Floors *"
-                value={String(lift.noOfFloors)} // lift.noOfFloors should store selected floor `id`
+               value={String(lift.noOfFloors || "")} // lift.noOfFloors should store selected floor `id`
                 onChange={(e) => {
                   handleLiftChange(index, 'noOfFloors', e.target.value);
                   //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
@@ -838,16 +892,20 @@ console.log(options);
                 }
               >
                 <option value="">Please Select</option>
-                {floorOption && floorOption.map((opt) => (
-                  <option key={opt.id} value={String(opt.id)}>
-                    {opt.name}
+                {floorOption.map((opt, idx) => (
+                  <option key={opt.id} value={idx + 1}>
+                    {/* {opt.name} */}
+                    {/* {idx + 1} - {opt.name} */}
+                    {idx + 1}
                   </option>
                 ))}
               </Select>
 
               <div>
                 <label className="block text-gray-700 text-sm mb-1">Floor Designation</label>
-                <input type="text" value={lift.noOfFloors ? `G + ${lift.noOfFloors - 1}` : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                {/* <input type="text" value={lift.noOfFloors ? `G + ${lift.noOfFloors - 1}` : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" /> */}
+                <input type="text" value={lift.floorsDesignation} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+
                 <div className="flex flex-wrap gap-4 mt-2">
                   {floorOptions.map((floor) => (
                     <label key={floor} className="text-gray-700 text-sm flex items-center gap-1">
@@ -863,13 +921,13 @@ console.log(options);
               </div>
               <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Stops *</label>
-                <input type="text" value={lift.noOfFloors ? lift.noOfFloors : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                <input type="text" value={lift.noOfStops ? lift.noOfStops : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
 
               </div>
 
               <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Openings *</label>
-                <input type="text" value={lift.noOfFloors ? lift.noOfFloors : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                <input type="text" value={lift.noOfOpenings ? lift.noOfOpenings : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
 
               </div>
 

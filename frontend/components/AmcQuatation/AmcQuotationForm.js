@@ -774,9 +774,9 @@ export default function AmcQuotationForm() {
                     <label className="w-32 text-sm font-semibold text-gray-700">
                       No. of Floors
                     </label>
-                    <input
-                      type="number"
-                      placeholder="No. of Floors"
+                   <input
+                      type="text"
+                      placeholder="no of floors"
                       readOnly
                       value={elevator.noOfFloors || ""}
                       className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
