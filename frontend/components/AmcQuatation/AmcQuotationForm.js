@@ -120,6 +120,7 @@ export default function AmcQuotationForm() {
             noOfElevator: parsed.entries?.length ?? 0,
             customerName: parsed.customerName ?? "",
             selectLead: parsed.selectLead ?? "",
+            gstPercentage: parsed.companyAmcGstPercentage || 0,
             leadId: parsed.leadId ?? null,
             customerSite: parsed.customerSite ?? "",
             quotationDate: parsed.createdDate
@@ -446,14 +447,44 @@ export default function AmcQuotationForm() {
   };
 
 
+useEffect(() => {
+  const today = new Date();
+  const nextYear = new Date();
+  nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+  const formattedToday = today.toISOString().split("T")[0];
+  const formattedNextYear = nextYear.toISOString().split("T")[0];
+
+  setFormData((prev) => ({
+    ...prev,
+    fromDate: formattedToday,
+    toDate: formattedNextYear,
+  }));
+}, []); // runs only once on first render
+
+
   // Function to handle AMC From Date
-  const handleAmcFromDateChange = (e) => {
-    const value = e.target.value; // "YYYY-MM-DD" from input[type="date"]
-    setFormData((prev) => ({
-      ...prev,
-      fromDate: value,
-    }));
-  };
+  // Function to handle AMC From Date
+const handleAmcFromDateChange = (e) => {
+  const value = e.target.value; // "YYYY-MM-DD"
+
+  // Convert to Date object
+  const startDate = new Date(value);
+
+  // Add 1 year
+  const endDate = new Date(startDate);
+  endDate.setFullYear(endDate.getFullYear() + 1);
+
+  // Format back to YYYY-MM-DD
+  const formattedEndDate = endDate.toISOString().split("T")[0];
+
+  setFormData((prev) => ({
+    ...prev,
+    fromDate: value,
+    toDate: formattedEndDate, // auto-fill AMC To Date
+  }));
+};
+
 
   // Function to handle AMC To Date
   const handleAmcToDateChange = (e) => {
@@ -637,7 +668,7 @@ export default function AmcQuotationForm() {
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">GST Percentage</label>
-                <input type="number" name="gstPercentage" onChange={handleSetGstPercentage} className="border p-2 w-full rounded" />
+                <input type="number" value={formData.gstPercentage} name="gstPercentage" onChange={handleSetGstPercentage} className="border p-2 w-full rounded" />
               </div>
               <div>
                 <label className="block text-sm font-semibold mb-1">Payment Terms</label>

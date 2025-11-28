@@ -17,6 +17,7 @@ import com.aibi.neerp.materialmanagement.dto.OperatorElevatorDto;
 import com.aibi.neerp.materialmanagement.dto.PersonCapacityDto;
 import com.aibi.neerp.materialmanagement.dto.TypeOfLiftDto;
 import com.aibi.neerp.materialmanagement.dto.WeightDto;
+import com.aibi.neerp.settings.service.CompanySettingService;
 import com.aibi.neerp.componentpricing.repository.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +74,9 @@ public class EnquiryService {
     private AdditionalFloorsRepository additionalFloorsRepository;
     @Autowired
     private com.aibi.neerp.quotation.repository.QuotationLiftDetailRepository quotationLiftDetailRepository;
+    
+    @Autowired
+    private CompanySettingService companySettingService;
 
     public List<EnquiryResponseDto> getAllSingleEnquirys(Integer enquiryTypeId) {
         return enquiryRepository.findByCombinedEnquiryIsNullAndEnquiryType_EnquiryTypeId(enquiryTypeId)
@@ -128,6 +132,10 @@ public class EnquiryService {
         dto.setProjectName(entity.getProjectName());
         dto.setSiteName(entity.getSiteName());;
         dto.setEnquiryDate(entity.getCreatedDate());
+        
+        dto.setCompanyAmcGstPercentage(companySettingService.getCompanySetting().getGstRateAmcTotalPercentage());  
+        
+        
         // dto.setLeadCompanyName(entity.getLead().getCompanyName());
 
         NewLeads lead = entity.getLead();

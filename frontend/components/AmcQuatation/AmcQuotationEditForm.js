@@ -1129,13 +1129,26 @@ export default function AmcQuotationEditForm({ quotationId, qid, revise, revisio
                   </div>
 
                   {/* No of Floors */}
-                  <div className="flex items-center mb-2">
+                  {/* <div className="flex items-center mb-2">
                     <label className="w-32 text-sm font-semibold text-gray-700">
                       No. of Floors
                     </label>
                     <input
                       type="number"
                       placeholder="No. of Floors"
+                      readOnly
+                      value={elevator.noOfFloors || ""}
+                      className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div> */}
+                   {/* No of Floors */}
+                  <div className="flex items-center mb-2">
+                    <label className="w-32 text-sm font-semibold text-gray-700">
+                      No. of Floors
+                    </label>
+                   <input
+                      type="text"
+                      placeholder="no of floors"
                       readOnly
                       value={elevator.noOfFloors || ""}
                       className="flex-1 p-2 rounded bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500"

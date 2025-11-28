@@ -26,6 +26,8 @@ public class CombinedEnquiryResponseDto {
     
     private LocalDate enquiryDate;
     
+    private double companyAmcGstPercentage;
+    
     
     private String customerName;
     private String customerSite;

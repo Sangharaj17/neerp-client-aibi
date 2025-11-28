@@ -399,6 +399,7 @@ let floorId = selectedFloor ? selectedFloor.id : null;
       leadId: lift.leadId,
       enquiryId: lift.enquiryId,
       buildTypeId: lift.liftUsageType,
+      liftName: `Lift ${index + 1}`,
       typeOfLiftId: lift.liftMechanism,
       liftTypeId: lift.elevatorType,
       reqMachineRoomId: lift.machineRoomType,
@@ -423,6 +424,10 @@ let floorId = selectedFloor ? selectedFloor.id : null;
     };
   };
 
+  // Add this state
+const [siteName, setSiteName] = useState(site);
+
+
   const handleSubmitj = async (event) => {
     event.preventDefault(); // 🛑 Prevent full page reload
 
@@ -434,7 +439,7 @@ let floorId = selectedFloor ? selectedFloor.id : null;
 
     // const query = `?projectName=${encodeURIComponent(projectName)}&enquiryTypeId=${enquiryTypeId}`;
 
-    const query = `?projectName=${encodeURIComponent(projectName)}&siteName=${encodeURIComponent(site)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
+    const query = `?projectName=${encodeURIComponent(projectName)}&siteName=${encodeURIComponent(siteName)}&enquiryTypeId=${typeId}&enquiryDate=${enquiryDate}`;
 
 
     // 🔁 transform all lifts before sending
@@ -651,6 +656,7 @@ let floorId = selectedFloor ? selectedFloor.id : null;
 
 
 
+
   return (
     <div className="w-full max-w-7xl bg-white rounded shadow-md">
       <div className="bg-blue-600 text-white text-center py-2 text-base font-semibold rounded-t-md">Add Lift Requirement</div>
@@ -661,30 +667,53 @@ let floorId = selectedFloor ? selectedFloor.id : null;
       <div className="inline-flex items-center gap-4 bg-white w-full pt-4 px-4">
 
         {/* Label + Dropdown */}
-        <div className="flex items-center gap-2">
-          <label
-            htmlFor="enquiryTypeId"
-            className="text-gray-600 text-xs font-medium whitespace-nowrap"
-          >
-            Select Enquiry Type
-          </label>
-          <select
-            id="enquiryTypeId"
-            name="enquiryTypeId"
-            className="border text-sm rounded px-2 py-1"
-            value={typeId || ''}
-            onChange={handleEnquiryTypeChange}
-          >
-            <option value="" disabled>
-              Select
-            </option>
-            {enquiryTypes.map((type) => (
-              <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
-                {type.enquiryTypeName}
-              </option>
-            ))}
-          </select>
-        </div>
+        <div className="flex items-center gap-6">
+  {/* Enquiry Type Select */}
+  <div className="flex items-center gap-2">
+    <label
+      htmlFor="enquiryTypeId"
+      className="text-gray-600 text-xs font-medium whitespace-nowrap"
+    >
+      Select Enquiry Type
+    </label>
+    <select
+      id="enquiryTypeId"
+      name="enquiryTypeId"
+      className="border text-sm rounded px-2 py-1"
+      value={typeId || ""}
+      onChange={handleEnquiryTypeChange}
+    >
+      <option value="" disabled>
+        Select
+      </option>
+      {enquiryTypes.map((type) => (
+        <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
+          {type.enquiryTypeName}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  {/* Site Name Input */}
+  <div className="flex items-center gap-2">
+    <label
+      htmlFor="siteName"
+      className="text-gray-600 text-xs font-medium whitespace-nowrap"
+    >
+      Site Name
+    </label>
+    <input
+      type="text"
+      id="siteName"
+      name="siteName"
+      value={siteName}
+      onChange={(e) => setSiteName(e.target.value)}
+      className="border text-sm rounded px-2 py-1"
+      placeholder="Enter site name"
+    />
+  </div>
+</div>
+
 
         {/* Floors info shifted right */}
         <div className="flex text-xs text-gray-700 gap-3 ml-auto">

@@ -216,6 +216,7 @@ function ViewEnquiryClientPageContent() {
            selectLead: combined.selectLead,
            leadId: combined.leadId,
            siteName: combined.siteName,
+           companyAmcGstPercentage: combined.companyAmcGstPercentage,
 
           entries: combined.enquiries.map((entry) => ({
             id: entry.enquiryId,
