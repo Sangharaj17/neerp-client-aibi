@@ -2,6 +2,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
 import BetaBanner from '@/components/BetaBanner';
+import NextTopLoader from 'nextjs-toploader';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -20,6 +21,17 @@ export default function RootLayout({ children }) {
       <body
         className={`${poppins.variable} antialiased`}
       >
+        <NextTopLoader
+          color="#22c55e"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #22c55e,0 0 5px #22c55e"
+        />
         <BetaBanner />
         <Toaster />
         {children}

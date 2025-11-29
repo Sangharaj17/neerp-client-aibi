@@ -4,16 +4,21 @@ export function getTenantFromCookie() {
   return match ? decodeURIComponent(match[1]) : undefined;
 }
 
+function sanitizeTenant(tenant) {
+  if (!tenant) return undefined;
+  return tenant.replace(/^https?:\/\//, '').replace(/\/$/, '');
+}
+
 export function getTenant() {
   // Prefer cookie set by middleware
   const fromCookie = getTenantFromCookie();
   // If cookie is just 'localhost' but we're on a port, prefer full host
-  if (fromCookie && fromCookie !== 'localhost') return fromCookie;
+  if (fromCookie && fromCookie !== 'localhost') return sanitizeTenant(fromCookie);
   // Fallback to localStorage for legacy flows
   try {
     const ls = localStorage.getItem('tenant');
-    if (ls) return ls;
-  } catch (_) {}
+    if (ls) return sanitizeTenant(ls);
+  } catch (_) { }
   // On localhost, use full host including port
   if (typeof location !== 'undefined' && location.hostname === 'localhost') {
     return location.port ? `localhost:${location.port}` : 'localhost';
@@ -28,14 +33,15 @@ export function getServerTenant(headers) {
   const cookieMatch = cookie.match(/(?:^|; )tenant=([^;]+)/);
   if (cookieMatch) {
     const c = decodeURIComponent(cookieMatch[1]);
-    if (c && c !== 'localhost') return c;
+    if (c && c !== 'localhost') return sanitizeTenant(c);
   }
   const [hostName, hostPort] = hostHeader.split(':');
   const host = hostName.replace(/^www\./i, '');
+  console.log('[getServerTenant] Host Header:', hostHeader);
+  console.log('[getServerTenant] Parsed Host:', host);
+
   if (host && !host.includes('localhost')) return host;
   // On localhost, return host including port
   if (host.includes('localhost')) return hostPort ? `localhost:${hostPort}` : 'localhost';
   return undefined;
 }
-
-
