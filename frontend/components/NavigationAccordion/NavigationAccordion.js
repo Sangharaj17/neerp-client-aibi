@@ -248,18 +248,7 @@ const NavigationAccordion = () => {
 
       ]
     },
-    // {
-    //   id: 'accounts',
-    //   title: 'Accounts',
-    //   icon: DollarSign,
-    //   hasSubmenu: true,
-    //   submenu: [
-    //     { title: 'Chart of Accounts', href: '/accounts/chart' },
-    //     { title: 'Transactions', href: '/accounts/transactions' },
-    //     { title: 'Reports', href: '/accounts/reports' },
-    //     { title: 'Settings', href: '/accounts/settings' }
-    //   ]
-    // },
+   
      {
       id: 'settings',
       title: 'settings',
@@ -268,6 +257,15 @@ const NavigationAccordion = () => {
       submenu: [
         { title: 'Company Setting', href: '/dashboard/settings' },
          { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
+      ]
+    },
+     {
+      id: 'sitre-expenses',
+      title: 'Site Expenses',
+       icon: Settings,
+      hasSubmenu: true,
+      submenu: [
+        { title: 'Site Expences', href: '/dashboard/site-expences' },
       ]
     }
   ];
