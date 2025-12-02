@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import { useEffect, useState, useCallback } from 'react';
 import axiosInstance from '@/utils/axiosInstance';
 import {
@@ -14,6 +14,7 @@ import {
   ChevronUp,
   ChevronDown,
   List,
+  Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -23,10 +24,7 @@ import OfficeActivity from './OfficeActivity';
 import BreakdownTodos from './BreakdownTodos';
 import ActionModal from '../AMC/ActionModal';
 import AddJobActivityForm from '../Jobs/AddJobActivityForm';
-
-import { Loader2 } from 'lucide-react';
 import AddRenewalJobActivityForm from '../Jobs/AddRenewalJobActivityForm';
-
 
 // Helper function to get the assigned employee names as a string
 const getAssignedEmployees = (employees) => {
@@ -36,59 +34,58 @@ const getAssignedEmployees = (employees) => {
 
 // Service Engineer Report Content Component
 const ServiceEngineerReportContent = ({ reports, totalAmcJobs, amcDoneCounts, amcPendingCounts }) => {
-    return (
-        <div className="p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
-                Service Engineer Performance Report
-            </h3>
+  return (
+    <div className="p-6">
+      <h3 className="text-xl font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+        Service Engineer Performance Report
+      </h3>
 
-            {/* Summary Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-700 font-medium mb-1">Total AMC Jobs</p>
-                    <p className="text-3xl font-semibold text-blue-900">{totalAmcJobs}</p>
-                </div>
-                <div className="bg-green-50 p-5 rounded-lg border border-green-200">
-                    <p className="text-sm text-green-700 font-medium mb-1">Completed Jobs</p>
-                    <p className="text-3xl font-semibold text-green-900">{amcDoneCounts}</p>
-                </div>
-                <div className="bg-red-50 p-5 rounded-lg border border-red-200">
-                    <p className="text-sm text-red-700 font-medium mb-1">Pending Jobs</p>
-                    <p className="text-3xl font-semibold text-red-900">{amcPendingCounts}</p>
-                </div>
-            </div>
-
-            {/* Employee Reports Grid */}
-            <h4 className="text-base font-semibold text-gray-900 mb-4">Engineer Breakdown</h4>
-            {reports.length > 0 ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {reports.map((report, index) => (
-                        <div key={index} className="bg-white p-5 rounded-lg border border-gray-200">
-                            <p className="text-base font-semibold text-gray-900 mb-3">{report.empName}</p>
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Assigned Services</span>
-                                    <span className="font-semibold text-blue-600">{report.assginedServiceCounts}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Done Services</span>
-                                    <span className="font-semibold text-green-600">{report.doneServiceCounts}</span>
-                                </div>
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-gray-600">Pending Services</span>
-                                    <span className="font-semibold text-red-600">{report.pendingServicesCounts}</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <p className="text-gray-500 text-center py-4">No service engineer reports available.</p>
-            )}
+      {/* Summary Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-blue-50 p-5 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-700 font-medium mb-1">Total AMC Jobs</p>
+          <p className="text-3xl font-semibold text-blue-900">{totalAmcJobs}</p>
         </div>
-    );
-};
+        <div className="bg-green-50 p-5 rounded-lg border border-green-200">
+          <p className="text-sm text-green-700 font-medium mb-1">Completed Jobs</p>
+          <p className="text-3xl font-semibold text-green-900">{amcDoneCounts}</p>
+        </div>
+        <div className="bg-red-50 p-5 rounded-lg border border-red-200">
+          <p className="text-sm text-red-700 font-medium mb-1">Pending Jobs</p>
+          <p className="text-3xl font-semibold text-red-900">{amcPendingCounts}</p>
+        </div>
+      </div>
 
+      {/* Employee Reports Grid */}
+      <h4 className="text-base font-semibold text-gray-900 mb-4">Engineer Breakdown</h4>
+      {reports.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {reports.map((report, index) => (
+            <div key={index} className="bg-white p-5 rounded-lg border border-gray-200">
+              <p className="text-base font-semibold text-gray-900 mb-3">{report.empName}</p>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Assigned Services</span>
+                  <span className="font-semibold text-blue-600">{report.assginedServiceCounts}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Done Services</span>
+                  <span className="font-semibold text-green-600">{report.doneServiceCounts}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Pending Services</span>
+                  <span className="font-semibold text-red-600">{report.pendingServicesCounts}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-center py-4">No service engineer reports available.</p>
+      )}
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const router = useRouter();
@@ -136,26 +133,26 @@ const Dashboard = () => {
   const [loadingBtn, setLoadingBtn] = useState(null);
 
   const openAddActivityModal = (jobId) => {
-      setSelectedJobId(jobId);
-      setModalContentType('ACTIVITY');
-      setIsModalOpen(true);
+    setSelectedJobId(jobId);
+    setModalContentType('ACTIVITY');
+    setIsModalOpen(true);
   };
 
   const openRenewalAddActivityModal = (jobId) => {
-      setSelectedJobId(jobId);
-      setModalContentType('Renewal');
-      setIsModalOpen(true);
+    setSelectedJobId(jobId);
+    setModalContentType('Renewal');
+    setIsModalOpen(true);
   };
 
   const openReportModal = () => {
-      setModalContentType('REPORT');
-      setIsModalOpen(true);
+    setModalContentType('REPORT');
+    setIsModalOpen(true);
   };
 
   const closeAddActivityModal = () => {
-      setIsModalOpen(false);
-      setSelectedJobId(null);
-      setModalContentType(null);
+    setIsModalOpen(false);
+    setSelectedJobId(null);
+    setModalContentType(null);
   };
 
   const handleActivitySuccess = () => {
@@ -183,59 +180,59 @@ const Dashboard = () => {
 
   // Fetch Service Engineer Report
   const fetchServiceEngineerReport = useCallback(async () => {
-      try {
-          setIsReportLoading(true);
-          const res = await axiosInstance.get('/api/dashboard/service-engineers-report');
-          setEngineerReport(res.data);
-      } catch (err) {
-          console.error('Error fetching service engineer report:', err);
-      } finally {
-          setIsReportLoading(false);
-      }
+    try {
+      setIsReportLoading(true);
+      const res = await axiosInstance.get('/api/dashboard/service-engineers-report');
+      setEngineerReport(res.data);
+    } catch (err) {
+      console.error('Error fetching service engineer report:', err);
+    } finally {
+      setIsReportLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-      fetchServiceEngineerReport();
+    fetchServiceEngineerReport();
   }, [fetchServiceEngineerReport]);
 
   // Fetch AMC alerts
   const fetchAmcAlerts = useCallback(async () => {
-      try {
-          setAmcLoading(true);
-          const res = await axiosInstance.get('/api/dashboard/amc-service-alerts', {
-              params: { page: amcPage, size: amcSize, search: amcSearch }
-          });
-          setAmcServiceAlerts(res.data.content || []);
-          setAmcTotalPages(res.data.totalPages ?? 0);
-      } catch (err) {
-        console.error('Error fetching AMC service alerts:', err);
-      } finally {
-          setAmcLoading(false);
-      }
+    try {
+      setAmcLoading(true);
+      const res = await axiosInstance.get('/api/dashboard/amc-service-alerts', {
+        params: { page: amcPage, size: amcSize, search: amcSearch }
+      });
+      setAmcServiceAlerts(res.data.content || []);
+      setAmcTotalPages(res.data.totalPages ?? 0);
+    } catch (err) {
+      console.error('Error fetching AMC service alerts:', err);
+    } finally {
+      setAmcLoading(false);
+    }
   }, [amcPage, amcSize, amcSearch]);
 
   useEffect(() => {
-      fetchAmcAlerts();
+    fetchAmcAlerts();
   }, [fetchAmcAlerts]);
 
   // Fetch Renewal alerts
   const fetchRenewalAlerts = useCallback(async () => {
-      try {
-          setRenewalLoading(true);
-          const res = await axiosInstance.get('/api/dashboard/amc-renewal-alerts', {
-              params: { page: renewalPage, size: renewalSize, search: renewalSearch }
-          });
-          setRenewalServiceAlerts(res.data.content || []);
-          setRenewalTotalPages(res.data.totalPages ?? 0);
-      } catch (err) {
-          console.error('Error fetching Renewal service alerts:', err);
-      } finally {
-          setRenewalLoading(false);
-      }
+    try {
+      setRenewalLoading(true);
+      const res = await axiosInstance.get('/api/dashboard/amc-renewal-alerts', {
+        params: { page: renewalPage, size: renewalSize, search: renewalSearch }
+      });
+      setRenewalServiceAlerts(res.data.content || []);
+      setRenewalTotalPages(res.data.totalPages ?? 0);
+    } catch (err) {
+      console.error('Error fetching Renewal service alerts:', err);
+    } finally {
+      setRenewalLoading(false);
+    }
   }, [renewalPage, renewalSize, renewalSearch]);
 
   useEffect(() => {
-      fetchRenewalAlerts();
+    fetchRenewalAlerts();
   }, [fetchRenewalAlerts]);
 
   // Fetch Customer To Do
@@ -276,7 +273,7 @@ const Dashboard = () => {
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'leads': return (<LeadsSection/>);
+      case 'leads': return (<LeadsSection />);
       case 'customers':
         return (
           <CustomerTodoAndMissedActivity
@@ -291,16 +288,16 @@ const Dashboard = () => {
             customerLoading={customerLoading}
           />
         );
-      case 'activity': return (<OfficeActivity/>);
-      case 'breakdown': return (<BreakdownTodos/>);
+      case 'activity': return (<OfficeActivity />);
+      case 'breakdown': return (<BreakdownTodos />);
       default: return (<div className="p-8 text-center"><p className="text-gray-500 text-sm">Select a tab to view content</p></div>);
     }
   };
 
-  const [activeAlertTab, setActiveAlertTab] = useState('service'); 
+  const [activeAlertTab, setActiveAlertTab] = useState('service');
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {/* Header */}
@@ -310,81 +307,104 @@ const Dashboard = () => {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {statCards.map((card) => (
-            <div
-              key={card.id}
-              className="bg-white rounded-lg border border-gray-200 p-5"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-100">
-                  <card.icon className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-semibold text-gray-900">{card.count}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{card.title}</div>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((card) => {
+            // Define colors based on card ID
+            const colors = {
+              leads: 'bg-emerald-500',
+              installation: 'bg-violet-500',
+              customers: 'bg-blue-500',
+              renewals: 'bg-orange-500'
+            };
+            const bgColor = colors[card.id] || 'bg-blue-500';
 
-              {/* Secondary data for Quotation card */}
-              {card.subCount !== undefined && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3 pb-3 border-b border-gray-100">
-                  <span className="font-semibold text-gray-900">{card.subCount}</span>
-                  <span>{card.subTitle} Quotations</span>
-                </div>
-              )}
+            return (
+              <div
+                key={card.id}
+                className={`${bgColor} rounded-2xl p-6 relative overflow-hidden shadow-lg transition-transform hover:scale-[1.02] duration-300`}
+              >
+                {/* Decorative Background Icon */}
+                <card.icon className="absolute -bottom-4 -right-4 w-32 h-32 text-white opacity-20 rotate-12" />
 
-              {/* Action Buttons */}
-              <div className="space-y-2">
-                {card.actions ? (
-                  card.actions.map((action, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setLoadingBtn(action);
-                        if (action === "AMC Quotation") {
-                          router.push(`/dashboard/quotations/amc_quatation_list`);
-                        } else if (action === "New Installation") {
-                          router.push(`/dashboard/quotations/installation_quatation_list`);
-                        }
-                      }}
-                      disabled={loadingBtn === action}
-                      className="flex items-center justify-between w-full text-left text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 transition-colors"
-                    >
-                      <span>{action}</span>
-                      {loadingBtn === action ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <ArrowRight className="w-4 h-4" />
-                      )}
-                    </button>
-                  ))
-                ) : (
-                  <button
-                    onClick={() => {
-                      setLoadingBtn(card.action);
-                      if (card.action === "Add New Lead") {
-                        router.push(`/dashboard/lead-management/lead-list/add-lead`);
-                      } else if (card.action === "See More Details") {
-                        router.push(`/dashboard/customer/customer-list`);
-                      } else if (card.action === "View Details") {
-                        router.push(`/dashboard/dashboard-data/amc_renewals_list`);
-                      }
-                    }}
-                    disabled={loadingBtn === card.action}
-                    className="flex items-center justify-between w-full text-left text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50 transition-colors"
-                  >
-                    <span>{card.action}</span>
-                    {loadingBtn === card.action ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="relative z-10">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg">
+                      <card.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-white/90 font-medium text-sm">{card.title}</span>
+                  </div>
+
+                  <div className="mb-6">
+                    {card.subCount !== undefined ? (
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <p className="text-white/80 text-xs font-medium mb-1">New Installation</p>
+                          <h3 className="text-4xl font-bold text-white">{card.count}</h3>
+                        </div>
+                        <div className="w-px h-12 bg-white/30"></div>
+                        <div className="flex-1">
+                          <p className="text-white/80 text-xs font-medium mb-1">{card.subTitle}</p>
+                          <h3 className="text-4xl font-bold text-white">{card.subCount}</h3>
+                        </div>
+                      </div>
                     ) : (
-                      <ArrowRight className="w-4 h-4" />
+                      <h3 className="text-4xl font-bold text-white mb-1">{card.count}</h3>
                     )}
-                  </button>
-                )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    {card.actions ? (
+                      card.actions.map((action, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setLoadingBtn(action);
+                            if (action === "AMC Quotation") {
+                              router.push(`/dashboard/quotations/amc_quatation_list`);
+                            } else if (action === "New Installation") {
+                              router.push(`/dashboard/quotations/installation_quatation_list`);
+                            }
+                          }}
+                          disabled={loadingBtn === action}
+                          className="flex items-center justify-between w-full px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl text-white text-sm font-medium transition-all border border-white/10"
+                        >
+                          <span>{action}</span>
+                          {loadingBtn === action ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <ArrowRight className="w-4 h-4" />
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setLoadingBtn(card.action);
+                          if (card.action === "Add New Lead") {
+                            router.push(`/dashboard/lead-management/lead-list/add-lead`);
+                          } else if (card.action === "See More Details") {
+                            router.push(`/dashboard/customer/customer-list`);
+                          } else if (card.action === "View Details") {
+                            router.push(`/dashboard/dashboard-data/amc_renewals_list`);
+                          }
+                        }}
+                        disabled={loadingBtn === card.action}
+                        className="flex items-center justify-between w-full px-4 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl text-white text-sm font-medium transition-all border border-white/10"
+                      >
+                        <span>{card.action}</span>
+                        {loadingBtn === card.action ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <ArrowRight className="w-4 h-4" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Tabs Section - To Do & Activity List */}
@@ -400,9 +420,9 @@ const Dashboard = () => {
               {isTodoListCollapsed ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
             </button>
           </div>
-          
-          <div 
-            id="todo-activity-content" 
+
+          <div
+            id="todo-activity-content"
             className={`transition-all duration-300 ease-in-out overflow-hidden ${isTodoListCollapsed ? 'max-h-0' : 'max-h-screen'}`}
           >
             <div className="border-b border-gray-200">
@@ -411,11 +431,10 @@ const Dashboard = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
-                      activeTab === tab.id
-                        ? 'text-blue-600 border-blue-600'
-                        : 'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300'
-                    }`}
+                    className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${activeTab === tab.id
+                      ? 'text-blue-600 border-blue-600'
+                      : 'text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-300'
+                      }`}
                   >
                     <tab.icon className="w-4 h-4" />
                     <span>{tab.label}</span>
@@ -492,22 +511,20 @@ const Dashboard = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => setActiveAlertTab('service')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      activeAlertTab === 'service' 
-                        ? 'bg-blue-600 text-white border-blue-600' 
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${activeAlertTab === 'service'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     AMC Service Alerts
                   </button>
-                  
+
                   <button
                     onClick={() => setActiveAlertTab('renewal')}
-                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
-                      activeAlertTab === 'renewal' 
-                        ? 'bg-blue-600 text-white border-blue-600' 
-                        : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${activeAlertTab === 'renewal'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     AMC Renewal Service Alert
                   </button>
@@ -530,8 +547,8 @@ const Dashboard = () => {
           )}
 
           {/* Alerts Content */}
-          <div 
-            id="amc-alerts-content" 
+          <div
+            id="amc-alerts-content"
             className={`transition-all duration-300 ease-in-out overflow-hidden ${isAmcAlertsCollapsed ? 'max-h-0' : 'max-h-screen p-6'}`}
           >
             {activeAlertTab === 'service' && (
@@ -574,16 +591,14 @@ const Dashboard = () => {
                                 {alert.previousServicingDate ? new Date(alert.previousServicingDate).toLocaleDateString() : 'N/A'}
                               </td>
                               <td className="px-4 py-3">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                                }`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                                  }`}>
                                   {alert.remark}
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-center">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                                }`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                                  }`}>
                                   {alert.currentServicePendingLiftCounts} / {alert.currentServiceTotalLiftsCounts}
                                 </span>
                               </td>
@@ -591,11 +606,10 @@ const Dashboard = () => {
                                 <button
                                   onClick={() => openAddActivityModal(alert.amcJobid)}
                                   disabled={isCompleted}
-                                  className={`p-2 rounded-lg transition-colors ${
-                                    isCompleted
-                                      ? 'text-gray-300 cursor-not-allowed'
-                                      : 'text-blue-600 hover:bg-blue-50'
-                                  }`}
+                                  className={`p-2 rounded-lg transition-colors ${isCompleted
+                                    ? 'text-gray-300 cursor-not-allowed'
+                                    : 'text-blue-600 hover:bg-blue-50'
+                                    }`}
                                   title={isCompleted ? "Service Completed" : "Add Activity"}
                                 >
                                   <Plus className="w-4 h-4" />
@@ -630,22 +644,20 @@ const Dashboard = () => {
                       <button
                         disabled={amcPage === 0}
                         onClick={() => setAmcPage((p) => p - 1)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          amcPage === 0 
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage === 0
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
                       >
                         Prev
                       </button>
                       <button
                         disabled={amcPage + 1 >= amcTotalPages}
                         onClick={() => setAmcPage((p) => p + 1)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          amcPage + 1 >= amcTotalPages 
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${amcPage + 1 >= amcTotalPages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
                       >
                         Next
                       </button>
@@ -697,16 +709,14 @@ const Dashboard = () => {
                                 {alert.previousServicingDate ? new Date(alert.previousServicingDate).toLocaleDateString() : 'N/A'}
                               </td>
                               <td className="px-4 py-3">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                                }`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                                  }`}>
                                   {alert.remark}
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-center">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                  isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
-                                }`}>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isCompleted ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                                  }`}>
                                   {alert.currentServicePendingLiftCounts} / {alert.currentServiceTotalLiftsCounts}
                                 </span>
                               </td>
@@ -714,11 +724,10 @@ const Dashboard = () => {
                                 <button
                                   onClick={() => openRenewalAddActivityModal(alert.renewalJobId)}
                                   disabled={isCompleted}
-                                  className={`p-2 rounded-lg transition-colors ${
-                                    isCompleted
-                                      ? 'text-gray-300 cursor-not-allowed'
-                                      : 'text-blue-600 hover:bg-blue-50'
-                                  }`}
+                                  className={`p-2 rounded-lg transition-colors ${isCompleted
+                                    ? 'text-gray-300 cursor-not-allowed'
+                                    : 'text-blue-600 hover:bg-blue-50'
+                                    }`}
                                   title={isCompleted ? "Service Completed" : "Add Activity"}
                                 >
                                   <Plus className="w-4 h-4" />
@@ -753,22 +762,20 @@ const Dashboard = () => {
                       <button
                         disabled={renewalPage === 0}
                         onClick={() => setRenewalPage((p) => p - 1)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          renewalPage === 0 
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${renewalPage === 0
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
                       >
                         Prev
                       </button>
                       <button
                         disabled={renewalPage + 1 >= renewalTotalPages}
                         onClick={() => setRenewalPage((p) => p + 1)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          renewalPage + 1 >= renewalTotalPages 
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${renewalPage + 1 >= renewalTotalPages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
                       >
                         Next
                       </button>
@@ -789,11 +796,11 @@ const Dashboard = () => {
         isOpen={isModalOpen}
         onCancel={closeAddActivityModal}
         title={
-          modalContentType === 'REPORT' 
-            ? 'Service Engineer Performance' 
-            : modalContentType === 'ACTIVITY' 
-            ? 'Add Job Activity' 
-            : 'Add Renewal Job Activity'
+          modalContentType === 'REPORT'
+            ? 'Service Engineer Performance'
+            : modalContentType === 'ACTIVITY'
+              ? 'Add Job Activity'
+              : 'Add Renewal Job Activity'
         }
       >
         {modalContentType === 'ACTIVITY' && selectedJobId && (

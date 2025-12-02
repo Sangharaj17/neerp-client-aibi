@@ -24,6 +24,7 @@
     "jwt-encode": "^1.0.1",
     "lucide-react": "^0.516.0",
     "next": "15.3.3",
+    "nextjs-toploader": "^3.9.17",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.31.0",
     "qrcode.react": "^4.2.0",
