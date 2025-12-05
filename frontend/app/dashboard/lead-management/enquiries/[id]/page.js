@@ -2,10 +2,12 @@
 
 import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
-import { Eye, Trash2, Pencil, FilePlus, Loader2 } from 'lucide-react';
+import { Eye, Trash2, Pencil, FilePlus, Loader2, FileText, X } from 'lucide-react';
 import { useEffect, useState, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
+import InspectionReportSystem from '@/components/Inspection/InspectionReportSystem';
+import InspectionReportsList from '@/components/Inspection/InspectionReportsList';
 //import jwtEncode from "jwt-encode";
 
 function ViewEnquiryClientPageContent() {
@@ -32,6 +34,13 @@ function ViewEnquiryClientPageContent() {
   const leadId = id;
 
   const [refreshKey, setRefreshKey] = useState(0); // 👈 used to trigger re-fetch
+
+  // Inspection Report Modal State
+  const [inspectionReportModalOpen, setInspectionReportModalOpen] = useState(false);
+  const [selectedCombinedEnquiryId, setSelectedCombinedEnquiryId] = useState(null);
+  const [modalView, setModalView] = useState('list'); // 'list' | 'form'
+  const [selectedReportId, setSelectedReportId] = useState(null);
+  const [reportMode, setReportMode] = useState('create'); // 'create' | 'edit' | 'view'
 
 
   useEffect(() => {
@@ -162,7 +171,7 @@ function ViewEnquiryClientPageContent() {
 
     // ✅ Clean navigation (no query string in URL)
     // router.push(`/dashboard/lead-management/enquiries/${id}/quotation/add`);
-     router.push(`/dashboard/lead-management/enquiries/${id}/quotation/add/${combinedEnquiryId}`);
+    router.push(`/dashboard/lead-management/enquiries/${id}/quotation/add/${combinedEnquiryId}`);
   };
 
 
@@ -211,12 +220,12 @@ function ViewEnquiryClientPageContent() {
           combinedId: combined.id,
           enquiryTitle: combined.projectName,
           createdDate: combined.enquiryDate, // 👈 Add this line
-           customerName: combined.customerName,
-           customerSite: combined.customerSite,
-           selectLead: combined.selectLead,
-           leadId: combined.leadId,
-           siteName: combined.siteName,
-           companyAmcGstPercentage: combined.companyAmcGstPercentage,
+          customerName: combined.customerName,
+          customerSite: combined.customerSite,
+          selectLead: combined.selectLead,
+          leadId: combined.leadId,
+          siteName: combined.siteName,
+          companyAmcGstPercentage: combined.companyAmcGstPercentage,
 
           entries: combined.enquiries.map((entry) => ({
             id: entry.enquiryId,
@@ -298,6 +307,27 @@ function ViewEnquiryClientPageContent() {
   const handleCancel = () => {
     setModalOpen(false);
     setDeleteId(null);
+  };
+
+  // Inspection Report Handlers
+  const handleSelectReport = (reportId, mode) => {
+    setSelectedReportId(reportId);
+    setReportMode(mode);
+    setModalView('form');
+  };
+
+  const handleOpenInspectionReports = (combinedId) => {
+    setSelectedCombinedEnquiryId(combinedId);
+    setModalView('list');
+    setInspectionReportModalOpen(true);
+  };
+
+  const handleCloseInspectionReports = () => {
+    setInspectionReportModalOpen(false);
+    setSelectedCombinedEnquiryId(null);
+    setModalView('list');
+    setSelectedReportId(null);
+    setReportMode('create');
   };
 
   const [isActionClick, setIsActionClick] = useState(null); // Track action type for loader
@@ -396,7 +426,7 @@ function ViewEnquiryClientPageContent() {
                       ? `Created At: ${new Date(group.createdDate).toLocaleDateString()}`
                       : ""}
                   </span>
-                   <span className="ml-4 text-sm text-gray-500">
+                  <span className="ml-4 text-sm text-gray-500">
                     {/* Format date (optional) */}
                     {group.siteName
                       ? `Site Name: ${group.siteName}`
@@ -477,61 +507,64 @@ function ViewEnquiryClientPageContent() {
                 </table>
               </div>
 
-              {/* Add Quotation Button */}
-              <div className="absolute -bottom-10 right-1">
+              {/* Buttons Section */}
+              <div className="absolute -bottom-10 right-1 flex gap-2">
+                {/* Inspection Report Button - Hidden for New Installation */}
+                {selectedCategory !== "New Installation" && (
+                  <button
+                    onClick={() => handleOpenInspectionReports(group.combinedId)}
+                    className="bg-green-500 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-green-600 transition shadow-md"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Inspection Report
+                  </button>
+                )}
+
+                {/* Add Quotation Button */}
                 <button
                   onClick={() => {
                     setQuotationLoadingId(groupIndex);
                     console.log(quotationLoadingId)
 
-                  //  alert("You are in " + selectedCategory + " category");
+                    //  alert("You are in " + selectedCategory + " category");
 
-                     if(selectedCategory == "AMC"){
+                    if (selectedCategory == "AMC") {
 
-                      console.log("AMC Quotation group-->"+JSON.stringify(group));
-                          localStorage.setItem('combinedEnquiry', JSON.stringify(group));
-                         router.push(
-                          `/dashboard/lead-management/enquiries/${id}/add-amc-quotation?customer=${encodeURIComponent(
-                            searchParams.get('customer')
-                          )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                        );
-                     }else if(selectedCategory == "New Installation"){
-                        handleNavigateToQuotation(group.combinedId)
-                     }else if(selectedCategory == "Moderization"){
-                       router.push(
-  `/dashboard/lead-management/enquiries/${id}/add-modernization/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
-    searchParams.get('customer')
-  )}&site=${encodeURIComponent(searchParams.get('site'))}`
-);
+                      console.log("AMC Quotation group-->" + JSON.stringify(group));
+                      localStorage.setItem('combinedEnquiry', JSON.stringify(group));
+                      router.push(
+                        `/dashboard/lead-management/enquiries/${id}/add-amc-quotation?customer=${encodeURIComponent(
+                          searchParams.get('customer')
+                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                      );
+                    } else if (selectedCategory == "New Installation") {
+                      handleNavigateToQuotation(group.combinedId)
+                    } else if (selectedCategory == "Moderization") {
+                      router.push(
+                        `/dashboard/lead-management/enquiries/${id}/add-modernization/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
+                          searchParams.get('customer')
+                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                      );
 
-                     }
-                     else if(selectedCategory == "On Call"){
-                       router.push(
-  `/dashboard/lead-management/enquiries/${id}/add-oncall/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
-    searchParams.get('customer')
-  )}&site=${encodeURIComponent(searchParams.get('site'))}`
-);
+                    }
+                    else if (selectedCategory == "On Call") {
+                      router.push(
+                        `/dashboard/lead-management/enquiries/${id}/add-oncall/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
+                          searchParams.get('customer')
+                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                      );
 
-                     }
-                     else{
+                    }
+                    else {
 
-                        router.push(
-                          `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
-                            searchParams.get('customer')
-                          )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                        );
-                      }
+                      router.push(
+                        `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
+                          searchParams.get('customer')
+                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                      );
+                    }
 
                   }}
-                  // onClick={() => {
-                  //   setQuotationLoadingId(groupIndex);
-                  //   console.log(quotationLoadingId)
-                  //   router.push(
-                  //     `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
-                  //       searchParams.get('customer')
-                  //     )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                  //   );
-                  // }}
                   disabled={quotationLoadingId === groupIndex}
                   className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-yellow-600 transition shadow-md"
                 >
@@ -561,6 +594,45 @@ function ViewEnquiryClientPageContent() {
         </div>
       </div>
 
+      {/* Inspection Report Modal */}
+      {inspectionReportModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={handleCloseInspectionReports}
+        >
+          <div
+            className="bg-white w-full max-w-5xl lg:max-w-6xl rounded-xl shadow-lg overflow-auto max-h-[90vh] animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {modalView === 'list' ? 'Inspection Reports' : 'Inspection Report'}
+              </h2>
+              <button
+                onClick={handleCloseInspectionReports}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className={modalView === 'list' ? '' : 'p-6'}>
+              {modalView === 'list' ? (
+                <InspectionReportsList
+                  combinedEnquiryId={selectedCombinedEnquiryId}
+                  onSelectReport={handleSelectReport}
+                />
+              ) : (
+                <InspectionReportSystem
+                  combinedEnquiryId={selectedCombinedEnquiryId}
+                  reportId={selectedReportId}
+                  mode={reportMode}
+                  onBack={() => setModalView('list')}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -192,7 +192,9 @@ const NavigationAccordion = () => {
       submenu: [
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
-        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` }
+        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` },
+                { title: 'Inspection Report', href: `/dashboard/lead-management/inspection-report` }
+
       ]
     },
     {
