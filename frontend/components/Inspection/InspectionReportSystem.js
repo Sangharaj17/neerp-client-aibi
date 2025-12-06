@@ -14,6 +14,10 @@ const InspectionReportSystem = ({
   const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Layout State
+  const [selectedLiftIndex, setSelectedLiftIndex] = useState(0);
+  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(0); // Using index for easier navigation
+
   // Create/Update Report State
   const [combinedEnquiryId] = useState(combinedEnquiryIdProp || '');
   const [inspectionReportId, setInspectionReportId] = useState(null);
@@ -40,9 +44,6 @@ const InspectionReportSystem = ({
     }
   }, [mode, combinedEnquiryId]);
 
-  // Determine if fields should be disabled
-  const isViewMode = mode === 'view';
-
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -57,7 +58,7 @@ const InspectionReportSystem = ({
 
   const fetchStatuses = async () => {
     try {
-      const response = await axiosInstance.get('/api/inspection-report/getAllCheckPointsStatuses');
+      const response = await axiosInstance.get('/api/inspection-checkpoint-status/getAllCheckPointsStatuses');
       setStatuses(response.data || []);
     } catch (err) {
       toast.error('Failed to fetch statuses: ' + err.message);
@@ -105,7 +106,6 @@ const InspectionReportSystem = ({
       const data = response.data || [];
 
       if (data.length > 0) {
-        // First pass: Create a map of database ID -> enquiryId
         const dbIdToEnquiryIdMap = {};
         data.forEach(item => {
           if (item.inspectionReportRepeatLiftDto) {
@@ -117,13 +117,11 @@ const InspectionReportSystem = ({
           }
         });
 
-        // Second pass: Transform lifts and convert repeatLiftId from DB ID to enquiryId
         const transformedLifts = data.map(item => {
-          // Enrich checkpoints with category and checkpoint names
           const enrichedCheckpoints = (item.inspectionReportDtos || []).map(cp => {
-            // Find the category and checkpoint details from categories state
             let categoryName = '';
             let checkpointName = '';
+            let categoryId = null;
 
             categories.forEach(category => {
               if (category.inspectionCategoryCheckpointDtos) {
@@ -132,6 +130,7 @@ const InspectionReportSystem = ({
                 );
                 if (checkpoint) {
                   categoryName = category.inspectionReportCategoryDto?.categoryName || '';
+                  categoryId = category.inspectionReportCategoryDto?.id;
                   checkpointName = checkpoint.checkpointName || '';
                 }
               }
@@ -140,19 +139,19 @@ const InspectionReportSystem = ({
             return {
               ...cp,
               categoryName,
+              categoryId,
               checkpointName
             };
           });
 
-          // Convert repeatLiftId from database ID to enquiryId for dropdown
           const repeatLiftDbId = item.inspectionReportRepeatLiftDto?.repeatLiftId;
           const repeatLiftEnquiryId = repeatLiftDbId ? dbIdToEnquiryIdMap[repeatLiftDbId] : null;
 
           return {
             id: item.inspectionReportRepeatLiftDto?.id,
             enquiryId: item.inspectionReportRepeatLiftDto?.enquiryId || '',
-            repeatLiftId: repeatLiftEnquiryId, // Use enquiryId for dropdown display
-            repeatLiftDbId: repeatLiftDbId, // Store original DB ID for submission
+            repeatLiftId: repeatLiftEnquiryId,
+            repeatLiftDbId: repeatLiftDbId,
             checkpoints: enrichedCheckpoints
           };
         });
@@ -179,6 +178,7 @@ const InspectionReportSystem = ({
             checkpointId: checkpoint.id,
             checkpointName: checkpoint.checkpointName,
             categoryName: category.inspectionReportCategoryDto?.categoryName,
+            categoryId: category.inspectionReportCategoryDto?.id, // Added for filtering
             statusId: statuses[0]?.id || null,
             remark: '',
             repeatLiftId: null
@@ -188,8 +188,6 @@ const InspectionReportSystem = ({
     });
     return checkpoints;
   };
-
-
 
   const updateLift = (index, field, value) => {
     const newLifts = [...lifts];
@@ -213,13 +211,20 @@ const InspectionReportSystem = ({
     setLifts(newLifts);
   };
 
-  const updateCheckpoint = (liftIndex, checkpointIndex, field, value) => {
+  // Helper to find absolute index of a checkpoint in the lift's checkpoint array
+  const updateFilteredCheckpoint = (liftIndex, checkpointId, field, value) => {
     const newLifts = [...lifts];
     if (!newLifts[liftIndex].checkpoints) {
       newLifts[liftIndex].checkpoints = initializeCheckpoints();
     }
-    newLifts[liftIndex].checkpoints[checkpointIndex][field] = value;
-    setLifts(newLifts);
+
+    // Find index by checkpointId since we are in a filtered view
+    const cpIndex = newLifts[liftIndex].checkpoints.findIndex(c => c.checkpointId === checkpointId);
+
+    if (cpIndex !== -1) {
+      newLifts[liftIndex].checkpoints[cpIndex][field] = value;
+      setLifts(newLifts);
+    }
   };
 
   const initializeLiftCheckpoints = (liftIndex) => {
@@ -243,8 +248,6 @@ const InspectionReportSystem = ({
 
     try {
       setLoading(true);
-
-      // For edit mode, create a map of enquiryId -> database ID
       const enquiryIdToDbIdMap = {};
       if (inspectionReportId) {
         lifts.forEach(lift => {
@@ -256,14 +259,11 @@ const InspectionReportSystem = ({
 
       const payload = {
         inspectionReportAndRepeatLiftsWrapperDtos: lifts.map(lift => {
-          // Determine the correct repeatLiftId to send
           let repeatLiftIdToSend = null;
           if (lift.repeatLiftId) {
             if (inspectionReportId) {
-              // EDIT mode: Convert enquiryId back to database ID
               repeatLiftIdToSend = enquiryIdToDbIdMap[lift.repeatLiftId] || null;
             } else {
-              // CREATE mode: Use enquiryId directly
               repeatLiftIdToSend = parseInt(lift.repeatLiftId);
             }
           }
@@ -287,12 +287,12 @@ const InspectionReportSystem = ({
       };
 
       const url = `/api/inspection-report/save?${inspectionReportId ? `inspectionReportId=${inspectionReportId}` : `combinedEnquiryId=${combinedEnquiryId}`}`;
-
       const response = await axiosInstance.post(url, payload);
-
       toast.success(response.data || 'Report saved successfully');
 
       if (!inspectionReportId) {
+        // Keeps user on page, maybe don't reset to avoid confusion in new layout?
+        // Or reset and expect them to start over? Let's keep existing behavior for now.
         setLifts([]);
         setAvailableLifts([]);
       }
@@ -309,291 +309,283 @@ const InspectionReportSystem = ({
     setAvailableLifts([]);
   };
 
+  const getFilteredCheckpoints = () => {
+    const selectedLift = lifts[selectedLiftIndex];
+    const selectedCategory = categories[selectedCategoryIndex];
+
+    if (!selectedLift || !selectedCategory || !selectedLift.checkpoints) return [];
+
+    // Safety check for category object structure
+    const catId = selectedCategory.inspectionReportCategoryDto?.id;
+    return selectedLift.checkpoints.filter(cp => cp.categoryId === catId);
+  };
+
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm border border-gray-100">
-          {/* Back Button */}
-          {onBack && (
-            <div className="px-6 pt-4">
-              <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Reports List
-              </button>
-            </div>
-          )}
-
-          {/* Header */}
-          <div className="px-6 py-5">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <FileText className="w-6 h-6 text-blue-600" />
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900">Inspection Reports</h1>
-            </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col h-screen overflow-hidden">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 rounded-lg">
+            <FileText className="w-5 h-5 text-blue-600" />
           </div>
-
-          {/* Tabs */}
-          <div className="border-b border-gray-100">
-            <div className="flex px-6">
-              <button
-                onClick={() => setActiveTab('create')}
-                className={`py-3 px-4 text-sm font-medium border-b-2 transition-all ${activeTab === 'create'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-              >
-                Create / Edit
-              </button>
-              <button
-                onClick={() => setActiveTab('load')}
-                className={`py-3 px-4 text-sm font-medium border-b-2 transition-all ${activeTab === 'load'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-              >
-                Load Report
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {activeTab === 'create' ? (
-              <div className="space-y-6">
-                {/* Report Info */}
-                <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Combined Enquiry ID
-                      </label>
-                      <input
-                        type="number"
-                        value={combinedEnquiryId}
-                        disabled
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 text-gray-500"
-                        placeholder="Enter ID"
-                      />
-                    </div>
-                    {inspectionReportId && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Report ID
-                        </label>
-                        <input
-                          type="text"
-                          value={inspectionReportId}
-                          disabled
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-100 text-gray-500"
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={resetForm}
-                      className="text-sm text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                    >
-                      Reset Form
-                    </button>
-                  </div>
-                </div>
-
-                {/* Lifts */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-base font-semibold text-gray-900">
-                      Lifts {lifts.length > 0 && <span className="text-sm text-gray-400 font-normal ml-2">({lifts.length})</span>}
-                    </h2>
-                  </div>
-
-                  {lifts.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                      <p className="text-sm text-gray-500">No lifts loaded. Enter Combined Enquiry ID to get started.</p>
-                    </div>
-                  ) : (
-                    lifts.map((lift, liftIndex) => (
-                      <div key={liftIndex} className="bg-white border border-gray-200 rounded-lg p-5 space-y-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div>
-                          <h3 className="text-sm font-semibold text-gray-900">Lift #{liftIndex + 1}</h3>
-                          {lift.liftName && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              {lift.liftName} • {lift.typeOfElevators} • {lift.capacityValue} • {lift.noOfFloors} floors
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                              Enquiry ID <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              value={lift.enquiryId}
-                              onChange={(e) => updateLift(liftIndex, 'enquiryId', e.target.value)}
-                              disabled={availableLifts.length > 0}
-                              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
-                              placeholder="Enter ID"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                              Copy From Lift
-                            </label>
-                            <select
-                              value={lift.repeatLiftId ? String(lift.repeatLiftId) : ''}
-                              onChange={(e) => updateLift(liftIndex, 'repeatLiftId', e.target.value || null)}
-                              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                              <option value="">Select lift</option>
-                              {lifts.map((l, idx) => (
-                                idx !== liftIndex && l.enquiryId && (
-                                  <option key={idx} value={String(l.enquiryId)}>
-                                    Lift #{idx + 1} - {l.enquiryId} {l.liftName ? `(${l.liftName})` : ''}
-                                  </option>
-                                )
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* Checkpoints */}
-                        <div className="pt-3 border-t border-gray-100">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-gray-900">
-                              Checkpoints
-                              {lift.repeatLiftId && (
-                                <span className="ml-2 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
-                                  Copied
-                                </span>
-                              )}
-                            </h4>
-                            {(!lift.checkpoints || lift.checkpoints.length === 0) && (
-                              <button
-                                onClick={() => initializeLiftCheckpoints(liftIndex)}
-                                className="text-xs px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                              >
-                                Initialize
-                              </button>
-                            )}
-                          </div>
-
-                          {lift.checkpoints && lift.checkpoints.length > 0 ? (
-                            <div className="overflow-x-auto -mx-5 px-5">
-                              <table className="w-full text-xs">
-                                <thead>
-                                  <tr className="border-b border-gray-200">
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700 bg-gray-50">Category</th>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700 bg-gray-50">Checkpoint</th>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700 bg-gray-50">Status</th>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700 bg-gray-50">Remark</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                  {lift.checkpoints.map((checkpoint, cpIndex) => (
-                                    <tr key={cpIndex} className="hover:bg-gray-50 transition-colors">
-                                      <td className="px-3 py-2.5 text-gray-600">{checkpoint.categoryName}</td>
-                                      <td className="px-3 py-2.5 text-gray-900">{checkpoint.checkpointName}</td>
-                                      <td className="px-3 py-2.5">
-                                        <select
-                                          value={checkpoint.statusId || ''}
-                                          onChange={(e) => updateCheckpoint(liftIndex, cpIndex, 'statusId', parseInt(e.target.value))}
-                                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                        >
-                                          <option value="">Select</option>
-                                          {statuses.map(status => (
-                                            <option key={status.id} value={status.id}>
-                                              {status.statusName}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      </td>
-                                      <td className="px-3 py-2.5">
-                                        <input
-                                          type="text"
-                                          value={checkpoint.remark || ''}
-                                          onChange={(e) => updateCheckpoint(liftIndex, cpIndex, 'remark', e.target.value)}
-                                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                          placeholder="Remark"
-                                        />
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-gray-500 py-4 text-center bg-gray-50 rounded-lg">
-                              Click "Initialize" to add checkpoints
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Submit Button */}
-                {lifts.length > 0 && (
-                  <div className="flex justify-end pt-4 border-t border-gray-100">
-                    <button
-                      onClick={handleSubmit}
-                      disabled={loading}
-                      className="flex items-center gap-2 px-5 py-2.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    >
-                      <Save className="w-4 h-4" />
-                      {loading ? 'Saving...' : (inspectionReportId ? 'Update' : 'Create')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4 max-w-xl">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Report ID
-                  </label>
-                  <div className="flex gap-3">
-                    <input
-                      type="number"
-                      placeholder="Enter report ID"
-                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter' && e.target.value) {
-                          fetchReportForEdit(parseInt(e.target.value));
-                        }
-                      }}
-                      id="loadReportId"
-                    />
-                    <button
-                      onClick={() => {
-                        const id = document.getElementById('loadReportId').value;
-                        if (id) fetchReportForEdit(parseInt(id));
-                      }}
-                      className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      Load
-                    </button>
-                  </div>
-                </div>
-
-                {loading && (
-                  <div className="text-center py-12">
-                    <div className="inline-block w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="mt-3 text-sm text-gray-600">Loading...</p>
-                  </div>
-                )}
-              </div>
-            )}
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">Inspection Report</h1>
+            {combinedEnquiryId && <p className='text-xs text-gray-500'>Combined ID: {combinedEnquiryId} {inspectionReportId ? `| Report ID: ${inspectionReportId}` : ''}</p>}
           </div>
         </div>
+
+        <div className="flex items-center gap-3">
+          {activeTab === 'create' && lifts.length > 0 && (
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {loading ? 'Saving...' : 'Save Report'}
+            </button>
+          )}
+          {onBack && (
+            <button onClick={onBack} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm border border-gray-200">
+              Back / Exit
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tabs for Mode Switching */}
+      <div className="bg-white border-b border-gray-200 px-6 shrink-0">
+        <div className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('create')}
+            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'create' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Report Workspace
+          </button>
+          <button
+            onClick={() => setActiveTab('load')}
+            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'load' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            Load Existing Report
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {activeTab === 'create' ? (
+          lifts.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 p-8">
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center max-w-md">
+                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FileText className="w-8 h-8 text-blue-500" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Start Inspection Report</h2>
+                <p className="text-gray-500 mb-6">No lifts loaded. Please ensure Combined Enquiry ID is passed or load an existing report.</p>
+                <div className="flex justify-center gap-2">
+                  <input
+                    type="number"
+                    placeholder="Combined Enquiry ID"
+                    className="px-3 py-2 border rounded-md text-sm"
+                    disabled // Start logic requires prop usually, enabled here for debugging if needed? No, kept disabled as per prev logic
+                    value={combinedEnquiryId}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* 1. Categories Column (Left) */}
+              <div className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+                <div className="p-4 border-b border-gray-100 bg-gray-50">
+                  <h3 className="font-semibold text-gray-700 text-sm">Categories</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto">
+                  {categories.map((cat, index) => (
+                    <button
+                      key={cat.inspectionReportCategoryDto.id}
+                      onClick={() => setSelectedCategoryIndex(index)}
+                      className={`w-full text-left px-4 py-3 text-sm border-l-4 transition-all ${selectedCategoryIndex === index
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                        : 'border-transparent text-gray-600 hover:bg-gray-50'
+                        }`}
+                    >
+                      {cat.inspectionReportCategoryDto.categoryName}
+                      <span className="block text-xs text-gray-400 font-normal mt-0.5">
+                        {cat.inspectionCategoryCheckpointDtos?.length || 0} checkpoints
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Checkpoints Form (Center) - The WORKSPACE */}
+              <div className="flex-1 bg-white flex flex-col overflow-hidden min-w-[400px]">
+                {/* Workspace Header */}
+                <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                  <div>
+                    <h2 className="font-bold text-gray-800 text-lg">
+                      {categories[selectedCategoryIndex]?.inspectionReportCategoryDto?.categoryName}
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      Working on Lift #{selectedLiftIndex + 1}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Copy Logic could go here specifically for this category if needed, staying simple for now */}
+                  </div>
+                </div>
+
+                {/* Scrollable Checkpoints Area */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {(!lifts[selectedLiftIndex].checkpoints || lifts[selectedLiftIndex].checkpoints.length === 0) ? (
+                    <div className="text-center py-10">
+                      <button
+                        onClick={() => initializeLiftCheckpoints(selectedLiftIndex)}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        Initialize Checkpoints for Lift #{selectedLiftIndex + 1}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {getFilteredCheckpoints().length === 0 ? (
+                        <p className="text-gray-500 text-center italic">No checkpoints in this category.</p>
+                      ) : (
+                        getFilteredCheckpoints().map((cp) => (
+                          <div key={cp.checkpointId} className="bg-white border rounded-lg p-4 shadow-sm hover:border-blue-300 transition-colors">
+                            <p className="text-sm font-medium text-gray-800 mb-3">{cp.checkpointName}</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Status</label>
+                                <select
+                                  value={cp.statusId || ''}
+                                  onChange={(e) => updateFilteredCheckpoint(selectedLiftIndex, cp.checkpointId, 'statusId', parseInt(e.target.value))}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                  <option value="">Select Status</option>
+                                  {statuses.map(s => (
+                                    <option key={s.id} value={s.id}>{s.statusName}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Remark</label>
+                                <input
+                                  type="text"
+                                  value={cp.remark || ''}
+                                  onChange={(e) => updateFilteredCheckpoint(selectedLiftIndex, cp.checkpointId, 'remark', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                  placeholder="Add a remark..."
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 3. Lifts List (Right) */}
+              <div className="w-80 bg-gray-100 border-l border-gray-200 flex flex-col shrink-0">
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="font-semibold text-gray-700 text-sm">Lifts ({lifts.length})</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {lifts.map((lift, index) => (
+                    <div
+                      key={index}
+                      onClick={() => setSelectedLiftIndex(index)}
+                      className={`cursor-pointer rounded-xl border p-4 transition-all ${selectedLiftIndex === index
+                        ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500'
+                        : 'bg-white border-gray-200 hover:border-blue-300 shadow-sm'
+                        }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className={`text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full ${selectedLiftIndex === index ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                          {index + 1}
+                        </span>
+                        <span className="text-xs font-mono text-gray-400">
+                          {lift.enquiryId || 'No ID'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Enquiry ID</label>
+                          <input
+                            type="number"
+                            value={lift.enquiryId}
+                            onClick={(e) => e.stopPropagation()} // Prevent card selection when typing
+                            onChange={(e) => updateLift(index, 'enquiryId', e.target.value)}
+                            className="w-full px-2 py-1 text-xs border rounded bg-gray-50 focus:bg-white transition-colors"
+                            placeholder="ID"
+                          />
+                        </div>
+                        {lift.liftName && (
+                          <p className="text-xs text-gray-600 font-medium truncate">{lift.liftName}</p>
+                        )}
+                        <div className="pt-2 border-t border-gray-100">
+                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Copy From</label>
+                          <select
+                            value={lift.repeatLiftId ? String(lift.repeatLiftId) : ''}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => updateLift(index, 'repeatLiftId', e.target.value || null)}
+                            className="w-full text-xs p-1 border rounded bg-gray-50"
+                          >
+                            <option value="">Select...</option>
+                            {lifts.map((l, idx) => (
+                              idx !== index && l.enquiryId && (
+                                <option key={idx} value={String(l.enquiryId)}>
+                                  Lift #{idx + 1}
+                                </option>
+                              )
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )
+        ) : (
+          /* Load Report View (Simple centered form) */
+          <div className="flex-1 bg-gray-50 flex items-center justify-center p-6">
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Load Existing Report</h2>
+              <div className="flex gap-3">
+                <input
+                  type="number"
+                  placeholder="Enter Report ID"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && e.target.value) {
+                      fetchReportForEdit(parseInt(e.target.value));
+                    }
+                  }}
+                  id="loadReportId"
+                />
+                <button
+                  onClick={() => {
+                    const id = document.getElementById('loadReportId').value;
+                    if (id) fetchReportForEdit(parseInt(id));
+                  }}
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loading ? 'Loading...' : 'Load'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -311,9 +311,15 @@ function ViewEnquiryClientPageContent() {
 
   // Inspection Report Handlers
   const handleSelectReport = (reportId, mode) => {
-    setSelectedReportId(reportId);
-    setReportMode(mode);
-    setModalView('form');
+    // 1. Get the parameters
+    const queryParams = new URLSearchParams({
+      combinedEnquiryId: selectedCombinedEnquiryId,
+      reportId: reportId || '', // Handle null reportId for create mode
+      mode: mode,
+    }).toString();
+
+    // 2. Redirect to the InspectionReportPage
+    router.push(`/dashboard/lead-management/enquiries/${id}/inspection-report?${queryParams}`);
   };
 
   const handleOpenInspectionReports = (combinedId) => {
@@ -334,19 +340,7 @@ function ViewEnquiryClientPageContent() {
 
 
   // The function to handle the redirection
-  const redirectToReportPage = () => {
-    // 1. Get the parameters
-    const queryParams = new URLSearchParams({
-      combinedEnquiryId: selectedCombinedEnquiryId,
-      reportId: selectedReportId,
-      mode: reportMode,
-      // You can also pass 'onBack' functionality via another query parameter
-      // or handle it differently on the new page.
-    }).toString();
 
-    // 2. Redirect to the InspectionReportPage
-    router.push(`/dashboard/lead-management/enquiries/${id}/inspection-report?${queryParams}`);
-  };
 
   return (
     <>
@@ -637,24 +631,10 @@ function ViewEnquiryClientPageContent() {
                   onSelectReport={handleSelectReport}
                 />
               ) : (
-                // === REPORT/REDIRECT LOGIC (The part you wanted to change) ===
-                // Instead of rendering <InspectionReportSystem> here, we redirect.
-                <>
-                  {/* You might want a simple loading or transition message here */}
-                  <p>Redirecting to Inspection Report...</p>
-                  {/* Execute the redirection when the component is rendered or an action is taken.
-                For this example, I'll call it within a useEffect or an explicit action,
-                but based on your prompt, the logic is: IF modalView is not 'list', THEN REDIRECT.
-                
-                For simplicity and to avoid issues with SSR/hydration, you should generally trigger
-                a router push *after* a user action (like clicking 'View Report') or inside a 
-                `useEffect` hook, not purely based on a render condition that is always true.
-                
-                However, to directly fulfill your request:
-            */}
-                  {/* We call the redirect function immediately */}
-                  {redirectToReportPage()}
-                </>
+                <div className="flex justify-center items-center py-10">
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                  <span className="ml-2 text-gray-500">Redirecting...</span>
+                </div>
               )}
             </div>
           </div>
