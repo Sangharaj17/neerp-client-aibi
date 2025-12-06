@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 // Assuming '@/utils/axiosInstance' exists and is correctly configured
-import axiosInstance from '@/utils/axiosInstance'; 
+import axiosInstance from '@/utils/axiosInstance';
 import { Pencil, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import InspectionReportSettings from '@/components/Inspection/InspectionReportSettings';
 
 /**
  * colorMap avoids dynamic class interpolation like `bg-${color}-600`
@@ -37,7 +38,7 @@ const GridBoxComponent = () => {
 
   const [selectedStateName, setSelectedStateName] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
-  
+
   // State for Dropdown Data
   const [allUnits, setAllUnits] = useState([]);
   const [allCapacityTypes, setAllCapacityTypes] = useState([]);
@@ -79,7 +80,8 @@ const GridBoxComponent = () => {
     { id: 14, title: 'Add Weight', api: '/api/weights', type: 'weight', color: 'brown' },
     { id: 15, title: 'Add Lift Quantity', api: '/api/leadmanagement/lift-quantities', type: 'liftQuantity', color: 'navy' },
     // ADDED: New box for Enquiry Type
-    { id: 16, title: 'Add Enquiry Type', api: '/api/enquiry-types', type: 'enquiryType', color: 'pink' } 
+    { id: 16, title: 'Add Enquiry Type', api: '/api/enquiry-types', type: 'enquiryType', color: 'pink' },
+    { id: 17, title: 'Inspection Report Settings', api: null, type: 'inspectionSettings', color: 'indigo' }
   ];
 
   const [formData, setFormData] = useState({});
@@ -96,8 +98,8 @@ const GridBoxComponent = () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(selectedBox.api);
-      let list = response.data?.data || response.data || []; 
-      
+      let list = response.data?.data || response.data || [];
+
       if (selectedBox.type === 'liftQuantity') {
         // Ensure sorting by quantity for correct sequential addition logic
         list.sort((a, b) => a.quantity - b.quantity);
@@ -130,8 +132,8 @@ const GridBoxComponent = () => {
       };
       fetchDependencies();
     } else {
-        setAllUnits([]);
-        setAllCapacityTypes([]);
+      setAllUnits([]);
+      setAllCapacityTypes([]);
     }
   }, [selectedBox]);
 
@@ -174,9 +176,9 @@ const GridBoxComponent = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     const isNumeric = name === 'personCount' || name === 'individualWeight' || name === 'unitId' || name === 'capacityTypeId' || name === 'weightValue' || name === 'quantity';
-    
+
     const finalValue = isNumeric && value !== '' ? parseInt(value, 10) : value;
 
     setFormData({ ...formData, [name]: finalValue });
@@ -193,80 +195,80 @@ const GridBoxComponent = () => {
 
     // Logic for Lift Quantity creation
     if (selectedBox.type === 'liftQuantity') {
-        
-        // ** FIX for NaN error: Robust calculation of nextQuantity **
-        const quantities = dataList
-            .filter(item => typeof item.quantity === 'number' && item.quantity >= 0)
-            .map(item => item.quantity);
-            
-        const lastQuantity = quantities.length > 0 ? Math.max(...quantities) : 0;
-        const nextQuantity = lastQuantity + 1;
-        // ** END FIX **
-        
-        if (editId) {
-            // Editing Lift Quantity is not allowed by requirement.
-            toast.error("Editing Lift Quantity is not allowed. Only sequential addition is permitted.");
-            setLoading(false);
-            return;
-        }
 
-        const payload = { quantity: nextQuantity };
+      // ** FIX for NaN error: Robust calculation of nextQuantity **
+      const quantities = dataList
+        .filter(item => typeof item.quantity === 'number' && item.quantity >= 0)
+        .map(item => item.quantity);
 
-        setLoading(true);
-        try {
-            await axiosInstance.post(selectedBox.api, payload);
-            toast.success(`Lift Quantity ${nextQuantity} saved successfully!`);
-        } catch (error) {
-            const errorMessage = error.response?.data?.message || error.response?.data || 'Error saving data';
-            toast.error(errorMessage);
-        } finally {
-            setLoading(false);
-            setFormData({});
-            fetchData();
-        }
-        return; 
+      const lastQuantity = quantities.length > 0 ? Math.max(...quantities) : 0;
+      const nextQuantity = lastQuantity + 1;
+      // ** END FIX **
+
+      if (editId) {
+        // Editing Lift Quantity is not allowed by requirement.
+        toast.error("Editing Lift Quantity is not allowed. Only sequential addition is permitted.");
+        setLoading(false);
+        return;
+      }
+
+      const payload = { quantity: nextQuantity };
+
+      setLoading(true);
+      try {
+        await axiosInstance.post(selectedBox.api, payload);
+        toast.success(`Lift Quantity ${nextQuantity} saved successfully!`);
+      } catch (error) {
+        const errorMessage = error.response?.data?.message || error.response?.data || 'Error saving data';
+        toast.error(errorMessage);
+      } finally {
+        setLoading(false);
+        setFormData({});
+        fetchData();
+      }
+      return;
     }
 
 
     // Standard Form Validation (Person Capacity and Weight)
     if (selectedBox.type === 'personCapacity') {
-        const { personCount, label, individualWeight, unitId, capacityTypeId } = formData;
-        if (!personCount || !label || !individualWeight || !unitId || !capacityTypeId) {
-            toast.error('All Person Capacity fields are required.');
-            setLoading(false); return;
-        }
+      const { personCount, label, individualWeight, unitId, capacityTypeId } = formData;
+      if (!personCount || !label || !individualWeight || !unitId || !capacityTypeId) {
+        toast.error('All Person Capacity fields are required.');
+        setLoading(false); return;
+      }
     }
-    
+
     if (selectedBox.type === 'weight') {
-        const { weightValue, unitId, capacityTypeId } = formData;
-        if (!weightValue || !unitId || !capacityTypeId) {
-            toast.error('All Weight fields are required (Weight Value, Unit, Capacity Type).');
-            setLoading(false); return;
-        }
+      const { weightValue, unitId, capacityTypeId } = formData;
+      if (!weightValue || !unitId || !capacityTypeId) {
+        toast.error('All Weight fields are required (Weight Value, Unit, Capacity Type).');
+        setLoading(false); return;
+      }
     }
-    
+
     // Enquiry Type Validation (Added)
     if (selectedBox.type === 'enquiryType') {
-        const { enquiryTypeName } = formData;
-        if (!enquiryTypeName) {
-            toast.error('Enquiry Type Name is required.');
-            setLoading(false); return;
-        }
+      const { enquiryTypeName } = formData;
+      if (!enquiryTypeName) {
+        toast.error('Enquiry Type Name is required.');
+        setLoading(false); return;
+      }
     }
 
 
     setLoading(true);
     try {
       let payload = { ...formData };
-      
+
       if (selectedBox.type === 'weight') {
-          payload = {
-              unitId: formData.unitId,
-              weightValue: formData.weightValue,
-              capacityTypeId: formData.capacityTypeId,
-          };
+        payload = {
+          unitId: formData.unitId,
+          weightValue: formData.weightValue,
+          capacityTypeId: formData.capacityTypeId,
+        };
       }
-      
+
       if (editId) {
         // Only other types are editable
         await axiosInstance.put(`${selectedBox.api}/${editId}`, payload);
@@ -288,7 +290,7 @@ const GridBoxComponent = () => {
 
   const handleEdit = (item) => {
     // Do not allow editing Lift Quantity
-    if (selectedBox.type === 'liftQuantity') return; 
+    if (selectedBox.type === 'liftQuantity') return;
 
     let fields = {};
     let idField = '';
@@ -303,26 +305,26 @@ const GridBoxComponent = () => {
       case 'buildingType': fields = { buildingType: item.buildingType }; idField = 'buildingTypeId'; break;
       case 'liftUsageType': fields = { name: item.name }; idField = 'id'; break;
       case 'state': fields = { name: item.name }; idField = 'id'; break;
-      case 'unit': fields = { unitName: item.unitName, description: item.description }; idField = 'id'; break; 
+      case 'unit': fields = { unitName: item.unitName, description: item.description }; idField = 'id'; break;
       case 'capacityType': fields = { type: item.type }; idField = 'id'; break;
-      case 'personCapacity': 
-          fields = { 
-              personCount: item.personCount, 
-              label: item.label, 
-              individualWeight: item.individualWeight, 
-              unitId: item.unitId,
-              capacityTypeId: item.capacityTypeId,
-          }; 
-          idField = 'id'; 
-          break;
-      case 'weight': 
-          fields = {
-              weightValue: item.weightValue,
-              unitId: item.unitId,
-              capacityTypeId: item.capacityTypeId,
-          };
-          idField = 'id';
-          break;
+      case 'personCapacity':
+        fields = {
+          personCount: item.personCount,
+          label: item.label,
+          individualWeight: item.individualWeight,
+          unitId: item.unitId,
+          capacityTypeId: item.capacityTypeId,
+        };
+        idField = 'id';
+        break;
+      case 'weight':
+        fields = {
+          weightValue: item.weightValue,
+          unitId: item.unitId,
+          capacityTypeId: item.capacityTypeId,
+        };
+        idField = 'id';
+        break;
       case 'city': fields = { cityName: item.name }; idField = 'id'; break;
       // ADDED: New case for Enquiry Type
       case 'enquiryType': fields = { enquiryTypeName: item.enquiryTypeName }; idField = 'enquiryTypeId'; break;
@@ -345,18 +347,18 @@ const GridBoxComponent = () => {
 
       if (error.response) {
         if (selectedBox.type === 'weight' && id === 1) {
-            message = 'Deleting the "Kg" unit weight is not allowed.';
+          message = 'Deleting the "Kg" unit weight is not allowed.';
         } else {
-            switch (error.response.status) {
-                case 404:
-                    message = error.response.data?.message || 'Record not found';
-                    break;
-                case 409:
-                    message = error.response.data || 'Resource is in use and cannot be deleted';
-                    break;
-                default:
-                    message = error.response.data?.message || 'Error deleting data';
-            }
+          switch (error.response.status) {
+            case 404:
+              message = error.response.data?.message || 'Record not found';
+              break;
+            case 409:
+              message = error.response.data || 'Resource is in use and cannot be deleted';
+              break;
+            default:
+              message = error.response.data?.message || 'Error deleting data';
+          }
         }
       }
 
@@ -419,10 +421,10 @@ const GridBoxComponent = () => {
       'unit': { label: 'Unit Name', key: 'unitName' },
       'capacityType': { label: 'Capacity Type', key: 'type' },
       // ADDED: New config for Enquiry Type
-      'enquiryType': { label: 'Enquiry Type Name', key: 'enquiryTypeName' }, 
+      'enquiryType': { label: 'Enquiry Type Name', key: 'enquiryTypeName' },
       'personCapacity': { label: 'Capacity Label', key: 'label' },
       'weight': { label: 'Weight Value', key: 'weightValue' },
-      'liftQuantity': { label: 'Lift Quantity', key: 'quantity' } 
+      'liftQuantity': { label: 'Lift Quantity', key: 'quantity' }
     };
 
     const currentConfig = nameFieldConfig[selectedBox.type];
@@ -435,17 +437,17 @@ const GridBoxComponent = () => {
     const isLiftQuantity = selectedBox.type === 'liftQuantity';
 
     const capacityTypeDisplayFields = isCapacityType ? ['fieldKey', 'formKey'] : [];
-    
+
     const personCapacityInputFields = [
-        { label: 'Person Count', key: 'personCount', type: 'number', required: true },
-        { label: 'Label', key: 'label', type: 'text', required: true },
-        { label: 'Individual Weight', key: 'individualWeight', type: 'number', required: true },
+      { label: 'Person Count', key: 'personCount', type: 'number', required: true },
+      { label: 'Label', key: 'label', type: 'text', required: true },
+      { label: 'Individual Weight', key: 'individualWeight', type: 'number', required: true },
     ];
-    
+
     const weightInputFields = [
-        { label: 'Weight Value (kg)', key: 'weightValue', type: 'number', required: true },
+      { label: 'Weight Value (kg)', key: 'weightValue', type: 'number', required: true },
     ];
-    
+
     const personCapacityDisplayFields = ['label', 'personCount', 'individualWeight', 'unitId', 'capacityTypeId', 'displayName'];
     const weightDisplayFields = ['weightValue', 'unitNM', 'weightFull', 'capacityTypeId'];
     const liftQuantityDisplayFields = ['quantity'];
@@ -457,9 +459,9 @@ const GridBoxComponent = () => {
 
     // ** FIX for NaN error: Robust calculation of nextQuantity **
     const quantities = dataList
-        .filter(item => typeof item.quantity === 'number' && item.quantity >= 0)
-        .map(item => item.quantity);
-        
+      .filter(item => typeof item.quantity === 'number' && item.quantity >= 0)
+      .map(item => item.quantity);
+
     const lastQuantity = quantities.length > 0 ? Math.max(...quantities) : 0;
     const nextQuantity = lastQuantity + 1;
     // ** END FIX **
@@ -491,14 +493,14 @@ const GridBoxComponent = () => {
 
           {/* Render Lift Quantity 'Add' button */}
           {isLiftQuantity ? (
-              <div className='p-4 border rounded-lg bg-gray-50'>
-                <p className='mb-2 text-lg font-semibold text-gray-700'>
-                    Next Quantity to Add: <span className={`${colorCfg.textAccent} font-bold text-xl`}>{nextQuantity}</span>
-                </p>
-                <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow`} disabled={loading}>
-                    {loading ? 'Adding...' : `Add Quantity ${nextQuantity}`}
-                </button>
-              </div>
+            <div className='p-4 border rounded-lg bg-gray-50'>
+              <p className='mb-2 text-lg font-semibold text-gray-700'>
+                Next Quantity to Add: <span className={`${colorCfg.textAccent} font-bold text-xl`}>{nextQuantity}</span>
+              </p>
+              <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow`} disabled={loading}>
+                {loading ? 'Adding...' : `Add Quantity ${nextQuantity}`}
+              </button>
+            </div>
 
           ) : (
             // Render Person Capacity or Weight Input Fields
@@ -507,34 +509,34 @@ const GridBoxComponent = () => {
                 {/* Input field(s) specific to Person Capacity or Weight */}
                 {(isPersonCapacity ? personCapacityInputFields : weightInputFields).map(field => (
                   <div key={field.key}>
-                      <label className="block mb-1 font-medium">{field.label}</label>
-                      <input 
-                          type={field.type} 
-                          name={field.key} 
-                          value={formData[field.key] ?? ''} 
-                          onChange={handleChange}
-                          className={`w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-opacity-50 ${colorCfg.ring}`} 
-                          required={field.required} 
-                          {...(field.type === 'number' && { min: 0 })}
-                      />
+                    <label className="block mb-1 font-medium">{field.label}</label>
+                    <input
+                      type={field.type}
+                      name={field.key}
+                      value={formData[field.key] ?? ''}
+                      onChange={handleChange}
+                      className={`w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-opacity-50 ${colorCfg.ring}`}
+                      required={field.required}
+                      {...(field.type === 'number' && { min: 0 })}
+                    />
                   </div>
                 ))}
-                
+
                 {/* Dropdown for Unit */}
                 <div>
                   <label className="block mb-1 font-medium">Select Unit</label>
                   <select
                     name="unitId"
-                    value={formData.unitId ?? ''} 
+                    value={formData.unitId ?? ''}
                     onChange={handleChange}
                     className={`w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-opacity-50 ${colorCfg.ring}`}
                     required
                   >
                     <option value="">-- Select Unit --</option>
                     {allUnits.map((unit, index) => (
-                      <option 
-                        key={unit.id || index} 
-                        value={unit.id} 
+                      <option
+                        key={unit.id || index}
+                        value={unit.id}
                       >
                         {unit.unitName}
                       </option>
@@ -554,8 +556,8 @@ const GridBoxComponent = () => {
                   >
                     <option value="">-- Select Capacity Type --</option>
                     {allCapacityTypes.map((capType, index) => (
-                      <option 
-                        key={capType.id || index} 
+                      <option
+                        key={capType.id || index}
                         value={capType.id}
                       >
                         {capType.type}
@@ -565,14 +567,14 @@ const GridBoxComponent = () => {
                 </div>
               </>
             ) : (
-                // Render single-field forms (standard entities including Enquiry Type)
-                currentConfig && (
-                    <div>
-                        <label className="block mb-1 font-medium">{currentConfig.label}</label>
-                        <input type="text" name={currentConfig.key} value={formData[currentConfig.key] || ''} onChange={handleChange}
-                            className={`w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-opacity-50 ${colorCfg.ring}`} required />
-                    </div>
-                )
+              // Render single-field forms (standard entities including Enquiry Type)
+              currentConfig && (
+                <div>
+                  <label className="block mb-1 font-medium">{currentConfig.label}</label>
+                  <input type="text" name={currentConfig.key} value={formData[currentConfig.key] || ''} onChange={handleChange}
+                    className={`w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-opacity-50 ${colorCfg.ring}`} required />
+                </div>
+              )
             )
           )}
 
@@ -584,7 +586,7 @@ const GridBoxComponent = () => {
                 className={`w-full border border-gray-300 rounded-lg p-2 focus:ring focus:ring-opacity-50 ${colorCfg.ring}`} rows="3" required />
             </div>
           )}
-          
+
           {/* Standard Save Button for non-LiftQuantity forms */}
           {!(isLiftQuantity) && (
             <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow`} disabled={loading}>
@@ -602,18 +604,18 @@ const GridBoxComponent = () => {
                   <tr>
                     <th className="px-4 py-2 text-left">ID</th>
                     {/* Dynamic Header based on type */}
-                    {isPersonCapacity ? 
-                        personCapacityDisplayFields.map(key => (
-                            <th key={key} className="px-4 py-2 text-left">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>
-                        )) : isWeight ? 
+                    {isPersonCapacity ?
+                      personCapacityDisplayFields.map(key => (
+                        <th key={key} className="px-4 py-2 text-left">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>
+                      )) : isWeight ?
                         weightDisplayFields.map(key => (
-                            <th key={key} className="px-4 py-2 text-left">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>
+                          <th key={key} className="px-4 py-2 text-left">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>
                         )) : isLiftQuantity ? (
-                            liftQuantityDisplayFields.map(key => (
-                                <th key={key} className="px-4 py-2 text-left">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>
-                            ))
+                          liftQuantityDisplayFields.map(key => (
+                            <th key={key} className="px-4 py-2 text-left">{key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</th>
+                          ))
                         ) :
-                        <th className="px-4 py-2 text-left">{currentConfig.label}</th>
+                          <th className="px-4 py-2 text-left">{currentConfig.label}</th>
                     }
                     {isUnit && <th className="px-4 py-2 text-left">Description</th>}
                     {capacityTypeDisplayFields.map(key => (
@@ -632,36 +634,36 @@ const GridBoxComponent = () => {
                         <td className="px-4 py-2 border-t">{id}</td>
                         {/* Dynamic Data Cells based on type */}
                         {isPersonCapacity ? (
-                            personCapacityDisplayFields.map(key => (
-                                <td key={key} className="px-4 py-2 border-t">{item[key]}</td>
-                            ))
+                          personCapacityDisplayFields.map(key => (
+                            <td key={key} className="px-4 py-2 border-t">{item[key]}</td>
+                          ))
                         ) : isWeight ? (
-                            weightDisplayFields.map(key => (
-                                <td key={key} className="px-4 py-2 border-t">{item[key]}</td>
-                            ))
+                          weightDisplayFields.map(key => (
+                            <td key={key} className="px-4 py-2 border-t">{item[key]}</td>
+                          ))
                         ) : isLiftQuantity ? (
-                            liftQuantityDisplayFields.map(key => (
-                                <td key={key} className="px-4 py-2 border-t font-semibold text-lg">{item[key]}</td>
-                            ))
+                          liftQuantityDisplayFields.map(key => (
+                            <td key={key} className="px-4 py-2 border-t font-semibold text-lg">{item[key]}</td>
+                          ))
                         ) : (
-                            <td className="px-4 py-2 border-t">{name}</td>
+                          <td className="px-4 py-2 border-t">{name}</td>
                         )}
                         {isUnit && <td className="px-4 py-2 border-t">{item.description}</td>}
                         {capacityTypeDisplayFields.map(key => (
                           <td key={key} className="px-4 py-2 border-t">{item[key]}</td>
                         ))}
                         <td className="px-4 py-2 border-t text-center">
-                            {/* Hide Edit button for LiftQuantity */}
-                            {isLiftQuantity ? (
-                                <span className='text-gray-400'>N/A</span>
-                            ) : (
-                                <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800"><Pencil size={18} /></button>
-                            )}
+                          {/* Hide Edit button for LiftQuantity */}
+                          {isLiftQuantity ? (
+                            <span className='text-gray-400'>N/A</span>
+                          ) : (
+                            <button onClick={() => handleEdit(item)} className="text-blue-600 hover:text-blue-800"><Pencil size={18} /></button>
+                          )}
                         </td>
                         <td className="px-4 py-2 border-t text-center">
-                          <button 
-                            onClick={() => handleDelete(id)} 
-                            className={`hover:text-red-800 ${isWeight && id === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600'}`} 
+                          <button
+                            onClick={() => handleDelete(id)}
+                            className={`hover:text-red-800 ${isWeight && id === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-red-600'}`}
                             disabled={isWeight && id === 1}
                           >
                             <Trash2 size={18} />
@@ -693,12 +695,17 @@ const GridBoxComponent = () => {
         {selectedBox ? (
           <div className="bg-gradient-to-br from-gray-50 via-gray-10 to-gray-20 rounded-xl shadow-lg p-8">
             <h1 className="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">{selectedBox.title}</h1>
-            {renderForm()}
+            {selectedBox.type === 'inspectionSettings' ? (
+              <InspectionReportSettings />
+            ) : (
+              renderForm()
+            )}
           </div>
         ) : (
           <p className="text-gray-500 text-lg">Select a form from the right side.</p>
         )}
       </div>
+
 
       <div className="w-64 bg-gray-100 border-l border-gray-300 p-4 space-y-4">
         {boxes.map((box) => (
