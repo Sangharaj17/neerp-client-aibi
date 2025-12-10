@@ -47,3 +47,10 @@ export const formatCurrency = (amount) => {
     if (typeof amount !== 'number') return '₹ N/A';
     return `₹ ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 };
+
+
+export const safeNumber = (v) => {
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+};
+

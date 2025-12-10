@@ -16,6 +16,9 @@ public class QuotationLiftDetailRequestDTO {
     private String liftQuotationNo;
     private Long quotationMainId;
 
+    private Long parentLiftId;
+    private String origin;
+
     private Long leadId;
     private Integer leadTypeId;
     private LocalDateTime leadDate;

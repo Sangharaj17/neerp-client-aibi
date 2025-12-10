@@ -206,7 +206,7 @@ export default function FastenerPage() {
   );
 
   return (
-    <div className="space-y-8 w-full p-6 min-h-screen">
+    <div className="space-y-6 w-full p-4 min-h-screen">
       {/* Header */}
       <PageHeader
         title="Fastener Type"
@@ -215,15 +215,14 @@ export default function FastenerPage() {
       />
 
       {/* Form Section */}
-      <div className="bg-gray-100 border border-gray-500 rounded-lg p-6">
+      <div className="border-b pb-4">
         <ResponsiveForm
           onSubmit={handleSubmit}
           columns="grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"
-          className="mt-4"
         >
           <FormInput
             type="text"
-            placeholder="Enter fastner"
+            placeholder="Enter fastener"
             value={form.fastenerName}
             onChange={(e) => setForm({ ...form, fastenerName: e.target.value })}
           />
@@ -269,7 +268,7 @@ export default function FastenerPage() {
       </div>
 
       <ReusableTable
-        title="fastner List"
+        title="Fastener List"
         columns={columns}
         data={filteredList}
         onEdit={handleEdit}

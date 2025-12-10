@@ -28,6 +28,9 @@ public class QuotationLiftDetailResponseDTO {
     private Integer enquiryTypeId;
     private LocalDateTime enqDate;
 
+    private Integer parentLiftId;
+    private String origin;
+
     // 🔹 Lift Configuration
     private Integer liftType;
     private String liftTypeName;

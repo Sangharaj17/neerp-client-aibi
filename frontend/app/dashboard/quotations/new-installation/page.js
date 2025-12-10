@@ -14,7 +14,8 @@ import {
   Eye, // Using Eye for view material
   Edit3, // Using Edit3 for revision
   Pencil,      // Using for general Edit
-  Trash2,   // Using for Delete
+  Trash2,
+  List,   // Using for Delete
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "react-hot-toast";
@@ -31,6 +32,8 @@ export default function QuotationList() {
 
   const [quotations, setQuotations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(false);
+
 
   const [totalPages, setTotalPages] = useState(1); // Initialize to 1 to prevent errors on first render
   const [totalElements, setTotalElements] = useState(0);
@@ -120,23 +123,30 @@ export default function QuotationList() {
     return localStorage.getItem("tenant") || "default-tenant";
   };
 
-  const generatePDF = (quotationMainId, includeLetterhead) => {
-    const tenantId = getTenantId();
-    if (!tenantId) {
-      console.error("Tenant ID not available.");
-      // toast.error("Tenant configuration missing.");
-      return;
+  const generatePDF = async (quotationMainId, includeLetterhead) => {
+    setPageLoading(true);
+
+    try {
+      const tenantId = getTenantId();
+      if (!tenantId) {
+        console.error("Tenant ID not available.");
+        setPageLoading(false);
+        return;
+      }
+
+      const apiUrl = `/api/pdf-generation?quotationId=${quotationMainId}&includeLetterhead=${includeLetterhead}&tenant=${tenantId}`;
+
+      // Open PDF in new tab
+      window.open(apiUrl, "_blank");
+
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+    } finally {
+      // Stop loading immediately since window.open can't be awaited
+      setPageLoading(false);
     }
-
-    // Call the new backend API route
-    const apiUrl = `/api/pdf-generation?quotationId=${quotationMainId}&includeLetterhead=${includeLetterhead}&tenant=${tenantId}`;
-
-    // Trigger the PDF download/view in a new tab
-    window.open(apiUrl, '_blank');
-
-    // Optional: Add a toast notification for the user
-    // toast.info("PDF generation started in the background...");
   };
+
 
 
   const handlePdfGeneration = (generatorFunction, includeLetterhead, row) => {
@@ -227,7 +237,7 @@ export default function QuotationList() {
           </th>
         ))}
         {/* Action Column Group */}
-        <th colSpan={7} className="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-600 tracking-wider">
+        <th colSpan={8} className="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-600 tracking-wider">
           Actions
         </th>
         <th className="px-4 py-3 text-center text-xs font-semibold uppercase text-gray-600 tracking-wider">
@@ -238,13 +248,14 @@ export default function QuotationList() {
       {/* Cleaner Sub-Header for PDF */}
       <tr className="bg-gray-50 text-center text-xs font-medium text-gray-500 sticky top-[2.4rem] z-10">
         <th colSpan={7}></th>
-        <th className="py-1">View</th>
-        <th className="py-1">Revise</th>
+        <th className="py-1 border-l border-r border-gray-200">View</th>
+        <th className="py-1 border-l border-r border-gray-200">Revise</th>
+        <th className="py-1 border-l border-r border-gray-200">Revisions</th>
         <th className="py-1 border-l border-r border-gray-200">PDF With Letterhead</th>
         <th className="py-1 border-r border-gray-200">PDF Without Letterhead</th>
-        <th className="py-1">Mail</th>
-        <th className="py-1">Edit</th>
-        <th className="py-1">Delete</th>
+        <th className="py-1 border-l border-r border-gray-200">Mail</th>
+        <th className="py-1 border-l border-r border-gray-200">Edit</th>
+        <th className="py-1 border-l border-r border-gray-200">Delete</th>
       </tr>
     </thead>
   );
@@ -252,6 +263,12 @@ export default function QuotationList() {
   return (
     <div className="w-full max-w-9xl mx-auto p-2 md:p-4">
       <div className="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+
+        {pageLoading && (
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="animate-spin h-12 w-12 border-4 border-white border-t-transparent rounded-full"></div>
+          </div>
+        )}
 
         {/* Header & Search Bar */}
         <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -287,7 +304,15 @@ export default function QuotationList() {
             />
 
             <tbody className="divide-y divide-gray-100">
-              {quotations.length > 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan="14" className="py-16 text-center">
+                    <div className="flex justify-center">
+                      <div className="animate-spin h-10 w-10 border-4 border-gray-300 border-t-indigo-600 rounded-full"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : quotations.length > 0 ? (
                 quotations.map((row) => (
                   <tr
                     key={row.sr}
@@ -312,6 +337,7 @@ export default function QuotationList() {
                       <Link
                         href={`/dashboard/quotations/new-installation/${row.id}/view-material`}
                         title="View Material Details"
+                        onClick={() => setPageLoading(true)}
                       >
                         <Eye className="h-5 w-5 text-sky-600 hover:text-sky-800 mx-auto transition" />
                       </Link>
@@ -319,7 +345,7 @@ export default function QuotationList() {
 
                     {/* 2. Revise Button (Disabled if Finalized) */}
                     <td className="px-4 py-3 text-center">
-                      {row.isFinalized ? (
+                      {row.hasAnyRevisionFinalized || row.isFinalized || row.status === "DELETED" || row.isDeleted === true ? (
                         <span
                           title="Quotation is Finalized and cannot be Revised directly. A formal revision process may be required."
                           className="cursor-not-allowed inline-block"
@@ -327,19 +353,39 @@ export default function QuotationList() {
                           <RotateCcw className="h-5 w-5 text-gray-400 mx-auto" />
                         </span>
                       ) : (
+                        <Link
+                          href={`/dashboard/quotations/new-installation/${row.id}/revision?quot=${row.quotationNo}`}
+                          title="Create Revision of this Draft Quotation"
+                          onClick={() => setPageLoading(true)}
+                        >
+                          <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
+                        </Link>
                         // <Link
-                        //   href={`/dashboard/quotations/new-installation/${row.id}/revision`}
+                        //   href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=revision`}
                         //   title="Create Revision of this Draft Quotation"
                         // >
                         //   <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
                         // </Link>
-                        <Link
-                          href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=revision`}
-                          title="Create Revision of this Draft Quotation"
-                        >
-                          <RotateCcw className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
-                        </Link>
 
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3 text-center">
+                      {row.isSuperseded ? (
+                        <Link
+                          href={`/dashboard/quotations/new-installation/${row.id}/revision?quot=${row.quotationNo}`}
+                          title="List of Revisions of this Draft Quotation"
+                          onClick={() => setPageLoading(true)}
+                        >
+                          <List className="h-5 w-5 text-indigo-600 hover:text-green-800 mx-auto transition" />
+                        </Link>
+                      ) : (
+                        <span
+                          title="Quotation has revisions."
+                          className="cursor-not-allowed inline-block text-gray-500 font-bold"
+                        >
+                          NA
+                        </span>
                       )}
                     </td>
 
@@ -368,9 +414,9 @@ export default function QuotationList() {
 
                     {/* 6. Edit Button (Disabled if Finalized) */}
                     <td className="px-4 py-3 text-center">
-                      {row.isFinalized ? (
+                      {row.hasAnyRevisionFinalized || row.isFinalized || row.isSuperseded || row.status === "DELETED" || row.isDeleted === true ? (
                         <span
-                          title="Quotation is Finalized and cannot be edited"
+                          title="Quotation is Finalized or revised and cannot be edited from here.Go to Revision list to edit."
                           className="cursor-not-allowed inline-block"
                         >
                           <Pencil className="h-5 w-5 text-gray-400 mx-auto" />
@@ -379,6 +425,7 @@ export default function QuotationList() {
                         <Link
                           href={`/dashboard/lead-management/enquiries/${row.leadId}/quotation/add/${row.combinedEnquiryId}?action=edit`}
                           title="Edit Quotation"
+                          onClick={() => setPageLoading(true)}
                         >
                           <Pencil className="h-5 w-5 text-indigo-600 hover:text-indigo-800 mx-auto transition" />
                         </Link>
@@ -387,9 +434,9 @@ export default function QuotationList() {
 
                     {/* 7. Delete */}
                     <td className="px-4 py-3 text-center">
-                      {row.isFinalized ? (
+                      {row.hasAnyRevisionFinalized || row.isFinalized || row.status === "DELETED" || row.isDeleted === true ? (
                         <span
-                          title="Quotation is Finalized and cannot be delete"
+                          title="Quotation is Finalized or revised and cannot be deleted from here.Go to Revision list to delete."
                           className="cursor-not-allowed inline-block"
                         >
                           <Trash2 className="h-5 w-5 text-gray-400 mx-auto" />
@@ -409,21 +456,38 @@ export default function QuotationList() {
 
                     {/* 8. Status (Is Final) */}
                     <td className="px-4 py-3 text-center">
-                      {row.isFinalized ? (
-                        <Lock
-                          className="h-5 w-5 text-red-500 mx-auto"
-                          title="Finalized (Locked)"
-                        />
-                      ) : (
-                        <button
-                          onClick={() => handleFinalize(row.id, row.quotationNo)}
-                          title="Click to Finalize this Quotation"
-                          className="inline-block"
-                        >
-                          <Unlock
-                            className="h-5 w-5 text-green-500 mx-auto hover:text-green-700 transition"
+                      {row.hasAnyRevisionFinalized || row.isFinalized ? (
+                        row.status === "DELETED" || row.isDeleted === true ? (
+                          <Lock
+                            // If Deleted: Use gray color and "Deleted" title
+                            className="h-5 w-5 text-gray-500 mx-auto cursor-not-allowed"
+                            title="Deleted"
                           />
-                        </button>
+                        ) : (
+                          <Lock
+                            // If Finalized (but not deleted): Use red color and "Finalized (Locked)" title
+                            className="h-5 w-5 text-red-500 mx-auto"
+                            title="Finalized (Locked)"
+                          />
+                        )
+                      ) : (
+                        row.status === "DELETED" || row.isDeleted === true ? (
+                          <Unlock
+                            className="h-5 w-5 text-gray-500 mx-auto hover:text-gray-700 transition cursor-not-allowed"
+                          />
+                        ) : (
+                          < button
+                            onClick={() => handleFinalize(row.id, row.quotationNo)}
+                            title="Click to Finalize this Quotation"
+                            className="inline-block"
+                          >
+                            <Unlock
+                              className="h-5 w-5 text-green-500 mx-auto hover:text-green-700 transition"
+                            />
+                          </button>
+                        )
+
+
                       )}
                     </td>
                   </tr>
@@ -441,6 +505,7 @@ export default function QuotationList() {
                 </tr>
               )}
             </tbody>
+
           </table>
         </div>
 
@@ -510,6 +575,6 @@ export default function QuotationList() {
         </div>
 
       </div>
-    </div>
+    </div >
   );
 }

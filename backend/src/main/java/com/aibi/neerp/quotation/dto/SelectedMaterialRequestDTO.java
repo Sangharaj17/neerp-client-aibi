@@ -14,6 +14,7 @@ public class SelectedMaterialRequestDTO {
     private String materialDisplayName;
     private Double quantity;
     private String quantityUnit;
+    private Double unitPrice;
     private Double price;
     private Integer materialId;
     private Integer operatorType;

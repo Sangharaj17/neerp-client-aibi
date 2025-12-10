@@ -1,13 +1,12 @@
 'use client';
 
 import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
+import InspectionReportsList from '@/components/Inspection/InspectionReportsList';
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { Eye, Trash2, Pencil, FilePlus, Loader2, FileText, X } from 'lucide-react';
 import { useEffect, useState, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
-import InspectionReportSystem from '@/components/Inspection/InspectionReportSystem';
-import InspectionReportsList from '@/components/Inspection/InspectionReportsList';
 //import jwtEncode from "jwt-encode";
 
 function ViewEnquiryClientPageContent() {
@@ -30,17 +29,16 @@ function ViewEnquiryClientPageContent() {
   const [isAddEnquiryLoading, setAddEnquiryLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(null);
   const [quotationLoadingId, setQuotationLoadingId] = useState(null);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [selectedCombinedEnquiryId, setSelectedCombinedEnquiryId] = useState(null);
+  const [inspectionReportModalOpen, setInspectionReportModalOpen] = useState(false);
+  const [modalView, setModalView] = useState('list');
+  const [selectedReportId, setSelectedReportId] = useState(null);
+  const [reportMode, setReportMode] = useState('create');
 
   const leadId = id;
 
   const [refreshKey, setRefreshKey] = useState(0); // 👈 used to trigger re-fetch
-
-  // Inspection Report Modal State
-  const [inspectionReportModalOpen, setInspectionReportModalOpen] = useState(false);
-  const [selectedCombinedEnquiryId, setSelectedCombinedEnquiryId] = useState(null);
-  const [modalView, setModalView] = useState('list'); // 'list' | 'form'
-  const [selectedReportId, setSelectedReportId] = useState(null);
-  const [reportMode, setReportMode] = useState('create'); // 'create' | 'edit' | 'view'
 
 
   useEffect(() => {
@@ -91,6 +89,16 @@ function ViewEnquiryClientPageContent() {
       })
       .catch((err) => console.error('Failed to fetch enquiry types', err));
   }, []);
+
+  const handleLinkClick = async (e) => {
+    e.preventDefault(); // prevent default navigation
+    setLinkLoading(true);
+
+    // Optional: you can simulate fetching or wait for some async task
+    // await someAsyncCheck();
+
+    router.push("/dashboard/quotations/new-installation");
+  };
 
   const setCombinedEnquiryInSessionStorage = (combinedId) => {
     console.log('Setting combined enquiry in session storage for ID:', combinedId);
@@ -212,10 +220,52 @@ function ViewEnquiryClientPageContent() {
   // };
 
 
-  const filteredEnquiries = Array.isArray(groupedData)
-    ? groupedData
+  // const filteredEnquiries = Array.isArray(groupedData)
+  //   ? groupedData
+  //     .filter((e) => e.enquiryType?.enquiryTypeName === selectedCategory)
+  //     .map((group) =>
+  //       group.enquiries.map((combined) => ({
+  //         combinedId: combined.id,
+  //         enquiryTitle: combined.projectName,
+  //         createdDate: combined.enquiryDate, // 👈 Add this line
+  //         customerName: combined.customerName,
+  //         customerSite: combined.customerSite,
+  //         selectLead: combined.selectLead,
+  //         leadId: combined.leadId,
+  //         siteName: combined.siteName,
+
+  //         entries: combined.enquiries.map((entry) => ({
+  //           id: entry.enquiryId,
+  //           date: entry.enqDate?.split('T')[0] ?? '-',
+  //           liftType: entry.liftType?.name ?? '-',
+  //           machineType: entry.reqMachineRoom?.machineRoomName ?? '-',
+  //           noOfFloors: entry.noOfFloors?.name ?? '-',
+  //           capacityTerm: entry.capacityTerm?.capacityType ?? '-',
+  //           from: entry.from?.from ?? '',
+  //           // selectPerson:
+  //           //   entry.capacityTerm?.capacityType === 'Person'
+  //           //     ? `${entry.personCapacity?.personCount ?? '-'} Persons / ${entry.personCapacity?.weight ?? '-'}Kg`
+  //           //     : `${entry.weight?.weightValue ?? '-'} Kg`,
+  //           // cabinType: entry.cabinType?.cabinType ?? '-'
+  //           selectPerson:
+  //             entry.capacityTerm?.capacityType === 'Person'
+  //               ? `${entry.personCapacity?.text}`
+  //               : `${entry.weight?.weightValue ?? '-'} Kg`,
+  //           cabinType: entry.cabinType?.cabinType ?? '-'
+  //           ,
+  //         })),
+  //       }))
+  //     )
+  //     .flat()
+  //   : [];
+
+
+  const filteredEnquiries = useMemo(() => {
+    if (!Array.isArray(groupedData)) return [];
+
+    return groupedData
       .filter((e) => e.enquiryType?.enquiryTypeName === selectedCategory)
-      .map((group) =>
+      .flatMap(group =>
         group.enquiries.map((combined) => ({
           combinedId: combined.id,
           enquiryTitle: combined.projectName,
@@ -225,7 +275,6 @@ function ViewEnquiryClientPageContent() {
           selectLead: combined.selectLead,
           leadId: combined.leadId,
           siteName: combined.siteName,
-          companyAmcGstPercentage: combined.companyAmcGstPercentage,
 
           entries: combined.enquiries.map((entry) => ({
             id: entry.enquiryId,
@@ -235,22 +284,60 @@ function ViewEnquiryClientPageContent() {
             noOfFloors: entry.noOfFloors?.name ?? '-',
             capacityTerm: entry.capacityTerm?.capacityType ?? '-',
             from: entry.from?.from ?? '',
-            // selectPerson:
-            //   entry.capacityTerm?.capacityType === 'Person'
-            //     ? `${entry.personCapacity?.personCount ?? '-'} Persons / ${entry.personCapacity?.weight ?? '-'}Kg`
-            //     : `${entry.weight?.weightValue ?? '-'} Kg`,
-            // cabinType: entry.cabinType?.cabinType ?? '-'
             selectPerson:
               entry.capacityTerm?.capacityType === 'Person'
-                ? `${entry.personCapacity?.text}`
+                ? entry.personCapacity?.text
                 : `${entry.weight?.weightValue ?? '-'} Kg`,
-            cabinType: entry.cabinType?.cabinType ?? '-'
-            ,
+            cabinType: entry.cabinType?.cabinType ?? '-',
           })),
         }))
-      )
-      .flat()
-    : [];
+      );
+  }, [groupedData, selectedCategory]);
+
+
+
+
+  const [quotationExistMap, setQuotationExistMap] = useState({});
+
+  useEffect(() => {
+    if (!filteredEnquiries.length) return;
+
+    let cancelled = false;
+
+    const checkAllQuotations = async () => {
+      const results = {};
+
+      await Promise.all(
+        filteredEnquiries.map(async (item) => {
+          try {
+            const response = await axiosInstance.get(
+              `${API_ENDPOINTS.QUOTATIONS}/check-existing`,
+              { params: { combinedEnquiryId: item.combinedId, leadId: item.leadId } }
+            );
+
+            results[item.combinedId] = response.data?.data;
+          } catch (error) {
+            results[item.combinedId] = false;
+          }
+        })
+      );
+
+      console.log("===results===>");
+      console.log("Quotation Existence Map:", results);
+      if (!cancelled) {
+        setQuotationExistMap(results);
+      }
+      console.log("===quotationExistMap===>", quotationExistMap);
+    };
+
+    checkAllQuotations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filteredEnquiries]);
+
+
 
   const handleAddEnquiry = () => {
     setAddEnquiryLoading(true);
@@ -530,60 +617,87 @@ function ViewEnquiryClientPageContent() {
                 )}
 
                 {/* Add Quotation Button */}
-                <button
-                  onClick={() => {
-                    setQuotationLoadingId(groupIndex);
-                    console.log(quotationLoadingId)
+                <div className="absolute -bottom-10 right-1">
+                  <button
+                    onClick={() => {
+                      setQuotationLoadingId(groupIndex);
+                      console.log(quotationLoadingId)
 
-                    //  alert("You are in " + selectedCategory + " category");
+                      //  alert("You are in " + selectedCategory + " category");
 
-                    if (selectedCategory == "AMC") {
+                      if (selectedCategory == "AMC") {
 
-                      console.log("AMC Quotation group-->" + JSON.stringify(group));
-                      localStorage.setItem('combinedEnquiry', JSON.stringify(group));
-                      router.push(
-                        `/dashboard/lead-management/enquiries/${id}/add-amc-quotation?customer=${encodeURIComponent(
-                          searchParams.get('customer')
-                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                      );
-                    } else if (selectedCategory == "New Installation") {
-                      handleNavigateToQuotation(group.combinedId)
-                    } else if (selectedCategory == "Moderization") {
-                      router.push(
-                        `/dashboard/lead-management/enquiries/${id}/add-modernization/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
-                          searchParams.get('customer')
-                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                      );
+                        console.log("AMC Quotation group-->" + JSON.stringify(group));
+                        localStorage.setItem('combinedEnquiry', JSON.stringify(group));
+                        router.push(
+                          `/dashboard/lead-management/enquiries/${id}/add-amc-quotation?customer=${encodeURIComponent(
+                            searchParams.get('customer')
+                          )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                        );
+                      } else if (selectedCategory == "New Installation") {
+                        handleNavigateToQuotation(group.combinedId)
+                      } else if (selectedCategory == "Moderization") {
+                        router.push(
+                          `/dashboard/lead-management/enquiries/${id}/add-modernization/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
+                            searchParams.get('customer')
+                          )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                        );
 
-                    }
-                    else if (selectedCategory == "On Call") {
-                      router.push(
-                        `/dashboard/lead-management/enquiries/${id}/add-oncall/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
-                          searchParams.get('customer')
-                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                      );
+                      }
+                      else if (selectedCategory == "On Call") {
+                        router.push(
+                          `/dashboard/lead-management/enquiries/${id}/add-oncall/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
+                            searchParams.get('customer')
+                          )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                        );
 
-                    }
-                    else {
+                      }
+                      else {
 
-                      router.push(
-                        `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
-                          searchParams.get('customer')
-                        )}&site=${encodeURIComponent(searchParams.get('site'))}`
-                      );
-                    }
+                        router.push(
+                          `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
+                            searchParams.get('customer')
+                          )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                        );
+                      }
 
-                  }}
-                  disabled={quotationLoadingId === groupIndex}
-                  className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-yellow-600 transition shadow-md"
-                >
-                  {quotationLoadingId === groupIndex ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <FilePlus className="w-4 h-4" />
-                  )}
-                  Add Quotation
-                </button>
+                    }}
+                    // onClick={() => {
+                    //   setQuotationLoadingId(groupIndex);
+                    //   console.log(quotationLoadingId)
+                    //   router.push(
+                    //     `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
+                    //       searchParams.get('customer')
+                    //     )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                    //   );
+                    // }}
+                    disabled={quotationLoadingId === groupIndex}
+                    className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-yellow-600 transition shadow-md"
+                  >
+                    {quotationLoadingId === groupIndex ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FilePlus className="w-4 h-4" />
+                    )}
+                    Add Quotation
+                  </button>
+
+                  {selectedCategory === "New Installation" &&
+                    quotationExistMap[group.combinedId] === true && (
+                      <button
+                        onClick={handleLinkClick}
+                        className="text-xs text-red-600 mt-1 font-medium text-right underline hover:text-red-800 flex items-center gap-1"
+                        disabled={linkLoading} // disable while loading
+                      >
+                        {linkLoading ? (
+                          <Loader2 className="animate-spin h-4 w-4 text-red-600" /> // or a spinner component
+                        ) : (
+                          "Quotation already added. Click here to check the quotation."
+                        )}
+                      </button>
+                    )}
+
+                </div>
               </div>
             </div>
           ))

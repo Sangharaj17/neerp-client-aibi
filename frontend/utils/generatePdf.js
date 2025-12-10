@@ -41,7 +41,7 @@ export const generatePdf = async (quotationMainId, includeLetterhead = true, onS
     if (!response || !response.success) throw new Error('Failed to fetch quotation details');
     const quotationData = response.data;
 
-    // console.log('Quotation Data for PDF:', quotationData);
+    console.log('Quotation Data for PDF:', quotationData);
 
 
 

@@ -1,6 +1,6 @@
 import axiosInstance from "@/utils/axiosInstance";
 import { API_ENDPOINTS } from "@/utils/apiEndpoints";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { showErrorToast } from "@/components/UI/toastUtils";
 
@@ -325,6 +325,8 @@ export function getReadableValue(key, value, formData, initialOptions = {}) {
 
 
 // 🔹 Fetch Cabin Types based on capacity
+
+
 export const fetchCabinSubTypes = async (capacityType, capacityValue, cabinType, setErrors) => {
   try {
     if (!capacityType || !capacityValue || !cabinType) {
@@ -387,6 +389,7 @@ export const fetchAirSystemPrice = async ({ airTypeId, capacityTypeId, personId,
 
       return {
         airSystemId: res.data.data.id || 0,
+        airTypeName: res.data.data.airTypeName || "",
         price: res.data.data.price || 0,
         success: true,
         message: res.data.message || "AirSystem price fetched successfully",
@@ -1171,523 +1174,545 @@ const calculateRoundedGuideRailQuantity = (noOfStops) => {
   return whole + roundedDecimal;
 };
 
-export const PriceBelowSelect = ({
-  id = "id",
-  options,
-  label,
-  formValue,               // single id or array of ids
-  color = "green-600",
-  isAirSystem = false,
-  isArdSystem = false,
-  showPrice = true,
-  priceVal = 0,
-  setPrice = "",
-  setName = "",
-  nameKey = "name",
-  itemMainName = "",
-  itemUnit = "",
-  setFormData,
-  formData = {},           // must pass whole formData (openings, landingEntranceCount etc.)
-  isOnlyLabel = false,
-  lead_id,
-  lift,
-}) => {
-  const lead = lead_id ?? formData.leadId;;
-  const operator = lift ?? formData.liftType;
-  if (isOnlyLabel) {
-    if (!label) return null;
-
-    return (
-      <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
-        <span className="font-medium space-y-1">{label}</span>
-      </div>
-    );
-  }
-
-  if (!showPrice) {
-    return null;
-  }
-
-  const { totalPrice, breakdownParts, price1, price2, selectedName, newMaterial } = useMemo(() => {
-    // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
-    if (!options) {
-      return {
-        totalPrice: priceVal || 0,
-        breakdownParts: [],
-        price1: 0,
-        price2: 0,
-        selectedName: "",
-        newMaterial: null,
-      };
-    }
-    const totalOpenings = Number(formData.openings) || 0;
-    const splitCount = Number(formData.landingEntranceCount) || 0;
-
-    const noOfStops = Number(formData.stops) || 0;
-    const liftQuantity = Number(formData.liftQuantity) || 1;
-
-    console.log(options, "-------options----------->");
-
-    // helper to find option
-    const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
-    const unitOf = (opt) => (opt?.price ?? opt?.prize ?? 0);
-
-    let price1 = 0, price2 = 0;
-    let breakdownParts = [];
-    let finalGuideRailQty = 0;
-
-    const sid = Array.isArray(formValue) ? formValue[0] : formValue;
-    const opt = findOpt(sid);
-
-    let materialId = opt ? opt[id] : null;
-    let quantity = 1; // Default quantity
-    // NAME ASSIGNMENT LOGIC:
-    let selectedName = "";
-    if (opt && formValue) {
-      quantity = Number(opt.quantity || opt.wireRopeQty
-      ) || 1;
-      // selectedName = opt[nameKey] || opt.name || "";
-      if (Array.isArray(nameKey)) {
-        selectedName = nameKey
-          .map(key => opt[key])
-          .filter(Boolean) // Remove null, undefined, or empty strings
-          .join(' / ');    // Join the available names with a separator
-      } else {
-        // Original logic for single key
-        selectedName = opt[nameKey] || opt.name || "";
-      }
-    }
-
-    let finalPrice = priceVal || 0;
-
-    // --- SPECIAL AIR SYSTEM LOGIC ---
-    if (isAirSystem) {
-      console.log("----formData.selectedMaterials-------", formData.selectedMaterials);
-      const existingMaterials = formData.selectedMaterials || [];
-
-      console.log("----In AIr-------", existingMaterials);
-      // Try to find if an Air System material already exists
-      const existingIndex = existingMaterials.findIndex(
-        (item) =>
-          item.materialType?.toLowerCase().includes("Air System".toLowerCase())
-      );
-
-      console.log("----In AIr--existingIndex-----", existingIndex);
-      console.log("----In AIr---existingMaterials[existingIndex]----", existingMaterials[existingIndex]);
-
-      const existing = existingIndex !== -1 ? existingMaterials[existingIndex] : {};
-
-      const airMaterial = {
-        ...existing,  // keep id, quotationLiftDetailId, etc.
-        id: existing.id,
-        leadId: formData.leadId ?? existing.leadId,
-        quotationLiftDetailId: existing.quotationLiftDetailId,
-        materialId: materialId ?? existing.materialId,
-        materialName: selectedName || existing.materialName || "Air System",
-        materialDisplayName: selectedName || existing.materialName || "Air System",
-        quantity: 1,
-        quantityUnit: existing.quantityUnit || "",
-        price: finalPrice ?? existing.price ?? 0,
-        operatorType: formData.liftType ?? existing.operatorType,
-        materialType: itemMainName || existing.materialType || "Air System",
-      };
-
-      // Prepare updated materials list (for reference/debugging, optional)
-      let updatedMaterials = [...existingMaterials];
-      if (existingIndex !== -1) {
-        updatedMaterials[existingIndex] = airMaterial; // Update
-      } else {
-        updatedMaterials.push(airMaterial); // Add new
-      }
-
-      // ✅ Return the airMaterial for parent to use
-      return {
-        totalPrice: finalPrice,
-        breakdownParts: [],
-        price1: 0,
-        price2: 0,
-        selectedName,
-        newMaterial: airMaterial,
-      };
-    }
-
-    // console.log(materialId, "---materialId---", selectedName);
-    // --- GUIDERAIL LOGIC ---
-    if (setPrice === "guideRailPrice") {
-
-      if (opt && noOfStops > 0) {
-        const unitPrice = unitOf(opt);
-
-        // Calculate rounded quantity (PHP $guide_rail_qty1)
-        const roundedQty1 = calculateRoundedGuideRailQuantity(noOfStops);
-
-        // Calculate final quantity (PHP $guide_rail_qty2)
-        finalGuideRailQty = roundedQty1 * liftQuantity;
-
-        // Calculate total price (PHP $guide_rail_price)
-        price1 = unitPrice * finalGuideRailQty;
-
-        // Optional breakdown
-        breakdownParts.push(
-          // `${opt.counterWeightName} (${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
-          `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
-        );
-
-        quantity = finalGuideRailQty || 0;
-      }
-    }
-    // -------------------------
-
-    // --- LOP TYPE LOGIC: unitPrice * noOfStops ---
-    else if (setPrice === "lopTypePrice") {
-      if (opt && noOfStops > 0) {
-        const unitPrice = unitOf(opt);
-
-        // Use noOfStops as the quantity/multiplier
-        const count = noOfStops;
-
-        price1 = unitPrice * count;
-
-        breakdownParts.push(
-          `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
-        );
-
-        quantity = count;
-      }
-    }
-
-    // ---------------------------------------------
-
-    // ✅ Default single price (for other non-split items)
-    else if (
-      setPrice &&
-      setPrice !== "landingEntrancePrice1" &&
-      setPrice !== "landingEntrancePrice2"
-    ) {
-      if (setPrice == "airSystemPrice") {
-        console.log("=====airSystemPrice====>", opt);
-      }
-      // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
-      // const opt = findOpt(sid);
-      if (opt) {
-        const unit = unitOf(opt);
-        price1 = unit * quantity; // just the unit price
-        // breakdownParts.push(`${opt.name} = ₹ ${unit.toLocaleString()}`);
-        if (quantity > 1) {
-          breakdownParts.push(
-            `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
-          );
-        } else {
-          breakdownParts.push(
-            `: ₹ ${price1.toLocaleString()}`
-          );
-        }
-      }
-    }
-
-    // ---- Landing Entrance 1 (always independent) ----
-    if (setPrice === "landingEntrancePrice1") {
-      const sid1 = Array.isArray(formValue) ? formValue[0] : formValue;
-      const opt1 = findOpt(sid1);
-
-      if (opt1) {
-        const floors1 = splitCount || totalOpenings; // if ALL selected, use total
-        const unit1 = unitOf(opt1);
-        price1 = unit1 * floors1;
-
-        breakdownParts.push(
-          `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
-        );
-
-        quantity = floors1; // set quantity for Landing Entrance 1
-      }
-    }
-
-    // ---- Landing Entrance 2 (only if selected) ----
-    if (setPrice === "landingEntrancePrice2") {
-      const sid2 = Array.isArray(formValue) ? formValue[1] : null;
-      const opt2 = findOpt(sid2);
-
-      let materialId = opt2 ? opt2[id] : null;
-      if (opt2 && formValue) {
-        selectedName = opt2[nameKey] || opt2.name || "";
-      }
-      console.log(materialId, "------", selectedName);
-
-      if (opt2) {
-        // default remaining floors
-        let floors2 = Math.max(totalOpenings - splitCount, 0);
-
-        // override with explicit From/To
-        if (formData.landingEntranceSubType2_fromFloor && formData.landingEntranceSubType2_toFloor) {
-          const from = Number(formData.landingEntranceSubType2_fromFloor);
-          const to = Number(formData.landingEntranceSubType2_toFloor);
-          if (!isNaN(from) && !isNaN(to) && to >= from) {
-            floors2 = to - from + 1;
-          }
-        }
-
-        const unit2 = unitOf(opt2);
-        price2 = unit2 * floors2;
-
-        breakdownParts.push(
-          `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
-        );
-
-        quantity = floors2; // set quantity for Landing Entrance 2
-      }
-    }
-
-
-    const totalPrice = price1 + price2;
-
-    // 🧩 Find if the same material type already exists in selectedMaterials
-    const existingMaterials = formData.selectedMaterials || [];
-    const existingIndex = existingMaterials.findIndex(
-      (item) =>
-        item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
-    );
-
-    console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
-    console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
-    // ✅ Build newMaterial with existing id (if found)
-    const newMaterial = {
-      id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
-      leadId: lead,
-      quotationLiftDetailId: formData.quotLiftDetailId || null,
-      materialId: materialId,          // ID of the selected option
-      materialName: selectedName,
-      materialDisplayName: selectedName,
-      quantity: quantity,
-      quantityUnit: itemUnit,
-      price: totalPrice,               // The total calculated price
-      operatorType: operator,  // Assuming liftType is available
-      materialType: itemMainName,      // "Guide Rail", "Door", etc.
-    };
-
-    if (setPrice === "cabinPrice") {
-      console.log("----->newMaterial----->", newMaterial);
-    }
-
-    return {
-      totalPrice: price1 + price2,
-      breakdownParts,
-      price1,
-      price2,
-      selectedName,
-      newMaterial,
-    };
-  }, [isAirSystem, priceVal, options, formValue, id, formData, setPrice, nameKey, itemMainName, formData.liftType, formData.leadId,]);
-
-
-  // write total back into formData
-  useEffect(() => {
-    if (!setFormData || !setPrice && !setName) return;
-
-    // setFormData(prev => {
-    //   if ((prev[setPrice] || 0) === (totalPrice || 0)) return prev;
-    //   return { ...prev, [setPrice]: totalPrice || 0 };
-    // });
-
-    setFormData((prev) => {
-      const next = { ...prev };
-      let updated = false;
-
-      // if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
-      //   next.landingEntrancePrice1 = price1;
-      // }
-      // if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
-      //   next.landingEntrancePrice2 = price2;
-      // }
-
-      if (setPrice === "landingEntrancePrice1") {
-        if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
-          next.landingEntrancePrice1 = price1;
-          updated = true;
-        }
-      } else if (setPrice === "landingEntrancePrice2") {
-        if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
-          next.landingEntrancePrice2 = price2;
-          updated = true;
-        }
-      } else if (setPrice) {
-        console.log(setPrice + '======>price1:- ' + price1 + "---------price2:- " + price2 + "---totalPrice------" + totalPrice);
-        if (prev[setPrice] !== totalPrice) {
-          next[setPrice] = totalPrice || 0;
-          updated = true;
-        }
-      }
-
-      if (setName && prev[setName] !== selectedName) {
-        next[setName] = selectedName;
-        updated = true;
-      }
-
-      // 3. ✅ NEW: SAVE STRUCTURED MATERIAL OBJECT
-      // Field name is created from the setPrice prop (e.g., guideRailPrice -> guideRailMaterial)
-      const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
-      // const materialFieldName = setPrice ? `${setPrice.replace(/Price\d*/, '')}Material` : null;
-
-      console.log(newMaterial, "Material Field Name:", materialFieldName);
-
-      if (materialFieldName) {
-        // Check if the item is valid (has a materialId and total price > 0)
-        console.log("---newMaterial:---", newMaterial);
-        // if (newMaterial.materialId && newMaterial.price > 0) {
-        if (newMaterial.materialId) {
-          // Check if the object is changing (using JSON.stringify for a simple deep compare)
-          console.log("JSON.stringify(prev[materialFieldName]):", JSON.stringify(prev[materialFieldName]));
-          console.log("JSON.stringify(newMaterial):", JSON.stringify(newMaterial));
-          console.log("Are they equal?", JSON.stringify(prev[materialFieldName]) === JSON.stringify(newMaterial));
-          console.log("prev[materialFieldName]", prev[materialFieldName]);
-
-          if (JSON.stringify(prev[materialFieldName]) !== JSON.stringify(newMaterial)) {
-            next[materialFieldName] = newMaterial;
-            updated = true;
-          }
-        } else {
-          // If selection is cleared, set the material object to null/undefined
-          if (prev[materialFieldName] !== undefined && prev[materialFieldName] !== null) {
-            next[materialFieldName] = null;
-            updated = true;
-          }
-        }
-      }
-
-
-      console.log(materialFieldName, "---next---", next[materialFieldName]);
-
-      return updated ? next : prev;
-    });
-  }, [
-    price1,
-    price2,
-    totalPrice,
-    selectedName,
-    setPrice,
-    setName,
-    setFormData
-  ]);
-
-  // nothing to display
-  if (showPrice && (!totalPrice || totalPrice === 0)) return null;
-
-  return (
-    <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
-      {label ? (
-        <>
-          {/* Hide total for Landing Entrance 1 & 2...if not landingentrance */}
-          {/* {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
-            <span>
-              {label}
-              {showPrice && (
-                <span className="font-medium space-y-1">
-                  :{" "}₹ {totalPrice.toLocaleString()}
-                </span>
-              )}
-            </span>
-          )}
-
-          {breakdownParts && breakdownParts.length > 0 && breakdownParts && (
-            <div className="text-xs space-y-1">
-              {breakdownParts.map((b, i) => (
-                <div key={i}>{b}</div>
-              ))}
-            </div>
-          )} */}
-
-          {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
-            <span>
-              {/* Check if a breakdown exists */}
-              {breakdownParts && breakdownParts.length > 0 ? (
-                // Condition 1: Breakdown exists
-                <>
-                  {label}
-                  <span className="font-medium space-y-1">
-                    {breakdownParts.map((b, i) => (
-                      <span key={i}>{b}</span>
-                    ))}
-                  </span>
-                </>
-              ) : (
-                // Condition 2: No breakdown, show label followed by price
-                <>
-                  {label}
-                  <span className="font-medium space-y-1">
-                    :{" "}₹ {totalPrice.toLocaleString()}
-                  </span>
-                </>
-              )}
-            </span>
-          )}
-
-
-          {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
-            <span>
-              {/* Check if a breakdown exists */}
-              {breakdownParts && breakdownParts.length > 0 ? (
-                // Condition 1: Breakdown exists
-                <>
-                  {label}
-                  <span className="font-medium space-y-1">
-                    {breakdownParts.map((b, i) => (
-                      <span key={i}>{b}</span>
-                    ))}
-                  </span>
-                </>
-              ) : (
-                // Condition 2: No breakdown, show label followed by price
-                <>
-                  {label}
-                  <span className="font-medium space-y-1">
-                    :{" "}₹ {totalPrice.toLocaleString()}
-                  </span>
-                </>
-              )}
-            </span>
-          )}
-
-
-        </>
-      ) : (
-        <>
-          {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
-            <span>
-              Price
-              {breakdownParts && breakdownParts.length > 0 ? (
-                // Condition 1: Breakdown exists
-                <>
-                  <span className="font-medium space-y-1">
-                    {breakdownParts.map((b, i) => (
-                      <span key={i}>{b}</span>
-                    ))}
-                  </span>
-                </>
-              ) : (
-                // Condition 2: No breakdown, show label followed by price
-                <>
-
-                  <span className="font-medium space-y-1">
-                    {" "}₹ {totalPrice.toLocaleString()}
-                  </span>
-                </>
-              )}
-            </span>
-          )}
-          {/* {breakdownParts && breakdownParts.length > 0 && (
-            <div className="font-medium space-y-1">
-              {breakdownParts.map((b, i) => (
-                <div key={i}>{b}</div>
-              ))}
-            </div>
-          )} */}
-        </>
-      )}
-    </div>
-  );
-
-};
-
+// export const PriceBelowSelect = ({
+//   id = "id",
+//   options,
+//   label,
+//   formValue,               // single id or array of ids
+//   color = "green-600",
+//   isAirSystem = false,
+//   isArdSystem = false,
+//   showPrice = true,
+//   priceVal = 0,
+//   setPrice = "",
+//   setName = "",
+//   nameKey = "name",
+//   itemMainName = "",
+//   itemUnit = "",
+//   setFormData,
+//   formData = {},           // must pass whole formData (openings, landingEntranceCount etc.)
+//   isOnlyLabel = false,
+//   lead_id,
+//   lift,
+// }) => {
+//   const lead = lead_id ?? formData.leadId;;
+//   const operator = lift ?? formData.liftType;
+//   if (isOnlyLabel) {
+//     if (!label) return null;
+
+//     return (
+//       <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//         <span className="font-medium space-y-1">{label}</span>
+//       </div>
+//     );
+//   }
+
+//   if (!showPrice) {
+//     return null;
+//   }
+
+//   const { totalPrice, breakdownParts, price1, price2, quantity, selectedName, newMaterial } = useMemo(() => {
+//     // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
+//     if (!options) {
+//       return {
+//         totalPrice: priceVal || 0,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName: "",
+//         newMaterial: null,
+//       };
+//     }
+//     const totalOpenings = Number(formData.openings) || 0;
+//     const splitCount = Number(formData.landingEntranceCount) || 0;
+
+//     const noOfStops = Number(formData.stops) || 0;
+//     const liftQuantity = Number(formData.liftQuantity) || 1;
+
+//     console.log(options, "-------options----------->");
+
+//     // helper to find option
+//     const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
+//     const unitOf = (opt) => (opt?.price ?? opt?.prize ?? 0);
+
+//     let price1 = 0, price2 = 0;
+//     let breakdownParts = [];
+//     let finalGuideRailQty = 0;
+
+//     const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//     const opt = findOpt(sid);
+
+//     let materialId = opt ? opt[id] : null;
+//     let quantity = 1; // Default quantity
+//     // NAME ASSIGNMENT LOGIC:
+//     let selectedName = "";
+//     if (opt && formValue) {
+//       quantity = Number(opt.quantity || opt.wireRopeQty
+//       ) || 1;
+//       // selectedName = opt[nameKey] || opt.name || "";
+//       if (Array.isArray(nameKey)) {
+//         selectedName = nameKey
+//           .map(key => opt[key])
+//           .filter(Boolean) // Remove null, undefined, or empty strings
+//           .join(' / ');    // Join the available names with a separator
+//       } else {
+//         // Original logic for single key
+//         selectedName = opt[nameKey] || opt.name || "";
+//       }
+//     }
+
+//     let finalPrice = priceVal || 0;
+
+//     // --- SPECIAL AIR SYSTEM LOGIC ---
+//     if (isAirSystem) {
+//       console.log("----formData.selectedMaterials-------", formData.selectedMaterials);
+//       const existingMaterials = formData.selectedMaterials || [];
+
+//       console.log("----In AIr-------", existingMaterials);
+//       // Try to find if an Air System material already exists
+//       const existingIndex = existingMaterials.findIndex(
+//         (item) =>
+//           item.materialType?.toLowerCase().includes("Air System".toLowerCase())
+//       );
+
+//       console.log("----In AIr--existingIndex-----", existingIndex);
+//       console.log("----In AIr---existingMaterials[existingIndex]----", existingMaterials[existingIndex]);
+
+//       const existing = existingIndex !== -1 ? existingMaterials[existingIndex] : {};
+
+//       const airMaterial = {
+//         ...existing,  // keep id, quotationLiftDetailId, etc.
+//         id: existing.id,
+//         leadId: formData.leadId ?? existing.leadId,
+//         quotationLiftDetailId: existing.quotationLiftDetailId,
+//         materialId: materialId ?? existing.materialId,
+//         materialName: selectedName || existing.materialName || "Air System",
+//         materialDisplayName: selectedName || existing.materialName || "Air System",
+//         quantity: 1,
+//         quantityUnit: existing.quantityUnit || "",
+//         unitPrice: finalPrice ?? existing.price ?? 0,//-----as quantity =1
+//         price: finalPrice ?? existing.price ?? 0,
+//         operatorType: formData.liftType ?? existing.operatorType,
+//         materialType: itemMainName || existing.materialType || "Air System",
+//       };
+
+//       // Prepare updated materials list (for reference/debugging, optional)
+//       let updatedMaterials = [...existingMaterials];
+//       if (existingIndex !== -1) {
+//         updatedMaterials[existingIndex] = airMaterial; // Update
+//       } else {
+//         updatedMaterials.push(airMaterial); // Add new
+//       }
+
+//       // ✅ Return the airMaterial for parent to use
+//       return {
+//         totalPrice: finalPrice,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName,
+//         newMaterial: airMaterial,
+//       };
+//     }
+
+//     // console.log(materialId, "---materialId---", selectedName);
+//     // --- GUIDERAIL LOGIC ---
+//     if (setPrice === "guideRailPrice") {
+
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Calculate rounded quantity (PHP $guide_rail_qty1)
+//         const roundedQty1 = calculateRoundedGuideRailQuantity(noOfStops);
+
+//         // Calculate final quantity (PHP $guide_rail_qty2)
+//         finalGuideRailQty = roundedQty1 * liftQuantity;
+
+//         // Calculate total price (PHP $guide_rail_price)
+//         price1 = unitPrice * finalGuideRailQty;
+
+//         // Optional breakdown
+//         breakdownParts.push(
+//           // `${opt.counterWeightName} (${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = finalGuideRailQty || 0;
+//       }
+//     }
+//     // -------------------------
+
+//     // --- LOP TYPE LOGIC: unitPrice * noOfStops ---
+//     else if (setPrice === "lopTypePrice") {
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Use noOfStops as the quantity/multiplier
+//         const count = noOfStops;
+
+//         price1 = unitPrice * count;
+
+//         breakdownParts.push(
+//           `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = count;
+//       }
+//     }
+
+//     // ---------------------------------------------
+
+//     // ✅ Default single price (for other non-split items)
+//     else if (
+//       setPrice &&
+//       setPrice !== "landingEntrancePrice1" &&
+//       setPrice !== "landingEntrancePrice2"
+//     ) {
+//       if (setPrice == "airSystemPrice") {
+//         console.log("=====airSystemPrice====>", opt);
+//       }
+//       // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//       // const opt = findOpt(sid);
+//       if (opt) {
+//         const unit = unitOf(opt);
+//         price1 = unit * quantity; // just the unit price
+//         // breakdownParts.push(`${opt.name} = ₹ ${unit.toLocaleString()}`);
+//         if (quantity > 1) {
+//           breakdownParts.push(
+//             `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           );
+//         } else {
+//           breakdownParts.push(
+//             `: ₹ ${price1.toLocaleString()}`
+//           );
+//         }
+//       }
+//     }
+
+//     // ---- Landing Entrance 1 (always independent) ----
+//     if (setPrice === "landingEntrancePrice1") {
+//       const sid1 = Array.isArray(formValue) ? formValue[0] : formValue;
+//       const opt1 = findOpt(sid1);
+
+//       if (opt1) {
+//         const floors1 = splitCount || totalOpenings; // if ALL selected, use total
+//         const unit1 = unitOf(opt1);
+//         price1 = unit1 * floors1;
+
+//         breakdownParts.push(
+//           `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = floors1; // set quantity for Landing Entrance 1
+//       }
+//     }
+
+//     // ---- Landing Entrance 2 (only if selected) ----
+//     if (setPrice === "landingEntrancePrice2") {
+//       const sid2 = Array.isArray(formValue) ? formValue[1] : null;
+//       const opt2 = findOpt(sid2);
+
+//       let materialId = opt2 ? opt2[id] : null;
+//       if (opt2 && formValue) {
+//         selectedName = opt2[nameKey] || opt2.name || "";
+//       }
+//       console.log(materialId, "------", selectedName);
+
+//       if (opt2) {
+//         // default remaining floors
+//         let floors2 = Math.max(totalOpenings - splitCount, 0);
+
+//         // override with explicit From/To
+//         if (formData.landingEntranceSubType2_fromFloor && formData.landingEntranceSubType2_toFloor) {
+//           const from = Number(formData.landingEntranceSubType2_fromFloor);
+//           const to = Number(formData.landingEntranceSubType2_toFloor);
+//           if (!isNaN(from) && !isNaN(to) && to >= from) {
+//             floors2 = to - from + 1;
+//           }
+//         }
+
+//         const unit2 = unitOf(opt2);
+//         price2 = unit2 * floors2;
+
+//         breakdownParts.push(
+//           `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
+//         );
+
+//         quantity = floors2; // set quantity for Landing Entrance 2
+//       }
+//     }
+
+
+//     const totalPrice = price1 + price2;
+
+//     // 🧩 Find if the same material type already exists in selectedMaterials
+//     const existingMaterials = formData.selectedMaterials || [];
+//     const existingIndex = existingMaterials.findIndex(
+//       (item) =>
+//         item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
+//     );
+
+//     console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+//     console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
+//     // ✅ Build newMaterial with existing id (if found)
+
+//     const unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+//     const newMaterial = {
+//       id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+//       leadId: lead,
+//       quotationLiftDetailId: formData.quotLiftDetailId || null,
+//       materialId: materialId,          // ID of the selected option
+//       materialName: selectedName,
+//       materialDisplayName: selectedName,
+//       quantity: quantity,
+//       quantityUnit: itemUnit,
+//       quantity: quantity,
+//       unitPrice: unitPrice,
+//       price: totalPrice,               // The total calculated price
+//       operatorType: operator,  // Assuming liftType is available
+//       materialType: itemMainName,      // "Guide Rail", "Door", etc.
+//     };
+
+//     if (setPrice === "cabinPrice") {
+//       console.log("----->newMaterial----->", newMaterial);
+//     }
+
+//     return {
+//       totalPrice: price1 + price2,
+//       breakdownParts,
+//       price1,
+//       price2,
+//       selectedName,
+//       newMaterial,
+//       quantity,
+//     };
+//   }, [isAirSystem, priceVal, options, formValue, id, formData, setPrice, nameKey, itemMainName, formData.liftType, formData.leadId,]);
+
+
+//   // write total back into formData
+//   useEffect(() => {
+//     if (!setFormData || !setPrice && !setName) return;
+
+//     // setFormData(prev => {
+//     //   if ((prev[setPrice] || 0) === (totalPrice || 0)) return prev;
+//     //   return { ...prev, [setPrice]: totalPrice || 0 };
+//     // });
+
+//     setFormData((prev) => {
+//       const next = { ...prev };
+//       let updated = false;
+
+//       // if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
+//       //   next.landingEntrancePrice1 = price1;
+//       // }
+//       // if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
+//       //   next.landingEntrancePrice2 = price2;
+//       // }
+
+//       if (setPrice === "landingEntrancePrice1") {
+//         if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
+//           next.landingEntrancePrice1 = price1;
+//           next.landingEntranceCount = quantity;
+//           updated = true;
+//         }
+//       } else if (setPrice === "landingEntrancePrice2") {
+//         if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
+//           next.landingEntrancePrice2 = price2;
+//           const totalOpenings = Number(prev.openings) || 0;
+//           const splitCount = Number(prev.landingEntranceCount) || 0;
+
+//           let fromFloor = Number(prev.landingEntranceSubType2_fromFloor);
+//           let toFloor = Number(prev.landingEntranceSubType2_toFloor);
+
+//           // CASE 2 — Auto-generate from/to if not set
+//           if (isNaN(fromFloor) || isNaN(toFloor) || toFloor < fromFloor) {
+//             fromFloor = splitCount + 1;
+//             toFloor = totalOpenings;
+//           }
+
+//           next.landingEntranceSubType2_fromFloor = fromFloor;
+//           next.landingEntranceSubType2_toFloor = toFloor;
+
+//           updated = true;
+//         }
+//       } else if (setPrice) {
+//         console.log(setPrice + '======>price1:- ' + price1 + "---------price2:- " + price2 + "---totalPrice------" + totalPrice);
+//         if (prev[setPrice] !== totalPrice) {
+//           next[setPrice] = totalPrice || 0;
+//           updated = true;
+//         }
+//       }
+
+//       if (setName && prev[setName] !== selectedName) {
+//         next[setName] = selectedName;
+//         updated = true;
+//       }
+
+//       // 3. ✅ NEW: SAVE STRUCTURED MATERIAL OBJECT
+//       // Field name is created from the setPrice prop (e.g., guideRailPrice -> guideRailMaterial)
+//       const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
+//       // const materialFieldName = setPrice ? `${setPrice.replace(/Price\d*/, '')}Material` : null;
+
+//       console.log(newMaterial, "Material Field Name:", materialFieldName);
+
+//       if (materialFieldName) {
+//         // Check if the item is valid (has a materialId and total price > 0)
+//         console.log("---newMaterial:---", newMaterial);
+//         // if (newMaterial.materialId && newMaterial.price > 0) {
+//         if (newMaterial.materialId) {
+//           // Check if the object is changing (using JSON.stringify for a simple deep compare)
+//           console.log("JSON.stringify(prev[materialFieldName]):", JSON.stringify(prev[materialFieldName]));
+//           console.log("JSON.stringify(newMaterial):", JSON.stringify(newMaterial));
+//           console.log("Are they equal?", JSON.stringify(prev[materialFieldName]) === JSON.stringify(newMaterial));
+//           console.log("prev[materialFieldName]", prev[materialFieldName]);
+
+//           if (JSON.stringify(prev[materialFieldName]) !== JSON.stringify(newMaterial)) {
+//             next[materialFieldName] = newMaterial;
+//             updated = true;
+//           }
+//         } else {
+//           // If selection is cleared, set the material object to null/undefined
+//           if (prev[materialFieldName] !== undefined && prev[materialFieldName] !== null) {
+//             next[materialFieldName] = null;
+//             updated = true;
+//           }
+//         }
+//       }
+
+
+//       console.log(materialFieldName, "---next---", next[materialFieldName]);
+
+//       return updated ? next : prev;
+//     });
+//   }, [
+//     price1,
+//     price2,
+//     quantity,
+//     totalPrice,
+//     selectedName,
+//     setPrice,
+//     setName,
+//     setFormData
+//   ]);
+
+//   // nothing to display
+//   if (showPrice && (!totalPrice || totalPrice === 0)) return null;
+
+//   return (
+//     <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//       {label ? (
+//         <>
+//           {/* Hide total for Landing Entrance 1 & 2...if not landingentrance */}
+//           {/* {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+//             <span>
+//               {label}
+//               {showPrice && (
+//                 <span className="font-medium space-y-1">
+//                   :{" "}₹ {totalPrice.toLocaleString()}
+//                 </span>
+//               )}
+//             </span>
+//           )}
+
+//           {breakdownParts && breakdownParts.length > 0 && breakdownParts && (
+//             <div className="text-xs space-y-1">
+//               {breakdownParts.map((b, i) => (
+//                 <div key={i}>{b}</div>
+//               ))}
+//             </div>
+//           )} */}
+
+//           {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//           {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//         </>
+//       ) : (
+//         <>
+//           {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+//             <span>
+//               Price
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+
+//                   <span className="font-medium space-y-1">
+//                     {" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+//           {/* {breakdownParts && breakdownParts.length > 0 && (
+//             <div className="font-medium space-y-1">
+//               {breakdownParts.map((b, i) => (
+//                 <div key={i}>{b}</div>
+//               ))}
+//             </div>
+//           )} */}
+//         </>
+//       )}
+//     </div>
+//   );
+
+// };
 
 export const calculateTotal = (formData) => {
   return priceKeys.reduce((sum, key) => sum + Number(formData[key] || 0), 0);
@@ -1857,6 +1882,2105 @@ export const fetchTax = async (setErrors) => {
   }
 };
 
+
+//------------------------>working with selected materials--------->
+// export const PriceBelowSelect = ({
+//   id = "id",
+//   options,
+//   label,
+//   formValue,               // single id or array of ids
+//   color = "green-600",
+//   isAirSystem = false,
+//   isArdSystem = false,
+//   showPrice = true,
+//   priceVal = 0,
+//   setPrice = "",
+//   setName = "",
+//   nameKey = "name",
+//   itemMainName = "",
+//   itemUnit = "",
+//   setFormData,
+//   formData = {},           // must pass whole formData (openings, landingEntranceCount etc.)
+//   isOnlyLabel = false,
+//   lead_id,
+//   lift,
+// }) => {
+//   const lead = lead_id ?? formData.leadId;
+//   const operator = lift ?? formData.liftType;
+
+//   // 1. ✅ State/Ref to track if the component has mounted
+//   const isInitialMount = useRef(true);
+
+//   if (isOnlyLabel) {
+//     if (!label) return null;
+
+//     return (
+//       <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//         <span className="font-medium space-y-1">{label}</span>
+//       </div>
+//     );
+//   }
+
+//   if (!showPrice) {
+//     return null;
+//   }
+
+//   const { totalPrice, breakdownParts, price1, price2, quantity, selectedName, newMaterial } = useMemo(() => {
+//     // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
+//     if (!options) {
+//       return {
+//         totalPrice: priceVal || 0,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName: "",
+//         newMaterial: null,
+//       };
+//     }
+//     const totalOpenings = Number(formData.openings) || 0;
+//     const splitCount = Number(formData.landingEntranceCount) || 0;
+
+//     const noOfStops = Number(formData.stops) || 0;
+//     const liftQuantity = Number(formData.liftQuantity) || 1;
+
+//     console.log(options, "-------options--------formValue--->",formValue);
+
+//     // helper to find option
+//     const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
+//     const unitOf = (opt) => (opt?.price ?? opt?.prize ?? 0);
+
+//     let price1 = 0, price2 = 0;
+//     let breakdownParts = [];
+//     let finalGuideRailQty = 0;
+
+//     const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//     const opt = findOpt(sid);
+
+//     console.log(options, "-------options----------->",sid,"..........",opt);
+
+//     let materialId = opt ? opt[id] : null;
+//     let quantity = 1; // Default quantity
+//     // NAME ASSIGNMENT LOGIC:
+//     let selectedName = "";
+//     if (opt && formValue) {
+//       quantity = Number(opt.quantity || opt.wireRopeQty
+//       ) || 1;
+//       // selectedName = opt[nameKey] || opt.name || "";
+//       if (Array.isArray(nameKey)) {
+//         selectedName = nameKey
+//           .map(key => opt[key])
+//           .filter(Boolean) // Remove null, undefined, or empty strings
+//           .join(' / ');    // Join the available names with a separator
+//       } else {
+//         // Original logic for single key
+//         selectedName = opt[nameKey] || opt.name || "";
+//       }
+//     }
+
+//     let finalPrice = priceVal || 0;
+
+//     // --- SPECIAL AIR SYSTEM LOGIC ---
+//     if (isAirSystem) {
+//       console.log("----formData.selectedMaterials-------", formData.selectedMaterials);
+//       const existingMaterials = formData.selectedMaterials || [];
+
+//       console.log("----In AIr-------", existingMaterials);
+//       // Try to find if an Air System material already exists
+//       const existingIndex = existingMaterials.findIndex(
+//         (item) =>
+//           item.materialType?.toLowerCase().includes("Air System".toLowerCase())
+//       );
+
+//       console.log("----In AIr--existingIndex-----", existingIndex);
+//       console.log("----In AIr---existingMaterials[existingIndex]----", existingMaterials[existingIndex]);
+
+//       const existing = existingIndex !== -1 ? existingMaterials[existingIndex] : {};
+
+//       const airMaterial = {
+//         ...existing,  // keep id, quotationLiftDetailId, etc.
+//         id: existing.id,
+//         leadId: formData.leadId ?? existing.leadId,
+//         quotationLiftDetailId: existing.quotationLiftDetailId,
+//         materialId: materialId ?? existing.materialId,
+//         materialName: selectedName || existing.materialName || "Air System",
+//         materialDisplayName: selectedName || existing.materialName || "Air System",
+//         quantity: 1,
+//         quantityUnit: existing.quantityUnit || "",
+//         unitPrice: finalPrice ?? existing.price ?? 0,//-----as quantity =1
+//         price: finalPrice ?? existing.price ?? 0,
+//         operatorType: formData.liftType ?? existing.operatorType,
+//         materialType: itemMainName || existing.materialType || "Air System",
+//       };
+
+//       // Prepare updated materials list (for reference/debugging, optional)
+//       let updatedMaterials = [...existingMaterials];
+//       if (existingIndex !== -1) {
+//         updatedMaterials[existingIndex] = airMaterial; // Update
+//       } else {
+//         updatedMaterials.push(airMaterial); // Add new
+//       }
+
+//       // ✅ Return the airMaterial for parent to use
+//       return {
+//         totalPrice: finalPrice,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName,
+//         newMaterial: airMaterial,
+//       };
+//     }
+
+//     // console.log(materialId, "---materialId---", selectedName);
+//     // --- GUIDERAIL LOGIC ---
+//     if (setPrice === "guideRailPrice") {
+
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Calculate rounded quantity (PHP $guide_rail_qty1)
+//         // Note: Assuming calculateRoundedGuideRailQuantity is available
+//         const roundedQty1 = 1 // calculateRoundedGuideRailQuantity(noOfStops); 
+
+//         // Calculate final quantity (PHP $guide_rail_qty2)
+//         finalGuideRailQty = roundedQty1 * liftQuantity;
+
+//         // Calculate total price (PHP $guide_rail_price)
+//         price1 = unitPrice * finalGuideRailQty;
+
+//         // Optional breakdown
+//         breakdownParts.push(
+//           // `${opt.counterWeightName} (${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = finalGuideRailQty || 0;
+//       }
+//     }
+//     // -------------------------
+
+//     // --- LOP TYPE LOGIC: unitPrice * noOfStops ---
+//     else if (setPrice === "lopTypePrice") {
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Use noOfStops as the quantity/multiplier
+//         const count = noOfStops;
+
+//         price1 = unitPrice * count;
+
+//         breakdownParts.push(
+//           `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = count;
+//       }
+//     }
+
+//     // ---------------------------------------------
+
+//     // ✅ Default single price (for other non-split items)
+//     else if (
+//       setPrice &&
+//       setPrice !== "landingEntrancePrice1" &&
+//       setPrice !== "landingEntrancePrice2"
+//     ) {
+//       if (setPrice == "airSystemPrice") {
+//         console.log("=====airSystemPrice====>", opt);
+//       }
+//       // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//       // const opt = findOpt(sid);
+//       if (opt) {
+//         const unit = unitOf(opt);
+//         price1 = unit * quantity; // just the unit price
+//         // breakdownParts.push(`${opt.name} = ₹ ${unit.toLocaleString()}`);
+//         if (quantity > 1) {
+//           breakdownParts.push(
+//             `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           );
+//         } else {
+//           breakdownParts.push(
+//             `: ₹ ${price1.toLocaleString()}`
+//           );
+//         }
+//       }
+//     }
+
+//     // ---- Landing Entrance 1 (always independent) ----
+//     else if (setPrice === "landingEntrancePrice1") {
+//       const sid1 = Array.isArray(formValue) ? formValue[0] : formValue;
+//       const opt1 = findOpt(sid1);
+//       console.log(materialId, "---landingEntrancePrice1---", selectedName);
+
+//       if (opt1) {
+//         const floors1 = splitCount || totalOpenings; // if ALL selected, use total
+//         const unit1 = unitOf(opt1);
+//         price1 = unit1 * floors1;
+
+//         breakdownParts.push(
+//           `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = floors1; // set quantity for Landing Entrance 1
+//       }
+//     }
+
+//     // ---- Landing Entrance 2 (only if selected) ----
+//     else if (setPrice === "landingEntrancePrice2") {
+//       const sid2 = Array.isArray(formValue) ? formValue[1] : null;
+//       const opt2 = findOpt(sid2);
+
+//       let materialId = opt2 ? opt2[id] : null;
+//       if (opt2 && formValue) {
+//         selectedName = opt2[nameKey] || opt2.name || "";
+//       }
+//       console.log(materialId, "---landingEntrancePrice2---", selectedName);
+
+//       if (opt2) {
+//         // default remaining floors
+//         let floors2 = Math.max(totalOpenings - splitCount, 0);
+
+//         // override with explicit From/To
+//         if (formData.landingEntranceSubType2_fromFloor && formData.landingEntranceSubType2_toFloor) {
+//           const from = Number(formData.landingEntranceSubType2_fromFloor);
+//           const to = Number(formData.landingEntranceSubType2_toFloor);
+//           if (!isNaN(from) && !isNaN(to) && to >= from) {
+//             floors2 = to - from + 1;
+//           }
+//         }
+
+//         const unit2 = unitOf(opt2);
+//         price2 = unit2 * floors2;
+
+//         breakdownParts.push(
+//           `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
+//         );
+
+//         quantity = floors2; // set quantity for Landing Entrance 2
+//       }
+//     }
+
+
+//     const totalPrice = price1 + price2;
+
+//     // 🧩 Find if the same material type already exists in selectedMaterials
+//     const existingMaterials = formData.selectedMaterials || [];
+//     const existingIndex = existingMaterials.findIndex(
+//       (item) =>
+//         item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
+//     );
+
+//     console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+//     console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
+//     // ✅ Build newMaterial with existing id (if found)
+
+//     const unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+//     const newMaterial = {
+//       id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+//       leadId: lead,
+//       quotationLiftDetailId: formData.quotLiftDetailId || null,
+//       materialId: materialId,          // ID of the selected option
+//       materialName: selectedName,
+//       materialDisplayName: selectedName,
+//       quantity: quantity,
+//       quantityUnit: itemUnit,
+//       unitPrice: unitPrice,
+//       price: totalPrice,               // The total calculated price
+//       operatorType: operator,  // Assuming liftType is available
+//       materialType: itemMainName,      // "Guide Rail", "Door", etc.
+//     };
+
+//     if (setPrice === "cabinPrice") {
+//       console.log("----->newMaterial----->", newMaterial);
+//     }
+
+//     return {
+//       totalPrice: price1 + price2,
+//       breakdownParts,
+//       price1,
+//       price2,
+//       selectedName,
+//       newMaterial,
+//       quantity,
+//     };
+//   }, [isAirSystem, priceVal, options, formValue, id, formData.openings, formData.landingEntranceCount, formData.stops, formData.liftQuantity, setPrice, nameKey, itemMainName, formData.liftType, formData.leadId, formData.quotLiftDetailId, formData.landingEntranceSubType2_fromFloor, formData.landingEntranceSubType2_toFloor,]);
+
+
+//   // write total back into formData
+//   // 2. ✅ Apply initial mount check here to prevent execution on first render
+//   useEffect(() => {
+
+//     // Skip execution on initial component mount
+//     if (isInitialMount.current) {
+//       isInitialMount.current = false;
+//       return;
+//     }
+
+//     if (!setFormData || !setPrice && !setName) return;
+
+//     setFormData((prev) => {
+//       const next = { ...prev };
+//       let updated = false;
+
+//       if (setPrice === "landingEntrancePrice1") {
+//         if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
+//           next.landingEntrancePrice1 = price1;
+//           next.landingEntranceCount = quantity;
+//           updated = true;
+//         }
+//       } else if (setPrice === "landingEntrancePrice2") {
+//         if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
+//           next.landingEntrancePrice2 = price2;
+//           const totalOpenings = Number(prev.openings) || 0;
+//           const splitCount = Number(prev.landingEntranceCount) || 0;
+
+//           let fromFloor = Number(prev.landingEntranceSubType2_fromFloor);
+//           let toFloor = Number(prev.landingEntranceSubType2_toFloor);
+
+//           // CASE 2 — Auto-generate from/to if not set
+//           if (isNaN(fromFloor) || isNaN(toFloor) || toFloor < fromFloor) {
+//             fromFloor = splitCount + 1;
+//             toFloor = totalOpenings;
+//           }
+
+//           next.landingEntranceSubType2_fromFloor = fromFloor;
+//           next.landingEntranceSubType2_toFloor = toFloor;
+
+//           updated = true;
+//         }
+//       } else if (setPrice) {
+//         console.log(setPrice + '======>price1:- ' + price1 + "---------price2:- " + price2 + "---totalPrice------" + totalPrice);
+//         if (prev[setPrice] !== totalPrice) {
+//           next[setPrice] = totalPrice || 0;
+//           updated = true;
+//         }
+//       }
+
+//       if (setName && prev[setName] !== selectedName) {
+//         next[setName] = selectedName;
+//         updated = true;
+//       }
+
+//       // 3. ✅ SAVE STRUCTURED MATERIAL OBJECT
+//       const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
+
+//       console.log(newMaterial, "Material Field Name:", materialFieldName);
+
+//       if (materialFieldName) {
+//         if (newMaterial.materialId) {
+//           console.log("---newMaterial:---", newMaterial);
+//           console.log("JSON.stringify(prev[materialFieldName]):", JSON.stringify(prev[materialFieldName]));
+//           console.log("JSON.stringify(newMaterial):", JSON.stringify(newMaterial));
+//           console.log("Are they equal?", JSON.stringify(prev[materialFieldName]) === JSON.stringify(newMaterial));
+//           console.log("prev[materialFieldName]", prev[materialFieldName]);
+
+//           if (JSON.stringify(prev[materialFieldName]) !== JSON.stringify(newMaterial)) {
+//             next[materialFieldName] = newMaterial;
+//             updated = true;
+//           }
+//         } else {
+//           // If selection is cleared, set the material object to null/undefined
+//           if (prev[materialFieldName] !== undefined && prev[materialFieldName] !== null) {
+//             next[materialFieldName] = null;
+//             updated = true;
+//           }
+//         }
+//       }
+
+
+//       console.log(materialFieldName, "---next---", next[materialFieldName]);
+
+//       return updated ? next : prev;
+//     });
+//   }, [
+//     price1,
+//     price2,
+//     quantity,
+//     totalPrice,
+//     selectedName,
+//     setPrice,
+//     setName,
+//     setFormData,
+//     newMaterial, // Include newMaterial so the effect reacts to calculation changes
+//   ]);
+
+//   // nothing to display
+//   if (showPrice && (!totalPrice || totalPrice === 0)) return null;
+
+//   return (
+//     <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//       {label ? (
+//         <>
+//           {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//           {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//         </>
+//       ) : (
+//         <>
+//           {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+//             <span>
+//               Price
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+
+//                   <span className="font-medium space-y-1">
+//                     {" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+//         </>
+//       )}
+//     </div>
+//   );
+
+// };
+
+
+
+//------------------------>working without selected materials--------->
+// export const PriceBelowSelect = ({
+//   id = "id",
+//   options,
+//   label,
+//   formValue,               // single id or array of ids
+//   color = "green-600",
+//   isAirSystem = false,
+//   showPrice = true,
+//   priceVal = 0,
+//   setPrice = "",
+//   // setName = "",
+//   // nameKey = "name",
+//   // itemMainName = "",
+//   // itemUnit = "",
+//   setFormData,
+//   formData = {},           // must pass whole formData (openings, landingEntranceCount etc.)
+//   isOnlyLabel = false,
+//   // lead_id,
+//   // lift,
+// }) => {
+//   // const lead = lead_id ?? formData.leadId;
+//   // const operator = lift ?? formData.liftType;
+
+//   // 1. ✅ State/Ref to track if the component has mounted
+//   const isInitialMount = useRef(true);
+
+//   if (isOnlyLabel) {
+//     if (!label) return null;
+
+//     return (
+//       <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//         <span className="font-medium space-y-1">{label}</span>
+//       </div>
+//     );
+//   }
+
+//   if (!showPrice) {
+//     return null;
+//   }
+
+//   // const { totalPrice, breakdownParts, price1, price2, quantity, selectedName, newMaterial } = useMemo(() => {
+//   const { totalPrice, breakdownParts, price1, price2, quantity } = useMemo(() => {
+//     // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
+//     if (!options) {
+//       return {
+//         totalPrice: priceVal || 0,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//       };
+//     }
+//     const totalOpenings = Number(formData.openings) || 0;
+//     const splitCount = Number(formData.landingEntranceCount) || 0;
+
+//     const noOfStops = Number(formData.stops) || 0;
+//     const liftQuantity = Number(formData.liftQuantity) || 1;
+
+//     console.log(options, "-------options--------formValue--->", formValue);
+
+//     // helper to find option
+//     const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
+//     const unitOf = (opt) => (opt?.price ?? opt?.prize ?? 0);
+
+//     let price1 = 0, price2 = 0;
+//     let breakdownParts = [];
+//     let finalGuideRailQty = 0;
+
+//     const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//     const opt = findOpt(sid);
+
+//     console.log(options, "-------options----------->", sid, "..........", opt);
+
+//     // let materialId = opt ? opt[id] : null;
+//     let quantity = 1; // Default quantity
+
+//     // NAME ASSIGNMENT LOGIC:
+//     // let selectedName = "";
+//     if (opt && formValue) {
+//       quantity = Number(opt.quantity || opt.wireRopeQty
+//       ) || 1;
+
+//       // if (Array.isArray(nameKey)) {
+//       //   selectedName = nameKey
+//       //     .map(key => opt[key])
+//       //     .filter(Boolean) // Remove null, undefined, or empty strings
+//       //     .join(' / ');    // Join the available names with a separator
+//       // } else {
+//       //   // Original logic for single key
+//       //   selectedName = opt[nameKey] || opt.name || "";
+//       // }
+//     }
+
+//     let finalPrice = priceVal || 0;
+
+//     // --- SPECIAL AIR SYSTEM LOGIC ---
+//     // if (isAirSystem) {
+//     //   console.log("----formData.selectedMaterials-------", formData.selectedMaterials);
+//     //   const existingMaterials = formData.selectedMaterials || [];
+
+//     //   console.log("----In AIr-------", existingMaterials);
+//     //   // Try to find if an Air System material already exists
+//     //   const existingIndex = existingMaterials.findIndex(
+//     //     (item) =>
+//     //       item.materialType?.toLowerCase().includes("Air System".toLowerCase())
+//     //   );
+
+//     //   console.log("----In AIr--existingIndex-----", existingIndex);
+//     //   console.log("----In AIr---existingMaterials[existingIndex]----", existingMaterials[existingIndex]);
+
+//     //   const existing = existingIndex !== -1 ? existingMaterials[existingIndex] : {};
+
+//     //   const airMaterial = {
+//     //     ...existing,  // keep id, quotationLiftDetailId, etc.
+//     //     id: existing.id,
+//     //     leadId: formData.leadId ?? existing.leadId,
+//     //     quotationLiftDetailId: existing.quotationLiftDetailId,
+//     //     materialId: materialId ?? existing.materialId,
+//     //     materialName: selectedName || existing.materialName || "Air System",
+//     //     materialDisplayName: selectedName || existing.materialName || "Air System",
+//     //     quantity: 1,
+//     //     quantityUnit: existing.quantityUnit || "",
+//     //     unitPrice: finalPrice ?? existing.price ?? 0,//-----as quantity =1
+//     //     price: finalPrice ?? existing.price ?? 0,
+//     //     operatorType: formData.liftType ?? existing.operatorType,
+//     //     materialType: itemMainName || existing.materialType || "Air System",
+//     //   };
+
+//     //   // Prepare updated materials list (for reference/debugging, optional)
+//     //   let updatedMaterials = [...existingMaterials];
+//     //   if (existingIndex !== -1) {
+//     //     updatedMaterials[existingIndex] = airMaterial; // Update
+//     //   } else {
+//     //     updatedMaterials.push(airMaterial); // Add new
+//     //   }
+
+//     //   // ✅ Return the airMaterial for parent to use
+//     //   return {
+//     //     totalPrice: finalPrice,
+//     //     breakdownParts: [],
+//     //     price1: 0,
+//     //     price2: 0,
+//     //     selectedName,
+//     //     newMaterial: airMaterial,
+//     //   };
+//     // }
+
+//     // console.log(materialId, "---materialId---", selectedName);
+//     // --- GUIDERAIL LOGIC ---
+//     if (setPrice === "guideRailPrice") {
+
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Calculate rounded quantity (PHP $guide_rail_qty1)
+//         // Note: Assuming calculateRoundedGuideRailQuantity is available
+//         const roundedQty1 = 1 // calculateRoundedGuideRailQuantity(noOfStops); 
+
+//         // Calculate final quantity (PHP $guide_rail_qty2)
+//         finalGuideRailQty = roundedQty1 * liftQuantity;
+
+//         // Calculate total price (PHP $guide_rail_price)
+//         price1 = unitPrice * finalGuideRailQty;
+
+//         // Optional breakdown
+//         breakdownParts.push(
+//           // `${opt.counterWeightName} (${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = finalGuideRailQty || 0;
+//       }
+//     }
+//     // -------------------------
+
+//     // --- LOP TYPE LOGIC: unitPrice * noOfStops ---
+//     else if (setPrice === "lopTypePrice") {
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Use noOfStops as the quantity/multiplier
+//         const count = noOfStops;
+
+//         price1 = unitPrice * count;
+
+//         breakdownParts.push(
+//           `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = count;
+//       }
+//     }
+
+//     // ---------------------------------------------
+
+//     // ✅ Default single price (for other non-split items)
+//     else if (
+//       setPrice &&
+//       setPrice !== "landingEntrancePrice1" &&
+//       setPrice !== "landingEntrancePrice2"
+//     ) {
+//       // if (setPrice == "airSystemPrice") {
+//       //   console.log("=====airSystemPrice====>", opt);
+//       // }
+//       // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//       // const opt = findOpt(sid);
+//       if (opt) {
+//         const unit = unitOf(opt);
+//         price1 = unit * quantity; // just the unit price
+//         // breakdownParts.push(`${opt.name} = ₹ ${unit.toLocaleString()}`);
+//         if (quantity > 1) {
+//           breakdownParts.push(
+//             `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           );
+//         } else {
+//           breakdownParts.push(
+//             `: ₹ ${price1.toLocaleString()}`
+//           );
+//         }
+//       }
+//     }
+
+//     // ---- Landing Entrance 1 (always independent) ----
+//     else if (setPrice === "landingEntrancePrice1") {
+//       const sid1 = Array.isArray(formValue) ? formValue[0] : formValue;
+//       const opt1 = findOpt(sid1);
+//       // console.log(materialId, "---landingEntrancePrice1---", selectedName);
+
+//       if (opt1) {
+//         const floors1 = splitCount || totalOpenings; // if ALL selected, use total
+//         const unit1 = unitOf(opt1);
+//         price1 = unit1 * floors1;
+
+//         breakdownParts.push(
+//           `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = floors1; // set quantity for Landing Entrance 1
+//       }
+//     }
+
+//     // ---- Landing Entrance 2 (only if selected) ----
+//     else if (setPrice === "landingEntrancePrice2") {
+//       const sid2 = Array.isArray(formValue) ? formValue[1] : null;
+//       const opt2 = findOpt(sid2);
+
+//       // let materialId = opt2 ? opt2[id] : null;
+//       // if (opt2 && formValue) {
+//       //   selectedName = opt2[nameKey] || opt2.name || "";
+//       // }
+//       // console.log(materialId, "---landingEntrancePrice2---", selectedName);
+
+//       if (opt2) {
+//         // default remaining floors
+//         let floors2 = Math.max(totalOpenings - splitCount, 0);
+
+//         // override with explicit From/To
+//         if (formData.landingEntranceSubType2_fromFloor && formData.landingEntranceSubType2_toFloor) {
+//           const from = Number(formData.landingEntranceSubType2_fromFloor);
+//           const to = Number(formData.landingEntranceSubType2_toFloor);
+//           if (!isNaN(from) && !isNaN(to) && to >= from) {
+//             floors2 = to - from + 1;
+//           }
+//         }
+
+//         const unit2 = unitOf(opt2);
+//         price2 = unit2 * floors2;
+
+//         breakdownParts.push(
+//           `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
+//         );
+
+//         quantity = floors2; // set quantity for Landing Entrance 2
+//       }
+//     }
+
+
+//     const totalPrice = price1 + price2;
+
+//     // // 🧩 Find if the same material type already exists in selectedMaterials
+//     // const existingMaterials = formData.selectedMaterials || [];
+//     // const existingIndex = existingMaterials.findIndex(
+//     //   (item) =>
+//     //     item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
+//     // );
+
+//     // console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+//     // console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
+//     // // ✅ Build newMaterial with existing id (if found)
+
+//     // const unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+//     // const newMaterial = {
+//     //   id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+//     //   leadId: lead,
+//     //   quotationLiftDetailId: formData.quotLiftDetailId || null,
+//     //   materialId: materialId,          // ID of the selected option
+//     //   materialName: selectedName,
+//     //   materialDisplayName: selectedName,
+//     //   quantity: quantity,
+//     //   quantityUnit: itemUnit,
+//     //   unitPrice: unitPrice,
+//     //   price: totalPrice,               // The total calculated price
+//     //   operatorType: operator,  // Assuming liftType is available
+//     //   materialType: itemMainName,      // "Guide Rail", "Door", etc.
+//     // };
+
+//     // if (setPrice === "cabinPrice") {
+//     //   console.log("----->newMaterial----->", newMaterial);
+//     // }
+
+//     return {
+//       totalPrice: price1 + price2,
+//       breakdownParts,
+//       price1,
+//       price2,
+//       // selectedName,
+//       // newMaterial,
+//       quantity,
+//     };
+//   // }, [isAirSystem, priceVal, options, formValue, id, formData.openings, formData.landingEntranceCount, formData.stops, formData.liftQuantity, setPrice, nameKey, itemMainName, formData.liftType, formData.leadId, formData.quotLiftDetailId, formData.landingEntranceSubType2_fromFloor, formData.landingEntranceSubType2_toFloor,]);
+//    }, [isAirSystem, priceVal, options, formValue, id, formData.openings, formData.landingEntranceCount, formData.stops, formData.liftQuantity, setPrice, formData.liftType, formData.leadId, formData.quotLiftDetailId, formData.landingEntranceSubType2_fromFloor, formData.landingEntranceSubType2_toFloor,]);
+
+
+
+//   // write total back into formData
+//   // 2. ✅ Apply initial mount check here to prevent execution on first render
+//   useEffect(() => {
+
+//     // Skip execution on initial component mount
+//     if (isInitialMount.current) {
+//       isInitialMount.current = false;
+//       return;
+//     }
+
+//     if (!setFormData || !setPrice && !setName) return;
+
+//     setFormData((prev) => {
+//       const next = { ...prev };
+//       let updated = false;
+
+//       if (setPrice === "landingEntrancePrice1") {
+//         if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
+//           next.landingEntrancePrice1 = price1;
+//           next.landingEntranceCount = quantity;
+//           updated = true;
+//         }
+//       } else if (setPrice === "landingEntrancePrice2") {
+//         if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
+//           next.landingEntrancePrice2 = price2;
+//           const totalOpenings = Number(prev.openings) || 0;
+//           const splitCount = Number(prev.landingEntranceCount) || 0;
+
+//           let fromFloor = Number(prev.landingEntranceSubType2_fromFloor);
+//           let toFloor = Number(prev.landingEntranceSubType2_toFloor);
+
+//           // CASE 2 — Auto-generate from/to if not set
+//           if (isNaN(fromFloor) || isNaN(toFloor) || toFloor < fromFloor) {
+//             fromFloor = splitCount + 1;
+//             toFloor = totalOpenings;
+//           }
+
+//           next.landingEntranceSubType2_fromFloor = fromFloor;
+//           next.landingEntranceSubType2_toFloor = toFloor;
+
+//           updated = true;
+//         }
+//       } else if (setPrice) {
+//         console.log(setPrice + '======>price1:- ' + price1 + "---------price2:- " + price2 + "---totalPrice------" + totalPrice);
+//         if (prev[setPrice] !== totalPrice) {
+//           next[setPrice] = totalPrice || 0;
+//           updated = true;
+//         }
+//       }
+
+//       // if (setName && prev[setName] !== selectedName) {
+//       //   next[setName] = selectedName;
+//       //   updated = true;
+//       // }
+
+//       // // 3. ✅ SAVE STRUCTURED MATERIAL OBJECT
+//       // const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
+
+//       // console.log(newMaterial, "Material Field Name:", materialFieldName);
+
+//       // if (materialFieldName) {
+//       //   if (newMaterial.materialId) {
+//       //     console.log("---newMaterial:---", newMaterial);
+//       //     console.log("JSON.stringify(prev[materialFieldName]):", JSON.stringify(prev[materialFieldName]));
+//       //     console.log("JSON.stringify(newMaterial):", JSON.stringify(newMaterial));
+//       //     console.log("Are they equal?", JSON.stringify(prev[materialFieldName]) === JSON.stringify(newMaterial));
+//       //     console.log("prev[materialFieldName]", prev[materialFieldName]);
+
+//       //     if (JSON.stringify(prev[materialFieldName]) !== JSON.stringify(newMaterial)) {
+//       //       next[materialFieldName] = newMaterial;
+//       //       updated = true;
+//       //     }
+//       //   } else {
+//       //     // If selection is cleared, set the material object to null/undefined
+//       //     if (prev[materialFieldName] !== undefined && prev[materialFieldName] !== null) {
+//       //       next[materialFieldName] = null;
+//       //       updated = true;
+//       //     }
+//       //   }
+//       // }
+
+
+//       // console.log(materialFieldName, "---next---", next[materialFieldName]);
+
+//       return updated ? next : prev;
+//     });
+//   }, [
+//     price1,
+//     price2,
+//     quantity,
+//     totalPrice,
+//     // selectedName,
+//     setPrice,
+//     // setName,
+//     setFormData,
+//     // newMaterial, // Include newMaterial so the effect reacts to calculation changes
+//   ]);
+
+//   // nothing to display
+//   if (showPrice && (!totalPrice || totalPrice === 0)) return null;
+
+//   return (
+//     <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//       {label ? (
+//         <>
+//           {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//           {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//         </>
+//       ) : (
+//         <>
+//           {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+//             <span>
+//               Price
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+
+//                   <span className="font-medium space-y-1">
+//                     {" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+//         </>
+//       )}
+//     </div>
+//   );
+
+// };
+
+
+
+
+
+// export const PriceBelowSelect = ({
+//   id = "id",
+//   options,
+//   label,
+//   formValue,               // single id or array of ids
+//   color = "green-600",
+//   isAirSystem = false,
+//   isArdSystem = false,
+//   showPrice = true,
+//   priceVal = 0,
+//   setPrice = "",
+//   setName = "",
+//   nameKey = "name",
+//   itemMainName = "",
+//   itemUnit = "",
+//   setFormData,
+//   formData = {},           // must pass whole formData (openings, landingEntranceCount etc.)
+//   isOnlyLabel = false,
+//   lead_id,
+//   lift,
+//   onMaterialChange,
+//   selectedMaterialFrmParent,
+// }) => {
+//   const lead = lead_id ?? formData.leadId;
+//   const operator = lift ?? formData.liftType;
+
+//   // 1. ✅ State/Ref to track if the component has mounted
+//   const isInitialMount = useRef(true);
+
+//   if (isOnlyLabel) {
+//     if (!label) return null;
+
+//     return (
+//       <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//         <span className="font-medium space-y-1">{label}</span>
+//       </div>
+//     );
+//   }
+
+//   if (!showPrice) {
+//     return null;
+//   }
+
+//   const { totalPrice, breakdownParts, price1, price2, quantity, selectedName, newMaterial } = useMemo(() => {
+//     // if (isArdSystem) return { totalPrice: priceVal || 0, breakdownParts: [], price1: 0, price2: 0 };
+//     if (!formValue || (Array.isArray(formValue) && formValue.length === 0)) {
+//       return {
+//         totalPrice: priceVal || 0,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName: "",
+//         newMaterial: null, // ⭐️ RETURN NULL WHEN NO SELECTION
+//       };
+//     }
+
+//     if (!options) {
+//       return {
+//         totalPrice: priceVal || 0,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName: "",
+//         newMaterial: null,
+//       };
+//     }
+//     const totalOpenings = Number(formData.openings) || 0;
+//     const splitCount = Number(formData.landingEntranceCount) || 0;
+
+//     const noOfStops = Number(formData.stops) || 0;
+//     const liftQuantity = Number(formData.liftQuantity) || 1;
+
+//     console.log(options, "-------options--------formValue--->", formValue);
+
+//     // helper to find option
+//     const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
+//     const unitOf = (opt) => (opt?.price ?? opt?.prize ?? 0);
+
+//     let price1 = 0, price2 = 0;
+//     let breakdownParts = [];
+//     let finalGuideRailQty = 0;
+
+//     const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//     const opt = findOpt(sid);
+
+//     console.log(options, "-------options----------->", sid, "..........", opt);
+
+//     let materialId = opt ? opt[id] : null;
+//     let quantity = 1; // Default quantity
+//     // NAME ASSIGNMENT LOGIC:
+//     let selectedName = "";
+//     if (opt && formValue) {
+//       quantity = Number(opt.quantity || opt.wireRopeQty
+//       ) || 1;
+//       // selectedName = opt[nameKey] || opt.name || "";
+//       if (Array.isArray(nameKey)) {
+//         selectedName = nameKey
+//           .map(key => opt[key])
+//           .filter(Boolean) // Remove null, undefined, or empty strings
+//           .join(' / ');    // Join the available names with a separator
+//       } else {
+//         // Original logic for single key
+//         selectedName = opt[nameKey] || opt.name || "";
+//       }
+//     }
+
+//     let finalPrice = priceVal || 0;
+
+//     // --- SPECIAL AIR SYSTEM LOGIC ---
+//     if (isAirSystem) {
+//       console.log("----formData.selectedMaterials-------", formData.selectedMaterials);
+//       const existingMaterials = formData.selectedMaterials || [];
+
+//       console.log("----In AIr-------", existingMaterials);
+//       // Try to find if an Air System material already exists
+//       const existingIndex = existingMaterials.findIndex(
+//         (item) =>
+//           item.materialType?.toLowerCase().includes("Air System".toLowerCase())
+//       );
+
+//       console.log("----In AIr--existingIndex-----", existingIndex);
+//       console.log("----In AIr---existingMaterials[existingIndex]----", existingMaterials[existingIndex]);
+
+//       const existing = existingIndex !== -1 ? existingMaterials[existingIndex] : {};
+
+//       const airMaterial = {
+//         ...existing,  // keep id, quotationLiftDetailId, etc.
+//         id: existing?.id || null,
+//         leadId: formData.leadId ?? existing.leadId,
+//         quotationLiftDetailId: existing?.quotationLiftDetailId || null,
+//         materialId: materialId ?? existing.materialId,
+//         materialName: selectedName || existing.materialName || "Air System",
+//         materialDisplayName: selectedName || existing.materialName || "Air System",
+//         quantity: 1,
+//         quantityUnit: existing.quantityUnit || "",
+//         unitPrice: finalPrice ?? existing.price ?? 0,//-----as quantity =1
+//         price: finalPrice ?? existing.price ?? 0,
+//         operatorType: formData.liftType ?? existing.operatorType,
+//         materialType: itemMainName || existing.materialType || "Air System",
+//       };
+
+//       // Prepare updated materials list (for reference/debugging, optional)
+//       let updatedMaterials = [...existingMaterials];
+//       if (existingIndex !== -1) {
+//         updatedMaterials[existingIndex] = airMaterial; // Update
+//       } else {
+//         updatedMaterials.push(airMaterial); // Add new
+//       }
+
+//       // ✅ Return the airMaterial for parent to use
+//       return {
+//         totalPrice: finalPrice,
+//         breakdownParts: [],
+//         price1: 0,
+//         price2: 0,
+//         selectedName,
+//         newMaterial: airMaterial,
+//       };
+//     }
+
+//     // console.log(materialId, "---materialId---", selectedName);
+//     // --- GUIDERAIL LOGIC ---
+//     if (setPrice === "guideRailPrice") {
+
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Calculate rounded quantity (PHP $guide_rail_qty1)
+//         // Note: Assuming calculateRoundedGuideRailQuantity is available
+//         const roundedQty1 = 1 // calculateRoundedGuideRailQuantity(noOfStops); 
+
+//         // Calculate final quantity (PHP $guide_rail_qty2)
+//         finalGuideRailQty = roundedQty1 * liftQuantity;
+
+//         // Calculate total price (PHP $guide_rail_price)
+//         price1 = unitPrice * finalGuideRailQty;
+
+//         // Optional breakdown
+//         breakdownParts.push(
+//           // `${opt.counterWeightName} (${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = finalGuideRailQty || 0;
+//       }
+//     }
+//     // -------------------------
+
+//     // --- LOP TYPE LOGIC: unitPrice * noOfStops ---
+//     else if (setPrice === "lopTypePrice") {
+//       if (opt && noOfStops > 0) {
+//         const unitPrice = unitOf(opt);
+
+//         // Use noOfStops as the quantity/multiplier
+//         const count = noOfStops;
+
+//         price1 = unitPrice * count;
+
+//         breakdownParts.push(
+//           `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = count;
+//       }
+//     }
+
+//     // ---------------------------------------------
+
+//     // ✅ Default single price (for other non-split items)
+//     else if (
+//       setPrice &&
+//       setPrice !== "landingEntrancePrice1" &&
+//       setPrice !== "landingEntrancePrice2"
+//     ) {
+//       if (setPrice == "airSystemPrice") {
+//         console.log("=====airSystemPrice====>", opt);
+//       }
+//       // const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+//       // const opt = findOpt(sid);
+//       if (opt) {
+//         const unit = unitOf(opt);
+//         price1 = unit * quantity; // just the unit price
+//         // breakdownParts.push(`${opt.name} = ₹ ${unit.toLocaleString()}`);
+//         if (quantity > 1) {
+//           breakdownParts.push(
+//             `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//           );
+//         } else {
+//           breakdownParts.push(
+//             `: ₹ ${price1.toLocaleString()}`
+//           );
+//         }
+//       }
+//     }
+
+//     // ---- Landing Entrance 1 (always independent) ----
+//     else if (setPrice === "landingEntrancePrice1") {
+//       const sid1 = Array.isArray(formValue) ? formValue[0] : formValue;
+//       const opt1 = findOpt(sid1);
+//       console.log(materialId, "---landingEntrancePrice1---", selectedName);
+
+//       if (opt1) {
+//         const floors1 = splitCount || totalOpenings; // if ALL selected, use total
+//         const unit1 = unitOf(opt1);
+//         price1 = unit1 * floors1;
+
+//         breakdownParts.push(
+//           `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+//         );
+
+//         quantity = floors1; // set quantity for Landing Entrance 1
+//       }
+//     }
+
+//     // ---- Landing Entrance 2 (only if selected) ----
+//     else if (setPrice === "landingEntrancePrice2") {
+//       const sid2 = Array.isArray(formValue) ? formValue[1] : null;
+//       const opt2 = findOpt(sid2);
+
+//       let materialId = opt2 ? opt2[id] : null;
+//       if (opt2 && formValue) {
+//         selectedName = opt2[nameKey] || opt2.name || "";
+//       }
+//       console.log(materialId, "---landingEntrancePrice2---", selectedName);
+
+//       if (opt2) {
+//         // default remaining floors
+//         let floors2 = Math.max(totalOpenings - splitCount, 0);
+
+//         // override with explicit From/To
+//         if (formData.landingEntranceSubType2_fromFloor && formData.landingEntranceSubType2_toFloor) {
+//           const from = Number(formData.landingEntranceSubType2_fromFloor);
+//           const to = Number(formData.landingEntranceSubType2_toFloor);
+//           if (!isNaN(from) && !isNaN(to) && to >= from) {
+//             floors2 = to - from + 1;
+//           }
+//         }
+
+//         const unit2 = unitOf(opt2);
+//         price2 = unit2 * floors2;
+
+//         breakdownParts.push(
+//           `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
+//         );
+
+//         quantity = floors2; // set quantity for Landing Entrance 2
+//       }
+//     }
+
+
+//     const totalPrice = price1 + price2;
+
+//     const selectedMaterial = formData.selectedMaterials ?? [];
+//     // 🧩 Find if the same material type already exists in selectedMaterials
+//     console.log(selectedMaterialFrmParent,">>>>>>>> formData.selectedMaterials >>>>>>>", formData.selectedMaterials);
+
+//     if (!Array.isArray(selectedMaterial) || selectedMaterial.length === 0) {
+//       return {
+//         totalPrice: price1 + price2,
+//         breakdownParts,
+//         price1,
+//         price2,
+//         selectedName : "",
+//         newMaterial : [],
+//         quantity,
+//       };
+//     }
+
+//     const existingMaterials = selectedMaterial || [];
+
+//     console.log(existingMaterials, "00000000000000000000> existingMaterials[existingIndex] 0000000000000000");
+
+//     // const alreadyExists = existingMaterials.some(
+//     //   item =>
+//     //     item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
+//     // );
+
+//     // console.log(alreadyExists, "00000000000000000000> alreadyExists 0000000000000000",itemMainName);
+
+
+//     // if (alreadyExists) {
+//     //   return {
+//     //     totalPrice: price1 + price2,
+//     //     breakdownParts,
+//     //     price1,
+//     //     price2,
+//     //     selectedName : "",
+//     //     newMaterial : [],
+//     //     quantity,
+//     //   };
+//     // }
+
+//     const existingIndex = existingMaterials.findIndex(
+//       (item) =>
+//         item.materialType?.toLowerCase() === itemMainName?.toLowerCase() 
+//     );
+
+//     console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+//     console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
+//     // ✅ Build newMaterial with existing id (if found)
+
+//     const unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+//     const newMaterial = {
+//       id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+//       leadId: lead,
+//       quotationLiftDetailId: formData.quotLiftDetailId || null,
+//       materialId: materialId,          // ID of the selected option
+//       materialName: selectedName,
+//       materialDisplayName: selectedName,
+//       quantity: quantity,
+//       quantityUnit: itemUnit,
+//       unitPrice: unitPrice,
+//       price: totalPrice,               // The total calculated price
+//       operatorType: operator,  // Assuming liftType is available
+//       materialType: itemMainName,      // "Guide Rail", "Door", etc.
+//     };
+
+//     if (setPrice === "cabinSubTypePrice") {
+//       console.log("----->newMaterial----->", newMaterial);
+//     }
+
+//     return {
+//       totalPrice: price1 + price2,
+//       breakdownParts,
+//       price1,
+//       price2,
+//       selectedName,
+//       newMaterial,
+//       quantity,
+//     };
+//   }, [isAirSystem, priceVal, options, formValue, id, formData.openings, formData.landingEntranceCount, formData.stops, formData.liftQuantity, setPrice, nameKey, itemMainName, formData.liftType, formData.leadId, formData.quotLiftDetailId, formData.landingEntranceSubType2_fromFloor, formData.landingEntranceSubType2_toFloor,]);
+
+
+//   // write total back into formData
+//   // 2. ✅ Apply initial mount check here to prevent execution on first render
+//   useEffect(() => {
+
+//     // Skip execution on initial component mount
+//     if (isInitialMount.current) {
+//       isInitialMount.current = false;
+//       return;
+//     }
+
+//     if (!setFormData || !setPrice && !setName) return;
+
+//     let materialUpdated = false;
+
+//     // --- ⭐️ STEP 1: Handle Material Change via Callback ---
+//     if (onMaterialChange && itemMainName) {
+//       // Check if the material object has changed its contents
+//       const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
+
+//       // We must check if the newMaterial object is different from the one 
+//       // currently stored in the *intermediate* field (if it were still used)
+//       // or check against the last material sent, but simplest is to check against prev form data
+
+//       // Since we removed the intermediate field, we check if newMaterial is logically different
+//       // from the last time we ran this effect. The easiest way is to let the parent handle the check
+//       // via its own JSON.stringify comparison (as implemented in the parent handler above).
+
+//       const isMaterialValid = newMaterial && newMaterial.materialId;
+//       const materialObjectToSend = isMaterialValid ? newMaterial : null;
+
+//       // Check if the old intermediate field (if it were still present) is different
+//       // If the price or name is changing, the material object implicitly changes.
+//       if (isMaterialValid || (!isMaterialValid && formData[materialFieldName])) {
+//         onMaterialChange(itemMainName, materialObjectToSend);
+//         materialUpdated = true;
+//       }
+//     }
+//     // --- ⭐️ END OF MATERIAL CHANGE ---
+
+//     setFormData((prev) => {
+//       const next = { ...prev };
+//       let priceNameUpdated = false;
+//       let updated = false;
+
+//       if (setPrice === "landingEntrancePrice1") {
+//         if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
+//           next.landingEntrancePrice1 = price1;
+//           next.landingEntranceCount = quantity;
+//           priceNameUpdated = true;
+//         }
+//       } else if (setPrice === "landingEntrancePrice2") {
+//         if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
+//           next.landingEntrancePrice2 = price2;
+//           const totalOpenings = Number(prev.openings) || 0;
+//           const splitCount = Number(prev.landingEntranceCount) || 0;
+
+//           let fromFloor = Number(prev.landingEntranceSubType2_fromFloor);
+//           let toFloor = Number(prev.landingEntranceSubType2_toFloor);
+
+//           // CASE 2 — Auto-generate from/to if not set
+//           if (isNaN(fromFloor) || isNaN(toFloor) || toFloor < fromFloor) {
+//             fromFloor = splitCount + 1;
+//             toFloor = totalOpenings;
+//           }
+
+//           next.landingEntranceSubType2_fromFloor = fromFloor;
+//           next.landingEntranceSubType2_toFloor = toFloor;
+
+//           priceNameUpdated = true;
+//         }
+//       } else if (setPrice) {
+//         console.log(setPrice + '======>price1:- ' + price1 + "---------price2:- " + price2 + "---totalPrice------" + totalPrice);
+//         if (prev[setPrice] !== totalPrice) {
+//           next[setPrice] = totalPrice || 0;
+//           priceNameUpdated = true;
+//         }
+//       }
+
+//       if (setName && prev[setName] !== selectedName) {
+//         next[setName] = selectedName;
+//         priceNameUpdated = true;
+//       }
+
+//       // // 3. ✅ SAVE STRUCTURED MATERIAL OBJECT
+//       // const materialFieldName = setPrice ? `${setPrice.replace('Price', '')}Material` : null;
+
+//       // console.log(newMaterial, "Material Field Name:", materialFieldName);
+
+//       // if (materialFieldName) {
+//       //   if (newMaterial.materialId) {
+//       //     console.log("---newMaterial:---", newMaterial);
+//       //     console.log("JSON.stringify(prev[materialFieldName]):", JSON.stringify(prev[materialFieldName]));
+//       //     console.log("JSON.stringify(newMaterial):", JSON.stringify(newMaterial));
+//       //     console.log("Are they equal?", JSON.stringify(prev[materialFieldName]) === JSON.stringify(newMaterial));
+//       //     console.log("prev[materialFieldName]", prev[materialFieldName]);
+
+//       //     if (JSON.stringify(prev[materialFieldName]) !== JSON.stringify(newMaterial)) {
+//       //       next[materialFieldName] = newMaterial;
+//       //       updated = true;
+//       //     }
+//       //   } else {
+//       //     // If selection is cleared, set the material object to null/undefined
+//       //     if (prev[materialFieldName] !== undefined && prev[materialFieldName] !== null) {
+//       //       next[materialFieldName] = null;
+//       //       updated = true;
+//       //     }
+//       //   }
+//       // }
+
+
+//       // console.log(materialFieldName, "---next---", next[materialFieldName]);
+
+//       return updated ? next : prev;
+//     });
+//   }, [
+//     price1,
+//     price2,
+//     quantity,
+//     totalPrice,
+//     selectedName,
+//     setPrice,
+//     setName,
+//     setFormData,
+//     newMaterial, // Include newMaterial so the effect reacts to calculation changes
+//   ]);
+
+//   // nothing to display
+//   if (showPrice && (!totalPrice || totalPrice === 0)) return null;
+
+//   return (
+//     <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+//       {label ? (
+//         <>
+//           {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//           {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+//             <span>
+//               {/* Check if a breakdown exists */}
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+//                   {label}
+//                   <span className="font-medium space-y-1">
+//                     :{" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+
+
+//         </>
+//       ) : (
+//         <>
+//           {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+//             <span>
+//               Price
+//               {breakdownParts && breakdownParts.length > 0 ? (
+//                 // Condition 1: Breakdown exists
+//                 <>
+//                   <span className="font-medium space-y-1">
+//                     {breakdownParts.map((b, i) => (
+//                       <span key={i}>{b}</span>
+//                     ))}
+//                   </span>
+//                 </>
+//               ) : (
+//                 // Condition 2: No breakdown, show label followed by price
+//                 <>
+
+//                   <span className="font-medium space-y-1">
+//                     {" "}₹ {totalPrice.toLocaleString()}
+//                   </span>
+//                 </>
+//               )}
+//             </span>
+//           )}
+//         </>
+//       )}
+//     </div>
+//   );
+
+// };
+
+
+
+
+
+
+
+
+
+
+export const PriceBelowSelect = ({
+  id = "id",
+  options,
+  label,
+  formValue,
+  color = "green-600",
+  isAirSystem = false,
+  isArdSystem = false,
+  showPrice = true,
+  priceVal = 0,
+  setPrice = "",
+  setName = "",
+  nameKey = "name",
+  itemMainName = "",
+  itemUnit = "",
+  setFormData,
+  formData = {}, // must pass whole formData (openings, landingEntranceCount etc.)
+  isOnlyLabel = false,
+  lead_id,
+  lift,
+  // ❌ REMOVED: onMaterialChange,
+  // ❌ REMOVED: selectedMaterialFrmParent, 
+}) => {
+  const lead = lead_id ?? formData.leadId;
+  const operator = lift ?? formData.liftType;
+
+  // 1. ✅ State/Ref to track if the component has mounted
+  const isInitialMount = useRef(true);
+
+  if (isOnlyLabel) {
+    if (!label) return null;
+
+    return (
+      <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+        <span className="font-medium space-y-1">{label}</span>
+      </div>
+    );
+  }
+
+  if (!showPrice) {
+    return null;
+  }
+
+  const { totalPrice, breakdownParts, price1, price2, quantity, selectedName } = useMemo(() => {
+    // ⭐️ Only calculate price and quantity, not newMaterial
+
+    if (!formValue || (Array.isArray(formValue) && formValue.length === 0)) {
+      return {
+        totalPrice: priceVal || 0,
+        breakdownParts: [],
+        price1: 0,
+        price2: 0,
+        selectedName: "",
+        // newMaterial: null, // ❌ Removed newMaterial
+        quantity: 0, // Set quantity to 0 when no selection
+      };
+    }
+
+    if (!options) {
+      return {
+        totalPrice: priceVal || 0,
+        breakdownParts: [],
+        price1: 0,
+        price2: 0,
+        selectedName: "",
+        // newMaterial: null, // ❌ Removed newMaterial
+        quantity: 0,
+      };
+    }
+
+    // --- Helper calculations (keep existing) ---
+    const totalOpenings = Number(formData.openings) || 0;
+    const splitCount = Number(formData.landingEntranceCount) || 0;
+    const noOfStops = Number(formData.stops) || 0;
+    const liftQuantity = Number(formData.liftQuantity) || 1;
+    const findOpt = (sid) => options.find(o => String(o[id]) === String(sid));
+    const unitOf = (opt) => (opt?.price ?? opt?.prize ?? 0);
+
+    let price1 = 0, price2 = 0;
+    let breakdownParts = [];
+    let finalGuideRailQty = 0;
+
+    const sid = Array.isArray(formValue) ? formValue[0] : formValue;
+    const opt = findOpt(sid);
+
+    let materialId = opt ? opt[id] : null;
+    let quantity = 1; // Default quantity
+    let selectedName = "";
+
+    if (opt && formValue) {
+      quantity = Number(opt.quantity || opt.wireRopeQty) || 1;
+
+      if (Array.isArray(nameKey)) {
+        selectedName = nameKey
+          .map(key => opt[key])
+          .filter(Boolean)
+          .join(' / ');
+      } else {
+        selectedName = opt[nameKey] || opt.name || "";
+      }
+    }
+
+    let finalPrice = priceVal || 0;
+
+    // --- SPECIAL AIR SYSTEM LOGIC (Price calculation only) ---
+    if (isAirSystem) {
+      finalPrice = finalPrice;
+      quantity = 1;
+      price1 = finalPrice;
+      price2 = 0;
+
+      breakdownParts.push(
+        `: ₹ ${price1.toLocaleString()}`
+      );
+
+      return {
+        totalPrice: finalPrice,
+        breakdownParts: [],
+        price1: 0,
+        price2: 0,
+        selectedName,
+        // newMaterial: airMaterial, // ❌ Removed material creation
+        quantity,
+      };
+    }
+
+    // --- GUIDERAIL LOGIC --- (Keep as is for price/quantity)
+    if (setPrice === "guideRailPrice") {
+      if (opt && noOfStops > 0) {
+        const unitPrice = unitOf(opt);
+        const roundedQty1 = 1 // calculateRoundedGuideRailQuantity(noOfStops); 
+        finalGuideRailQty = roundedQty1 * liftQuantity;
+        price1 = unitPrice * finalGuideRailQty;
+
+        breakdownParts.push(
+          `(${finalGuideRailQty.toFixed(2)} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+        );
+        quantity = finalGuideRailQty || 0;
+      }
+    }
+    // --- LOP TYPE LOGIC --- (Keep as is for price/quantity)
+    else if (setPrice === "lopTypePrice") {
+      if (opt && noOfStops > 0) {
+        const unitPrice = unitOf(opt);
+        const count = noOfStops;
+        price1 = unitPrice * count;
+        breakdownParts.push(
+          `(${count} × ₹${unitPrice.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+        );
+        quantity = count;
+      }
+    }
+
+    // ✅ Default single price (Keep as is for price/quantity)
+    else if (
+      setPrice &&
+      setPrice !== "landingEntrancePrice1" &&
+      setPrice !== "landingEntrancePrice2"
+    ) {
+      if (opt) {
+        const unit = unitOf(opt);
+        price1 = unit * quantity;
+        if (quantity > 1) {
+          // breakdownParts.push(
+          //   `${selectedName}: (${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+          // );
+          breakdownParts.push(
+            `(${quantity} × ₹${unit.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+          );
+        } else {
+          breakdownParts.push(
+            `: ₹ ${price1.toLocaleString()}`
+          );
+        }
+      }
+    }
+
+    // ---- Landing Entrance 1 & 2 logic (Keep as is for price/quantity) ----
+    else if (setPrice === "landingEntrancePrice1") {
+      const sid1 = Array.isArray(formValue) ? formValue[0] : formValue;
+      const opt1 = findOpt(sid1);
+      if (opt1) {
+        const floors1 = splitCount || totalOpenings;
+        const unit1 = unitOf(opt1);
+        price1 = unit1 * floors1;
+        // breakdownParts.push(
+        //   `${opt1.name} (${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+        // );
+        breakdownParts.push(
+          `(${floors1} × ₹${unit1.toLocaleString()}) = ₹ ${price1.toLocaleString()}`
+        );
+        quantity = floors1;
+      }
+    }
+    else if (setPrice === "landingEntrancePrice2") {
+      const sid2 = Array.isArray(formValue) ? formValue[1] : null;
+      const opt2 = findOpt(sid2);
+      let materialId = opt2 ? opt2[id] : null;
+      if (opt2 && formValue) {
+        selectedName = opt2[nameKey] || opt2.name || "";
+      }
+      if (opt2) {
+        let floors2 = Math.max(totalOpenings - splitCount, 0);
+        if (formData.landingEntranceSubType2_fromFloor && formData.landingEntranceSubType2_toFloor) {
+          const from = Number(formData.landingEntranceSubType2_fromFloor);
+          const to = Number(formData.landingEntranceSubType2_toFloor);
+          if (!isNaN(from) && !isNaN(to) && to >= from) {
+            floors2 = to - from + 1;
+          }
+        }
+        const unit2 = unitOf(opt2);
+        price2 = unit2 * floors2;
+        // breakdownParts.push(
+        //   `${opt2.name} (${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
+        // );
+        breakdownParts.push(
+          `(${floors2} × ₹${unit2.toLocaleString()}) = ₹ ${price2.toLocaleString()}`
+        );
+        quantity = floors2;
+      }
+    }
+    // --- END Price/Quantity Calculation ---
+
+    const totalPrice = price1 + price2;
+
+    // ❌ REMOVED all the selectedMaterial / existingMaterials / existingIndex lookups.
+    // ❌ REMOVED the newMaterial object creation.
+
+    return {
+      totalPrice: price1 + price2,
+      breakdownParts,
+      price1,
+      price2,
+      selectedName,
+      // newMaterial: null, // ⭐️ Ensure newMaterial is not returned
+      quantity,
+    };
+  }, [
+    isAirSystem, priceVal, options, formValue, id, formData.openings, formData.landingEntranceCount,
+    formData.stops, formData.liftQuantity, setPrice, nameKey, itemMainName, formData.liftType,
+    formData.leadId, formData.quotLiftDetailId, formData.landingEntranceSubType2_fromFloor,
+    formData.landingEntranceSubType2_toFloor,
+  ]);
+
+
+  // ❌ STEP 2: Simplify useEffect
+  useEffect(() => {
+    // Skip execution on initial component mount
+    // if (isInitialMount.current) {
+    //   isInitialMount.current = false;
+    //   return;
+    // }
+
+    if (!setFormData || (!setPrice && !setName)) return;
+
+    // ❌ REMOVED: All onMaterialChange logic (STEP 1 in old code)
+
+    setFormData((prev) => {
+      const next = { ...prev };
+      let updated = false;
+
+      // Update price fields (Keep this logic)
+      // if (setPrice === "landingEntrancePrice1") {
+      //   console.log("Updating landingEntrancePrice1:", price1, "Prev:", prev.landingEntrancePrice1);
+      //   if (price1 !== undefined && prev.landingEntrancePrice1 !== price1) {
+      //     next.landingEntrancePrice1 = price1;
+      //     next.landingEntranceCount = quantity;
+      //     updated = true;
+      //   }
+      //   console.log("Updated landingEntrancePrice1 to:", next.landingEntrancePrice1);
+      // } else if (setPrice === "landingEntrancePrice2") {
+      //   if (price2 !== undefined && prev.landingEntrancePrice2 !== price2) {
+      //     next.landingEntrancePrice2 = price2;
+      //     // ... (keep from/to floor logic)
+      //     const totalOpenings = Number(prev.openings) || 0;
+      //     const splitCount = Number(prev.landingEntranceCount) || 0;
+      //     let fromFloor = Number(prev.landingEntranceSubType2_fromFloor);
+      //     let toFloor = Number(prev.landingEntranceSubType2_toFloor);
+      //     if (isNaN(fromFloor) || isNaN(toFloor) || toFloor < fromFloor) {
+      //       fromFloor = splitCount + 1;
+      //       toFloor = totalOpenings;
+      //     }
+      //     next.landingEntranceSubType2_fromFloor = fromFloor;
+      //     next.landingEntranceSubType2_toFloor = toFloor;
+      //     updated = true;
+      //   }
+      // } 
+
+      // --------------------- PRICE / FLOOR SYNC LOGIC ---------------------
+      if (setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") {
+        const totalOpenings = Number(prev.openings) || 0;
+
+        // Current user selections
+        const count1 = Number(prev.landingEntranceCount) || 0;     // Subtype-1 count
+        let from2 = Number(prev.landingEntranceSubType2_fromFloor);
+        let to2 = Number(prev.landingEntranceSubType2_toFloor);
+
+        let newCount1 = count1;
+
+        // ---------------- SUBTYPE 1 SELECTED ----------------
+        if (setPrice === "landingEntrancePrice1" && price1 !== undefined) {
+          // Save price
+          next.landingEntrancePrice1 = price1;
+
+          // If user selects "ALL"
+          if (quantity === "ALL" || Number(quantity) === totalOpenings) {
+            newCount1 = totalOpenings;
+
+            // Subtype 2 disappears
+            next.landingEntrancePrice2 = 0;
+            next.landingEntranceSubType2_fromFloor = "";
+            next.landingEntranceSubType2_toFloor = "";
+            next.landingEntranceSubType2 = "";
+          }
+          else {
+            // Keep numeric quantity
+            newCount1 = Number(quantity) || 0;
+
+            const remaining = totalOpenings - newCount1;
+
+            if (remaining <= 0) {
+              // Nothing left for Subtype-2
+              next.landingEntrancePrice2 = 0;
+              next.landingEntranceSubType2_fromFloor = "";
+              next.landingEntranceSubType2_toFloor = "";
+            } else {
+              // Auto-adjust Subtype-2 range
+              next.landingEntranceSubType2_fromFloor = newCount1 + 1;
+              next.landingEntranceSubType2_toFloor = totalOpenings;
+            }
+          }
+
+          next.landingEntranceCount = newCount1;
+          updated = true;
+        }
+
+        // ---------------- SUBTYPE 2 SELECTED ----------------
+        if (setPrice === "landingEntrancePrice2" && price2 !== undefined) {
+          next.landingEntrancePrice2 = price2;
+
+          // If subtype 1 = ALL, subtype 2 must be disabled
+          if (newCount1 === totalOpenings) {
+            next.landingEntrancePrice2 = 0;
+            next.landingEntranceSubType2_fromFloor = "";
+            next.landingEntranceSubType2_toFloor = "";
+          }
+          else {
+            // If from/to invalid → auto-correct
+            if (
+              isNaN(from2) ||
+              isNaN(to2) ||
+              from2 <= newCount1 ||
+              to2 > totalOpenings ||
+              to2 < from2
+            ) {
+              next.landingEntranceSubType2_fromFloor = newCount1 + 1;
+              next.landingEntranceSubType2_toFloor = totalOpenings;
+            }
+          }
+
+          updated = true;
+        }
+      }
+
+      else if (setPrice) {
+        if (prev[setPrice] !== totalPrice) {
+          next[setPrice] = totalPrice || 0;
+          updated = true;
+        }
+      }
+
+      // Update name field (Keep this logic)
+      if (setName && prev[setName] !== selectedName) {
+        next[setName] = selectedName;
+        updated = true;
+      }
+
+      // ❌ REMOVED: All material object saving logic (STEP 3 in old code)
+
+      return updated ? next : prev;
+    });
+  }, [
+    price1, price2, quantity, totalPrice, selectedName, setPrice, setName, setFormData,
+    // ❌ REMOVED: newMaterial from dependencies
+  ]);
+
+  // nothing to display
+  if (showPrice && (!totalPrice || totalPrice === 0)) return null;
+
+  // --- JSX Rendering (Keep as is) ---
+  return (
+    <div className={`absolute right-8 mt-[4.1rem] text-xs font-semibold tracking-wide ${color}`}>
+      {label ? (
+        <>
+          {!(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+            <span>
+              {breakdownParts && breakdownParts.length > 0 ? (
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    {breakdownParts.map((b, i) => (
+                      <span key={i}>{b}</span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    :{" "}₹ {totalPrice.toLocaleString()}
+                  </span>
+                </>
+              )}
+            </span>
+          )}
+          {/* ... (rest of landing entrance price display logic) */}
+          {(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && showPrice && (
+            <span>
+              {breakdownParts && breakdownParts.length > 0 ? (
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    {breakdownParts.map((b, i) => (
+                      <span key={i}>{b}</span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {label}
+                  <span className="font-medium space-y-1">
+                    :{" "}₹ {totalPrice.toLocaleString()}
+                  </span>
+                </>
+              )}
+            </span>
+          )}
+        </>
+      ) : (
+        <>
+          {showPrice && !(setPrice === "landingEntrancePrice1" || setPrice === "landingEntrancePrice2") && (
+            <span>
+              Price
+              {breakdownParts && breakdownParts.length > 0 ? (
+                <>
+                  <span className="font-medium space-y-1">
+                    {breakdownParts.map((b, i) => (
+                      <span key={i}>{b}</span>
+                    ))}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="font-medium space-y-1">
+                    {" "}₹ {totalPrice.toLocaleString()}
+                  </span>
+                </>
+              )}
+            </span>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
 
 
 

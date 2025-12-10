@@ -137,6 +137,7 @@ const calculateTruffingPrice = async (floors, setErrors) => {
     if (ruleExpression) {
       const quantity = evaluateRule(ruleExpression, targetFloor);
       const truffingPrice = quantity * basePrice;
+      const unitPrice = quantity > 0 ? truffingPrice / quantity : 0;
 
       const truffingMaterial = {
         // id, leadId, quotationLiftDetailId will be set in fetchFloorPrices
@@ -145,6 +146,7 @@ const calculateTruffingPrice = async (floors, setErrors) => {
         materialDisplayName: material.otherMaterialDisplayName || material.otherMaterialName,
         quantity: quantity,
         quantityUnit: "",
+        unitPrice: unitPrice,
         price: truffingPrice,
         materialType: "Truffing",
       };
@@ -281,6 +283,7 @@ const fetchArdPrice = async (liftType, capacityType, capacityValue, leadID, exis
         materialDisplayName: ard.ardDevice,
         quantity: 1, // ARD is typically a quantity of 1
         quantityUnit: "",
+        unitPrice: finalPrice,
         price: finalPrice,
         operatorType: existingArd?.operatorId || liftType,
         materialType: "ARD", // Use a distinct materialType
@@ -356,6 +359,8 @@ const fetchMachinePrice = async (liftType, capacityType, capacityValue, typeOfLi
 
       console.log(machine, "---------existingMachineSelectedMaterials--------", existingItem);
 
+      const unitPrice = machine.quantity > 0 ? machine.price / machine.quantity : 0;
+
       const newMachineSelectedMaterials = {
         // Preserve existing DB ID for UPDATE, otherwise set to null for INSERT
         id: existingItem?.id || null,
@@ -368,6 +373,7 @@ const fetchMachinePrice = async (liftType, capacityType, capacityValue, typeOfLi
         // materialName: machine.otherMaterialName +" / "+ machine.otherMaterialDisplayName,
         quantity: machine.quantity,
         quantityUnit: "",
+        unitPrice: unitPrice,
         price: (machine.quantity * machine.price) || 0,
         operatorType: existingItem?.operatorType || liftType,
         materialType: "Machine", // Use the exact string "Fastener"
@@ -424,6 +430,7 @@ const fetchHarnessPrice = async (floorDesignations, setErrors) => {
     if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
       const material = apiRes.data[0];
       const price = material.price || 0;
+      const unitPrice = price;
 
       const harnessMaterial = {
         // id, leadId, quotationLiftDetailId will be set in fetchFloorPrices
@@ -432,6 +439,7 @@ const fetchHarnessPrice = async (floorDesignations, setErrors) => {
         materialDisplayName: material.name,
         quantity: 1, // Assuming quantity is 1 for harness
         quantityUnit: "",
+        unitPrice: unitPrice,
         price: price,
         materialType: "WiringHarness",
       };
@@ -537,6 +545,7 @@ const fetchGovernorRopePriceByNm = async (floorDesignations, setErrors) => {
     if (apiRes.success && Array.isArray(apiRes.data) && apiRes.data.length > 0) {
       const material = apiRes.data[0];
       const price = material.price || 0;
+      const unitPrice = material.quantity > 0 ? material.price / material.quantity : 0;
 
       const governorMaterial = {
         materialId: material.id,
@@ -544,6 +553,7 @@ const fetchGovernorRopePriceByNm = async (floorDesignations, setErrors) => {
         materialDisplayName: material.governorName,
         quantity: material.quantity,
         quantityUnit: "mtrs",
+        unitPrice: unitPrice,
         price: material.quantity * material.price,
         materialType: "Governor",
       };

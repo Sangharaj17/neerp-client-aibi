@@ -1,16 +1,15 @@
 package com.aibi.neerp.quotation.controller;
 
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
-import com.aibi.neerp.quotation.dto.LiftSaveStatusRequestDTO;
-import com.aibi.neerp.quotation.dto.QuotationIdRequestDTO;
-import com.aibi.neerp.quotation.dto.QuotationMainRequestDTO;
-import com.aibi.neerp.quotation.dto.QuotationMainResponseDTO;
+import com.aibi.neerp.exception.ResourceNotFoundException;
+import com.aibi.neerp.quotation.dto.*;
 import com.aibi.neerp.quotation.service.QuotationService;
 import com.aibi.neerp.quotation.utility.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +23,16 @@ public class QuotationController {
 
     private final QuotationService quotationService;
 
+    @GetMapping("/check-existing")
+    public ResponseEntity<ApiResponse<Boolean>> checkExistingQuotation(
+            @RequestParam Integer combinedEnquiryId,
+            @RequestParam Integer leadId) {
+        return ResponseEntity.ok(
+                quotationService.checkExistingQuotation(combinedEnquiryId, leadId)
+        );
+    }
+
+
     // =========================================================
     // 🔹 CREATE OR UPDATE QUOTATION
     @PostMapping("/save")
@@ -32,6 +41,31 @@ public class QuotationController {
         System.out.println("------controller start call service-----------");
         return quotationService.saveQuotation(dto);
     }
+
+    // =========================================================
+    // 🔹 CREATE NEW REVISION
+    // =========================================================
+    @PostMapping("/revise/{oldQuotationMainId}")
+    public ApiResponse<QuotationMainResponseDTO> reviseQuotation(@PathVariable Integer oldQuotationMainId,
+                                                                 @RequestBody QuotationMainRequestDTO request) {
+        log.info("Received request to revise quotation: {}", oldQuotationMainId);
+        System.out.println("------controller start call service for revise-----------");
+        return quotationService.createRevisionFromDTO(oldQuotationMainId, request);
+    }
+
+
+    // =========================================================
+    // 🔹 Add the missing lift to revised quotation
+    // =========================================================
+    @PostMapping("/{quotationMainId}/add-lift")
+    public ApiResponse<QuotationMainResponseDTO> addMissingLift(
+            @PathVariable Integer quotationMainId,
+            @RequestBody QuotationLiftDetailRequestDTO dto
+    ) {
+        log.info("➡️ Add missing lift for quotation {}", quotationMainId);
+        return quotationService.addMissingLift(quotationMainId, dto);
+    }
+
 
     @PutMapping("/mark-saved")
     public ApiResponse<String> markLiftsAsSaved(@RequestBody LiftSaveStatusRequestDTO request) {
@@ -59,12 +93,49 @@ public class QuotationController {
     }
 
     // =========================================================
-    // 🔹 GET QUOTATION BY ID
+    // 🔹 GET QUOTATION BY ID (with full lift details)
+    // =========================================================
+//    @GetMapping("/{id}")
+//    public ApiResponse<QuotationMainResponseDTO> getQuotationById(@PathVariable Integer id) {
+//        log.info("Fetching quotation with ID: {}", id);
+//        return quotationService.getQuotationById(id);
+//    }
     @GetMapping("/{id}")
-    public ApiResponse<QuotationMainResponseDTO> getQuotationById(@PathVariable Integer id) {
-        log.info("Fetching quotation with ID: {}", id);
-        return quotationService.getQuotationById(id);
+    public ResponseEntity<ApiResponse<QuotationMainResponseDTO>> getQuotationById(
+            @PathVariable Integer id) {
+
+        log.info("API Hit → GET /api/quotations/{}", id);
+
+        ApiResponse<QuotationMainResponseDTO> response = quotationService.getQuotationById(id);
+
+        if (!response.isSuccess()) {
+            // ❗ Quotation not found → return 404
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        // ✔ Return 200 OK
+        return ResponseEntity.ok(response);
     }
+
+
+    // =========================================================
+    // 🔹 GET QUOTATION BY ID (with full lift details for revised quotation with merged lifts(get from parent lift if not exists) )
+    // =========================================================
+    @GetMapping("/revised/{id}")
+    public ResponseEntity<ApiResponse<QuotationMainResponseDTO>> getQuotationWithMergedLifts(
+            @PathVariable Integer id
+    ) {
+        ApiResponse<QuotationMainResponseDTO> response = quotationService.getQuotationWithMergedLifts(id);
+        if (!response.isSuccess()) {
+            // ❗ Quotation not found → return 404
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+
+        // ✔ Return 200 OK
+        return ResponseEntity.ok(response);
+    }
+
+
 
     // =========================================================
     // 🔹 DELETE QUOTATION
@@ -76,11 +147,12 @@ public class QuotationController {
 
     // =========================================================
     // 🔹 GET QUOTATIONS BY LEAD ID AND COMBINED ENQUIRY ID
+
     /**
      * ✅ Fetch quotations and their associated lift details for a given lead and combined enquiry.
-     *
+     * <p>
      * Example API call:
-     *  GET /api/quotations/by-lead-and-combined-enquiry?leadId=12&combinedEnquiryId=45
+     * GET /api/quotations/by-lead-and-combined-enquiry?leadId=12&combinedEnquiryId=45
      */
     @GetMapping("/by-lead-and-combined-enquiry")
     public ApiResponse<List<QuotationMainResponseDTO>> getQuotationsByLeadAndCombinedEnquiry(
@@ -95,7 +167,39 @@ public class QuotationController {
 
 
     // =========================================================
-    // 🔹 GET EXISTING ALL QUOTATIONS WITHOUT LIFTS DETAILS
+    // 🔹 GET ALL REVISIONS (ACTIVE & SUPERSEDED)
+    // =========================================================
+
+    /**
+     * ✅ Fetches ALL editions (revisions) of a quotation chain
+     * associated with a specific lead and combined enquiry, optionally filtered by quotation number,
+     * and only including valid editions (edition > 0).
+     * <p>
+     * Example API call:
+     * GET /api/quotations/all-revisions-by-enquiry?leadId=12&combinedEnquiryId=45&quotationNo=QUOT-12-001
+     */
+    @GetMapping("/all-revisions-by-enquiry")
+    public ApiResponse<List<QuotationMainResponseDTO>> getAllRevisionsByEnquiry(
+            @RequestParam(required = false) Integer leadId,
+            @RequestParam(required = false) Integer combinedEnquiryId,
+            @RequestParam(required = false) String quotationNo) { // 💡 New Parameter
+
+        log.info("Controller: Fetching ALL REVISIONS. Lead ID: {}, Combined Enquiry ID: {}, Quotation No: {}",
+                leadId, combinedEnquiryId, quotationNo);
+
+        // Update the service method call to pass the new parameter
+        return quotationService.getQuotationsByLeadCombinedEnquiryAndQuotationNo(
+                leadId,
+                combinedEnquiryId,
+                quotationNo // Pass the quotation number
+        );
+    }
+
+
+    // ================================================================================================================
+    // 🔹 GET EXISTING ALL QUOTATIONS WITHOUT LIFTS DETAILS for new quotation quotation list page
+    // ================================================================================================================
+
     /**
      * Fetches all QuotationMain records without loading the detailed lift information.
      */
@@ -115,8 +219,26 @@ public class QuotationController {
         }
     }
 
+
+    // ============================================================================================================
+    // 🔹 GET EXISTING ALL QUOTATIONS BY QUOTATION NO WITHOUT LIFTS DETAILS for revision page
+    // =============================================================================================================
+    // 🔹 Fetch all editions by Quotation No
+    @GetMapping("/by-quotation-no")
+    public ResponseEntity<ApiResponse<?>> getByQuotationNo(
+            @RequestParam String quotationNo) {
+
+        log.info("API Call: Get quotations by Quotation No = {}", quotationNo);
+
+        ApiResponse<List<QuotationMainResponseDTO>> response =
+                quotationService.getByQuotationNo(quotationNo.trim());
+
+        return ResponseEntity.ok(response);
+    }
+
     // =========================================================
     // 🔹 GET PAGE WISE QUOTATIONS WITHOUT LIFTS DETAILS
+    // =========================================================
     @GetMapping("/pagination-quotations-without-lifts")
     public ResponseEntity<ApiResponse<PaginationResponse<QuotationMainResponseDTO>>> getAllQuotationsList(
             // 💡 Spring automatically creates Pageable from request params:
@@ -137,10 +259,13 @@ public class QuotationController {
 
     // =========================================================
     // 🔹 FINALIZE QUOTATION
+    // =========================================================
+
     /**
      * Finalizes a specific quotation by ID.
+     *
      * @param quotationId The ID of the quotation to finalize.
-     * @param request The ID of the employee who finalize.
+     * @param request     The ID of the employee who finalize.
      * @return ApiResponse containing success status and message.
      */
     @PutMapping("/{quotationId}/finalize")
@@ -148,8 +273,8 @@ public class QuotationController {
         log.info("REST request to finalize Quotation ID: {} by Employee ID: {}",
                 quotationId, request.getEmployeeId());
 
-        System.out.println("REST request to finalize Quotation ID: "+quotationId+" by Employee ID: "+
-                 request.getEmployeeId());
+        System.out.println("REST request to finalize Quotation ID: " + quotationId + " by Employee ID: " +
+                request.getEmployeeId());
         ApiResponse<Void> response = quotationService.finalizeQuotation(quotationId, request.getEmployeeId());
 
         if (response.isSuccess()) {
@@ -162,10 +287,12 @@ public class QuotationController {
 
     // =========================================================
     // 🔹 DELETE QUOTATION
+
     /**
      * Delete a specific quotation by ID.
+     *
      * @param quotationId The ID of the quotation to finalize.
-     * @param request The ID of the employee who finalize.
+     * @param request     The ID of the employee who finalize.
      * @return ApiResponse containing success status and message.
      */
     @PutMapping("/{quotationId}/delete-by-status")

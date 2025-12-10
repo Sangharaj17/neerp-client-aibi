@@ -1,11 +1,11 @@
 // Import all your HTML generation utility functions here
 import {
-  generateLiftTable,
-  generateStandardFeaturesTable,
-  generateScopeOfWorkHtml,
-  generateLiftPriceRow,
-  generateCombinedLiftPriceTable,
-  generateTermsAndConditionsHtml
+    generateLiftTable,
+    generateStandardFeaturesTable,
+    generateScopeOfWorkHtml,
+    generateLiftPriceRow,
+    generateCombinedLiftPriceTable,
+    generateTermsAndConditionsHtml
 } from "@/utils/pdfElementCreations";
 import { formatDate } from "@/utils/common";
 
@@ -24,52 +24,52 @@ const getFeatureNameMap = () => { /* Logic to fetch/create map */ return {}; };
  * @returns {string} The full HTML document string.
  */
 export const generateQuotationHtml = (
-  quotationData,
-  includeLetterhead,
-  tenant,
-  COVER_IMG_URL,
-  BACK_IMG_URL,
-  LETTERHEAD_URL,
-  featureNameMap
+    quotationData,
+    includeLetterhead,
+    tenant,
+    COVER_IMG_URL,
+    BACK_IMG_URL,
+    LETTERHEAD_URL,
+    featureNameMap
 ) => {
-  // Data Extraction 
-  let company_name = tenant;
-  const values = "";
+    // Data Extraction 
+    let company_name = tenant;
+    const values = "";
 
-  const dateObject = new Date(quotationData.quotationDate);
-  const refName = "";
-  const monthName = dateObject.toLocaleString('en-US', { month: 'short' });
-  const financialYear = `${String(dateObject.getFullYear()).slice(-2)}-${String(dateObject.getFullYear() + 1).slice(-2)}`;
-  const refNo = `${financialYear}/${monthName}/${quotationData.quotationNo}`;
+    const dateObject = new Date(quotationData.quotationDate);
+    const refName = "";
+    const monthName = dateObject.toLocaleString('en-US', { month: 'short' });
+    const financialYear = `${String(dateObject.getFullYear()).slice(-2)}-${String(dateObject.getFullYear() + 1).slice(-2)}`;
+    const refNo = `${financialYear}/${monthName}/${quotationData.quotationNo}`;
 
-  const newQuatationDate = formatDate(quotationData.quotationDate) || '';
-  const quotationNo = quotationData.quotationNo || '';
+    const newQuatationDate = formatDate(quotationData.quotationDate) || '';
+    const quotationNo = quotationData.quotationNo || '';
 
-  const site_address = quotationData.siteAdder || '';
-  const siteName = quotationData.siteName || '';
+    const site_address = quotationData.siteAdder || '';
+    const siteName = quotationData.siteName || '';
 
-  const customerName = quotationData.customerName || '';
-  const contact_number = quotationData.contactNumber || '';
-  const contact_number1 = quotationData.contactNumber1 || '';
+    const customerName = quotationData.customerName || '';
+    const contact_number = quotationData.contactNumber || '';
+    const contact_number1 = quotationData.contactNumber1 || '';
 
-  const customer_name2 = quotationData.customerName2 || "";
-  const contact_number2 = quotationData.contactNumber2 || "";
+    const customer_name2 = quotationData.customerName2 || "";
+    const contact_number2 = quotationData.contactNumber2 || "";
 
-  const salutations1 = quotationData.salutations1 || '';
-  const salutations2 = quotationData.customerName2 ? quotationData.salutations2 : "";
+    const salutations1 = quotationData.salutations1 || '';
+    const salutations2 = quotationData.customerName2 ? quotationData.salutations2 : "";
 
-  const activity_by = quotationData.createdByEmployeeName || '';
-  const employeeContactNumber = quotationData.contactNumber || ''; // Assuming contactNumber is the employee's contact
-  const employeeRoleName = quotationData.employeeRoleName || '';
+    const activity_by = quotationData.createdByEmployeeName || '';
+    const employeeContactNumber = quotationData.contactNumber || ''; // Assuming contactNumber is the employee's contact
+    const employeeRoleName = quotationData.employeeRoleName || '';
 
-  const lift_qnty = quotationData.liftDetails.length || '';
+    const lift_qnty = quotationData.liftDetails.length || '';
 
-  // Define the safe area heights for the letterhead (critical for the margin fix)
-  const LETTERHEAD_TOP_SAFE_MM = 50;
-  const LETTERHEAD_BOTTOM_SAFE_MM = 28;
-  const CONTENT_SIDE_MARGIN_MM = 12;
+    // Define the safe area heights for the letterhead (critical for the margin fix)
+    const LETTERHEAD_TOP_SAFE_MM = 50;
+    const LETTERHEAD_BOTTOM_SAFE_MM = 28;
+    const CONTENT_SIDE_MARGIN_MM = 12;
 
-  const globalStyles = `
+    const globalStyles = `
     <style>
         :root {
             --a4-width-mm: 210mm;
@@ -163,21 +163,30 @@ export const generateQuotationHtml = (
         }
         
         /* Letterhead Overlay DIV for maximum compatibility across print engines. */
-        .letterhead-overlay {
-            position: fixed; /* Keep it fixed relative to the viewport/page */
-            top: 0;
-            left: 0;
-            /* Using A4 dimensions for fixed overlay for exact full bleed fit */
-            width: 100%; 
-            height: 100%; 
-            background-image: url('${LETTERHEAD_URL}') !important;
-            background-size: 100% 100% !important; 
-            background-repeat: no-repeat !important;
-            z-index: -100; /* Ensure it is behind all content */
-            margin: 0 !important; /* Ensure no margins push it */
-            /* This fixed element will be automatically repeated on every content page
-               by the browser's print engine, providing the full-bleed background. */
+        
+        @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
+        }
+
+        .letterhead-overlay {
+            position: fixed;
+            inset: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+
+            background-image: url('${LETTERHEAD_URL}') !important;
+            background-size: cover !important;
+            background-repeat: no-repeat !important;
+
+            z-index: -1000;
+            pointer-events: none;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+
+            }
 
         /* Keep tables and headings safe during page-breaks */
         table { width:100%; border-collapse: collapse; page-break-inside: avoid; }
@@ -193,17 +202,17 @@ export const generateQuotationHtml = (
 
 
 
-  // ******************** 2. Build Content Sections ***************
+    // ******************** 2. Build Content Sections ***************
 
-  // --- A. Cover Page ---
-  const coverPageHtml = `
+    // --- A. Cover Page ---
+    const coverPageHtml = `
         <div class="cover-page"></div>
     `;
 
 
-  // --- B. Initial Letter (First Content Page) ---
-  // Note: The content automatically flows within the @page margins.
-  const initialLetterHtml = `
+    // --- B. Initial Letter (First Content Page) ---
+    // Note: The content automatically flows within the @page margins.
+    const initialLetterHtml = `
         <div class="content-page">
             <div style="line-height:1.6;">
                 <table style="width:100%; margin-bottom:16mm;">
@@ -222,9 +231,9 @@ export const generateQuotationHtml = (
                     <strong style="text-transform:uppercase;">
                         ${customerName} ${contact_number ? `( +91 ${quotationData.contactNumber} )` : ''}           
                         ${customer_name2
-      ? `<br>${salutations2}&nbsp;${customer_name2}&nbsp;${contact_number2}`
-      : ''
-    }
+            ? `<br>${salutations2}&nbsp;${customer_name2}&nbsp;${contact_number2}`
+            : ''
+        }
                     </strong>
                 </p>
                 
@@ -251,97 +260,97 @@ export const generateQuotationHtml = (
     `;
 
 
-  // --- C. Lift Specifications and Features ---
-  let liftSpecsHtml = '';
-  quotationData.liftDetails.forEach((lift, i) => {
-    liftSpecsHtml += `
+    // --- C. Lift Specifications and Features ---
+    let liftSpecsHtml = '';
+    quotationData.liftDetails.forEach((lift, i) => {
+        liftSpecsHtml += `
             <div class="content-page">
                 ${generateLiftTable(lift,
-      i,
-      quotationData.customerName || '',
-      quotationData.siteAdder || '',
-      refName,
-      financialYear,
-      monthName,
-      quotationData.quotationNo || '',
-      newQuatationDate)
-      }
+            i,
+            quotationData.customerName || '',
+            quotationData.siteAdder || '',
+            refName,
+            financialYear,
+            monthName,
+            quotationData.quotationNo || '',
+            newQuatationDate)
+            }
             `;
 
-    if (lift.stdFeatureIds && lift.stdFeatureIds.length > 0) {
-      liftSpecsHtml += `              
+        if (lift.stdFeatureIds && lift.stdFeatureIds.length > 0) {
+            liftSpecsHtml += `              
                 ${generateStandardFeaturesTable(
-        lift.stdFeatureIds,
-        featureNameMap,
-        lift.liftTypeName,
-        lift.vfdMainDriveName,
-        lift.controlPanelMakeName,
-        lift.doorOperatorName,
-        lift.mainMachineSetName,
-        lift.carRailsName,
-        lift.wireRopeName,
-        lift.wiringHarnessName
-      )}              
+                lift.stdFeatureIds,
+                featureNameMap,
+                lift.liftTypeName,
+                lift.vfdMainDriveName,
+                lift.controlPanelMakeName,
+                lift.doorOperatorName,
+                lift.mainMachineSetName,
+                lift.carRailsName,
+                lift.wireRopeName,
+                lift.wiringHarnessName
+            )}              
             </div>
             `;
-    }
-  });
+        }
+    });
 
 
 
-  // --- D. Scope, Price, and Terms ---
-  const scopeContent = quotationData.scopeOfWorkContent;
-  const proposalContent = quotationData.proposalTermsContent;
-  const liftRows = quotationData.liftDetails
-    .map(lift => generateLiftPriceRow(lift))
-    .join("");
+    // --- D. Scope, Price, and Terms ---
+    const scopeContent = quotationData.scopeOfWorkContent;
+    const proposalContent = quotationData.proposalTermsContent;
+    const liftRows = quotationData.liftDetails
+        .map(lift => generateLiftPriceRow(lift))
+        .join("");
 
-  const liftPriceTables = generateCombinedLiftPriceTable(
-    liftRows,
-    quotationData.customerName,
-    quotationData.siteAdder,
-    refName,
-    financialYear,
-    monthName,
-    newQuatationDate
-  );
+    const liftPriceTables = generateCombinedLiftPriceTable(
+        liftRows,
+        quotationData.customerName,
+        quotationData.siteAdder,
+        refName,
+        financialYear,
+        monthName,
+        newQuatationDate
+    );
 
-  // collect lift-specific scope info
-  const liftScopeData = quotationData.liftDetails.map((lift, idx) => ({
-    liftNo: idx + 1,
-    warranty_period: lift.warrantyPeriodName,
-    pwd_including: lift.pwdIncludeExclude,
-    pwd_amount: lift.pwdAmount,
-    scaf_including: lift.scaffoldingIncludeExclude,
-    scaf_amount: lift.bambooScaffolding
-  }));
+    // collect lift-specific scope info
+    const liftScopeData = quotationData.liftDetails.map((lift, idx) => ({
+        liftNo: idx + 1,
+        warranty_period: lift.warrantyPeriodName,
+        pwd_including: lift.pwdIncludeExclude,
+        pwd_amount: lift.pwdAmount,
+        scaf_including: lift.scaffoldingIncludeExclude,
+        scaf_amount: lift.bambooScaffolding
+    }));
 
-  const scopePriceAndTermsHtml = `
+    const scopePriceAndTermsHtml = `
             <div class="page-break"></div>
             <div class="content-page">
                 ${generateScopeOfWorkHtml(
-    scopeContent,
-    liftScopeData,
-    liftPriceTables,
-    proposalContent,
-    company_name,
-    values)}
+        scopeContent,
+        liftScopeData,
+        liftPriceTables,
+        proposalContent,
+        company_name,
+        values)}
     </div>
         `;
 
-  // --- E. Terms & Conditions ---
-  const tncHtml = `
+    // --- E. Terms & Conditions ---
+    const tncHtml = `
         <div class="page-break"></div>
         <div class="content-page">
             ${generateTermsAndConditionsHtml(quotationData.tncContent)}
         </div>
     `;
 
-  // --- F. Back Page ---
-  const backPageHtml = `<div class="back-page"></div>`;
+    // --- F. Back Page ---
+    const backPageHtml = `<div class="back-page"></div>`;
 
-  // 3. Assemble the final HTML document
-  return `
+    // 3. Assemble the final HTML document
+    return `
         <!DOCTYPE html>
         <html>
         <head>

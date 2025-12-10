@@ -1,6 +1,7 @@
 package com.aibi.neerp.quotation.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class SelectedQuotationMaterial {
 
     @Id
@@ -51,8 +53,11 @@ public class SelectedQuotationMaterial {
     @Column(name = "material_unit", length = 255)
     private String quantityUnit;
 
+    @Column(name = "unit_price", nullable = false)
+    private Double unitPrice;
+
     // Correcting "prize" to "price" and using Double
-    @Column(name = "prize", nullable = false)
+    @Column(name = "price", nullable = false)
     private Double price;
 
     @Column(name = "created_at")
