@@ -1,5 +1,5 @@
 // components/AddJobForm.jsx
-import { useState , useEffect} from "react";
+import { useState, useEffect } from "react";
 import { X, User } from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import { toast } from "react-hot-toast";
@@ -8,10 +8,10 @@ import { useRouter, useParams } from "next/navigation";
 
 export default function AddJobForm() {
   const router = useRouter();
-  const [jobDetails,setJobDetails] = useState([]);
-//   "AMC for Mr. SAGAR KANJANE / Regent Hills - B&C WING",
-//     "AMC for Mr. JOHN DOE / Skyline Tower",
-//     "AMC for Mr. RAJ PATIL / Green Valley"
+  const [jobDetails, setJobDetails] = useState([]);
+  //   "AMC for Mr. SAGAR KANJANE / Regent Hills - B&C WING",
+  //     "AMC for Mr. JOHN DOE / Skyline Tower",
+  //     "AMC for Mr. RAJ PATIL / Green Valley"
   const [filteredJobs, setFilteredJobs] = useState(jobDetails);
   const [jobSearch, setJobSearch] = useState("");
   const [jobDropdownOpen, setJobDropdownOpen] = useState(false);
@@ -52,12 +52,12 @@ export default function AddJobForm() {
   // Track selected job type (small change)
   const [selectedJobType, setSelectedJobType] = useState("");
 
-//   const handleJobSearch = (value) => {
-//     setJobSearch(value);
-//     setFilteredJobs(
-//       jobDetails.filter((job) => job.toLowerCase().includes(value.toLowerCase()))
-//     );
-//   };
+  //   const handleJobSearch = (value) => {
+  //     setJobSearch(value);
+  //     setFilteredJobs(
+  //       jobDetails.filter((job) => job.toLowerCase().includes(value.toLowerCase()))
+  //     );
+  //   };
 
   const handleEngineerSearch = (value) => {
     setEngineerSearch(value);
@@ -98,12 +98,12 @@ export default function AddJobForm() {
     setRouteDropdownOpen(false);
 
     // Auto-select engineers for this route
-     // Auto-select engineers for this route
+    // Auto-select engineers for this route
     const routeEngineers = route.employees || []; // directly take employees from selected route
     setSelectedEngineers(routeEngineers);
   };
 
-   const [jobTypes, setJobTypes] = useState([]);
+  const [jobTypes, setJobTypes] = useState([]);
 
   // Fetch job types from API on mount
   useEffect(() => {
@@ -119,9 +119,9 @@ export default function AddJobForm() {
     fetchJobTypes();
   }, []);
 
-  useEffect(()=>{
+  useEffect(() => {
 
-  },[jobTypes])
+  }, [jobTypes])
 
   //  useEffect(() => {
   //   async function fetchJobs() {
@@ -141,244 +141,257 @@ export default function AddJobForm() {
   // }, []);
 
   useEffect(() => {
-  async function fetchJobs() {
-    try {
-      // Run both API calls in parallel
-      const [amcJobsRes, renewalJobsRes] = await Promise.all([
-        axiosInstance.get("/api/amc-jobs/pending"),
-        axiosInstance.get("/api/amc-renewal-jobs/pendingRenewalJobs")
-      ]);
 
-      const amcJobs = amcJobsRes.data;
-      const renewalJobs = renewalJobsRes.data;
+    async function fetchJobs() {
+      try {
+        if (selectedJobType === "New Installation") {
+          const res = await axiosInstance.get("/api/quotations/finalized-active");
+          const data = res.data?.data || [];
 
-      // Combine both results (customize as needed)
-      const combinedJobs = [...amcJobs, ...renewalJobs];
+          setJobDetails(data);
+          setFilteredJobs(data);
+        } else {
+          // Run both API calls in parallel
+          const [amcJobsRes, renewalJobsRes] = await Promise.all([
+            axiosInstance.get("/api/amc-jobs/pending"),
+            axiosInstance.get("/api/amc-renewal-jobs/pendingRenewalJobs")
+          ]);
 
-      // Store combined data in your states
-      setJobDetails(combinedJobs);
-      setFilteredJobs(combinedJobs);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
+          const amcJobs = amcJobsRes.data;
+          const renewalJobs = renewalJobsRes.data;
+
+          // Combine both results (customize as needed)
+          const combinedJobs = [...amcJobs, ...renewalJobs];
+
+          // Store combined data in your states
+          setJobDetails(combinedJobs);
+          setFilteredJobs(combinedJobs);
+        }
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+      }
     }
-  }
 
-  fetchJobs();
-}, []);
+    fetchJobs();
+  }, [selectedJobType]);
 
 
-   // ✅ Handle search filtering
+  // ✅ Handle search filtering
   const handleJobSearch = (value) => {
     setJobSearch(value);
+    console.log(value, "handleJobSearch");
+    console.log(jobDetails, "jobDetails");
     const filtered = jobDetails.filter((job) =>
       job.selectDetailForJob.toLowerCase().includes(value.toLowerCase())
     );
+    console.log(filtered, "filtered");
     setFilteredJobs(filtered);
   };
 
-const [jobDetailsData, setJobDetailsData] = useState(null);
+  const [jobDetailsData, setJobDetailsData] = useState(null);
 
- const fetchJobDetails = async () => {
-      //setLoading(true);
-      //setError(null);
-      try {
-        const response = await axiosInstance.post(
-          "/api/amc-jobs/get-add-job-details",
-          {
-            selectDetailForJob: selectedJob.selectDetailForJob,
-            amcQuatationId: selectedJob.amcQuatationId,
-            revisedQuatationId: selectedJob.revisedQuatationId,
-          }
-        );
-        setJobDetailsData(response.data);
-        setFilteredEngineers(response.data.employeeDtos || []);
-      
-        setRoutes(response.data.routesDtos || []);
-        setFilteredRoutes(response.data.routesDtos || []);
-        setEngineers(response.data.employeeDtos || []);
+  const fetchJobDetails = async () => {
+    //setLoading(true);
+    //setError(null);
+    try {
+      const response = await axiosInstance.post(
+        "/api/amc-jobs/get-add-job-details",
+        {
+          selectDetailForJob: selectedJob.selectDetailForJob,
+          amcQuatationId: selectedJob.amcQuatationId,
+          revisedQuatationId: selectedJob.revisedQuatationId,
+        }
+      );
+      setJobDetailsData(response.data);
+      setFilteredEngineers(response.data.employeeDtos || []);
 
-      } catch (err) {
-        console.error("Error fetching job details:", err);
-        setError("Failed to fetch job details");
-      } finally {
-        //setLoading(false);
-      }
-    };
+      setRoutes(response.data.routesDtos || []);
+      setFilteredRoutes(response.data.routesDtos || []);
+      setEngineers(response.data.employeeDtos || []);
 
-     const fetchRenewalJobDetails = async () => {
-      //setLoading(true);
-      //setError(null);
-      try {
-        const response = await axiosInstance.post(
-          "/api/amc-renewal-jobs/get-add-renewal-job-details",
-          {
-            selectDetailForJob: selectedJob.selectDetailForJob,
-            amcRenewalQuatationId: selectedJob.amcRenewalQuatationId,
-            revisedRenewalQuatationId: selectedJob.revisedRenewalQuatationId,
-          }
-        );
-        setJobDetailsData(response.data);
-        setFilteredEngineers(response.data.employeeDtos || []);
-      
-        setRoutes(response.data.routesDtos || []);
-        setFilteredRoutes(response.data.routesDtos || []);
-        setEngineers(response.data.employeeDtos || []);
+    } catch (err) {
+      console.error("Error fetching job details:", err);
+      setError("Failed to fetch job details");
+    } finally {
+      //setLoading(false);
+    }
+  };
 
-      } catch (err) {
-        console.error("Error fetching job details:", err);
-        setError("Failed to fetch job details");
-      } finally {
-        //setLoading(false);
-      }
-    };
+  const fetchRenewalJobDetails = async () => {
+    //setLoading(true);
+    //setError(null);
+    try {
+      const response = await axiosInstance.post(
+        "/api/amc-renewal-jobs/get-add-renewal-job-details",
+        {
+          selectDetailForJob: selectedJob.selectDetailForJob,
+          amcRenewalQuatationId: selectedJob.amcRenewalQuatationId,
+          revisedRenewalQuatationId: selectedJob.revisedRenewalQuatationId,
+        }
+      );
+      setJobDetailsData(response.data);
+      setFilteredEngineers(response.data.employeeDtos || []);
+
+      setRoutes(response.data.routesDtos || []);
+      setFilteredRoutes(response.data.routesDtos || []);
+      setEngineers(response.data.employeeDtos || []);
+
+    } catch (err) {
+      console.error("Error fetching job details:", err);
+      setError("Failed to fetch job details");
+    } finally {
+      //setLoading(false);
+    }
+  };
 
 
 
- useEffect(() => {
+  useEffect(() => {
     if (!selectedJob) return; // Do nothing if no job is selected
 
-    if(selectedJob.thisJobIsRenewal === true){
+    console.log(selectedJob);
+    if (selectedJob.thisJobIsRenewal === true) {
       fetchRenewalJobDetails();
-    }else
-    fetchJobDetails();
+    } else
+      fetchJobDetails();
 
   }, [selectedJob]);
 
-    const [jobStatus, setJobStatus] = useState("");
-    const [gstNumber, setCustomerGstNo] = useState("");
-    const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
+  const [jobStatus, setJobStatus] = useState("");
+  const [gstNumber, setCustomerGstNo] = useState("");
+  const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
 
 
 
   const handleSubmit = async () => {
 
     let selectedEmployeesIds = null;
-    if(selectedRoute == null && selectionMode === "manual"){
-       selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
+    if (selectedRoute == null && selectionMode === "manual") {
+      selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
     }
 
-  try {
-    const requestDto = {
-     // leadId: lead_id_state,
-      amcQuatationId: selectedJob.amcQuatationId || null,
-      revisedQuatationId: selectedJob.revisedQuatationId || null,
+    try {
+      const requestDto = {
+        // leadId: lead_id_state,
+        amcQuatationId: selectedJob.amcQuatationId || null,
+        revisedQuatationId: selectedJob.revisedQuatationId || null,
 
-     // serviceEngineerId: selectedEngineer,
-      salesExecutiveId: selectedSalesPerson,
-      routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
-      listOfEmployees: selectedEmployeesIds,
-      renewlStatus: 0,
-      contractType: "",
-      makeOfElevator: "",
-      noOfElevator: 0,
-      jobNo: 0,
-      customerGstNo: gstNumber,
-      jobType: "AMC",
-      startDate: jobDetailsData ? jobDetailsData.startDate : "",
-      endDate: "",
-      noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
-      jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
-      amountWithGst: 0,
-      amountWithoutGst: 0,
-      paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
-      gstPercentage: 0,
-      dealDate: "",
-      jobLiftDetail: "",
-      jobStatus: jobStatus,
-      status: 1,
-      renewalRemark: "",
-      isNew: 1,
-      currentServiceNumber: 0,
-    };
+        // serviceEngineerId: selectedEngineer,
+        salesExecutiveId: selectedSalesPerson,
+        routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
+        listOfEmployees: selectedEmployeesIds,
+        renewlStatus: 0,
+        contractType: "",
+        makeOfElevator: "",
+        noOfElevator: 0,
+        jobNo: 0,
+        customerGstNo: gstNumber,
+        jobType: "AMC",
+        startDate: jobDetailsData ? jobDetailsData.startDate : "",
+        endDate: "",
+        noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
+        jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
+        amountWithGst: 0,
+        amountWithoutGst: 0,
+        paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
+        gstPercentage: 0,
+        dealDate: "",
+        jobLiftDetail: "",
+        jobStatus: jobStatus,
+        status: 1,
+        renewalRemark: "",
+        isNew: 1,
+        currentServiceNumber: 0,
+      };
 
-    toast.loading("Saving job...");
+      toast.loading("Saving job...");
 
-    const response = await axiosInstance.post("/api/amc-jobs/create-amc-job", requestDto);
+      const response = await axiosInstance.post("/api/amc-jobs/create-amc-job", requestDto);
 
-    toast.dismiss(); // remove loading toast
+      toast.dismiss(); // remove loading toast
 
-    if (response.status === 200) {
-      toast.success("AMC Job saved successfully!");
-      // `/${tenant}/dashboard/jobs/amc_job_list`
+      if (response.status === 200) {
+        toast.success("AMC Job saved successfully!");
+        // `/${tenant}/dashboard/jobs/amc_job_list`
         router.push(
-              `/dashboard/jobs/amc_job_list/false`
-            );
-    } else {
-      toast.error("Something went wrong while saving!");
+          `/dashboard/jobs/amc_job_list/false`
+        );
+      } else {
+        toast.error("Something went wrong while saving!");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error saving AMC job:", error);
+      toast.error("Failed to save AMC job");
     }
-  } catch (error) {
-    toast.dismiss();
-    console.error("Error saving AMC job:", error);
-    toast.error("Failed to save AMC job");
-  }
-};
+  };
 
-const handleSubmitRenewalJob = async () => {
+  const handleSubmitRenewalJob = async () => {
 
     let selectedEmployeesIds = null;
-    if(selectedRoute == null && selectionMode === "manual"){
-       selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
+    if (selectedRoute == null && selectionMode === "manual") {
+      selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
     }
 
-  try {
-    const requestDto = {
-     // leadId: lead_id_state,
-      amcRenewalQuatationId: selectedJob.amcRenewalQuatationId || null,
-      revisedRenewalQuatationId: selectedJob.revisedRenewalQuatationId || null,
+    try {
+      const requestDto = {
+        // leadId: lead_id_state,
+        amcRenewalQuatationId: selectedJob.amcRenewalQuatationId || null,
+        revisedRenewalQuatationId: selectedJob.revisedRenewalQuatationId || null,
 
-     // serviceEngineerId: selectedEngineer,
-      salesExecutiveId: selectedSalesPerson,
-      routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
-      listOfEmployees: selectedEmployeesIds,
-      //renewlStatus: 0,
-      contractType: "",
-      makeOfElevator: "",
-      noOfElevator: 0,
-      jobNo: 0,
-      customerGstNo: gstNumber,
-      jobType: "AMC",
-      startDate: jobDetailsData ? jobDetailsData.startDate : "",
-      endDate: "",
-      noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
-      jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
-      amountWithGst: 0,
-      amountWithoutGst: 0,
-      paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
-      gstPercentage: 0,
-      dealDate: "",
-      jobLiftDetail: "",
-      jobStatus: jobStatus,
-      status: 1,
-      renewalRemark: "",
-      isNew: 1,
-      currentServiceNumber: 0,
-    };
+        // serviceEngineerId: selectedEngineer,
+        salesExecutiveId: selectedSalesPerson,
+        routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
+        listOfEmployees: selectedEmployeesIds,
+        //renewlStatus: 0,
+        contractType: "",
+        makeOfElevator: "",
+        noOfElevator: 0,
+        jobNo: 0,
+        customerGstNo: gstNumber,
+        jobType: "AMC",
+        startDate: jobDetailsData ? jobDetailsData.startDate : "",
+        endDate: "",
+        noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
+        jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
+        amountWithGst: 0,
+        amountWithoutGst: 0,
+        paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
+        gstPercentage: 0,
+        dealDate: "",
+        jobLiftDetail: "",
+        jobStatus: jobStatus,
+        status: 1,
+        renewalRemark: "",
+        isNew: 1,
+        currentServiceNumber: 0,
+      };
 
-    toast.loading("Saving Renewal job...");
+      toast.loading("Saving Renewal job...");
 
-    const response = await axiosInstance.post("/api/amc-renewal-jobs/create-amc-renewal-job", requestDto);
+      const response = await axiosInstance.post("/api/amc-renewal-jobs/create-amc-renewal-job", requestDto);
 
-    toast.dismiss(); // remove loading toast
+      toast.dismiss(); // remove loading toast
 
-    if (response.status === 200) {
-      toast.success("AMC Renewal Job saved successfully!");
-      // `/${tenant}/dashboard/jobs/amc_job_list`
-      let isRenewal = false;
-      if(selectedJob.thisJobIsRenewal === true){
-        isRenewal = true;
-      }
+      if (response.status === 200) {
+        toast.success("AMC Renewal Job saved successfully!");
+        // `/${tenant}/dashboard/jobs/amc_job_list`
+        let isRenewal = false;
+        if (selectedJob.thisJobIsRenewal === true) {
+          isRenewal = true;
+        }
         router.push(
-              `/dashboard/jobs/amc_job_list/${isRenewal}`
-            );
-    } else {
-      toast.error("Something went wrong while saving!");
+          `/dashboard/jobs/amc_job_list/${isRenewal}`
+        );
+      } else {
+        toast.error("Something went wrong while saving!");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error saving AMC job:", error);
+      toast.error("Failed to save AMC job");
     }
-  } catch (error) {
-    toast.dismiss();
-    console.error("Error saving AMC job:", error);
-    toast.error("Failed to save AMC job");
-  }
-};
+  };
 
 
   return (
@@ -388,74 +401,84 @@ const handleSubmitRenewalJob = async () => {
       {/* Job Type and (conditionally shown) Job Selection */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Job Type */}
-         <div>
-      <label className="block text-sm font-medium mb-1">Job Type*</label>
-      <select
-        className="w-full border rounded-lg p-2"
-        value={selectedJobType}
-        onChange={(e) => {
-          setSelectedJobType(e.target.value);
-          // reset job detail when type changes
-          setSelectedJob("");
-          setJobSearch("");
-          setFilteredJobs(jobDetails);
-        }}
-      >
-        <option value="">Select Job Type</option>
-        {jobTypes.map((type) => (
-          <option key={type.enquiryTypeId} value={type.enquiryTypeName}>
-            {type.enquiryTypeName}
-          </option>
-        ))}
-      </select>
-    </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Job Type*</label>
+          <select
+            className="w-full border rounded-lg p-2"
+            value={selectedJobType}
+            onChange={(e) => {
+              setSelectedJobType(e.target.value);
+              // reset job detail when type changes
+              setSelectedJob("");
+              setJobSearch("");
+              setFilteredJobs(jobDetails);
+            }}
+          >
+            <option value="">Select Job Type</option>
+            {jobTypes.map((type) => (
+              <option key={type.enquiryTypeId} value={type.enquiryTypeName}>
+                {type.enquiryTypeName}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Select Detail For Job - SHOW ONLY when a job type is chosen */}
-              {/* Select Detail For Job - SHOW ONLY when a job type is chosen */}
-      {selectedJobType && (
-        <div className="relative">
-          <label className="block text-sm font-medium mb-1">
-            Select Detail For Job*
-          </label>
-          <input
-            type="text"
-            value={jobSearch}
-            onChange={(e) => handleJobSearch(e.target.value)}
-            onFocus={() => setJobDropdownOpen(true)}
-            onBlur={() => setTimeout(() => setJobDropdownOpen(false), 150)}
-            placeholder="Search Job..."
-            className="w-full border rounded-lg p-2"
-          />
-          {jobDropdownOpen && (
-            <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
-              {filteredJobs.length > 0 ? (
-                filteredJobs.map((job, index) => (
-                  <li
-                    key={index}
-                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                    onClick={() => {
-                      setSelectedJob(job); // store full object
-                      setJobSearch(job.selectDetailForJob); // show text in input
-                      setJobDropdownOpen(false);
-                    }}
-                  >
-                    {job.selectDetailForJob}
+        {/* Select Detail For Job - SHOW ONLY when a job type is chosen */}
+        {selectedJobType && (
+          <div className="relative">
+            <label className="block text-sm font-medium mb-1">
+              Select Detail For Job*
+            </label>
+            <input
+              type="text"
+              value={jobSearch}
+              onChange={(e) => handleJobSearch(e.target.value)}
+              onFocus={() => setJobDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setJobDropdownOpen(false), 150)}
+              placeholder="Search Job..."
+              className="w-full border rounded-lg p-2"
+            />
+            {jobDropdownOpen && (
+              <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
+                {console.log(filteredJobs, "filteredJobs")}
+                {filteredJobs.length > 0 ? (
+                  filteredJobs.map((job, index) => {
+                    const selectDetailForJob =
+                      selectedJobType === "New Installation"
+                        ? job.formattedTitle
+                        : job.selectDetailForJob;
+
+
+                    return (
+                      <li
+                        key={index}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setSelectedJob(job);                 // save full job object
+                          setJobSearch(selectDetailForJob);    // show text in input
+                          setJobDropdownOpen(false);           // close dropdown
+                        }}
+                      >
+                        {selectDetailForJob}
+                      </li>
+                    );
+                  })
+                ) : (
+                  <li className="px-3 py-2 text-gray-400 text-sm">
+                    No results found
                   </li>
-                ))
-              ) : (
-                <li className="px-3 py-2 text-gray-400 text-sm">
-                  No results found
-                </li>
-              )}
-            </ul>
-          )}
-          {selectedJob && (
-            <div className="mt-2 text-sm text-green-700 font-medium">
-              ✅ {selectedJob.selectDetailForJob}
-            </div>
-          )}
-        </div>
-      )}
+                )}
+              </ul>
+            )}
+
+            {selectedJob && (
+              <div className="mt-2 text-sm text-green-700 font-medium">
+                ✅ {selectedJob.selectDetailForJob}
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
 
@@ -465,35 +488,35 @@ const handleSubmitRenewalJob = async () => {
           {/* Remaining Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Job Amount */}
-           <div>
-  <label className="block text-sm font-medium mb-1">Job Amount*</label>
-  <input
-    type="number"
-    readOnly
-    value={jobDetailsData ? jobDetailsData.jobAmount : 0}
-    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-  />
-</div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Job Amount*</label>
+              <input
+                type="number"
+                readOnly
+                value={jobDetailsData ? jobDetailsData.jobAmount : 0}
+                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+              />
+            </div>
 
-<div>
-  <label className="block text-sm font-medium mb-1">Customer</label>
-  <input
-    readOnly
-    value={jobDetailsData ? jobDetailsData.customer : ""}
-    type="text"
-    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-  />
-</div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer</label>
+              <input
+                readOnly
+                value={jobDetailsData ? jobDetailsData.customer : ""}
+                type="text"
+                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+              />
+            </div>
 
-<div>
-  <label className="block text-sm font-medium mb-1">Customer Site</label>
-  <input
-    readOnly
-    value={jobDetailsData ? jobDetailsData.customerSite : ""}
-    type="text"
-    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-  />
-</div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Customer Site</label>
+              <input
+                readOnly
+                value={jobDetailsData ? jobDetailsData.customerSite : ""}
+                type="text"
+                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+              />
+            </div>
 
 
             <div>
@@ -503,8 +526,8 @@ const handleSubmitRenewalJob = async () => {
 
             <div>
               <label className="block text-sm font-medium mb-1">Customer GST No</label>
-              <input onChange={(e)=>{
-                 setCustomerGstNo(e.target.value);
+              <input onChange={(e) => {
+                setCustomerGstNo(e.target.value);
               }} type="text" className="w-full border rounded-lg p-2" />
             </div>
 
@@ -512,8 +535,8 @@ const handleSubmitRenewalJob = async () => {
               <label className="block text-sm font-medium mb-1">
                 Sales Executive*
               </label>
-              <select onChange={(e)=>{
-                  setSelectedSalesPerson(e.target.value);
+              <select onChange={(e) => {
+                setSelectedSalesPerson(e.target.value);
               }} className="w-full border rounded-lg p-2">
                 <option value="">Select</option>
                 {engineers.map((engineer) => (
@@ -525,15 +548,15 @@ const handleSubmitRenewalJob = async () => {
             </div>
 
 
-           <div>
-  <label className="block text-sm font-medium mb-1">Start Date*</label>
-  <input
-    type="date"
-    readOnly
-    value={jobDetailsData ? jobDetailsData.startDate : ""}
-    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-  />
-</div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Start Date*</label>
+              <input
+                type="date"
+                readOnly
+                value={jobDetailsData ? jobDetailsData.startDate : ""}
+                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+              />
+            </div>
 
 
             {/* <div>
@@ -545,29 +568,29 @@ const handleSubmitRenewalJob = async () => {
             </div> */}
 
             <div>
-      <label className="block text-sm font-medium mb-1">Job Status*</label>
-      <select
-        value={jobStatus}
-        onChange={(e) => setJobStatus(e.target.value)}
-        className="w-full border rounded-lg p-2"
-      >
-        <option value="">-- Select Job Status --</option>
-        <option value="Hold">Hold</option>
-        <option value="WIP">WIP</option>
-        <option value="Pre Service">Pre Service</option>
-        <option value="Option">Option</option>
-      </select>
-    </div>
+              <label className="block text-sm font-medium mb-1">Job Status*</label>
+              <select
+                value={jobStatus}
+                onChange={(e) => setJobStatus(e.target.value)}
+                className="w-full border rounded-lg p-2"
+              >
+                <option value="">-- Select Job Status --</option>
+                <option value="Hold">Hold</option>
+                <option value="WIP">WIP</option>
+                <option value="Pre Service">Pre Service</option>
+                <option value="Option">Option</option>
+              </select>
+            </div>
 
             <div>
-  <label className="block text-sm font-medium mb-1">Payment Terms*</label>
-  <input
-    type="text"
-    readOnly
-    value={jobDetailsData ? jobDetailsData.paymentTerm : ""}
-    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-  />
-</div>
+              <label className="block text-sm font-medium mb-1">Payment Terms*</label>
+              <input
+                type="text"
+                readOnly
+                value={jobDetailsData ? jobDetailsData.paymentTerm : ""}
+                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+              />
+            </div>
 
           </div>
 
@@ -579,7 +602,7 @@ const handleSubmitRenewalJob = async () => {
                 name="selectionMode"
                 value="routes"
                 checked={selectionMode === "routes"}
-                onChange={() =>{ 
+                onChange={() => {
                   setSelectionMode("routes");
                   setSelectedEngineers([]); // 
                 }}
@@ -619,7 +642,7 @@ const handleSubmitRenewalJob = async () => {
               {routeDropdownOpen && (
                 <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
                   {filteredRoutes.length > 0 ? (
-                    filteredRoutes.map((route , index) => (
+                    filteredRoutes.map((route, index) => (
                       <li
                         key={index}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
@@ -662,11 +685,11 @@ const handleSubmitRenewalJob = async () => {
                 {engineerDropdownOpen && (
                   <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
                     {filteredEngineers.length > 0 ? (
-                      filteredEngineers.map((eng , index) => (
+                      filteredEngineers.map((eng, index) => (
                         <li
                           key={index}
                           className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() =>{ 
+                          onClick={() => {
                             addEngineer(eng);
                             setEngineerSearch("");
                             setFilteredEngineers(engineers);
@@ -693,7 +716,7 @@ const handleSubmitRenewalJob = async () => {
           {/* Selected Engineers Grid */}
           {selectedEngineers.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              {selectedEngineers.map((eng , index) => (
+              {selectedEngineers.map((eng, index) => (
                 <div
                   key={index}
                   className="border rounded-xl p-4 shadow hover:shadow-md flex items-start gap-3 bg-gray-50 relative"
@@ -716,117 +739,117 @@ const handleSubmitRenewalJob = async () => {
           )}
 
           <div className="mt-6">
-  <h2 className="text-2xl font-bold mb-6 text-gray-800">Lift Details</h2>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-    {jobDetailsData?.liftDatas?.map((lift, index) => (
-      <div
-        key={index}
-        className="relative border rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-shadow duration-300 p-5 overflow-hidden"
-      >
-        {/* Gradient Header */}
-        <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-t-2xl flex items-center px-5 text-white font-bold text-lg">
-          {/* Lift {index + 1} */}
-          {lift.liftName || `Lift ${index + 1}`}
-        </div>
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Lift Details</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {jobDetailsData?.liftDatas?.map((lift, index) => (
+                <div
+                  key={index}
+                  className="relative border rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-shadow duration-300 p-5 overflow-hidden"
+                >
+                  {/* Gradient Header */}
+                  <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-t-2xl flex items-center px-5 text-white font-bold text-lg">
+                    {/* Lift {index + 1} */}
+                    {lift.liftName || `Lift ${index + 1}`}
+                  </div>
 
-        <div className="mt-14 grid grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <span className="text-gray-500 text-sm mb-1 flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1 text-blue-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Lift Name
-            </span>
-            <span className="text-gray-800 font-medium">{lift.liftName || "N/A"}</span>
-          </div>
+                  <div className="mt-14 grid grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <span className="text-gray-500 text-sm mb-1 flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1 text-blue-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Lift Name
+                      </span>
+                      <span className="text-gray-800 font-medium">{lift.liftName || "N/A"}</span>
+                    </div>
 
-          <div className="flex flex-col">
-            <span className="text-gray-500 text-sm mb-1 flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1 text-green-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m2 0a2 2 0 110 4H7a2 2 0 110-4h2"
-                />
-              </svg>
-              Capacity
-            </span>
-            <span className="text-gray-800 font-medium">{lift.capacityValue}</span>
-          </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-500 text-sm mb-1 flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1 text-green-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12h6m2 0a2 2 0 110 4H7a2 2 0 110-4h2"
+                          />
+                        </svg>
+                        Capacity
+                      </span>
+                      <span className="text-gray-800 font-medium">{lift.capacityValue}</span>
+                    </div>
 
-          <div className="flex flex-col">
-            <span className="text-gray-500 text-sm mb-1 flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1 text-purple-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-8 8v8m8-8v8M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"
-                />
-              </svg>
-              Type
-            </span>
-            <span className="text-gray-800 font-medium">{lift.typeOfElevators}</span>
-          </div>
+                    <div className="flex flex-col">
+                      <span className="text-gray-500 text-sm mb-1 flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1 text-purple-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-8 8v8m8-8v8M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Type
+                      </span>
+                      <span className="text-gray-800 font-medium">{lift.typeOfElevators}</span>
+                    </div>
 
-          <div className="flex flex-col">
-            <span className="text-gray-500 text-sm mb-1 flex items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 mr-1 text-red-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 7h18M3 12h18M3 17h18"
-                />
-              </svg>
-              Floors
-            </span>
-            <span className="text-gray-800 font-medium">{lift.noOfFloors}</span>
+                    <div className="flex flex-col">
+                      <span className="text-gray-500 text-sm mb-1 flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4 mr-1 text-red-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 7h18M3 12h18M3 17h18"
+                          />
+                        </svg>
+                        Floors
+                      </span>
+                      <span className="text-gray-800 font-medium">{lift.noOfFloors}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
 
 
           {/* Submit Button */}
           <div className="mt-6">
-            <button onClick={()=>{
+            <button onClick={() => {
 
-              if(selectedJob.thisJobIsRenewal === true){
+              if (selectedJob.thisJobIsRenewal === true) {
                 handleSubmitRenewalJob();
-              }else{
+              } else {
                 handleSubmit();
               }
 

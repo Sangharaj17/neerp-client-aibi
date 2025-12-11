@@ -132,10 +132,17 @@ public class EnquiryService {
         dto.setProjectName(entity.getProjectName());
         dto.setSiteName(entity.getSiteName());;
         dto.setEnquiryDate(entity.getCreatedDate());
-        
-        dto.setCompanyAmcGstPercentage(companySettingService.getCompanySetting().getGstRateAmcTotalPercentage());  
-        
-        
+
+        Double amcGst = companySettingService
+                .getCompanySetting()
+                .getGstRateAmcTotalPercentage();
+
+        dto.setCompanyAmcGstPercentage(
+                amcGst != null ? amcGst : 0.0
+        );
+
+
+
         // dto.setLeadCompanyName(entity.getLead().getCompanyName());
 
         NewLeads lead = entity.getLead();

@@ -42,6 +42,7 @@ public class QuotationController {
         return quotationService.saveQuotation(dto);
     }
 
+
     // =========================================================
     // 🔹 CREATE NEW REVISION
     // =========================================================
@@ -77,6 +78,7 @@ public class QuotationController {
         return new ApiResponse<>(true, "Lifts and Quotation updated successfully!", null);
     }
 
+
 //    @PutMapping("/mark-saved")
 //    public ApiResponse<String> markLiftsAsSaved(@RequestBody LiftSaveStatusRequestDTO request) {
 //        log.info("🔹 Marking lifts as saved: {}", request);
@@ -84,13 +86,16 @@ public class QuotationController {
 //        return new ApiResponse<>(true, "Lifts marked as saved successfully!", null);
 //    }
 
+
     // =========================================================
     // 🔹 GET ALL QUOTATIONS
+    // =========================================================
     @GetMapping
     public ApiResponse<List<QuotationMainResponseDTO>> getAllQuotations() {
         log.info("Fetching all quotations...");
         return quotationService.getAllQuotations();
     }
+
 
     // =========================================================
     // 🔹 GET QUOTATION BY ID (with full lift details)
@@ -136,7 +141,6 @@ public class QuotationController {
     }
 
 
-
     // =========================================================
     // 🔹 DELETE QUOTATION
     @DeleteMapping("/{id}")
@@ -145,8 +149,10 @@ public class QuotationController {
         return quotationService.deleteQuotation(id);
     }
 
+
     // =========================================================
     // 🔹 GET QUOTATIONS BY LEAD ID AND COMBINED ENQUIRY ID
+    // =========================================================
 
     /**
      * ✅ Fetch quotations and their associated lift details for a given lead and combined enquiry.
@@ -236,6 +242,7 @@ public class QuotationController {
         return ResponseEntity.ok(response);
     }
 
+
     // =========================================================
     // 🔹 GET PAGE WISE QUOTATIONS WITHOUT LIFTS DETAILS
     // =========================================================
@@ -256,6 +263,7 @@ public class QuotationController {
             return ResponseEntity.status(500).body(response);
         }
     }
+
 
     // =========================================================
     // 🔹 FINALIZE QUOTATION
@@ -285,8 +293,10 @@ public class QuotationController {
         }
     }
 
+
     // =========================================================
     // 🔹 DELETE QUOTATION
+    // =========================================================
 
     /**
      * Delete a specific quotation by ID.
@@ -309,6 +319,26 @@ public class QuotationController {
             return ResponseEntity.status(400).body(response);
         }
     }
+
+
+    // =========================================================
+    // 🔹 GET ALL FINALIZED & NOT DELETED QUOTATIONS (NO LIFTS)
+    // =========================================================
+    @GetMapping("/finalized-active")
+    public ResponseEntity<ApiResponse<List<QuotationMinimalDTO>>> getFinalizedActiveQuotations() {
+
+        log.info("Fetching all FINALIZED & ACTIVE (not deleted) quotations without lifts...");
+
+        ApiResponse<List<QuotationMinimalDTO>> response =
+                quotationService.getFinalizedActiveQuotations();
+
+        if (response.isSuccess()) {
+            return ResponseEntity.ok(response);
+        } else {
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
 
     // =========================================================
     // 🔹 HEALTH CHECK / DEBUG

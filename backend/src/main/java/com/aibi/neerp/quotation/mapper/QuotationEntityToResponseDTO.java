@@ -1,11 +1,16 @@
 package com.aibi.neerp.quotation.mapper;
 
 import com.aibi.neerp.componentpricing.entity.AdditionalFloors;
+import com.aibi.neerp.customer.entity.Customer;
+import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.customer.repository.CustomerRepository;
+import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.quotation.dto.QuotationLiftDetailResponseDTO;
 import com.aibi.neerp.quotation.dto.QuotationMainResponseDTO;
+import com.aibi.neerp.quotation.dto.QuotationMinimalDTO;
 import com.aibi.neerp.quotation.dto.SelectedMaterialResponseDTO;
 import com.aibi.neerp.quotation.entity.QuotationLiftDetail;
 import com.aibi.neerp.quotation.entity.QuotationMain;
@@ -24,6 +29,8 @@ import java.util.stream.Collectors;
 public class QuotationEntityToResponseDTO {
 
     private final QuotationMainRepository quotationMainRepository;
+    private final CustomerRepository customerRepository;
+    private final SiteRepository siteRepository;
 
     public QuotationMainResponseDTO mapQuotationEntityToResponseDTO(QuotationMain entity) {
         QuotationMainResponseDTO dto = new QuotationMainResponseDTO();
@@ -54,7 +61,7 @@ public class QuotationEntityToResponseDTO {
         dto.setCustomerName(entity.getCustomerName());
         dto.setCustomerName2(leadOpt.map(NewLeads::getCustomerName2).orElse(null));
 //        dto.setCustomerName(leadOpt.map(NewLeads::getCustomer1Contact).orElse(entity.getCustomerName()));
-        dto.setCustomerId(entity.getCustomerId());
+//        dto.setCustomerId(entity.getCustomerId());
         dto.setCustomerAdder(leadOpt.map(NewLeads::getAddress).orElse(null));
         dto.setCustomerStd(leadOpt.map(NewLeads::getStatus).orElse(null)); // Assuming Status field holds the STD code
         dto.setContactNumber(leadOpt.map(NewLeads::getContactNo).orElse(null));
@@ -64,7 +71,7 @@ public class QuotationEntityToResponseDTO {
         dto.setSalutations2(leadOpt.map(NewLeads::getSalutations2).orElse(null));
 
         dto.setSiteName(entity.getSiteName());
-        dto.setSiteId(entity.getSiteId());
+//        dto.setSiteId(entity.getSiteId());
         dto.setSiteAdder(leadOpt.map(NewLeads::getSiteAddress).orElse(null));
 
         // --- Created / Approved ---
@@ -116,7 +123,7 @@ public class QuotationEntityToResponseDTO {
                 .enquiryTypeId(entity.getEnquiryTypeId())
                 .enqDate(entity.getEnqDate())
 
-                .parentLiftId(entity.getParentLift() != null ?Math.toIntExact( entity.getParentLift().getId()) : null)
+                .parentLiftId(entity.getParentLift() != null ? Math.toIntExact(entity.getParentLift().getId()) : null)
 
                 // --- Lift Config ---
                 .liftType(entity.getLiftType() != null ? entity.getLiftType().getId() : null)
@@ -328,12 +335,28 @@ public class QuotationEntityToResponseDTO {
         Employee deletedBy = entity.getDeletedBy();
         Employee revisedBy = entity.getRevisedBy();
 
+        // ===================== CUSTOMER LOOKUP ======================
+        Customer customer = null;
+        if (entity.getCustomerName() != null) {
+            customer = customerRepository.findByCustomerNameIgnoreCase(entity.getCustomerName())
+                    .orElse(null);
+        }
+
+        // ===================== SITE LOOKUP ======================
+        Site site = null;
+        if (entity.getSiteName() != null && customer != null) {
+            site = siteRepository.findByCustomer_CustomerIdAndSiteNameIgnoreCase(
+                    customer.getCustomerId(),
+                    entity.getSiteName()
+            ).orElse(null);
+        }
+
         // Check if any quotation in the revision group is finalized
         boolean hasAnyRevisionFinalized = false;
         if (entity.getQuotationNo() != null && entity.getLead() != null && entity.getCombinedEnquiry() != null) {
             List<QuotationMain> allQuotationsInGroup = quotationMainRepository
                     .findByQuotationNoIgnoreCaseOrderByEditionAsc(entity.getQuotationNo());
-            
+
             hasAnyRevisionFinalized = allQuotationsInGroup.stream()
                     .anyMatch(q -> Boolean.TRUE.equals(q.getIsFinalized()));
         }
@@ -357,14 +380,22 @@ public class QuotationEntityToResponseDTO {
                 .enquiryTypeId(entity.getEnquiryTypeId())
 
                 // Customer & Site
-                .customerName(entity.getCustomerName())
-                .customerId(entity.getCustomerId())
+//                .customerName(entity.getCustomerName())
+//                .customerId(entity.getCustomerId())
 //                .customerAdder(entity.getLead() != null ? entity.getLead().getAddress() : null)
 //                .customerStd(entity.getLead() != null ? entity.getLead().getStatus() : null)
 
-                .siteName(entity.getSiteName())
-                .siteId(entity.getSiteId())
+                .customerName(customer != null ? customer.getCustomerName() : entity.getCustomerName())
+                .customerId(customer != null ? customer.getCustomerId() : null)
+                .customerAdder(customer != null ? customer.getAddress() : null)
+
+//                .siteName(entity.getSiteName())
+//                .siteId(entity.getSiteId())
 //                .siteAdder(entity.getLead() != null ? entity.getLead().getSiteAddress() : null)
+
+                .siteName(site != null ? site.getSiteName() : entity.getSiteName())
+                .siteId(site != null ? site.getSiteId() : null)
+                .siteAdder(site != null ? site.getSiteAddress() : null)
 
                 // Created / Approved info
                 .createdByEmployeeId(createdBy != null ? createdBy.getEmployeeId() : null)
@@ -417,4 +448,27 @@ public class QuotationEntityToResponseDTO {
         }
         return dto;
     }
+
+
+
+    public QuotationMinimalDTO mapToMinimalQuotationDTO(QuotationMain entity) {
+
+        String customerName = entity.getCustomerName() != null
+                ? entity.getCustomerName()
+                : (entity.getCustomer() != null ? entity.getCustomer().getCustomerName() : "Unknown");
+
+        String siteName = entity.getSiteName() != null
+                ? entity.getSiteName()
+                : (entity.getSite() != null ? entity.getSite().getSiteName() : "Unknown");
+
+        String formattedTitle = "NewInstallation For " + customerName + " / " + siteName;
+
+        return QuotationMinimalDTO.builder()
+                .id(entity.getId())
+                .customerName(customerName)
+                .siteName(siteName)
+                .formattedTitle(formattedTitle)
+                .build();
+    }
+
 }

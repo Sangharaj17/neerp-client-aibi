@@ -43,6 +43,8 @@ const NavigationAccordion = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
 
   useEffect(() => {
     if (!tenant) return;
@@ -54,6 +56,8 @@ const NavigationAccordion = () => {
 
   const handleLogout = async () => {
     try {
+      setLogoutLoading(true);
+
       const tokenKey = `${tenant}_token`;
       const storedToken = localStorage.getItem(tokenKey);
 
@@ -79,7 +83,11 @@ const NavigationAccordion = () => {
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed");
+      setLogoutLoading(false);
     }
+    // finally {
+    //   setLogoutLoading(false); // 👉 Always remove spinner
+    // }
   };
 
   useEffect(() => {
@@ -193,7 +201,7 @@ const NavigationAccordion = () => {
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
         { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` },
-                { title: 'Inspection Report', href: `/dashboard/lead-management/inspection-report` }
+        { title: 'Inspection Report', href: `/dashboard/lead-management/inspection-report` }
 
       ]
     },
@@ -250,10 +258,10 @@ const NavigationAccordion = () => {
         { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
       ]
     },
-     {
+    {
       id: 'sitre-expenses',
       title: 'Site Expenses',
-       icon: Settings,
+      icon: Settings,
       hasSubmenu: true,
       submenu: [
         { title: 'Site Expences', href: '/dashboard/site-expences' },
@@ -311,8 +319,8 @@ const NavigationAccordion = () => {
                     onClick={() => toggleSection(section.id)}
                     title={section.title}
                     className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                        ? 'text-slate-900 bg-slate-100'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      ? 'text-slate-900 bg-slate-100'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -335,8 +343,8 @@ const NavigationAccordion = () => {
                             onClick={() => handleNavigation(item.href)}
                             title={item.title}
                             className={`block px-3 py-1.5 text-sm rounded-md transition-colors ${isItemActive
-                                ? 'text-slate-900 font-medium bg-slate-100'
-                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                              ? 'text-slate-900 font-medium bg-slate-100'
+                              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                           >
                             <div className="flex items-center justify-between">
@@ -357,8 +365,8 @@ const NavigationAccordion = () => {
                   onClick={() => handleNavigation(section.href)}
                   title={section.title}
                   className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                      ? 'text-slate-900 bg-slate-100'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'text-slate-900 bg-slate-100'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -393,7 +401,11 @@ const NavigationAccordion = () => {
               onClick={handleLogout}
               className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              {logoutLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <LogOut className="w-4 h-4 mr-2" />
+              )}
               Logout
             </button>
           </div>

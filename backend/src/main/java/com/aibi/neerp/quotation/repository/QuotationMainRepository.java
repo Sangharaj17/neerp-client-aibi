@@ -120,4 +120,10 @@ public interface QuotationMainRepository extends JpaRepository<QuotationMain, In
             @Param("combinedEnquiryId") Integer combinedEnquiryId
     );
 
+    List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
+
+    @Query("SELECT COUNT(q) FROM QuotationMain q " +
+            "WHERE q.isDeleted = false AND q.edition = 0 AND q.parentQuotation IS NULL")
+    Long countAllActiveQuotations();
+
 }

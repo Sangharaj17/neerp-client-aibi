@@ -2,6 +2,8 @@ package com.aibi.neerp.quotation.service;
 
 import com.aibi.neerp.componentpricing.entity.*;
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
+import com.aibi.neerp.customer.repository.CustomerRepository;
+import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.leadmanagement.entity.Enquiry;
 import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
@@ -55,6 +57,8 @@ public class QuotationService {
     private final CombinedEnquiryRepository combinedEnquiryRepository;
     private final EmployeeRepository employeeRepository;
     private final EnquiryRepository enquiryRepository;
+    private final CustomerRepository customerRepository;
+    private final SiteRepository siteRepository;
 
     @Autowired
     private final QuotationRevisionService clonerService;
@@ -181,9 +185,9 @@ public class QuotationService {
 
             // --- Customer / Site ---
             entity.setCustomerName(dto.getCustomerName());
-            entity.setCustomerId(dto.getCustomerId());
+            // entity.setCustomer(dto.getCustomerId());
             entity.setSiteName(dto.getSiteName());
-            entity.setSiteId(dto.getSiteId());
+            // entity.setSite(dto.getSiteId());
             System.out.println("-------Main-----77777777777777-----------" + dto.getCreatedByEmployeeId());
 
             // --- Created / Approved Info ---
@@ -342,7 +346,7 @@ public class QuotationService {
                         parentLift = originalLiftMap.get(originalLiftId);
                     }
 
-                    System.out.println(parentLift+"-------> Parent Lift for DTO Lift ID: " + originalLiftId);
+                    System.out.println(parentLift + "-------> Parent Lift for DTO Lift ID: " + originalLiftId);
                     // 💡 NEW: Set the Parent Lift link
                     liftDetail.setParentLift(parentLift);
 
@@ -1056,7 +1060,6 @@ public class QuotationService {
             Employee finalizingEmployee = employeeRepository.findById(finalizedByEmployeeId)
                     .orElseThrow(() -> new RuntimeException("Finalizing Employee not found with ID: " + finalizedByEmployeeId));
 
-
             // 1. Update the status fields
             quotation.setIsFinalized(true);
 //            quotation.setStatus("FINALIZED");
@@ -1064,11 +1067,87 @@ public class QuotationService {
             quotation.setFinalizedAt(LocalDateTime.now());
             quotation.setFinalizedBy(finalizingEmployee);
 
+
+            // ************** add or update customer ***************************
+            NewLeads lead = quotation.getLead();
+            Customer customer = customerRepository.findByLead_LeadId(lead.getLeadId());
+            if (customer == null) {
+                // ✅ 4A. Create New Customer
+                customer = Customer.builder()
+                        .customerName(lead.getCustomerName())
+                        .contactNumber(lead.getCustomer1Contact())
+                        .emailId(lead.getEmailId())
+                        .address(lead.getSiteName()) // or actual lead address field
+                        .isVerified(false)
+                        .active(true)
+                        .lead(lead)
+                        .build();
+
+                customer = customerRepository.save(customer);
+                log.info("Created NEW customer for Lead ID {}", lead.getLeadId());
+            } else {
+                customer.setCustomerName(quotation.getCustomerName());
+                customer.setContactNumber(lead.getCustomer1Contact());
+                customer.setEmailId(lead.getEmailId());
+                customer.setAddress(quotation.getSiteName());
+
+                customer = customerRepository.save(customer);
+                log.info("Updated EXISTING customer for Lead ID {}", lead.getLeadId());
+            }
+
+            quotation.setCustomer(customer);
+
+            // ************** add or update site ***************************
+//            String siteName= "";
+//            CombinedEnquiry combinedEnquiry = quotation.getCombinedEnquiry();
+//
+//            if(combinedEnquiry!=null ) {
+//                siteName = combinedEnquiry.getSiteName();
+//            }
+
+//            String siteName = quotation.getSiteName();
+            String siteName = lead.getSiteName();
+            String siteAddress = lead.getSiteAddress();
+            log.info("siteAddress----------> {}----------->", siteAddress);
+
+            // ✅ 5. Check if Site with Same Name Exists for This Customer
+            boolean siteExists = siteRepository.existsByCustomer_CustomerIdAndSiteNameIgnoreCase(
+                    customer.getCustomerId(),
+                    siteName
+            );
+
+            Optional<Site> existingSite =
+                    siteRepository.findByCustomer_CustomerIdAndSiteNameIgnoreCase(
+                            customer.getCustomerId(),
+                            siteName
+                    );
+
+            Site site;
+
+            if (existingSite.isEmpty()) {
+                // CREATE NEW SITE
+                site = Site.builder()
+                        .siteName(siteName)
+                        .siteAddress(siteAddress)
+                        .customer(customer)
+                        .status("ACTIVE")
+                        .build();
+
+                site = siteRepository.save(site);
+                log.info("Created NEW Site '{}' for Customer {}", siteName, customer.getCustomerId());
+            } else {
+                // Use existing site
+                site = existingSite.get();
+                log.info("Reusing EXISTING Site '{}' for Customer {}", siteName, customer.getCustomerId());
+            }
+
+            quotation.setSite(site);
+
+
             // 2. Save the updated entity
             quotationMainRepository.save(quotation);
 
             log.info("Quotation ID {} successfully finalized by Employee ID {}", quotationId, finalizingEmployee.getEmployeeId());
-
             return new ApiResponse<>(true, "Quotation finalized successfully.", null);
 
         } catch (RuntimeException ex) {
@@ -1119,6 +1198,40 @@ public class QuotationService {
             return new ApiResponse<>(false, "An unexpected server error occurred during finalization.", null);
         }
     }
+
+
+
+    public ApiResponse<List<QuotationMinimalDTO>> getFinalizedActiveQuotations() {
+        log.info("Service: Fetching finalized & active quotations (minimal data)...");
+
+        try {
+            // Fetch ONLY finalized + active quotations
+            List<QuotationMain> quotations =
+                    quotationMainRepository.findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
+
+            // Map to minimal DTO
+            List<QuotationMinimalDTO> dtoList = quotations.stream()
+                    .map(entityToResponseDTOMapper::mapToMinimalQuotationDTO)
+                    .collect(Collectors.toList());
+
+            return new ApiResponse<>(
+                    true,
+                    "Finalized & Active quotations fetched successfully",
+                    dtoList
+            );
+
+        } catch (Exception ex) {
+            log.error("Error fetching finalized quotations: {}", ex.getMessage(), ex);
+
+            return new ApiResponse<>(
+                    false,
+                    "Failed to fetch finalized quotations",
+                    null
+            );
+        }
+    }
+
+
 
 
 // ***********************************************************************************

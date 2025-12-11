@@ -1,5 +1,7 @@
 package com.aibi.neerp.quotation.entity;
 
+import com.aibi.neerp.customer.entity.Customer;
+import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
@@ -25,7 +27,10 @@ import java.util.List;
                 @Index(name = "idx_status", columnList = "status"),
                 @Index(name = "idx_created_at", columnList = "created_at"),
                 @Index(name = "idx_parent_quotation", columnList = "parent_quotation_id"),
-                @Index(name = "idx_is_superseded", columnList = "is_superseded")
+                @Index(name = "idx_is_superseded", columnList = "is_superseded"),
+
+                @Index(name = "idx_active_quotations",
+                        columnList = "is_deleted, edition, parent_quotation_id")
         }
 )
 @Getter
@@ -60,14 +65,22 @@ public class QuotationMain {
     @Column(name = "customer_name", length = 100, nullable = false)
     private String customerName;
 
-    @Column(name = "customer_id")
-    private Integer customerId;
+//    @Column(name = "customer_id")
+//    private Integer customerId;
 
     @Column(name = "site_name", length = 100, nullable = false)
     private String siteName;
 
-    @Column(name = "site_id")
-    private Integer siteId;
+//    @Column(name = "site_id")
+//    private Integer siteId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", referencedColumnName = "customer_id")
+    private Customer customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "site_id", referencedColumnName = "site_id")
+    private Site site;
 
     // 🔹 Quotation metadata
     @Column(name = "quotation_no", length = 100, nullable = false)

@@ -59,9 +59,9 @@ public class QuotationRevisionService {
                 .lead(original.getLead())
                 .combinedEnquiry(original.getCombinedEnquiry())
                 .customerName(original.getCustomerName())
-                .customerId(original.getCustomerId())
+//                .customerId(original.getCustomerId())
                 .siteName(original.getSiteName())
-                .siteId(original.getSiteId())
+//                .siteId(original.getSiteId())
 
                 // --- Audit Fields (New/Updated) ---
                 .createdBy(original.getCreatedBy()) // Original creator remains
