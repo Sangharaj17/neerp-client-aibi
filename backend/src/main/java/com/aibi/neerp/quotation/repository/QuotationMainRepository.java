@@ -122,8 +122,12 @@ public interface QuotationMainRepository extends JpaRepository<QuotationMain, In
 
     List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
 
-    @Query("SELECT COUNT(q) FROM QuotationMain q " +
-            "WHERE q.isDeleted = false AND q.edition = 0 AND q.parentQuotation IS NULL")
+    @Query(value = "SELECT COUNT(*) FROM tbl_quotation_main " +
+            "WHERE is_deleted = false " +
+            "AND edition = 0 " +
+            "AND parent_quotation_id IS NULL",
+            nativeQuery = true)
     Long countAllActiveQuotations();
+
 
 }

@@ -441,20 +441,29 @@ export default function AddJobForm() {
             />
             {jobDropdownOpen && (
               <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
+                {console.log(filteredJobs, "filteredJobs")}
                 {filteredJobs.length > 0 ? (
-                  filteredJobs.map((job, index) => (
-                    <li
-                      key={index}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => {
-                        setSelectedJob(job); // store full object
-                        setJobSearch(job.selectDetailForJob); // show text in input
-                        setJobDropdownOpen(false);
-                      }}
-                    >
-                      {job.selectDetailForJob}
-                    </li>
-                  ))
+                  filteredJobs.map((job, index) => {
+                    const selectDetailForJob =
+                      selectedJobType === "New Installation"
+                        ? job.formattedTitle
+                        : job.selectDetailForJob;
+
+
+                    return (
+                      <li
+                        key={index}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setSelectedJob(job);                 // save full job object
+                          setJobSearch(selectDetailForJob);    // show text in input
+                          setJobDropdownOpen(false);           // close dropdown
+                        }}
+                      >
+                        {selectDetailForJob}
+                      </li>
+                    );
+                  })
                 ) : (
                   <li className="px-3 py-2 text-gray-400 text-sm">
                     No results found
@@ -462,6 +471,7 @@ export default function AddJobForm() {
                 )}
               </ul>
             )}
+
             {selectedJob && (
               <div className="mt-2 text-sm text-green-700 font-medium">
                 ✅ {selectedJob.selectDetailForJob}
