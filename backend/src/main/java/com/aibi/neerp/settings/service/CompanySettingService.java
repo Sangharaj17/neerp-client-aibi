@@ -160,4 +160,9 @@ public class CompanySettingService {
                 .map(CompanySetting::getGstRateNewInstallationTotalPercentage)
                 .orElse(null);
     }
+    public String getCompanyName(String refName) {
+        return repository.findById(refName)
+                .map(CompanySetting::getCompanyName)
+                .orElse(null);
+    }
 }

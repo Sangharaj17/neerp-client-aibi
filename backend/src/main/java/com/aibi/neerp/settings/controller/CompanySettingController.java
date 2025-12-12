@@ -92,4 +92,27 @@ public class CompanySettingController {
 
 
 
+    @GetMapping("/{refName}/company-name")
+    public ResponseEntity<ApiResponse<String>> getCompanyName(@PathVariable String refName) {
+        String companyName = service.getCompanyName(refName);
+
+        if (companyName == null) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(
+                            false,
+                            "Company Name not found",
+                            null
+                    ));
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(
+                        true,
+                        "Company Name fetched successfully",
+                        companyName
+                )
+        );
+    }
+
 }

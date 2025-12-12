@@ -5,6 +5,7 @@ import axiosInstance from "@/utils/axiosInstance";
 import { toast } from "react-hot-toast";
 
 import { useRouter, useParams } from "next/navigation";
+import { getTenant } from "@/utils/tenant";
 
 export default function AddJobForm() {
   const router = useRouter();
@@ -59,6 +60,17 @@ export default function AddJobForm() {
   //     );
   //   };
 
+  const [userId, setUserId] = useState(0);
+  const [isSuccessLoading, setIsSuccessLoading] = useState(false);
+
+  useEffect(() => {
+    const tenant = getTenant();
+    const storedId = localStorage.getItem(tenant ? `${tenant}_userId` : "userId");
+    if (storedId && storedId !== userId) {
+      setUserId(storedId);
+    }
+  }, [userId]);
+
   const handleEngineerSearch = (value) => {
     setEngineerSearch(value);
     setFilteredEngineers(
@@ -71,8 +83,12 @@ export default function AddJobForm() {
   };
 
   const addEngineer = (eng) => {
-    if (!selectedEngineers.find((e) => e.employeeId === eng.employeeId)) {
-      setSelectedEngineers([...selectedEngineers, eng]);
+    if (selectedJobType === "New Installation") {
+      setSelectedEngineers([eng]);
+    } else {
+      if (!selectedEngineers.find((e) => e.employeeId === eng.employeeId)) {
+        setSelectedEngineers([...selectedEngineers, eng]);
+      }
     }
     setEngineerSearch("");
     setEngineerDropdownOpen(false);
@@ -244,22 +260,53 @@ export default function AddJobForm() {
     }
   };
 
+  const fetchJobDetailsForNewInstallation = async () => {
+    //setLoading(true);
+    //setError(null);
+    try {
 
+      const response = await axiosInstance.post(
+        "/api/amc-jobs/get-add-job-details-for-new-installation",
+        {
+          quotationMainId: selectedJob.id,
+          selectDetailForJob: selectedJob.formattedTitle,
+        }
+      );
+
+      setJobDetailsData(response?.data);
+      setFilteredEngineers(response?.data?.employeeDtos || []);
+
+      setRoutes(response?.data?.routesDtos || []);
+      setFilteredRoutes(response?.data?.routesDtos || []);
+      setEngineers(response?.data?.employeeDtos || []);
+
+    } catch (err) {
+      console.error("Error fetching job details:", err);
+      setError("Failed to fetch job details");
+    } finally {
+      //setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedJob) return; // Do nothing if no job is selected
 
-    console.log(selectedJob);
-    if (selectedJob.thisJobIsRenewal === true) {
-      fetchRenewalJobDetails();
-    } else
-      fetchJobDetails();
+    console.log("selectedJob", selectedJob);
+    if (selectedJobType === "New Installation") {
+      fetchJobDetailsForNewInstallation();
+    } else {
+      if (selectedJob.thisJobIsRenewal === true) {
+        fetchRenewalJobDetails();
+      } else
+        fetchJobDetails();
+    }
 
   }, [selectedJob]);
 
   const [jobStatus, setJobStatus] = useState("");
   const [gstNumber, setCustomerGstNo] = useState("");
   const [selectedSalesPerson, setSelectedSalesPerson] = useState("");
+  const [jobNo, setJobNo] = useState("");
 
 
 
@@ -393,6 +440,116 @@ export default function AddJobForm() {
     }
   };
 
+  const handleNewInstallationSubmit = async () => {
+    try {
+      // Validate Required Fields
+      if (!selectedJob) {
+        toast.error("Please select a Job Detail.");
+        return;
+      }
+      if (!jobDetailsData?.jobAmount) {
+        toast.error("Job Amount is missing.");
+        return;
+      }
+      if (!selectedSalesPerson) {
+        toast.error("Please select a Sales Executive.");
+        return;
+      }
+      if (!jobDetailsData?.startDate) {
+        toast.error("Start Date is missing.");
+        return;
+      }
+      if (!jobStatus) {
+        toast.error("Please select a Job Status.");
+        return;
+      }
+      if (!paymentTerm) {
+        toast.error("Please select Payment Terms.");
+        return;
+      }
+      if (selectedEngineers.length === 0) {
+        toast.error("Please select a Service Engineer.");
+        return;
+      }
+
+      console.log("jobDetailsData", jobDetailsData);
+      console.log("selectedJob", selectedJob);
+      console.log("selectedEngineers", selectedEngineers);
+      console.log("selectedSalesPerson", selectedSalesPerson);
+
+      const selectedEngineerId = selectedEngineers.length > 0 ? selectedEngineers[0].employeeId : null;
+
+      // Find jobTypeId for "New Installation" (or whatever selectedJobType is)
+      const selectedJobTypeObj = jobTypes.find(t => t.enquiryTypeName === selectedJobType);
+      const jobTypeId = selectedJobTypeObj ? selectedJobTypeObj.enquiryTypeId : null;
+
+      const requestDto = {
+        leadId: jobDetailsData?.leadId || null,
+        combinedEnquiryId: jobDetailsData?.combinedEnquiryId || null,
+        customerId: jobDetailsData?.customerId || null,
+        siteId: jobDetailsData?.siteId || null,
+        niQuotationId: selectedJob.id, // Quotation Main ID
+        serviceEngineerId: selectedEngineerId,
+        salesExecutiveId: selectedSalesPerson,
+        createdById: userId,
+
+        jobNo: jobNo,
+        jobTypeId: jobTypeId,
+        jobType: selectedJobType, // "New Installation"
+        jobAmount: jobDetailsData?.jobAmount || 0,
+        jobStatus: jobStatus,
+        // jobLiftDetail: JSON.stringify(jobDetailsData?.liftDatas || []), // Store as JSON string or modifying DTO? Assuming JSON string is okay or ignored if unused. The DTO expects String.
+
+        jobLiftDetail: "",
+
+        paymentTerm: paymentTerm, // selected from dropdown
+        customerGstNo: gstNumber,
+
+        startDate: jobDetailsData?.startDate || null,
+        // dealDate: "", // Not captured in form
+        // isHandover: false,
+        // handoverDate: null,
+        // pwdStatus: "",
+        // pwdActDate: null
+      };
+
+      console.log("requestDto", requestDto);
+      console.log("jobTypeId", jobTypeId);
+
+      toast.loading("Saving New Installation job...");
+
+      const response = await axiosInstance.post("/api/jobs", requestDto);
+
+      toast.dismiss();
+
+      if (response.status === 200) {
+        toast.success("Job saved successfully!");
+        setIsSuccessLoading(true); // Trigger the glass loader
+        setTimeout(() => {
+          router.push(`/dashboard/jobs/ni_job_list`); // Validate this route
+        }, 1000); // Optional delay to let the user see the loader/success state
+      } else {
+        toast.error("Something went wrong while saving!");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error saving job:", error);
+      toast.error("Failed to save job");
+    }
+  };
+
+  const [paymentTerm, setPaymentTerm] = useState("");
+  const [paymentTerms, setPaymentTerms] = useState([]);
+
+  // Fetch payment terms on component mount
+  useEffect(() => {
+    axiosInstance.get("/api/amc/common/payment-terms")
+      .then(res => {
+        setPaymentTerms(res.data); // expects [{id:1, termName:"Monthly"}, ...]
+      })
+      .catch(err => console.error("Failed to fetch payment terms:", err));
+  }, []);
+
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white rounded-2xl shadow-lg">
@@ -402,7 +559,7 @@ export default function AddJobForm() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {/* Job Type */}
         <div>
-          <label className="block text-sm font-medium mb-1">Job Type*</label>
+          <label className="block text-sm font-medium mb-1">Job Type<span className="text-red-500">*</span></label>
           <select
             className="w-full border rounded-lg p-2"
             value={selectedJobType}
@@ -428,7 +585,7 @@ export default function AddJobForm() {
         {selectedJobType && (
           <div className="relative">
             <label className="block text-sm font-medium mb-1">
-              Select Detail For Job*
+              Select Detail For Job<span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -474,7 +631,7 @@ export default function AddJobForm() {
 
             {selectedJob && (
               <div className="mt-2 text-sm text-green-700 font-medium">
-                ✅ {selectedJob.selectDetailForJob}
+                ✅ {selectedJobType === "New Installation" ? selectedJob.formattedTitle : selectedJob.selectDetailForJob}
               </div>
             )}
           </div>
@@ -483,83 +640,89 @@ export default function AddJobForm() {
       </div>
 
       {/* Show below fields only when a job is selected */}
-      {selectedJob && (
-        <>
-          {/* Remaining Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            {/* Job Amount */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Job Amount*</label>
-              <input
-                type="number"
-                readOnly
-                value={jobDetailsData ? jobDetailsData.jobAmount : 0}
-                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-              />
-            </div>
+      {
+        selectedJob && (
+          <>
+            {/* Remaining Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* Job Amount */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Job Amount<span className="text-red-500">*</span></label>
+                <input
+                  type="number"
+                  readOnly
+                  value={jobDetailsData ? jobDetailsData.jobAmount : 0}
+                  className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Customer</label>
-              <input
-                readOnly
-                value={jobDetailsData ? jobDetailsData.customer : ""}
-                type="text"
-                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Customer</label>
+                <input
+                  readOnly
+                  value={jobDetailsData ? jobDetailsData.customer : ""}
+                  type="text"
+                  className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Customer Site</label>
-              <input
-                readOnly
-                value={jobDetailsData ? jobDetailsData.customerSite : ""}
-                type="text"
-                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-              />
-            </div>
-
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Job No</label>
-              <input type="text" className="w-full border rounded-lg p-2" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Customer GST No</label>
-              <input onChange={(e) => {
-                setCustomerGstNo(e.target.value);
-              }} type="text" className="w-full border rounded-lg p-2" />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Sales Executive*
-              </label>
-              <select onChange={(e) => {
-                setSelectedSalesPerson(e.target.value);
-              }} className="w-full border rounded-lg p-2">
-                <option value="">Select</option>
-                {engineers.map((engineer) => (
-                  <option key={engineer.employeeId} value={engineer.employeeId}>
-                    {engineer.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Customer Site</label>
+                <input
+                  readOnly
+                  value={jobDetailsData ? jobDetailsData.customerSite : ""}
+                  type="text"
+                  className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                />
+              </div>
 
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Start Date*</label>
-              <input
-                type="date"
-                readOnly
-                value={jobDetailsData ? jobDetailsData.startDate : ""}
-                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Job No</label>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg p-2"
+                  value={jobNo}
+                  onChange={(e) => setJobNo(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Customer GST No</label>
+                <input onChange={(e) => {
+                  setCustomerGstNo(e.target.value);
+                }} type="text" className="w-full border rounded-lg p-2" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Sales Executive<span className="text-red-500">*</span>
+                </label>
+                <select onChange={(e) => {
+                  setSelectedSalesPerson(e.target.value);
+                }} className="w-full border rounded-lg p-2">
+                  <option value="">Select</option>
+                  {engineers.map((engineer) => (
+                    <option key={engineer.employeeId} value={engineer.employeeId}>
+                      {engineer.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
 
-            {/* <div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Start Date<span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  readOnly
+                  value={jobDetailsData ? jobDetailsData.startDate : ""}
+                  className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+
+
+              {/* <div>
               <label className="block text-sm font-medium mb-1">Job Lift Details</label>
               <select className="w-full border rounded-lg p-2">
                 <option>Automatic</option>
@@ -567,298 +730,330 @@ export default function AddJobForm() {
               </select>
             </div> */}
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Job Status*</label>
-              <select
-                value={jobStatus}
-                onChange={(e) => setJobStatus(e.target.value)}
-                className="w-full border rounded-lg p-2"
-              >
-                <option value="">-- Select Job Status --</option>
-                <option value="Hold">Hold</option>
-                <option value="WIP">WIP</option>
-                <option value="Pre Service">Pre Service</option>
-                <option value="Option">Option</option>
-              </select>
+              <div>
+                <label className="block text-sm font-medium mb-1">Job Status<span className="text-red-500">*</span></label>
+                <select
+                  value={jobStatus}
+                  onChange={(e) => setJobStatus(e.target.value)}
+                  className="w-full border rounded-lg p-2"
+                >
+                  <option value="">-- Select Job Status --</option>
+                  <option value="Hold">Hold</option>
+                  <option value="WIP">WIP</option>
+                  <option value="Pre Service">Pre Service</option>
+                  <option value="Option">Option</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Payment Terms<span className="text-red-500">*</span></label>
+                {selectedJobType === "New Installation" ? (
+                  <select
+                    value={paymentTerm}
+                    onChange={(e) => setPaymentTerm(e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                  >
+                    <option value="">Select</option>
+                    {paymentTerms.map((term) => (
+                      <option key={term.id} value={term.termName}>
+                        {term.termName}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    readOnly
+                    value={jobDetailsData ? jobDetailsData.paymentTerm : ""}
+                    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                )}
+              </div>
+
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Payment Terms*</label>
-              <input
-                type="text"
-                readOnly
-                value={jobDetailsData ? jobDetailsData.paymentTerm : ""}
-                className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-              />
-            </div>
-
-          </div>
-
-          {/* Selection Mode Toggle */}
-          <div className="flex gap-6 mb-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="selectionMode"
-                value="routes"
-                checked={selectionMode === "routes"}
-                onChange={() => {
-                  setSelectionMode("routes");
-                  setSelectedEngineers([]); // 
-                }}
-              />
-              Go with Routes
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="selectionMode"
-                value="manual"
-                checked={selectionMode === "manual"}
-                onChange={() => {
-                  setSelectionMode("manual");
-                  setSelectedRoute(null);
-                  setSelectedEngineers([]); // 
-                  setRouteSearch("");
-                }}
-              />
-              Select Individual Engineers
-            </label>
-          </div>
-
-          {/* Service Engineer Section */}
-          {selectionMode === "routes" ? (
-            <div className="relative">
-              <label className="block text-sm font-medium mb-1">Select Route*</label>
-              <input
-                type="text"
-                value={routeSearch}
-                onChange={(e) => handleRouteSearch(e.target.value)}
-                onFocus={() => setRouteDropdownOpen(true)}
-                onBlur={() => setTimeout(() => setRouteDropdownOpen(false), 150)}
-                placeholder="Search Route..."
-                className="w-full border rounded-lg p-2"
-              />
-              {routeDropdownOpen && (
-                <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
-                  {filteredRoutes.length > 0 ? (
-                    filteredRoutes.map((route, index) => (
-                      <li
-                        key={index}
-                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => {
-                          handleRouteSelect(route);
-                          setFilteredRoutes(routes);
-                        }}
-                      >
-                        {route.routeName}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="px-3 py-2 text-gray-400 text-sm">
-                      No routes found
-                    </li>
-                  )}
-                </ul>
+            {/* Selection Mode Toggle */}
+            <div className="flex gap-6 mb-4">
+              {selectedJobType !== "New Installation" && (
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="selectionMode"
+                    value="routes"
+                    checked={selectionMode === "routes"}
+                    onChange={() => {
+                      setSelectionMode("routes");
+                      setSelectedEngineers([]); // 
+                    }}
+                  />
+                  Go with Routes
+                </label>
               )}
-              {selectedRoute && (
-                <div className="mt-2 text-sm text-green-700 font-medium">
-                  ✅ {selectedRoute.routeName}
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              <label className="block text-sm font-medium mb-1">
-                Select Service Engineer*
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="selectionMode"
+                  value="manual"
+                  checked={selectionMode === "manual"}
+                  onChange={() => {
+                    setSelectionMode("manual");
+                    setSelectedRoute(null);
+                    setSelectedEngineers([]); // 
+                    setRouteSearch("");
+                  }}
+                />
+                Select Individual Engineers
               </label>
+            </div>
+
+            {/* Service Engineer Section */}
+            {selectionMode === "routes" ? (
               <div className="relative">
+                <label className="block text-sm font-medium mb-1">Select Route<span className="text-red-500">*</span></label>
                 <input
                   type="text"
-                  value={engineerSearch}
-                  onChange={(e) => handleEngineerSearch(e.target.value)}
-                  onFocus={() => setEngineerDropdownOpen(true)}
-                  onBlur={() => setTimeout(() => setEngineerDropdownOpen(false), 150)}
-                  placeholder="Search by name, role or address..."
+                  value={routeSearch}
+                  onChange={(e) => handleRouteSearch(e.target.value)}
+                  onFocus={() => setRouteDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setRouteDropdownOpen(false), 150)}
+                  placeholder="Search Route..."
                   className="w-full border rounded-lg p-2"
                 />
-                {engineerDropdownOpen && (
+                {routeDropdownOpen && (
                   <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
-                    {filteredEngineers.length > 0 ? (
-                      filteredEngineers.map((eng, index) => (
+                    {filteredRoutes.length > 0 ? (
+                      filteredRoutes.map((route, index) => (
                         <li
                           key={index}
                           className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => {
-                            addEngineer(eng);
-                            setEngineerSearch("");
-                            setFilteredEngineers(engineers);
+                            handleRouteSelect(route);
+                            setFilteredRoutes(routes);
                           }}
                         >
-                          <span className="font-medium">{eng.name}</span> —{" "}
-                          <span className="text-sm text-gray-600">{eng.role}</span>
-                          <span className="text-xs text-gray-500 ml-2">
-                            ({eng.address})
-                          </span>
+                          {route.routeName}
                         </li>
                       ))
                     ) : (
                       <li className="px-3 py-2 text-gray-400 text-sm">
-                        No results found
+                        No routes found
                       </li>
                     )}
                   </ul>
                 )}
+                {selectedRoute && (
+                  <div className="mt-2 text-sm text-green-700 font-medium">
+                    ✅ {selectedRoute.routeName}
+                  </div>
+                )}
               </div>
-            </>
-          )}
+            ) : (
+              <>
+                <label className="block text-sm font-medium mb-1">
+                  Select Service Engineer<span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={engineerSearch}
+                    onChange={(e) => handleEngineerSearch(e.target.value)}
+                    onFocus={() => setEngineerDropdownOpen(true)}
+                    onBlur={() => setTimeout(() => setEngineerDropdownOpen(false), 150)}
+                    placeholder="Search by name, role or address..."
+                    className="w-full border rounded-lg p-2"
+                  />
+                  {engineerDropdownOpen && (
+                    <ul className="absolute z-10 bg-white border rounded-lg shadow w-full mt-1 max-h-40 overflow-auto">
+                      {filteredEngineers.length > 0 ? (
+                        filteredEngineers.map((eng, index) => (
+                          <li
+                            key={index}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              addEngineer(eng);
+                              setEngineerSearch("");
+                              setFilteredEngineers(engineers);
+                            }}
+                          >
+                            <span className="font-medium">{eng.name}</span> —{" "}
+                            <span className="text-sm text-gray-600">{eng.role}</span>
+                            <span className="text-xs text-gray-500 ml-2">
+                              ({eng.address})
+                            </span>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="px-3 py-2 text-gray-400 text-sm">
+                          No results found
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </>
+            )}
 
-          {/* Selected Engineers Grid */}
-          {selectedEngineers.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              {selectedEngineers.map((eng, index) => (
-                <div
-                  key={index}
-                  className="border rounded-xl p-4 shadow hover:shadow-md flex items-start gap-3 bg-gray-50 relative"
-                >
-                  <User className="text-blue-500 w-6 h-6 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-semibold">{eng.name}</p>
-                    <p className="text-sm text-gray-600">{eng.role}</p>
-                    <p className="text-xs text-gray-500">{eng.address}</p>
-                  </div>
-                  <button
-                    onClick={() => removeEngineer(eng.employeeId)}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+            {/* Selected Engineers Grid */}
+            {selectedEngineers.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                {selectedEngineers.map((eng, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-xl p-4 shadow hover:shadow-md flex items-start gap-3 bg-gray-50 relative"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                    <User className="text-blue-500 w-6 h-6 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold">{eng.name}</p>
+                      <p className="text-sm text-gray-600">{eng.role}</p>
+                      <p className="text-xs text-gray-500">{eng.address}</p>
+                    </div>
+                    <button
+                      onClick={() => removeEngineer(eng.employeeId)}
+                      className="absolute top-2 right-2 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6">
+              <h2 className="text-2xl font-bold mb-6 text-gray-800">Lift Details</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {jobDetailsData?.liftDatas?.map((lift, index) => (
+                  <div
+                    key={index}
+                    className="relative border rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-shadow duration-300 p-5 overflow-hidden"
+                  >
+                    {/* Gradient Header */}
+                    <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-t-2xl flex items-center px-5 text-white font-bold text-lg">
+                      {/* Lift {index + 1} */}
+                      {lift.liftName || `Lift ${index + 1}`}
+                    </div>
+
+                    <div className="mt-14 grid grid-cols-2 gap-4">
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 text-sm mb-1 flex items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1 text-blue-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Lift Name
+                        </span>
+                        <span className="text-gray-800 font-medium">{lift.liftName || "N/A"}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 text-sm mb-1 flex items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1 text-green-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m2 0a2 2 0 110 4H7a2 2 0 110-4h2"
+                            />
+                          </svg>
+                          Capacity
+                        </span>
+                        <span className="text-gray-800 font-medium">{lift.capacityValue}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 text-sm mb-1 flex items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1 text-purple-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7V3m8 4V3m-8 8v8m8-8v8M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          Type
+                        </span>
+                        <span className="text-gray-800 font-medium">{lift.typeOfElevators}</span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-gray-500 text-sm mb-1 flex items-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1 text-red-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 7h18M3 12h18M3 17h18"
+                            />
+                          </svg>
+                          Floors
+                        </span>
+                        <span className="text-gray-800 font-medium">{lift.noOfFloors}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
 
-          <div className="mt-6">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Lift Details</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {jobDetailsData?.liftDatas?.map((lift, index) => (
-                <div
-                  key={index}
-                  className="relative border rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-shadow duration-300 p-5 overflow-hidden"
-                >
-                  {/* Gradient Header */}
-                  <div className="absolute top-0 left-0 w-full h-12 bg-gradient-to-r from-blue-400 to-blue-600 rounded-t-2xl flex items-center px-5 text-white font-bold text-lg">
-                    {/* Lift {index + 1} */}
-                    {lift.liftName || `Lift ${index + 1}`}
-                  </div>
 
-                  <div className="mt-14 grid grid-cols-2 gap-4">
-                    <div className="flex flex-col">
-                      <span className="text-gray-500 text-sm mb-1 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1 text-blue-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        Lift Name
-                      </span>
-                      <span className="text-gray-800 font-medium">{lift.liftName || "N/A"}</span>
-                    </div>
-
-                    <div className="flex flex-col">
-                      <span className="text-gray-500 text-sm mb-1 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1 text-green-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12h6m2 0a2 2 0 110 4H7a2 2 0 110-4h2"
-                          />
-                        </svg>
-                        Capacity
-                      </span>
-                      <span className="text-gray-800 font-medium">{lift.capacityValue}</span>
-                    </div>
-
-                    <div className="flex flex-col">
-                      <span className="text-gray-500 text-sm mb-1 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1 text-purple-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-8 8v8m8-8v8M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        Type
-                      </span>
-                      <span className="text-gray-800 font-medium">{lift.typeOfElevators}</span>
-                    </div>
-
-                    <div className="flex flex-col">
-                      <span className="text-gray-500 text-sm mb-1 flex items-center">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 7h18M3 12h18M3 17h18"
-                          />
-                        </svg>
-                        Floors
-                      </span>
-                      <span className="text-gray-800 font-medium">{lift.noOfFloors}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            {/* Submit Button */}
+            <div className="mt-6">
+              <button onClick={() => {
+                if (selectedJobType === "New Installation") {
+                  handleNewInstallationSubmit();
+                } else if (selectedJob.thisJobIsRenewal === true) {
+                  handleSubmitRenewalJob();
+                } else {
+                  handleSubmit();
+                }
+              }} className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700">
+                Submit
+              </button>
+            </div>
+          </>
+        )
+      }
+      {/* Full Page Glass Loader */}
+      {
+        isSuccessLoading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-opacity duration-300">
+            <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white border-opacity-30 flex flex-col items-center">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
+              <h2 className="text-white text-xl font-bold tracking-wider animate-pulse">
+                Processing...
+              </h2>
             </div>
           </div>
+        )
+      }
 
-
-          {/* Submit Button */}
-          <div className="mt-6">
-            <button onClick={() => {
-
-              if (selectedJob.thisJobIsRenewal === true) {
-                handleSubmitRenewalJob();
-              } else {
-                handleSubmit();
-              }
-
-            }} className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700">
-              Submit
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+    </div >
   );
 }
