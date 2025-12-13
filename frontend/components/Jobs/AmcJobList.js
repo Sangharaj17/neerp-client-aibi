@@ -17,17 +17,17 @@ import { exportAmcRenewalJobsToExcel } from './exportAmcRenewalJobsToExcel';
 const AMC_JOBS_API = '/api/amc-jobs/getAllJobs';
 const AMC_RENEWAL_JOBS_API = '/api/amc-renewal-jobs/getAllRenewalJobs';
 
-export default function AmcJobList({isAmcJobRenewal}) {
+export default function AmcJobList({ isAmcJobRenewal }) {
   const router = useRouter();
 
- /// alert(isAmcJobRenewal);
+  /// alert(isAmcJobRenewal);
   // State for active tab
-// State for active tab
+  // State for active tab
   const [activeTab, setActiveTab] = useState(
-    isAmcJobRenewal === false || isAmcJobRenewal === 'false' ? 
-    'amcJobs' : 
-    'amcRenewalJobs'
-  ); 
+    isAmcJobRenewal === false || isAmcJobRenewal === 'false' ?
+      'amcJobs' :
+      'amcRenewalJobs'
+  );
   // --- Common Paging/Search State for BOTH Lists ---
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
@@ -48,7 +48,7 @@ export default function AmcJobList({isAmcJobRenewal}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-    const [loadingBtn, setLoadingBtn] = useState(null);
+  const [loadingBtn, setLoadingBtn] = useState(null);
 
 
   /**
@@ -199,81 +199,78 @@ export default function AmcJobList({isAmcJobRenewal}) {
 
   return (
     <div className="p-4 bg-gray-10 min-h-screen">
-   <div className="flex justify-between items-end mb-4 border-b border-gray-300">
-    {/* Left-aligned Tabs */}
-    <div className="flex gap-4">
-        {/* AMC Jobs List Tab */}
-        <button
+      <div className="flex justify-between items-end mb-4 border-b border-gray-300">
+        {/* Left-aligned Tabs */}
+        <div className="flex gap-4">
+          {/* AMC Jobs List Tab */}
+          <button
             onClick={() => handleTabChange('amcJobs')}
-            className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${
-                activeTab === 'amcJobs'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
-                    : 'text-gray-600 hover:text-indigo-600'
-            }`}
-        >
+            className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${activeTab === 'amcJobs'
+                ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
+                : 'text-gray-600 hover:text-indigo-600'
+              }`}
+          >
             AMC Jobs List
-        </button>
+          </button>
 
-        {/* AMC Renewal Jobs List Tab */}
-        <button
+          {/* AMC Renewal Jobs List Tab */}
+          <button
             onClick={() => handleTabChange('amcRenewalJobs')}
-            className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${
-                activeTab === 'amcRenewalJobs'
-                    ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
-                    : 'text-gray-600 hover:text-indigo-600'
-            }`}
-        >
+            className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${activeTab === 'amcRenewalJobs'
+                ? 'text-indigo-600 border-b-2 border-indigo-600 bg-white'
+                : 'text-gray-600 hover:text-indigo-600'
+              }`}
+          >
             AMC Renewal Jobs List
-        </button>
-    </div>
+          </button>
+        </div>
 
-    {/* Buttons pushed to the far right */}
-    <div className="flex gap-4 mb-1">
-        {/* Employee Job Task Details Button (Treated as a secondary filter/action) */}
-        <button
+        {/* Buttons pushed to the far right */}
+        <div className="flex gap-4 mb-1">
+          {/* Employee Job Task Details Button (Treated as a secondary filter/action) */}
+          <button
             onClick={() => {
               setLoadingBtn('Employee Job Task Details');
-              router.push('/dashboard/jobs/amc-jobs-activity-emp-report');
+              router.push('/dashboard/employee-dashboard');
             }}
-            className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
-                activeTab === 'employeeJobTaskDetails'
-                    ? 'bg-slate-700 text-white shadow' // Active state
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300' // Inactive state
-            }`}
-        >
+            className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeTab === 'employeeJobTaskDetails'
+                ? 'bg-slate-700 text-white shadow' // Active state
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300' // Inactive state
+              }`}
+          >
             Employee Job Task Details
             {loadingBtn === 'Employee Job Task Details' && <Loader2 className="w-4 h-4 inline-block ml-2 animate-spin text-white" />}
-        </button>
+          </button>
 
-        {/* Export to Excel Button (Key action, using a common 'Success/Export' green color) */}
+          {/* Export to Excel Button (Key action, using a common 'Success/Export' green color) */}
 
-<button
-    onClick={async () => {
-        // 1. Set loading state before starting the export
-        setLoadingBtn('Export to Excel');
-        
-        try {
-            if(activeTab === 'amcRenewalJobs'){
-                await exportAmcRenewalJobsToExcel(); // Use await here
-            } else {
-                await exportAmcJobsToExcel(); // Use await here
-            }
-        } catch (error) {
-            // Handle any unexpected errors that the export function didn't catch
-            console.error("Export operation failed:", error);
-        } finally {
-            // 2. Clear loading state after export finishes (success or failure)
-            setLoadingBtn(''); 
-        }
-    }}
-    className="px-3 py-1 text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow"
->
-    Export to Excel
-    {loadingBtn === 'Export to Excel' && <Loader2 className="w-4 h-4 inline-block ml-2 animate-spin text-white" />}
-</button>
-    </div>
-</div>
-{/* End Tabs */}
+          <button
+            onClick={async () => {
+              // 1. Set loading state before starting the export
+              setLoadingBtn('Export to Excel');
+
+              try {
+                if (activeTab === 'amcRenewalJobs') {
+                  await exportAmcRenewalJobsToExcel(); // Use await here
+                } else {
+                  await exportAmcJobsToExcel(); // Use await here
+                }
+              } catch (error) {
+                // Handle any unexpected errors that the export function didn't catch
+                console.error("Export operation failed:", error);
+              } finally {
+                // 2. Clear loading state after export finishes (success or failure)
+                setLoadingBtn('');
+              }
+            }}
+            className="px-3 py-1 text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow"
+          >
+            Export to Excel
+            {loadingBtn === 'Export to Excel' && <Loader2 className="w-4 h-4 inline-block ml-2 animate-spin text-white" />}
+          </button>
+        </div>
+      </div>
+      {/* End Tabs */}
 
       {/* Search & Page Size */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
@@ -381,7 +378,7 @@ export default function AmcJobList({isAmcJobRenewal}) {
                       <button
                         onClick={() => {
                           const id = job[idKey];
-                            setLoadingBtn(`view-${id}`);
+                          setLoadingBtn(`view-${id}`);
                           const path = activeTab === 'amcJobs'
                             ? `/dashboard/jobs/amc_job_list/view_amc_job_detail/${id}`
                             : `/dashboard/jobs/amc_job_list/view_amc_renewal_job_detail/${id}`; // Adjust path for renewal job detail if needed
@@ -389,13 +386,13 @@ export default function AmcJobList({isAmcJobRenewal}) {
                         }}
                         title="View"
                       >
-                        
-{loadingBtn === `view-${job[idKey]}` ? 
-<Loader2 className="w-4 h-4 animate-spin text-orange-500" /> : <Eye className="w-4 h-4 text-blue-500" />}
+
+                        {loadingBtn === `view-${job[idKey]}` ?
+                          <Loader2 className="w-4 h-4 animate-spin text-orange-500" /> : <Eye className="w-4 h-4 text-blue-500" />}
 
                       </button>
 
-                      
+
                       {/* Invoice Button */}
                       <button title="Invoice">
                         <FileText className="w-4 h-4 text-green-500" />

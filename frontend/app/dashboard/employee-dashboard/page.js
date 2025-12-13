@@ -9,9 +9,9 @@ import {
 import TopEmployeesChart from '@/components/EmployeeDashboard/TopEmployeesChart';
 import YearlyActivityChart from '@/components/EmployeeDashboard/YearlyActivityChart';
 import EmployeeActivityTable from '@/components/EmployeeDashboard/EmployeeActivityTable';
-import EmployeeDetailModal from '@/components/EmployeeDashboard/EmployeeDetailModal';
 import { Calendar } from 'lucide-react';
 import dayjs from 'dayjs';
+import { useRouter } from 'next/navigation';
 
 export default function EmployeeDashboardPage() {
     const [dateRange, setDateRange] = useState({
@@ -24,7 +24,7 @@ export default function EmployeeDashboardPage() {
     const [employeeActivitiesData, setEmployeeActivitiesData] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const router = useRouter();
 
     useEffect(() => {
         fetchDashboardData();
@@ -57,6 +57,22 @@ export default function EmployeeDashboardPage() {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleEmployeeClick = (employee) => {
+        // Navigate to details page with query params
+        const query = new URLSearchParams({
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+            empName: employee.empName || ''
+        }).toString();
+
+        // Check if empId exists (we added it to DTO earlier)
+        if (employee.empId) {
+            router.push(`/dashboard/employee-dashboard/${employee.empId}?${query}`);
+        } else {
+            console.error("No employee ID found", employee);
+        }
     };
 
     return (
@@ -104,19 +120,12 @@ export default function EmployeeDashboardPage() {
             <div>
                 <EmployeeActivityTable
                     data={employeeActivitiesData}
-                    onEmployeeClick={setSelectedEmployee}
+                    onEmployeeClick={handleEmployeeClick} // Updated handler
                     isLoading={loading}
                 />
             </div>
 
-            {/* Detail Modal */}
-            {selectedEmployee && (
-                <EmployeeDetailModal
-                    employee={selectedEmployee}
-                    dateRange={{ from: dateRange.startDate, to: dateRange.endDate }}
-                    onClose={() => setSelectedEmployee(null)}
-                />
-            )}
+            {/* Modal Removed */}
         </div>
     );
 }

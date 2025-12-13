@@ -166,7 +166,6 @@ const NavigationAccordion = () => {
       hasSubmenu: true,
       submenu: [
         { title: 'Employee List', href: '/dashboard/user-resource/employee-list' },
-        { title: 'Employee Dashboard', href: '/dashboard/employee-dashboard' },
         { title: 'Add User Role', href: '/dashboard/user-resource/add-user-role' },
         { title: 'Assign Role', href: '/dashboard/user-resource/assign-role' },
         { title: 'Change Password', href: '/dashboard/user-resource/change-password' },
