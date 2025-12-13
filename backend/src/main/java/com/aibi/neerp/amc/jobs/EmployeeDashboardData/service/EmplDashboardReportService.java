@@ -173,80 +173,83 @@ public class EmplDashboardReportService {
 	        List<AmcJobActivity> amcJobActivities) {
 
 	    List<AmcJobActivity> filteredActivities = new ArrayList<>();
+	    
+	    if(amcJobActivities!=null) {
 
-	    // Group activities by jobId
-	    Map<Integer, List<AmcJobActivity>> jobActivitiesMap = new HashMap<>();
-
-	    for (AmcJobActivity a : amcJobActivities) {
-	        Integer jobId = a.getJob().getJobId();
-	        jobActivitiesMap.computeIfAbsent(jobId, k -> new ArrayList<>()).add(a);
-	    }
-
-	    // Process per job
-	    for (Map.Entry<Integer, List<AmcJobActivity>> entry : jobActivitiesMap.entrySet()) {
-
-	        Integer jobId = entry.getKey();
-	        List<AmcJobActivity> activities = entry.getValue();
-
-	        Map<String, Set<Integer>> serviceEmpMap = new HashMap<>();
-	        Map<Integer, Set<Integer>> breakdownEmpMap = new HashMap<>();
-
-	        for (AmcJobActivity activity : activities) {
-
-	            String type = activity.getJobActivityType().getActivityName();
-
-	            // ====================================================
-	            // SERVICE ACTIVITY
-	            // ====================================================
-	            if ("service".equalsIgnoreCase(type)) {
-
-	                Integer empId = activity.getJobActivityBy().getEmployeeId();
-	                String jobService = activity.getJobService();
-
-	                Set<Integer> empIds =
-	                        serviceEmpMap.computeIfAbsent(jobService, k -> new HashSet<>());
-
-	                if (!empIds.contains(empId)) {
-
-	                    // Fetch total lifts count for this service
-	                    AmcJob amcJob = amcJobRepository.findById(jobId).get();
-	                    CombinedEnquiry combinedEnquiry =
-	                            amcJob.getAmcQuotation() != null
-	                                    ? amcJob.getAmcQuotation().getCombinedEnquiry()
-	                                    : amcJob.getRevisedAmcQuotation().getCombinedEnquiry();
-
-	                    int totalLifts = combinedEnquiry.getEnquiries().size();
-
-	                    // Check if service done for all lifts
-	                    if (isServiceDoneForAllLifts(jobService, jobId, totalLifts)) {
-	                        filteredActivities.add(activity);
-	                    }
-
-	                    empIds.add(empId);
-	                }
-	            }
-
-	            // ====================================================
-	            // BREAKDOWN ACTIVITY
-	            // ====================================================
-	            else {
-
-	                Integer todoId = activity.getBreakdownTodo().getCustTodoId();
-	                Integer empId = activity.getJobActivityBy().getEmployeeId();
-
-	                Set<Integer> empIds =
-	                        breakdownEmpMap.computeIfAbsent(todoId, k -> new HashSet<>());
-
-	                if (!empIds.contains(empId)) {
-
-	                    if (isBreakDownActivityDoneForAllLifts(todoId)) {
-	                        filteredActivities.add(activity);
-	                    }
-
-	                    empIds.add(empId);
-	                }
-	            }
-	        }
+		    // Group activities by jobId
+		    Map<Integer, List<AmcJobActivity>> jobActivitiesMap = new HashMap<>();
+	
+		    for (AmcJobActivity a : amcJobActivities) {
+		        Integer jobId = a.getJob().getJobId();
+		        jobActivitiesMap.computeIfAbsent(jobId, k -> new ArrayList<>()).add(a);
+		    }
+	
+		    // Process per job
+		    for (Map.Entry<Integer, List<AmcJobActivity>> entry : jobActivitiesMap.entrySet()) {
+	
+		        Integer jobId = entry.getKey();
+		        List<AmcJobActivity> activities = entry.getValue();
+	
+		        Map<String, Set<Integer>> serviceEmpMap = new HashMap<>();
+		        Map<Integer, Set<Integer>> breakdownEmpMap = new HashMap<>();
+	
+		        for (AmcJobActivity activity : activities) {
+	
+		            String type = activity.getJobActivityType().getActivityName();
+	
+		            // ====================================================
+		            // SERVICE ACTIVITY
+		            // ====================================================
+		            if ("service".equalsIgnoreCase(type)) {
+	
+		                Integer empId = activity.getJobActivityBy().getEmployeeId();
+		                String jobService = activity.getJobService();
+	
+		                Set<Integer> empIds =
+		                        serviceEmpMap.computeIfAbsent(jobService, k -> new HashSet<>());
+	
+		                if (!empIds.contains(empId)) {
+	
+		                    // Fetch total lifts count for this service
+		                    AmcJob amcJob = amcJobRepository.findById(jobId).get();
+		                    CombinedEnquiry combinedEnquiry =
+		                            amcJob.getAmcQuotation() != null
+		                                    ? amcJob.getAmcQuotation().getCombinedEnquiry()
+		                                    : amcJob.getRevisedAmcQuotation().getCombinedEnquiry();
+	
+		                    int totalLifts = combinedEnquiry.getEnquiries().size();
+	
+		                    // Check if service done for all lifts
+		                    if (isServiceDoneForAllLifts(jobService, jobId, totalLifts)) {
+		                        filteredActivities.add(activity);
+		                    }
+	
+		                    empIds.add(empId);
+		                }
+		            }
+	
+		            // ====================================================
+		            // BREAKDOWN ACTIVITY
+		            // ====================================================
+		            else {
+	
+		                Integer todoId = activity.getBreakdownTodo().getCustTodoId();
+		                Integer empId = activity.getJobActivityBy().getEmployeeId();
+	
+		                Set<Integer> empIds =
+		                        breakdownEmpMap.computeIfAbsent(todoId, k -> new HashSet<>());
+	
+		                if (!empIds.contains(empId)) {
+	
+		                    if (isBreakDownActivityDoneForAllLifts(todoId)) {
+		                        filteredActivities.add(activity);
+		                    }
+	
+		                    empIds.add(empId);
+		                }
+		            }
+		        }
+		    }
 	    }
 
 	    return filteredActivities;
@@ -300,118 +303,121 @@ public class EmplDashboardReportService {
 	        List<AmcRenewalJobActivity> amcRenewalJobActivities) {
 
 	    List<AmcRenewalJobActivity> filterActivites = new ArrayList<>();
+	    
+	    if(amcRenewalJobActivities!=null) {
 
-	    HashMap<Integer, List<AmcRenewalJobActivity>> jobIdMapWithAmcRenewalJobActivities = 
-	            new HashMap<>();
-
-	    // --- Group by RenewalJobId ---
-	    for (AmcRenewalJobActivity activity : amcRenewalJobActivities) {
-
-	        Integer renewalJobId = activity.getAmcRenewalJob().getRenewalJobId();
-
-	        jobIdMapWithAmcRenewalJobActivities
-	            .computeIfAbsent(renewalJobId, k -> new ArrayList<>())
-	            .add(activity);
-	    }
-
-	    // --- Process each Renewal Job ---
-	    for (Map.Entry<Integer, List<AmcRenewalJobActivity>> entry :
-	            jobIdMapWithAmcRenewalJobActivities.entrySet()) {
-
-	        Integer renewalJobId = entry.getKey();
-	        List<AmcRenewalJobActivity> activities = entry.getValue();
-
-	        // Track service jobService → employeeIds
-	        HashMap<String, HashSet<Integer>> jobServiceMapWithListOfEmpIds =
-	                new HashMap<>();
-
-	        // Track breakdown todo → employeeIds
-	        HashMap<Integer, HashSet<Integer>> breakDownTodoIdMapWithListOfEmpIds =
-	                new HashMap<>();
-
-	        for (AmcRenewalJobActivity activity : activities) {
-
-	            String jobActivityType = activity.getJobActivityType().getActivityName();
-
-	            // ============================================================
-	            //                  SERVICE ACTIVITIES
-	            // ============================================================
-	            if (jobActivityType.equalsIgnoreCase("service")) {
-
-	                Integer empId = activity.getJobActivityBy().getEmployeeId();
-	                String jobService = activity.getJobService();
-
-	                HashSet<Integer> serviceEmpIds =
-	                        jobServiceMapWithListOfEmpIds.get(jobService);
-
-	                boolean isAlreadyDone =
-	                        serviceEmpIds != null && serviceEmpIds.contains(empId);
-
-	                if (!isAlreadyDone) {
-
-	                    // ----------------------------------------
-	                    // 1. Get total lift count for this renewal job
-	                    // ----------------------------------------
-	                    AmcRenewalJob renewalJob =
-	                            amcRenewalJobRepository.findById(renewalJobId).get();
-
-	                    CombinedEnquiry combinedEnquiry = null;
-
-	                    if (renewalJob.getAmcRenewalQuotation()!= null)
-	                        combinedEnquiry = renewalJob.getAmcRenewalQuotation().getCombinedEnquiry();
-	                    else
-	                        combinedEnquiry = renewalJob.getRevisedRenewalAmcQuotation().getCombinedEnquiry();
-
-	                    int totalLiftCount = combinedEnquiry.getEnquiries().size();
-
-	                    // ----------------------------------------
-	                    // 2. Check if service completed for all lifts
-	                    // ----------------------------------------
-	                    boolean isServiceDoneForAll =
-	                            isRenewalServiceDoneForAllLifts(jobService, renewalJobId, totalLiftCount);
-
-	                    if (isServiceDoneForAll) {
-	                        filterActivites.add(activity);
-	                    }
-
-	                    // ----------------------------------------
-	                    // 3. Add emp id to tracking map
-	                    // ----------------------------------------
-	                    jobServiceMapWithListOfEmpIds
-	                            .computeIfAbsent(jobService, k -> new HashSet<>())
-	                            .add(empId);
-	                }
-
-	            }
-	            // ============================================================
-	            //                  BREAKDOWN ACTIVITIES
-	            // ============================================================
-	            else {
-
-	                Integer custTodoId = activity.getBreakdownTodo().getCustTodoId();
-	                Integer empId = activity.getJobActivityBy().getEmployeeId();
-
-	                HashSet<Integer> bdEmpIds =
-	                        breakDownTodoIdMapWithListOfEmpIds.get(custTodoId);
-
-	                boolean isAlreadyDone =
-	                        bdEmpIds != null && bdEmpIds.contains(empId);
-
-	                if (!isAlreadyDone) {
-
-	                    boolean allLiftsDone =
-	                            isRenewalBreakdownDoneForAllLifts(custTodoId);
-
-	                    if (allLiftsDone) {
-	                        filterActivites.add(activity);
-	                    }
-
-	                    breakDownTodoIdMapWithListOfEmpIds
-	                            .computeIfAbsent(custTodoId, k -> new HashSet<>())
-	                            .add(empId);
-	                }
-	            }
-	        }
+		    HashMap<Integer, List<AmcRenewalJobActivity>> jobIdMapWithAmcRenewalJobActivities = 
+		            new HashMap<>();
+	
+		    // --- Group by RenewalJobId ---
+		    for (AmcRenewalJobActivity activity : amcRenewalJobActivities) {
+	
+		        Integer renewalJobId = activity.getAmcRenewalJob().getRenewalJobId();
+	
+		        jobIdMapWithAmcRenewalJobActivities
+		            .computeIfAbsent(renewalJobId, k -> new ArrayList<>())
+		            .add(activity);
+		    }
+	
+		    // --- Process each Renewal Job ---
+		    for (Map.Entry<Integer, List<AmcRenewalJobActivity>> entry :
+		            jobIdMapWithAmcRenewalJobActivities.entrySet()) {
+	
+		        Integer renewalJobId = entry.getKey();
+		        List<AmcRenewalJobActivity> activities = entry.getValue();
+	
+		        // Track service jobService → employeeIds
+		        HashMap<String, HashSet<Integer>> jobServiceMapWithListOfEmpIds =
+		                new HashMap<>();
+	
+		        // Track breakdown todo → employeeIds
+		        HashMap<Integer, HashSet<Integer>> breakDownTodoIdMapWithListOfEmpIds =
+		                new HashMap<>();
+	
+		        for (AmcRenewalJobActivity activity : activities) {
+	
+		            String jobActivityType = activity.getJobActivityType().getActivityName();
+	
+		            // ============================================================
+		            //                  SERVICE ACTIVITIES
+		            // ============================================================
+		            if (jobActivityType.equalsIgnoreCase("service")) {
+	
+		                Integer empId = activity.getJobActivityBy().getEmployeeId();
+		                String jobService = activity.getJobService();
+	
+		                HashSet<Integer> serviceEmpIds =
+		                        jobServiceMapWithListOfEmpIds.get(jobService);
+	
+		                boolean isAlreadyDone =
+		                        serviceEmpIds != null && serviceEmpIds.contains(empId);
+	
+		                if (!isAlreadyDone) {
+	
+		                    // ----------------------------------------
+		                    // 1. Get total lift count for this renewal job
+		                    // ----------------------------------------
+		                    AmcRenewalJob renewalJob =
+		                            amcRenewalJobRepository.findById(renewalJobId).get();
+	
+		                    CombinedEnquiry combinedEnquiry = null;
+	
+		                    if (renewalJob.getAmcRenewalQuotation()!= null)
+		                        combinedEnquiry = renewalJob.getAmcRenewalQuotation().getCombinedEnquiry();
+		                    else
+		                        combinedEnquiry = renewalJob.getRevisedRenewalAmcQuotation().getCombinedEnquiry();
+	
+		                    int totalLiftCount = combinedEnquiry.getEnquiries().size();
+	
+		                    // ----------------------------------------
+		                    // 2. Check if service completed for all lifts
+		                    // ----------------------------------------
+		                    boolean isServiceDoneForAll =
+		                            isRenewalServiceDoneForAllLifts(jobService, renewalJobId, totalLiftCount);
+	
+		                    if (isServiceDoneForAll) {
+		                        filterActivites.add(activity);
+		                    }
+	
+		                    // ----------------------------------------
+		                    // 3. Add emp id to tracking map
+		                    // ----------------------------------------
+		                    jobServiceMapWithListOfEmpIds
+		                            .computeIfAbsent(jobService, k -> new HashSet<>())
+		                            .add(empId);
+		                }
+	
+		            }
+		            // ============================================================
+		            //                  BREAKDOWN ACTIVITIES
+		            // ============================================================
+		            else {
+	
+		                Integer custTodoId = activity.getBreakdownTodo().getCustTodoId();
+		                Integer empId = activity.getJobActivityBy().getEmployeeId();
+	
+		                HashSet<Integer> bdEmpIds =
+		                        breakDownTodoIdMapWithListOfEmpIds.get(custTodoId);
+	
+		                boolean isAlreadyDone =
+		                        bdEmpIds != null && bdEmpIds.contains(empId);
+	
+		                if (!isAlreadyDone) {
+	
+		                    boolean allLiftsDone =
+		                            isRenewalBreakdownDoneForAllLifts(custTodoId);
+	
+		                    if (allLiftsDone) {
+		                        filterActivites.add(activity);
+		                    }
+	
+		                    breakDownTodoIdMapWithListOfEmpIds
+		                            .computeIfAbsent(custTodoId, k -> new HashSet<>())
+		                            .add(empId);
+		                }
+		            }
+		        }
+		    }
 	    }
 
 	    return filterActivites;
@@ -779,46 +785,50 @@ public class EmplDashboardReportService {
 			HashMap<String, MonthlyActivityCount> monthlyActivityCountInHash) {
 		
 		try {
-			for (AmcJobActivity amcJobActivity : amcJobActivities) {
-				if (amcJobActivity == null || amcJobActivity.getJobActivityType() == null || 
-					amcJobActivity.getActivityDate() == null) {
-					continue;
-				}
-				
-				JobActivityType jobActivityType = amcJobActivity.getJobActivityType();
-				String jobActivityTypeName = jobActivityType.getActivityName();
-				
-				if (jobActivityTypeName == null) {
-					continue;
-				}
-				
-				LocalDate activityDate = amcJobActivity.getActivityDate();
-				String activityMonth = activityDate.getMonth()
-						.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).toUpperCase();
-				Integer activityMonthInNum = activityDate.getMonthValue();
-				
-				MonthlyActivityCount monthlyActivityCount = monthlyActivityCountInHash.get(activityMonth);
-				
-				if (monthlyActivityCount == null) {
-					monthlyActivityCount = new MonthlyActivityCount();
-					monthlyActivityCount.setMonth(activityMonth);
-					monthlyActivityCount.setTotalServicesCounts(0);
-					monthlyActivityCount.setTotalBreakDownsCounts(0);
+			
+			if(amcJobActivities!=null) {
+				for (AmcJobActivity amcJobActivity : amcJobActivities) {
+					if (amcJobActivity == null || amcJobActivity.getJobActivityType() == null || 
+						amcJobActivity.getActivityDate() == null) {
+						continue;
+					}
+					
+					JobActivityType jobActivityType = amcJobActivity.getJobActivityType();
+					String jobActivityTypeName = jobActivityType.getActivityName();
+					
+					if (jobActivityTypeName == null) {
+						continue;
+					}
+					
+					LocalDate activityDate = amcJobActivity.getActivityDate();
+					String activityMonth = activityDate.getMonth()
+							.getDisplayName(TextStyle.SHORT, Locale.ENGLISH).toUpperCase();
+					Integer activityMonthInNum = activityDate.getMonthValue();
+					
+					MonthlyActivityCount monthlyActivityCount = monthlyActivityCountInHash.get(activityMonth);
+					
+					if (monthlyActivityCount == null) {
+						monthlyActivityCount = new MonthlyActivityCount();
+						monthlyActivityCount.setMonth(activityMonth);
+						monthlyActivityCount.setTotalServicesCounts(0);
+						monthlyActivityCount.setTotalBreakDownsCounts(0);
+						monthlyActivityCount.setMonthInNum(activityMonthInNum);
+					}
+					
+					// Increment the correct count based on activity type
+					if ("service".equalsIgnoreCase(jobActivityTypeName)) {
+						monthlyActivityCount.setTotalServicesCounts(
+								monthlyActivityCount.getTotalServicesCounts() + 1);
+					} else if ("breakdown".equalsIgnoreCase(jobActivityTypeName)) {
+						monthlyActivityCount.setTotalBreakDownsCounts(
+								monthlyActivityCount.getTotalBreakDownsCounts() + 1);
+					}
+					
 					monthlyActivityCount.setMonthInNum(activityMonthInNum);
+					monthlyActivityCountInHash.put(activityMonth, monthlyActivityCount);
 				}
-				
-				// Increment the correct count based on activity type
-				if ("service".equalsIgnoreCase(jobActivityTypeName)) {
-					monthlyActivityCount.setTotalServicesCounts(
-							monthlyActivityCount.getTotalServicesCounts() + 1);
-				} else if ("breakdown".equalsIgnoreCase(jobActivityTypeName)) {
-					monthlyActivityCount.setTotalBreakDownsCounts(
-							monthlyActivityCount.getTotalBreakDownsCounts() + 1);
-				}
-				
-				monthlyActivityCount.setMonthInNum(activityMonthInNum);
-				monthlyActivityCountInHash.put(activityMonth, monthlyActivityCount);
 			}
+			
 		} catch (Exception e) {
 			// Silently handle exception
 		}
