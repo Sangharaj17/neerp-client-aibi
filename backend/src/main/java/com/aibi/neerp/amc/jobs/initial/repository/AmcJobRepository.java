@@ -199,6 +199,15 @@ public interface AmcJobRepository extends JpaRepository<AmcJob, Integer> {
 		);
 
 
+	 @Query("SELECT COUNT(a) FROM AmcJob a " +
+	           "WHERE a.currentServiceNumber <= 12 " +
+	           "AND a.endDate > :currentDate")
+	    Integer countActiveJobs(@Param("currentDate") LocalDate currentDate);
+
+
+	 @Query("SELECT COUNT(j) FROM AmcJob j JOIN j.route r JOIN r.employees e WHERE e.employeeId = :empId")
+	 Long countAssignedJobs(@Param("empId") Integer empId);
+
 
 	
 

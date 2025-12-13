@@ -129,6 +129,15 @@ public interface AmcRenewalJobRepository extends JpaRepository<AmcRenewalJob, In
 		    	        @Param("currentDate") LocalDate currentDate
 		    	);
 
+
+		    @Query("SELECT COUNT(r) FROM AmcRenewalJob r " +
+		            "WHERE r.currentServiceNumber <= 12 " +
+		            "AND r.endDate > :currentDate")
+		     Integer countActiveRenewalJobs(@Param("currentDate") LocalDate currentDate);
+
+
+		    @Query("SELECT COUNT(j) FROM AmcRenewalJob j JOIN j.route r JOIN r.employees e WHERE e.employeeId = :empId")
+		    Long countAssignedRenewalJobs(@Param("empId") Integer empId);
 		
 
 	

@@ -14,4 +14,6 @@ public interface BreakdownTodoLiftMappingRepository extends JpaRepository<Breakd
 
 	List<BreakdownTodoLiftMapping> findByBreakdownTodo_CustTodoId(Integer breakdownId);
 
+	long countByBreakdownTodo_CustTodoId(Integer custTodoId);
+
 }
