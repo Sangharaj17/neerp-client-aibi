@@ -166,6 +166,7 @@ const NavigationAccordion = () => {
       hasSubmenu: true,
       submenu: [
         { title: 'Employee List', href: '/dashboard/user-resource/employee-list' },
+        { title: 'Employee Dashboard', href: '/dashboard/employee-dashboard' },
         { title: 'Add User Role', href: '/dashboard/user-resource/add-user-role' },
         { title: 'Assign Role', href: '/dashboard/user-resource/assign-role' },
         { title: 'Change Password', href: '/dashboard/user-resource/change-password' },
@@ -193,7 +194,7 @@ const NavigationAccordion = () => {
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
         { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` },
-                { title: 'Inspection Report', href: `/dashboard/lead-management/inspection-report` }
+        { title: 'Inspection Report', href: `/dashboard/lead-management/inspection-report` }
 
       ]
     },
@@ -250,10 +251,10 @@ const NavigationAccordion = () => {
         { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
       ]
     },
-     {
+    {
       id: 'sitre-expenses',
       title: 'Site Expenses',
-       icon: Settings,
+      icon: Settings,
       hasSubmenu: true,
       submenu: [
         { title: 'Site Expences', href: '/dashboard/site-expences' },
@@ -311,8 +312,8 @@ const NavigationAccordion = () => {
                     onClick={() => toggleSection(section.id)}
                     title={section.title}
                     className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                        ? 'text-slate-900 bg-slate-100'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      ? 'text-slate-900 bg-slate-100'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -335,8 +336,8 @@ const NavigationAccordion = () => {
                             onClick={() => handleNavigation(item.href)}
                             title={item.title}
                             className={`block px-3 py-1.5 text-sm rounded-md transition-colors ${isItemActive
-                                ? 'text-slate-900 font-medium bg-slate-100'
-                                : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                              ? 'text-slate-900 font-medium bg-slate-100'
+                              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                               }`}
                           >
                             <div className="flex items-center justify-between">
@@ -357,8 +358,8 @@ const NavigationAccordion = () => {
                   onClick={() => handleNavigation(section.href)}
                   title={section.title}
                   className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                      ? 'text-slate-900 bg-slate-100'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                    ? 'text-slate-900 bg-slate-100'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                     }`}
                 >
                   <div className="flex items-center gap-3">

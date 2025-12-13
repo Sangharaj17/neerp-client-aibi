@@ -1043,6 +1043,7 @@ public class EmplDashboardReportService {
 
 	            EmpActivitiesCountsData dto = EmpActivitiesCountsData.builder()
 	                    .empName(empName)
+	                    .empId(empId)
 	                    .assignedDoneServiceCounts(assignedService)
 	                    .assignedDoneBreakdownCounts(assignedBreak)
 	                    .unassignedDoneServiceCounts(unassignedService)

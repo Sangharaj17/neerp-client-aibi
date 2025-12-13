@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class EmpActivitiesCountsData {
 	
 	private String empName;
+	private Integer empId;
 	
 	private Integer assignedDoneServiceCounts;
 	private Integer assignedDoneBreakdownCounts;
