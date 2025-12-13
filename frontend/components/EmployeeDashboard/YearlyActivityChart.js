@@ -46,6 +46,17 @@ export default function YearlyActivityChart({ data }) {
                     </BarChart>
                 </ResponsiveContainer>
             </div>
+
+            <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                <div className="bg-blue-50 p-3 rounded-lg text-center">
+                    <p className="text-xs font-semibold text-slate-500 uppercase">Active Jobs</p>
+                    <p className="text-xl font-bold text-blue-600">{data.totalActiveJobs || 0}</p>
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg text-center">
+                    <p className="text-xs font-semibold text-slate-500 uppercase">Svc Done ({data.currentMonthAndYear})</p>
+                    <p className="text-xl font-bold text-green-600">{data.toatlServiceDoneCurrentMonth || 0}</p>
+                </div>
+            </div>
         </div>
     );
 }

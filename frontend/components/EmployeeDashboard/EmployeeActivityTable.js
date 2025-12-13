@@ -29,7 +29,9 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
     return (
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between gap-4 items-center">
-                <h3 className="text-lg font-semibold text-slate-800">Employee Activity Details</h3>
+                <h3 className="text-lg font-semibold text-slate-800">
+                    Employee Activity Details <span className="text-slate-500 text-sm font-normal ml-2">({data.length} Employees)</span>
+                </h3>
 
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -47,6 +49,7 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                 <table className="w-full text-sm text-left">
                     <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                         <tr>
+                            <th className="px-6 py-4 w-16">Sr No</th>
                             <th className="px-6 py-4">Employee Name</th>
                             <th className="px-6 py-4 text-center bg-blue-50/50">Assigned Service</th>
                             <th className="px-6 py-4 text-center bg-blue-50/50">Unassigned Service</th>
@@ -65,6 +68,9 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                                 className="hover:bg-slate-50 transition-colors cursor-pointer group"
                                 onClick={() => onEmployeeClick(emp)}
                             >
+                                <td className="px-6 py-4 font-medium text-slate-500">
+                                    {index + 1}
+                                </td>
                                 <td className="px-6 py-4 font-medium text-slate-900">
                                     {emp.empName}
                                 </td>

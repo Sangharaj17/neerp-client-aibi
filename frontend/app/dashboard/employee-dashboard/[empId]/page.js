@@ -90,7 +90,7 @@ export default function EmployeeDetailsPage({ params }) {
                             {empName}
                         </h1>
                         <p className="text-slate-500 text-sm mt-1 ml-14">
-                            Detailed Activity Report ({startDate} to {endDate})
+                            Detailed Activity Report ({startDate} to {endDate}) • <span className="font-semibold text-slate-800">{activities.length} Activities</span>
                         </p>
                     </div>
                 </div>
@@ -223,6 +223,7 @@ export default function EmployeeDetailsPage({ params }) {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                                     <tr>
+                                        <th className="px-4 py-3 w-16">Sr No</th>
                                         <th className="px-4 py-3">Date</th>
                                         <th className="px-4 py-3">Customer</th>
                                         <th className="px-4 py-3">Site</th>
@@ -234,6 +235,9 @@ export default function EmployeeDetailsPage({ params }) {
                                 <tbody className="divide-y divide-slate-100">
                                     {currentItems.map((activity, index) => (
                                         <tr key={index} className="hover:bg-slate-50">
+                                            <td className="px-4 py-3 font-medium text-slate-500">
+                                                {(currentPage - 1) * itemsPerPage + index + 1}
+                                            </td>
                                             <td className="px-4 py-3 whitespace-nowrap font-medium text-slate-700">{activity.activityDate}</td>
                                             <td className="px-4 py-3 text-slate-800 font-semibold">{activity.customerName}</td>
                                             <td className="px-4 py-3 text-slate-600">

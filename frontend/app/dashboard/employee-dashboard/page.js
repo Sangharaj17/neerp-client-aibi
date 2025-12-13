@@ -108,10 +108,10 @@ export default function EmployeeDashboardPage() {
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="h-96">
+                <div>
                     <TopEmployeesChart data={topEmployeesData} />
                 </div>
-                <div className="h-96">
+                <div>
                     <YearlyActivityChart data={yearlyActivityData} />
                 </div>
             </div>
