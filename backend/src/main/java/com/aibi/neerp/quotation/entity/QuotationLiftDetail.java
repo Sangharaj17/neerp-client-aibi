@@ -12,8 +12,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Entity
-@Table(name = "tbl_quotation_lift_detail")
+@Table(
+        name = "tbl_quotation_lift_detail",
+        indexes = {
+                // Index for linking back to the parent quote
+                @Index(name = "idx_quotation_main_id", columnList = "quotation_main_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,13 +32,22 @@ public class QuotationLiftDetail {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "lift_quotation_no", length = 100, nullable = false, unique = true)
-    private String liftQuotationNo;
+    // 💡 UNIQUE constraint should be removed or made composite if lift_quotation_no is needed
+    // Assuming lift_quotation_no is just an internal identifier that is unique per quote,
+    // it must be unique per (lift_quotation_no, quotation_main_id) pair.
+    @Column(name = "lift_quotation_no", length = 100, nullable = false)
+    private String liftQuotationNo; // Removed 'unique = true'
 
     // 🔹 Relationships
+    // CRITICAL FK LINK: Links this lift to its parent quote revision
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "quotation_main_id")
+    @JoinColumn(name = "quotation_main_id", nullable = false) // Added nullable=false
     private QuotationMain quotationMain;
+
+    // 💡 REVISION FIELD: Link to the previous version of this specific lift
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_lift_id")
+    private QuotationLiftDetail parentLift;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lead_id")
@@ -327,6 +343,7 @@ public class QuotationLiftDetail {
     // 🔹 Quotation metadata
     private LocalDateTime quotationDate;
 
+    // 🔹 Relation to Materials (1-to-Many FK relationships)
     @OneToMany(mappedBy = "liftDetail", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QuotationLiftMaterial> liftMaterials = new ArrayList<>();
 

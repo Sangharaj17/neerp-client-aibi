@@ -215,3 +215,163 @@ export const fetchComponents = async () => {
     return { success: false, message: "Error fetching components.", data: [] };
   }
 };
+
+export const fetchQuotationsByQuotationNo = async (quotationNo) => {
+  try {
+    if (!quotationNo) {
+      return {
+        success: false,
+        message: "Quotation Number is required",
+        data: [],
+      };
+    }
+
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.QUOTATIONS}/by-quotation-no`,
+      {
+        params: { quotationNo },
+      }
+    );
+
+    return response?.data; // ApiResponse object
+  } catch (err) {
+    console.error("❌ Error fetching quotations by Quotation No:", err);
+
+    return {
+      success: false,
+      message: err?.response?.data?.message || "Failed to fetch quotations.",
+      data: [],
+    };
+  }
+};
+
+export const getRevisionsLifts = async (quotationMainId, action) => {
+  console.log("🚀 getRevisionsLifts called with ID:", quotationMainId, "and action:", action);
+  console.log("-------------->",(!quotationMainId || action !== "revise" || action !== "editRevision"));
+  if (!quotationMainId || (action !== "revise" && action !== "editRevision")) return [];
+
+  console.log("🚀............ getRevisionsLifts called with ID:", quotationMainId, "and action:", action);
+  try {
+    // const response = await axiosInstance.get(
+    //   `${API_ENDPOINTS.QUOTATIONS}/${quotationMainId}`
+    // ); 
+
+    const response = await axiosInstance.get(
+      `${API_ENDPOINTS.QUOTATIONS}/revised/${quotationMainId}`
+    );
+
+    const api = response.data;
+    console.log("==========api==========>", api);
+
+    // 🔹 ApiResponse Format: { status, message, data }
+    if (!api.success || !api.data) {
+      console.warn("⚠ No revision data returned");
+      return [];
+    }
+
+    console.log("📌 Revision API Response:", api);
+    return api.data; // This is QuotationMainResponseDTO
+  } catch (err) {
+    console.error("❌ Failed to load revision:", err);
+
+    return [];
+  }
+};
+
+// export const fetchRevisions = async (id, action) => {
+//   if (!id || action !== "revise") return; // 'id' here is the old QuotationMainId
+//   const oldQuotationMainId = Number(id);
+
+//   try {
+//     const response = await axiosInstance.get(
+//       `${API_ENDPOINTS.QUOTATIONS}/${id}`
+//     );
+
+//     console.log("=========response=========>", response);
+//     return response.data?.data || [];
+//   } catch (err) {
+//     console.error("❌ Failed to load revision:", err);
+
+//     return {
+//       success: false,
+//       message: err?.response?.data?.message || "Failed to fetch quotations.",
+//       data: [],
+//     };
+//   }
+// };
+
+export const createRevision = async (requestBody, originalLiftId) => {
+  
+  console.log(originalLiftId,"🚀 createRevision called with:", requestBody);
+  try {
+    const response = await axiosInstance.post(
+      `${API_ENDPOINTS.QUOTATIONS}/revise/${originalLiftId}`, // New endpoint
+      requestBody
+    );
+
+    return response?.data;
+  } catch (error) {
+    console.error("❌ Error in createRevision API:", error);
+    // Throwing the error allows the calling component to catch it
+    throw error;
+  }
+};
+
+export const addMissingRevisedLift = async (requestBody, originalLiftId) => {
+  
+  console.log(originalLiftId,"🚀 createRevision called with:", requestBody);
+  console.log("🚀 Request Body lifts:", requestBody) ;
+  try {
+    const response = await axiosInstance.post(
+      `${API_ENDPOINTS.QUOTATIONS}/${originalLiftId}/add-lift`, // New endpoint
+      requestBody
+    );
+
+    return response?.data;
+
+    // return {
+    //   success: true,
+    //   message: "Lift added successfully (mock)",
+    //   data: {
+    //     originalLiftId,
+    //     ...requestBody
+    //   }
+    // };
+  } catch (error) {
+    console.error("❌ Error in createRevision API:", error);
+    // Throwing the error allows the calling component to catch it
+    throw error;
+  }
+};
+
+export const groupAndSortMaterials = (materials = []) => {
+  if (!Array.isArray(materials)) return [];
+
+  // 1️⃣ Group items by materialType
+  const grouped = materials.reduce((acc, item) => {
+    const key = item.materialType || "Unknown";
+
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(item);
+
+    return acc;
+  }, {});
+
+  // 2️⃣ Sort materialTypes alphabetically
+  const sortedTypes = Object.keys(grouped).sort();
+
+  // 3️⃣ Sort items inside each materialType by materialDisplayName
+  const finalList = [];
+
+  sortedTypes.forEach((type) => {
+    const sortedItems = grouped[type].sort((a, b) =>
+      (a.materialDisplayName || "").localeCompare(b.materialDisplayName || "")
+    );
+
+    // 4️⃣ Push into final list (keeping original object structure)
+    finalList.push(...sortedItems);
+  });
+
+  return finalList;
+};
+

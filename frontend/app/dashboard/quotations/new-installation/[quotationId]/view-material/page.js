@@ -260,8 +260,8 @@ export default function ViewMaterialPage() {
   // Overall Final Amount is now: Material + GST + Load
   const overallFinalAmount = amountIncludingGST + overallTotalLoadAmount;
 
-  if (loading) return <div className="p-4 text-center text-blue-600">Loading quotation data...</div>;
-  if (error) return <div className="p-4 text-center text-red-600">Error: {error}</div>;
+  // if (loading) return <div className="p-4 text-center text-blue-600">Loading quotation data...</div>;
+  // if (error) return <div className="p-4 text-center text-red-600">Error: {error}</div>;
 
   if (quotationData) {
     return (
@@ -314,13 +314,14 @@ export default function ViewMaterialPage() {
               <List className="w-5 h-5" /> Individual Lift Breakdown
             </h2>
 
-            {lifts.map((lift) => (
+            {lifts.map((lift, index) => (
               <div
                 key={lift.id}
                 className="flex items-center justify-between border border-gray-200 rounded-xl p-4 shadow-md bg-white w-full transition duration-300 hover:shadow-lg hover:border-blue-400"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <span className="font-bold text-xl text-blue-600">Lift {lift.id}</span>
+                  {/* <span className="font-bold text-xl text-blue-600">Lift {lift.id}</span> */}
+                  <span className="font-bold text-xl text-blue-600">Lift {index + 1}</span>
                   <span className="text-gray-500 text-sm font-medium ml-4">
                     Final Price: <span className="text-xl font-semibold text-green-700">{formatCurrency(lift.totalAmount).toLocaleString()}</span>
                   </span>
@@ -461,8 +462,37 @@ export default function ViewMaterialPage() {
 
   }
 
+
+
+
+
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-600 border-solid"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center text-red-600">
+        Error: {error}
+      </div>
+    );
+  }
+
   // Fallback if data is null after loading (e.g., initial null state)
-  return <div className="p-4 text-center text-gray-500">No quotation data available.</div>;
+  // return <div className="p-4 text-center text-gray-500">No quotation data available.</div>;
+
+  if (!quotationData) {
+    return (
+      <div className="flex justify-center items-center py-10">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-600 border-solid"></div>
+      </div>
+    );
+  }
 }
 
 // Helper component for structured info display

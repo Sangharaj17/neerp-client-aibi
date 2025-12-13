@@ -1,13 +1,13 @@
 'use client';
 
 import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
+import InspectionReportsList from '@/components/Inspection/InspectionReportsList';
 import { useSearchParams, useParams, useRouter } from 'next/navigation';
 import { Eye, Trash2, Pencil, FilePlus, Loader2, FileText, X } from 'lucide-react';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
-import InspectionReportSystem from '@/components/Inspection/InspectionReportSystem';
-import InspectionReportsList from '@/components/Inspection/InspectionReportsList';
+import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 //import jwtEncode from "jwt-encode";
 
 function ViewEnquiryClientPageContent() {
@@ -30,17 +30,16 @@ function ViewEnquiryClientPageContent() {
   const [isAddEnquiryLoading, setAddEnquiryLoading] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(null);
   const [quotationLoadingId, setQuotationLoadingId] = useState(null);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [selectedCombinedEnquiryId, setSelectedCombinedEnquiryId] = useState(null);
+  const [inspectionReportModalOpen, setInspectionReportModalOpen] = useState(false);
+  const [modalView, setModalView] = useState('list');
+  const [selectedReportId, setSelectedReportId] = useState(null);
+  const [reportMode, setReportMode] = useState('create');
 
   const leadId = id;
 
   const [refreshKey, setRefreshKey] = useState(0); // 👈 used to trigger re-fetch
-
-  // Inspection Report Modal State
-  const [inspectionReportModalOpen, setInspectionReportModalOpen] = useState(false);
-  const [selectedCombinedEnquiryId, setSelectedCombinedEnquiryId] = useState(null);
-  const [modalView, setModalView] = useState('list'); // 'list' | 'form'
-  const [selectedReportId, setSelectedReportId] = useState(null);
-  const [reportMode, setReportMode] = useState('create'); // 'create' | 'edit' | 'view'
 
 
   useEffect(() => {
@@ -91,6 +90,16 @@ function ViewEnquiryClientPageContent() {
       })
       .catch((err) => console.error('Failed to fetch enquiry types', err));
   }, []);
+
+  const handleLinkClick = async (e) => {
+    e.preventDefault(); // prevent default navigation
+    setLinkLoading(true);
+
+    // Optional: you can simulate fetching or wait for some async task
+    // await someAsyncCheck();
+
+    router.push("/dashboard/quotations/new-installation");
+  };
 
   const setCombinedEnquiryInSessionStorage = (combinedId) => {
     console.log('Setting combined enquiry in session storage for ID:', combinedId);
@@ -212,10 +221,52 @@ function ViewEnquiryClientPageContent() {
   // };
 
 
-  const filteredEnquiries = Array.isArray(groupedData)
-    ? groupedData
+  // const filteredEnquiries = Array.isArray(groupedData)
+  //   ? groupedData
+  //     .filter((e) => e.enquiryType?.enquiryTypeName === selectedCategory)
+  //     .map((group) =>
+  //       group.enquiries.map((combined) => ({
+  //         combinedId: combined.id,
+  //         enquiryTitle: combined.projectName,
+  //         createdDate: combined.enquiryDate, // 👈 Add this line
+  //         customerName: combined.customerName,
+  //         customerSite: combined.customerSite,
+  //         selectLead: combined.selectLead,
+  //         leadId: combined.leadId,
+  //         siteName: combined.siteName,
+
+  //         entries: combined.enquiries.map((entry) => ({
+  //           id: entry.enquiryId,
+  //           date: entry.enqDate?.split('T')[0] ?? '-',
+  //           liftType: entry.liftType?.name ?? '-',
+  //           machineType: entry.reqMachineRoom?.machineRoomName ?? '-',
+  //           noOfFloors: entry.noOfFloors?.name ?? '-',
+  //           capacityTerm: entry.capacityTerm?.capacityType ?? '-',
+  //           from: entry.from?.from ?? '',
+  //           // selectPerson:
+  //           //   entry.capacityTerm?.capacityType === 'Person'
+  //           //     ? `${entry.personCapacity?.personCount ?? '-'} Persons / ${entry.personCapacity?.weight ?? '-'}Kg`
+  //           //     : `${entry.weight?.weightValue ?? '-'} Kg`,
+  //           // cabinType: entry.cabinType?.cabinType ?? '-'
+  //           selectPerson:
+  //             entry.capacityTerm?.capacityType === 'Person'
+  //               ? `${entry.personCapacity?.text}`
+  //               : `${entry.weight?.weightValue ?? '-'} Kg`,
+  //           cabinType: entry.cabinType?.cabinType ?? '-'
+  //           ,
+  //         })),
+  //       }))
+  //     )
+  //     .flat()
+  //   : [];
+
+
+  const filteredEnquiries = useMemo(() => {
+    if (!Array.isArray(groupedData)) return [];
+
+    return groupedData
       .filter((e) => e.enquiryType?.enquiryTypeName === selectedCategory)
-      .map((group) =>
+      .flatMap(group =>
         group.enquiries.map((combined) => ({
           combinedId: combined.id,
           enquiryTitle: combined.projectName,
@@ -225,7 +276,6 @@ function ViewEnquiryClientPageContent() {
           selectLead: combined.selectLead,
           leadId: combined.leadId,
           siteName: combined.siteName,
-          companyAmcGstPercentage: combined.companyAmcGstPercentage,
 
           entries: combined.enquiries.map((entry) => ({
             id: entry.enquiryId,
@@ -235,22 +285,61 @@ function ViewEnquiryClientPageContent() {
             noOfFloors: entry.noOfFloors?.name ?? '-',
             capacityTerm: entry.capacityTerm?.capacityType ?? '-',
             from: entry.from?.from ?? '',
-            // selectPerson:
-            //   entry.capacityTerm?.capacityType === 'Person'
-            //     ? `${entry.personCapacity?.personCount ?? '-'} Persons / ${entry.personCapacity?.weight ?? '-'}Kg`
-            //     : `${entry.weight?.weightValue ?? '-'} Kg`,
-            // cabinType: entry.cabinType?.cabinType ?? '-'
             selectPerson:
               entry.capacityTerm?.capacityType === 'Person'
-                ? `${entry.personCapacity?.text}`
+                ? entry.personCapacity?.text
                 : `${entry.weight?.weightValue ?? '-'} Kg`,
-            cabinType: entry.cabinType?.cabinType ?? '-'
-            ,
+            cabinType: entry.cabinType?.cabinType ?? '-',
           })),
         }))
-      )
-      .flat()
-    : [];
+      );
+  }, [groupedData, selectedCategory]);
+
+
+
+
+  const [quotationExistMap, setQuotationExistMap] = useState({});
+
+  useEffect(() => {
+    if (!filteredEnquiries.length) return;
+
+    let cancelled = false;
+
+    const checkAllQuotations = async () => {
+      const results = {};
+
+      await Promise.all(
+        filteredEnquiries.map(async (item) => {
+          try {
+            console.log(item.combinedId, "===calling api for /check-existing ===>", item.leadId);
+            const response = await axiosInstance.get(
+              `${API_ENDPOINTS.QUOTATIONS}/check-existing`,
+              { params: { combinedEnquiryId: item.combinedId, leadId: item.leadId } }
+            );
+
+            results[item.combinedId] = response.data?.data;
+          } catch (error) {
+            results[item.combinedId] = false;
+          }
+        })
+      );
+
+      console.log("===results===>");
+      console.log("Quotation Existence Map:", results);
+      if (!cancelled) {
+        setQuotationExistMap(results);
+      }
+      console.log("===quotationExistMap===>", quotationExistMap);
+    };
+
+    checkAllQuotations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filteredEnquiries]);
+
+
 
   const handleAddEnquiry = () => {
     setAddEnquiryLoading(true);
@@ -517,7 +606,14 @@ function ViewEnquiryClientPageContent() {
               </div>
 
               {/* Buttons Section */}
-              <div className="absolute -bottom-10 right-1 flex gap-2">
+              {/* <div className="absolute -bottom-10 right-1"> */}
+              <div
+                className={
+                  selectedCategory === "New Installation"
+                    ? "absolute -bottom-10 right-1 flex flex-col items-end gap-2"
+                    : "absolute -bottom-10 right-1 flex items-end gap-2"
+                }
+              >
                 {/* Inspection Report Button - Hidden for New Installation */}
                 {selectedCategory !== "New Installation" && (
                   <button
@@ -530,6 +626,13 @@ function ViewEnquiryClientPageContent() {
                 )}
 
                 {/* Add Quotation Button */}
+                {/* <div
+                  className={
+                    selectedCategory === "New Installation"
+                      ? "absolute -bottom-10 right-1 flex flex-col items-end"
+                      : "absolute -bottom-10 right-1"
+                  }
+                > */}
                 <button
                   onClick={() => {
                     setQuotationLoadingId(groupIndex);
@@ -574,8 +677,29 @@ function ViewEnquiryClientPageContent() {
                     }
 
                   }}
-                  disabled={quotationLoadingId === groupIndex}
-                  className="bg-yellow-500 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-yellow-600 transition shadow-md"
+                  // onClick={() => {
+                  //   setQuotationLoadingId(groupIndex);
+                  //   console.log(quotationLoadingId)
+                  //   router.push(
+                  //     `/dashboard/lead-management/enquiries/${id}/quotation/add?customer=${encodeURIComponent(
+                  //       searchParams.get('customer')
+                  //     )}&site=${encodeURIComponent(searchParams.get('site'))}`
+                  //   );
+                  // }}
+                  disabled={
+                    // Disable if NEW INSTALLATION and quotation already exists
+                    (selectedCategory === "New Installation" &&
+                      quotationExistMap[group.combinedId] == true)
+                    ||
+                    // Disable only for loader spinner
+                    quotationLoadingId === groupIndex
+                  }
+                  className={`text-white px-4 py-2 rounded-md flex items-center gap-2  transition shadow-md ${(selectedCategory === "New Installation" &&
+                    quotationExistMap[group.combinedId])
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-yellow-500 hover:bg-yellow-600"
+                    }`}
+
                 >
                   {quotationLoadingId === groupIndex ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -584,6 +708,23 @@ function ViewEnquiryClientPageContent() {
                   )}
                   Add Quotation
                 </button>
+
+                {selectedCategory === "New Installation" &&
+                  quotationExistMap[group.combinedId] === true && (
+                    <button
+                      onClick={handleLinkClick}
+                      className="text-xs text-red-600 mt-1 font-medium text-right underline hover:text-red-800 flex items-center gap-1"
+                      disabled={linkLoading} // disable while loading
+                    >
+                      {linkLoading ? (
+                        <Loader2 className="animate-spin h-4 w-4 text-red-600" /> // or a spinner component
+                      ) : (
+                        "Quotation already added. Click here to check the quotation."
+                      )}
+                    </button>
+                  )}
+
+                {/* </div> */}
               </div>
             </div>
           ))
@@ -601,45 +742,47 @@ function ViewEnquiryClientPageContent() {
             Next
           </button>
         </div>
-      </div>
+      </div >
 
       {/* Inspection Report Modal */}
-      {inspectionReportModalOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={handleCloseInspectionReports}
-        >
+      {
+        inspectionReportModalOpen && (
           <div
-            className="bg-white w-full max-w-5xl lg:max-w-6xl rounded-xl shadow-lg overflow-auto max-h-[90vh] animate-fadeIn"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={handleCloseInspectionReports}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {modalView === 'list' ? 'Inspection Reports' : 'Inspection Report'}
-              </h2>
-              <button
-                onClick={handleCloseInspectionReports}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className={modalView === 'list' ? '' : 'p-6'}>
-              {modalView === 'list' ? (
-                <InspectionReportsList
-                  combinedEnquiryId={selectedCombinedEnquiryId}
-                  onSelectReport={handleSelectReport}
-                />
-              ) : (
-                <div className="flex justify-center items-center py-10">
-                  <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                  <span className="ml-2 text-gray-500">Redirecting...</span>
-                </div>
-              )}
+            <div
+              className="bg-white w-full max-w-5xl lg:max-w-6xl rounded-xl shadow-lg overflow-auto max-h-[90vh] animate-fadeIn"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center z-10">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {modalView === 'list' ? 'Inspection Reports' : 'Inspection Report'}
+                </h2>
+                <button
+                  onClick={handleCloseInspectionReports}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className={modalView === 'list' ? '' : 'p-6'}>
+                {modalView === 'list' ? (
+                  <InspectionReportsList
+                    combinedEnquiryId={selectedCombinedEnquiryId}
+                    onSelectReport={handleSelectReport}
+                  />
+                ) : (
+                  <div className="flex justify-center items-center py-10">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    <span className="ml-2 text-gray-500">Redirecting...</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </>
   );
 }

@@ -37,6 +37,9 @@ import com.aibi.neerp.employeemanagement.repository.EmployeeRepository;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.Enquiry;
 import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
+import com.aibi.neerp.quotation.entity.QuotationLiftDetail;
+import com.aibi.neerp.quotation.entity.QuotationMain;
+import com.aibi.neerp.quotation.repository.QuotationMainRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -79,6 +82,9 @@ public class AmcJobsService {
 	    
 	    @Autowired
 	    private AmcRenewalJobRepository amcRenewalJobRepository;
+
+        @Autowired
+        private QuotationMainRepository quotationMainRepository;
 	    
 	    
 	  
@@ -145,7 +151,7 @@ public class AmcJobsService {
 	                        a.getCustomer().getCustomerName() +
 	                        " / " + a.getSite().getSiteName();
 
-	                return new SelectDetailForJob(display, a.getAmcQuatationId(), null , false);
+	                return new SelectDetailForJob(display, a.getAmcQuatationId(), null, null, false);
 	            })
 	            .collect(Collectors.toList());
 
@@ -167,7 +173,7 @@ public class AmcJobsService {
 	                        " / " + r.getSite().getSiteName() +
 	                        " / " + r.getRevisedEdition();
 
-	                return new SelectDetailForJob(display, null, r.getRevisedQuatationId() , false);
+	                return new SelectDetailForJob(display, null, r.getRevisedQuatationId(), null, false);
 	            })
 	            .collect(Collectors.toList());
 
@@ -864,12 +870,103 @@ public class AmcJobsService {
         return new PageImpl<>(alertDataList, pageable, amcJobsPage.getTotalElements());
     }
 
-    
-    
+
+    public AddJobDetailsData getAddJobDetailsDataForNewInstallation(SelectDetailForJob selectDetailForJob) {
+        Integer quotationMainId = selectDetailForJob.getQuotationMainId();
+        log.info("Quotation Main ID: " + quotationMainId); 
+
+        if (quotationMainId != null) {
+            // ✅ New Installation (Quotation Main)
+            QuotationMain quotationMain = quotationMainRepository.findById(quotationMainId)
+                    .orElseThrow(() -> new RuntimeException("Quotation Main not found for ID: " + quotationMainId));
+
+            return buildAddJobDetailsDataFromNewInstallation(quotationMain);
+        }
+
+        throw new IllegalArgumentException("Quotation Main ID is null!");
+    }
+
+    private AddJobDetailsData buildAddJobDetailsDataFromNewInstallation(QuotationMain quotationMain) {
+        AddJobDetailsData addJobDetailsData = new AddJobDetailsData();
+
+        // ✅ Customer & Site
+        if (quotationMain.getCustomer() != null) {
+            addJobDetailsData.setCustomer(quotationMain.getCustomer().getCustomerName());
+            addJobDetailsData.setCustomerId(quotationMain.getCustomer().getCustomerId());
+        }
+        if (quotationMain.getSite() != null) {
+            addJobDetailsData.setCustomerSite(quotationMain.getSite().getSiteName());
+            addJobDetailsData.setSiteId(quotationMain.getSite().getSiteId());
+        }
+        if (quotationMain.getLead() != null) {
+            addJobDetailsData.setLeadId(quotationMain.getLead().getLeadId());
+        }
+
+        if (quotationMain.getCombinedEnquiry() != null) {
+            addJobDetailsData.setCombinedEnquiryId(quotationMain.getCombinedEnquiry().getId());
+        }
+        // New Installation usually doesn't have "No Of Services" from existing AMC, 
+        // but might get it from default or leave 0/null. 
+        // Assuming 0 or getting it from somewhere else if needed.
+        addJobDetailsData.setNoOfServices(0); 
+
+        // ✅ Job Amount (Total Amount from Quotation)
+        addJobDetailsData.setJobAmount(quotationMain.getTotalAmount() != null ? BigDecimal.valueOf(quotationMain.getTotalAmount()) : BigDecimal.ZERO);
+
+        // Date ? Use quotation date or Created date? Assuming Quotation Date
+        // Since Start Date is expected as LocalDate, conversion might be needed if quotationDate is LocalDateTime
+        if(quotationMain.getQuotationDate() != null){
+             addJobDetailsData.setStartDate(quotationMain.getQuotationDate().toLocalDate());
+        }
 
 
+        // ✅ Lift Data
+        addJobDetailsData.setLiftDatas(buildLiftDataFromQuotationLifts(quotationMain.getLiftDetails()));
 
-    
+        // ✅ Routes & Employees
+        addJobDetailsData.setRoutesDtos(routesService.getAllRoutes());
+        addJobDetailsData.setEmployeeDtos(buildEmployeeDtos());
 
+        return addJobDetailsData;
+    }
 
+    private List<LiftData> buildLiftDataFromQuotationLifts(List<QuotationLiftDetail> quotationLifts) {
+        List<LiftData> liftDatas = new ArrayList<>();
+        if (quotationLifts != null) {
+            for (QuotationLiftDetail qLift : quotationLifts) {
+                LiftData liftData = new LiftData();
+
+                if (qLift.getEnquiry() != null) {
+                    liftData.setEnquiryId(qLift.getEnquiry().getEnquiryId());
+                }
+
+                liftData.setLiftName(qLift.getLiftType().getName()); // Or use another name field if available? qLift.getLiftQuotationNo() seems to be the identifier here.
+
+                // Capacity
+                String capacity = null;
+                if (qLift.getPersonCapacity() != null) {
+                    capacity = qLift.getPersonCapacity().getDisplayName();
+                } else if (qLift.getWeight() != null) {
+                    capacity = qLift.getWeight().getWeightValue() + " Kg";
+                }
+                liftData.setCapacityValue(capacity);
+
+                if (qLift.getFloors() != null) {
+                   // liftData.setNoOfFloors(String.valueOf(qLift.getFloors())); // LiftData expects String? The previous buildLiftData uses FloorName from Enquiry.NoOfFloors (Floor object). 
+                   // Here qLift.getFloors() is Integer.
+                   //liftData.setNoOfFloors(String.valueOf(qLift.getFloors()));
+                    liftData.setNoOfFloors(qLift.getFloorDesignations());
+                }
+                
+                if (qLift.getTypeOfLift() != null) {
+//                    liftData.setTypeOfElevators(qLift.getTypeOfLift().getLiftTypeName());
+
+                    liftData.setTypeOfElevators(qLift.getLiftType().getName());
+                }
+
+                liftDatas.add(liftData);
+            }
+        }
+        return liftDatas;
+    }
 }

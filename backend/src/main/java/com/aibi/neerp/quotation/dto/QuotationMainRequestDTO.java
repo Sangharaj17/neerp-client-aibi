@@ -17,9 +17,10 @@ public class QuotationMainRequestDTO {
     // 🔹 Basic info
     private String quotationNo;
     private LocalDateTime quotationDate;
-    private String edition;
+    private Integer edition;
     private Double totalQuotationAmount;
     private QuotationStatus status;
+    private String parentQuotationNo;
     private Boolean isFinalized;
     private String remarks;
 

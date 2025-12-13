@@ -1,4 +1,158 @@
 import { useState, useEffect, useRef } from "react";
+import { groupAndSortMaterials } from "@/services/quotationApi";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+const clean = (val) =>
+  String(val)
+    .replace(/[^\d.-]/g, "") // remove hidden unicode
+    .trim();
+
+function exportToPDF(rows, summary) {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "pt",
+    format: "A4",
+  });
+
+  // ------------------------------------------------------
+  // 1. Table Headers + Table Rows
+  // ------------------------------------------------------
+  const tableColumns = [
+    { header: "Material Name", dataKey: "name" },
+    { header: "Quantity", dataKey: "qty" },
+    { header: "Price", dataKey: "price" },
+    // { header: "Vendor", dataKey: "vendor" },
+    // { header: "Selected", dataKey: "selected" },
+  ];
+
+  // Convert rows → table-friendly format
+  const tableRows = rows.map((r) => ({
+    name: r.name,
+    qty: r.qty,
+    price: r.prices?.default ?? 0,
+    vendor: r.vendorId || "—",
+    selected: r.selected ? "Yes" : "No",
+  }));
+
+  // ------------------------------------------------------
+  // 2. Draw Table
+  // ------------------------------------------------------
+  autoTable(doc, {
+    head: [tableColumns.map((c) => c.header)],
+    body: tableRows.map((r) => Object.values(r)),
+
+    startY: 40,
+    theme: "grid",
+    headStyles: { fillColor: [33, 150, 243], textColor: 255, halign: "center" },
+    bodyStyles: { fontSize: 10 },
+    styles: { halign: "center", cellPadding: 5 },
+    margin: { left: 20, right: 20 },
+  });
+
+  // ------------------------------------------------------
+  // 3. Summary Section under Table
+  // ------------------------------------------------------
+  const finalY = doc.lastAutoTable.finalY + 30; // space after table
+
+  const summaryRows = [
+    ["Customer Standard", summary.customerStandard],
+    ["Basic Material Amount (Excl. GST)", `₹${clean(summary.amount.toFixed(2))}`],
+    ["GST %", `${clean(summary.gstPercentage)}%`],
+    ["GST Amount", `₹${clean(summary.gstAmount.toFixed(2))}`],
+    ["Load %", `${clean(summary.loadPercentage)}%`],
+    ["Load Amount", `₹${clean(summary.loadAmount.toFixed(2))}`],
+    ["Final Quotation Amount", `₹${clean(summary.finalAmount.toFixed(2))}`],
+  ];
+
+  doc.setFontSize(14);
+  doc.text("Quotation Summary", 20, finalY);
+
+  autoTable(doc, {
+    startY: finalY + 10,
+    theme: "plain",
+    body: summaryRows,
+    styles: {
+      fontSize: 11,
+      cellPadding: 3,
+      overflow: "linebreak", // wraps long text
+    },
+    margin: { left: 20, right: 20 },
+
+    // Force left alignment for all columns
+    columnStyles: {
+      0: { halign: "left", fontStyle: "bold" },
+      1: { halign: "left", cellWidth: 200 }, // fixed width to stop overflow
+    },
+
+    didParseCell(data) {
+      data.cell.text = data.cell.text.map(t =>
+        t.replace(/[^\x00-\x7F]/g, "")
+      );
+    }
+  });
+
+
+  // ------------------------------------------------------
+  // 4. Save PDF
+  // ------------------------------------------------------
+  doc.save(`BOM_Lift_${Date.now()}.pdf`);
+}
+
+function exportToExcel(rows, summary) {
+  // ---------------------------
+  // 1. Convert table rows to Excel sheet format
+  // ---------------------------
+  const tableData = rows.map(r => ({
+    "Material Name": r.name,
+    "Quantity": r.qty,
+    "Price": r.prices?.default ?? 0,
+    // "Vendor": r.vendorId || "—",
+    // "Selected": r.selected ? "Yes" : "No"
+  }));
+
+  const tableSheet = XLSX.utils.json_to_sheet(tableData, { origin: "A1" });
+
+  // ---------------------------
+  // 2. Add Summary Section BELOW Table
+  // ---------------------------
+  const summaryStartRow = tableData.length + 3;
+
+  const summaryData = [
+    ["Customer Standard", summary.customerStandard],
+    ["Basic Material Amount (Excl. GST)", summary.amount],
+    ["GST %", summary.gstPercentage],
+    ["GST Amount", summary.gstAmount],
+    ["Load %", summary.loadPercentage],
+    ["Load Amount", summary.loadAmount],
+    ["Final Quotation Amount", summary.finalAmount]
+  ];
+
+  summaryData.forEach((row, index) => {
+    XLSX.utils.sheet_add_aoa(tableSheet, [row], {
+      origin: `A${summaryStartRow + index}`
+    });
+  });
+
+  // ---------------------------
+  // 3. Create Workbook & Export
+  // ---------------------------
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, tableSheet, "Bill Of Material");
+
+  const excelBuffer = XLSX.write(workbook, {
+    bookType: "xlsx",
+    type: "array",
+  });
+
+  saveAs(
+    new Blob([excelBuffer], { type: "application/octet-stream" }),
+    `BOM_Lift_${Date.now()}.xlsx`
+  );
+}
+
 
 // Sample vendors
 const VENDORS = [
@@ -8,7 +162,16 @@ const VENDORS = [
 ];
 
 export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
-  console.log("--------liftData-------->", liftData);
+  console.log(liftData?.selectedMaterials.length, "--------liftData-------->", liftData);
+
+  if (liftData?.selectedMaterials && Array.isArray(liftData.selectedMaterials)) {
+    liftData = {
+      ...liftData,
+      selectedMaterials: groupAndSortMaterials(liftData.selectedMaterials)
+    };
+  }
+
+  console.log("Final Processed liftData:", liftData);
 
   const decodeMaterialName = (name) => {
     return name ? name.replace(/&amp;/g, '&') : '';
@@ -173,7 +336,7 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
             Bill of Material - Lift {liftId}
           </h4>
           <div className="flex items-center gap-2">
-            <select
+            {/* <select
               value={globalSelectedVendorId}
               onChange={handleGlobalVendorChange}
               className="border px-2 py-1 rounded text-sm"
@@ -184,7 +347,7 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
                   {v.name}
                 </option>
               ))}
-            </select>
+            </select> */}
             <button className="text-gray-500 ml-2" onClick={handleClose}>
               ✖
             </button>
@@ -206,7 +369,7 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
                 <th className="p-2 border">Material Name</th>
                 <th className="p-2 border">Quantity</th>
                 <th className="p-2 border">Price</th>
-                <th className="p-2 border">Vendor</th>
+                {/* <th className="p-2 border">Vendor</th> */}
               </tr>
             </thead>
             <tbody>
@@ -226,7 +389,7 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
                   <td className="border p-1">
                     <span className="font-medium">₹{getItemPrice(item).toFixed(2)}</span>
                   </td>
-                  <td className="border p-1">
+                  {/* <td className="border p-1">
                     <select
                       className="border rounded px-1 w-full"
                       value={item.vendorId}
@@ -240,7 +403,7 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
                         </option>
                       ))}
                     </select>
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>
@@ -254,24 +417,30 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
           {/* 2. Customer Standard (Optional, using current state) */}
           <div className="flex justify-between items-center col-span-2 sm:col-span-1">
             <label className="font-semibold text-gray-700">Customer Standard:</label>
-            <input
+            {/* <input
               type="text"
               readOnly
               value={customerStandard}
               className="border-0 bg-gray-100 p-1 w-32 text-right"
-            />
+            /> */}
+            <div className="border-0 bg-gray-100 p-1 w-32 text-right rounded">
+              {customerStandard}
+            </div>
           </div>
 
           {/* 1. Basic Material Amount (totalAmountWithoutGST) */}
           <div className="flex justify-between items-center col-span-2 sm:col-span-1">
             <label className="font-semibold text-gray-700">Basic Material Amount (Excl. GST):</label>
-            <input
+            {/* <input
               type="text"
               readOnly
               // 🚨 Display the material amount calculated from the table
               value={`₹${amount.toFixed(2)}`}
               className="border-0 bg-gray-100 p-1 w-32 text-right font-bold text-gray-800"
-            />
+            /> */}
+            <div className="border-0 bg-gray-100 p-1 w-32 text-right font-bold text-gray-800 rounded">
+              ₹{amount.toFixed(2)}
+            </div>
           </div>
 
 
@@ -282,6 +451,12 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
           <div className="flex justify-between items-center col-span-2 sm:col-span-1">
             <label htmlFor="gst-percent" className="font-semibold text-orange-600">GST Rate %:</label>
             <div className="flex items-center gap-1">
+              <div className="border-0 bg-orange-50 p-1 w-32 text-right font-bold text-orange-700 rounded">
+                {gstPercentage}
+              </div>
+              <span className="text-lg font-bold">%</span>
+            </div>
+            {/* <div className="flex items-center gap-1">
               <input
                 id="gst-percent"
                 type="number"
@@ -291,18 +466,21 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
                 className="border-0 bg-orange-50 p-1 w-32 text-right font-bold text-orange-700"
               />
               <span className="text-lg font-bold">%</span>
-            </div>
+            </div> */}
           </div>
 
           {/* 4. GST Amount (Calculated based on Amount * GST %) */}
           <div className="flex justify-between items-center col-span-2 sm:col-span-1">
             <label className="font-semibold text-orange-600">GST Amount:</label>
-            <input
+            {/* <input
               type="text"
               readOnly
               value={`₹${gstAmount.toFixed(2)}`}
               className="border-0 bg-orange-50 p-1 w-32 text-right font-bold text-orange-700"
-            />
+            /> */}
+            <div className="border-0 bg-orange-50 p-1 w-32 text-right font-bold text-orange-700 rounded">
+              ₹{gstAmount.toFixed(2)}
+            </div>
           </div>
 
           <hr className="col-span-2 border-gray-300 my-1" />
@@ -310,7 +488,7 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
           {/* 5. Load % (Editable input reflects the rate from liftData) */}
           <div className="flex justify-between items-center col-span-2 sm:col-span-1">
             <label htmlFor="load-percent" className="font-semibold text-red-600">Load Rate %:</label>
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               <input
                 id="load-percent"
                 type="number"
@@ -320,18 +498,27 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
                 className="border-0 bg-red-50 p-1 w-32 text-right font-bold text-red-700"
               />
               <span className="text-lg font-bold">%</span>
+            </div> */}
+            <div className="flex items-center gap-1">
+              <div className="border-0 bg-red-50 p-1 w-32 text-right font-bold text-red-700 rounded">
+                {loadPercentage}
+              </div>
+              <span className="text-lg font-bold">%</span>
             </div>
           </div>
 
           {/* 6. Load Amount (Calculated based on Amount * Load %) */}
           <div className="flex justify-between items-center col-span-2 sm:col-span-1">
             <label className="font-semibold text-red-600">Load Amount:</label>
-            <input
+            {/* <input
               type="text"
               readOnly
               value={`₹${loadAmount.toFixed(2)}`}
               className="border-0 bg-red-50 p-1 w-32 text-right font-bold text-red-700"
-            />
+            /> */}
+            <div className="border-0 bg-red-50 p-1 w-32 text-right font-bold text-red-700 rounded">
+              ₹{loadAmount.toFixed(2)}
+            </div>
           </div>
 
           <hr className="col-span-2 border-blue-500 my-2" />
@@ -339,24 +526,61 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
           {/* 7. Final Amount (Amount + GST Amount + Load Amount) */}
           <div className="flex justify-between items-center col-span-2">
             <label className="font-extrabold text-2xl text-blue-900">Final Quotation Amount:</label>
-            <input
+            {/* <input
               type="text"
               readOnly
               value={`₹${finalAmount.toFixed(2)}`}
               className="border-0 bg-blue-100 p-1 w-48 text-right font-extrabold text-2xl text-blue-900"
-            />
+            /> */}
+            <div className="border-0 bg-blue-100 p-1 w-48 text-right font-extrabold text-2xl text-blue-900 rounded">
+              ₹{finalAmount.toFixed(2)}
+            </div>
           </div>
 
         </div>
 
-        <div className="flex justify-end pt-4 flex-shrink-0"> {/* flex-shrink-0 */}
+        <div className="flex justify-end gap-3 pt-4 flex-shrink-0">
+
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            className="bg-green-600 text-white px-3 py-1.5 text-sm rounded hover:bg-green-700"
+            onClick={() => exportToPDF(rows, {
+              amount,
+              gstPercentage,
+              gstAmount,
+              loadPercentage,
+              loadAmount,
+              finalAmount,
+              customerStandard
+            })}
+          >
+            Export to PDF
+          </button>
+
+          <button
+            className="bg-green-600 text-white px-3 py-1.5 text-sm rounded hover:bg-green-700"
+            onClick={() => exportToExcel(rows, {
+              amount,
+              gstPercentage,
+              gstAmount,
+              loadPercentage,
+              loadAmount,
+              finalAmount,
+              customerStandard
+            })}
+          >
+            Export to Excel
+          </button>
+
+          <button
+            className="bg-blue-500 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-600"
             onClick={handleClose}
           >
             Close
           </button>
+
         </div>
+
+
         <div className="text-xs text-gray-500 pt-2 flex-shrink-0"> {/* flex-shrink-0 */}
           <span className="italic">
             Tip: Use the "Apply Vendor to Selected" dropdown to quickly assign a

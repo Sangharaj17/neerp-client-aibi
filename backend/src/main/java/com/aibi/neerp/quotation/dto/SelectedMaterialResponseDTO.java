@@ -14,8 +14,8 @@ public class SelectedMaterialResponseDTO {
     private String materialDisplayName;
     private Double quantity;
     private String quantityUnit;
+    private Double unitPrice;
     private Double price;
     private Integer materialId;
     private Double totalAmount; // Calculated: quantity * price
-    // ... potentially other read-only fields ...
 }

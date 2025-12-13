@@ -363,7 +363,7 @@ const Dashboard = () => {
                             if (action === "AMC Quotation") {
                               router.push(`/dashboard/quotations/amc_quatation_list`);
                             } else if (action === "New Installation") {
-                              router.push(`/dashboard/quotations/installation_quatation_list`);
+                              router.push(`/dashboard/quotations/new-installation`);
                             }
                           }}
                           disabled={loadingBtn === action}

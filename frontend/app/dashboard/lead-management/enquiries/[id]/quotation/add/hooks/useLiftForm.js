@@ -37,6 +37,15 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       ? Number(lift.noOfOpenings)
       : initialStops; // ✅ This line ensures openings defaults to the number of stops
 
+    const floorSelections =
+      lift.floorSelectionIds?.map?.(f => f.id) ??           // 1️⃣ Flat array of objects
+      lift.data?.floorSelections?.map?.(f => f.id) ??       // 2️⃣ Nested structure
+      lift.floorSelections?.map?.(f => f.id) ??             // 3️⃣ Legacy field
+      lift.data?.floorSelectionIds ??                       // 4️⃣ Already array of IDs
+      [];
+
+    const floorSelectionCount = floorSelections.length;
+
     return {
       id: lift.id || "",
       leadId: lift.data?.leadId ?? lift.lead?.leadId ?? "",
@@ -52,6 +61,10 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       enqDate: lift.data?.enqDate ?? lift.enqDate ?? "",
 
       quotationId: lift.data?.quotationId ?? lift.quotation?.id ?? "",
+
+      origin: lift.data?.origin ?? lift.origin ?? "",
+
+      parentLiftId: lift.data?.parentLiftId ?? "",
 
       // liftId: lift.data?.liftId ?? lift.id ?? "",
 
@@ -107,16 +120,16 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
         // 2. Determine capacity based on capacityType/capacityTypeId
         (
           // Check if capacity type is 'Person' (assuming ID 1)
-          lift.capacityTypeId === 1 || lift.capacityType === 1
+          lift.data?.capacityTypeId === 1 || lift.data?.capacityType === 1
             ? (
               // Use personCapacityId, or if personCapacity is an object, use its id, otherwise use personCapacity itself
-              lift.personCapacityId ??
-              (typeof lift.personCapacity === "object" ? lift.personCapacity?.id : lift.personCapacity)
+              lift.data?.personCapacityId ??
+              (typeof lift.data?.personCapacity === "object" ? lift.data?.personCapacity?.id : lift.data?.personCapacity)
             )
             : (
               // Use weightId, or if weight is an object, use its id, otherwise use weight itself
-              lift.weightId ??
-              (typeof lift.weight === "object" ? lift.weight?.id : lift.weight)
+              lift.data?.weightId ??
+              (typeof lift.data?.weight === "object" ? lift.data?.weight?.id : lift.data?.weight)
             )
         ) ??
         // 3. Final Fallback (Simplified logic based on the intent of the broken third section)
@@ -136,12 +149,23 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
 
       floorDesignations: lift.data?.floorDesignations ?? lift.floorsDesignation ?? "",
 
-      floorSelections: lift.floorSelectionIds ?? lift.data?.floorSelections ?? lift.floorSelections?.map(f => f.id) ?? [],
+      // floorSelections: lift.floorSelectionIds ?? lift.data?.floorSelections ?? lift.floorSelections?.map(f => f.id) ?? [],
+
+      floorSelections: lift.floorSelectionIds ?? // 1. Check for flat list of IDs first (highest priority)
+        lift.data?.floorSelections ??
+        lift.floorSelections?.map(f => f.id) ?? // 2. If no flat list, use IDs derived from the full objects
+        lift.data?.floorSelectionIds ?? // 3. Fallback to the array stored in lift.data
+        [], // 4. Default to empty array
+
+      // carTravel:
+      //   lift.data?.carTravel ??
+      //   lift.carTravel ??
+      //   (safeNumber(initialFloors) > 0 ? (safeNumber(initialFloors) - 1) * 3000 : 0),
 
       carTravel:
         lift.data?.carTravel ??
         lift.carTravel ??
-        (safeNumber(initialFloors) > 0 ? (safeNumber(initialFloors) - 1) * 3000 : 0),
+        (safeNumber(initialFloors) > 0 ? (safeNumber(initialFloors) + floorSelectionCount - 1) * 3000 : 0),
 
       speed: lift.data?.speed ?? "",
 
@@ -228,7 +252,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
 
       //---------------- FEATURES ----------------
       // stdFeatures: lift.data?.stdFeatures ?? lift.features?.map(f => f.id) ?? [],
-      stdFeatures: lift.stdFeatureIds ?? lift.data?.stdFeatures ?? lift.features?.map(f => f.id) ?? [],
+      stdFeatures: lift.stdFeatureIds ?? lift.data?.stdFeatureIds ?? lift.features?.map(f => f.id) ?? [],
 
       autoRescue: lift.data?.autoRescue ?? false,
 
@@ -348,7 +372,8 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       installationAmountRuleId: lift.data?.installationAmountRuleId ?? "",
 
       //---------------- PRICE FIELDS ----------------
-      cabinPrice: lift.data?.cabinPrice ?? 0,
+      // cabinPrice: lift.data?.cabinPrice ?? 0,
+      cabinSubTypePrice: lift.data?.cabinPrice ?? 0,
       lightFittingPrice: lift.data?.lightFittingPrice ?? 0,
       cabinFlooringPrice: lift.data?.cabinFlooringPrice ?? 0,
       cabinCeilingPrice: lift.data?.cabinCeilingPrice ?? 0,
@@ -383,6 +408,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       numberLockSystem: lift.data?.numberLockSystem ?? 0,
       thumbLockSystem: lift.data?.thumbLockSystem ?? 0,
       tax: lift.data?.tax ?? 0, // Default to 18% if not provided
+      taxAmt: lift.data?.taxAmt ?? 0,
       loadPerAmt: lift.data?.loadPerAmt ?? 0,
       loadAmt: lift.data?.loadAmt ?? 0,
 
@@ -402,7 +428,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
       commonDetails: lift.data?.commonDetails ?? [],
       otherDetails: lift.data?.otherDetails ?? [],
 
-      selectedMaterials: lift.selectedMaterials || [],
+      selectedMaterials: lift.data?.selectedMaterials || [],
 
       totalAmount: lift.data?.totalAmount ?? 0,
       totalAmountWithoutGST: lift.data?.totalAmountWithoutGST ?? 0,
@@ -1020,14 +1046,66 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
   //   // };
   // });
 
+  const addMaterialToSelection = (materialObject) => {
+    if (!materialObject || !materialObject.materialType) return;
+
+    console.log("****************materialObject*********8", materialObject);
+
+    const existingMaterials = formData.selectedMaterials || [];
+    let updatedMaterials = [...existingMaterials];
+
+    // Check if ARD already exists
+    const existingIndex = existingMaterials.findIndex(
+      (item) =>
+        item.materialType?.toLowerCase() === materialObject.itemMainName?.toLowerCase()
+    );
+
+    console.log(existingMaterials, ">>>>>>>> existingMaterials[existingIndex] >>>>>>>", existingMaterials[existingIndex]);
+    console.log(operator, ">>>>>>>>operator>>>>>lead>>>>>>>", lead);
+    // ✅ Build newMaterial with existing id (if found)
+
+    const unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+    const newMaterial = {
+      id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+      leadId: lead,
+      quotationLiftDetailId: formData.quotLiftDetailId || null,
+      materialId: materialId,          // ID of the selected option
+      materialName: selectedName,
+      materialDisplayName: selectedName,
+      quantity: quantity,
+      quantityUnit: itemUnit,
+      quantity: quantity,
+      unitPrice: unitPrice,
+      price: totalPrice,               // The total calculated price
+      operatorType: operator,  // Assuming liftType is available
+      materialType: itemMainName,      // "Guide Rail", "Door", etc.
+    };
+
+    // If ARD already exists, update it; else push it
+    if (existingArdIndex !== -1) {
+      updatedMaterials[existingArdIndex] = newArdMaterial;
+    } else {
+      updatedMaterials.push(newArdMaterial);
+    }
+
+  }
+
+
   // Generic handler for most fields
-  const handleChange = (e) => {
+  const handleChange = (e, materialConfig) => {
     const { name, value } = e.target;
 
     if (onUserActivity) onUserActivity();
 
     setFormData((prev) => {
       let updated = { ...prev, [name]: value };
+
+      console.log("-----materialConfig---->", materialConfig);
+
+      if (materialConfig) {
+        const updatedMat = addMaterialToSelection(materialConfig, value);
+        updated.selectedMaterials = updatedMat;
+      }
 
       // ✅ Reset dependent field if capacityType changes
       if (name === "capacityType") {
@@ -1080,6 +1158,7 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
           materialDisplayName: "Manual ARD Amount",
           quantity: 1,
           quantityUnit: "",
+          unitPrice: ardValue, // as quantity =1 
           price: ardValue,
           operatorType: prev.liftType,
           materialType: "ARD (Manual Entry)",
@@ -1274,44 +1353,44 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
   }, [formData, initialOptions]);
 
 
-  useEffect(() => {
-    const loadAirSystemPrice = async () => {
-      if (!formData.airType || !formData.capacityType || !formData.capacityValue) return;
+  // useEffect(() => {
+  //   const loadAirSystemPrice = async () => {
+  //     if (!formData.airType || !formData.capacityType || !formData.capacityValue) return;
 
-      const result = await fetchAirSystemPrice({
-        airTypeId: formData.airType,
-        capacityTypeId: formData.capacityType,
-        personId: formData.capacityType === 1 ? formData.capacityValue : null,
-        weightId: formData.capacityType === 2 ? formData.capacityValue : null,
-        // setErrors,
-      });
+  //     const result = await fetchAirSystemPrice({
+  //       airTypeId: formData.airType,
+  //       capacityTypeId: formData.capacityType,
+  //       personId: formData.capacityType === 1 ? formData.capacityValue : null,
+  //       weightId: formData.capacityType === 2 ? formData.capacityValue : null,
+  //       // setErrors,
+  //     });
 
-      if (!result.success) {
-        const message = result.message;
-        setErrors((prev) => ({ ...prev, airSystemPrice: message }));
-        toast.error(message);
-      } else {
-        // Clear the error on success
-        setErrors((prev) => {
-          const updated = { ...prev };
-          delete updated.airSystemPrice;
-          return updated;
-        });
-      }
+  //     if (!result.success) {
+  //       const message = result.message;
+  //       setErrors((prev) => ({ ...prev, airSystemPrice: message }));
+  //       toast.error(message);
+  //     } else {
+  //       // Clear the error on success
+  //       setErrors((prev) => {
+  //         const updated = { ...prev };
+  //         delete updated.airSystemPrice;
+  //         return updated;
+  //       });
+  //     }
 
-      setFormData((prev) => ({
-        ...prev,
-        airSystem: result.airSystemId,
-        airSystemPrice: result.price,
-      }));
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       airSystem: result.airSystemId,
+  //       airSystemPrice: result.price,
+  //     }));
 
-      if (!result.success) {
-        toast.error(result.message);
-      }
-    };
+  //     if (!result.success) {
+  //       toast.error(result.message);
+  //     }
+  //   };
 
-    loadAirSystemPrice();
-  }, [formData.airType, formData.capacityType, formData.capacityValue]);
+  //   loadAirSystemPrice();
+  // }, [formData.airType, formData.capacityType, formData.capacityValue]);
 
 
 

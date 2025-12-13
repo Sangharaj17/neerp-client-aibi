@@ -49,6 +49,14 @@ public class AmcJobsController {
         AddJobDetailsData jobDetails = amcJobsService.getAddJobDetailsData(selectDetailForJob);
         return ResponseEntity.ok(jobDetails);
     }
+
+    @PostMapping("/get-add-job-details-for-new-installation")
+    public ResponseEntity<AddJobDetailsData> getAddJobDetailsDataForNewInstallation(
+            @RequestBody SelectDetailForJob selectDetailForJob) {
+
+        AddJobDetailsData jobDetails = amcJobsService.getAddJobDetailsDataForNewInstallation(selectDetailForJob);
+        return ResponseEntity.ok(jobDetails);
+    }
     
     @PostMapping("/create-amc-job")
     public ResponseEntity<String> createAmcJob(@RequestBody AmcJobRequestDto dto) {

@@ -43,6 +43,8 @@ const NavigationAccordion = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
 
   useEffect(() => {
     if (!tenant) return;
@@ -54,6 +56,8 @@ const NavigationAccordion = () => {
 
   const handleLogout = async () => {
     try {
+      setLogoutLoading(true);
+
       const tokenKey = `${tenant}_token`;
       const storedToken = localStorage.getItem(tokenKey);
 
@@ -79,7 +83,11 @@ const NavigationAccordion = () => {
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed");
+      setLogoutLoading(false);
     }
+    // finally {
+    //   setLogoutLoading(false); // 👉 Always remove spinner
+    // }
   };
 
   useEffect(() => {
@@ -238,6 +246,7 @@ const NavigationAccordion = () => {
         { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
         { title: 'Invoices', href: `/dashboard/jobs/amc-invoices` },
         { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments` },
+        { title: 'NI Jobs List', href: `/dashboard/jobs/ni_job_list` },
       ]
     },
     {
@@ -393,7 +402,11 @@ const NavigationAccordion = () => {
               onClick={handleLogout}
               className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              {logoutLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <LogOut className="w-4 h-4 mr-2" />
+              )}
               Logout
             </button>
           </div>

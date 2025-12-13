@@ -1,6 +1,7 @@
 package com.aibi.neerp.quotation.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.AllArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class QuotationLiftMaterial {
 
     @Id
@@ -17,7 +19,6 @@ public class QuotationLiftMaterial {
     private Long id;
 
     // 💡 CRITICAL LINK: Foreign key to the QuotationLiftDetail
-    // Note: Renamed from 'quotationLiftDetail' to 'liftDetail' to match the service logic convention (entity.setLiftDetail)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quotation_lift_detail_id", nullable = false)
     private QuotationLiftDetail liftDetail;

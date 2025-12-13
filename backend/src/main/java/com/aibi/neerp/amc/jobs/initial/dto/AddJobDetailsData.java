@@ -24,6 +24,12 @@ public class AddJobDetailsData {
     
     private Integer noOfServices;
     
+    // newly added fields
+    private Integer leadId;
+    private Integer customerId;
+    private Integer siteId;
+    private Integer combinedEnquiryId;
+    
    
 
     

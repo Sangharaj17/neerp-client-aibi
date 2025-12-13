@@ -11,7 +11,10 @@ public class SelectDetailForJob {
     private String selectDetailForJob;
     private Integer amcQuatationId;
     private Integer revisedQuatationId;
+    private Integer quotationMainId;
     
     private boolean isThisJobIsRenewal ;
 
+//    public SelectDetailForJob(String display, Object o, Integer revisedQuatationId, boolean b) {
+//    }
 }

@@ -35,7 +35,10 @@ export async function GET(request) {
       return new Response(JSON.stringify({ message: "Quotation not found" }), { status: 404 });
     }
     const quotationData = response.data;
-    // console.log(quotationData);
+    
+     console.log('Quotation Data for PDF:', quotationData);
+     console.log('Quotation floorSelectionLabels-----------:',quotationData.liftDetails[0].floorSelectionLabels);
+
     const filename = `${(quotationData.customerName || 'quotation').replace(/\s+/g, '_')}_${quotationData.quotationNo || ''}.pdf`;
 
 

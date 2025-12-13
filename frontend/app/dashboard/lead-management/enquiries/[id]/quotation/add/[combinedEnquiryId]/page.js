@@ -8,9 +8,11 @@ import PreviewAllModal from "@/app/dashboard/lead-management/enquiries/[id]/quot
 import { toast } from "react-hot-toast";
 //import { jwtDecode } from "jwt-decode";
 import { getFilteredLeads, getLeadById, getEnquiryByLeadAndEnquiry } from "@/services/leadsApi";
-import { saveQuotation, getMissingLifts, getExistingLifts, markLiftsAsSaved } from "@/services/quotationApi";
+import { saveQuotation, getMissingLifts, getExistingLifts, markLiftsAsSaved, getRevisionsLifts, createRevision, addMissingRevisedLift } from "@/services/quotationApi";
 import { fieldLabels } from "../liftService";
 
+///dashboard/lead-management/enquiries/1/quotation/add/2?action=revise&id=4
+//1 is lead id, 2 is combined enquiry id, 4 is quotation main id
 
 export default function QuotationAddPage() {
   // const { id, tenant } = useParams();
@@ -20,7 +22,9 @@ export default function QuotationAddPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const action = searchParams.get("action");
+  const action = searchParams.get("action") || "";
+  const quotaionMainId = searchParams.get("id") || "";
+
 
   const [tenant, setTenant] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -46,10 +50,13 @@ export default function QuotationAddPage() {
   const [enquiryTypeId, setEnquiryTypeId] = useState(null);
   const [enquiryTypeName, setEnquiryTypeName] = useState("");
   const [modalEnquiryId, setModalEnquiryId] = useState(null);
+  const [status, setStatus] = useState(null);
 
   // const [combinedEnquiryId, setCombinedEnquiryId] = useState(0);
   const [lifts, setLifts] = useState([]);
   const [initialOptions, setInitialOptions] = useState({});
+
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const lead_Id = id;
 
@@ -96,6 +103,77 @@ export default function QuotationAddPage() {
     }
   };
 
+  const fetchRevisionsData = async () => {
+
+    if (!lead_Id || !combinedEnquiryId) return;
+
+    try {
+      console.log("🔍 Fetching Revised Quotation...", { quotaionMainId, action });
+      const revisionQuote = await getRevisionsLifts(quotaionMainId, action);
+
+      if (!revisionQuote) {
+        console.warn("⚠ No revision quotation found.");
+        return;
+      }
+
+      console.log("📌 Revision Quotation Response:", revisionQuote);
+
+
+      // Extract lift details + main details
+      const { liftDetails = [], ...mainDetails } = revisionQuote;
+
+      // ---------------------------
+      // 1️⃣ SET MAIN DETAILS
+      // ---------------------------
+      setQuotationMainDetails(mainDetails);
+      setCustomer(mainDetails.customerName);
+      setSite(mainDetails.siteName);
+      setEnquiryTypeId(mainDetails.enquiryTypeId);
+      setEnquiryTypeName(mainDetails.enquiryTypeName);
+      setCustomerId(mainDetails.customerId || null);
+      setSiteId(mainDetails.siteId || null);
+      fetchLead(mainDetails.leadId || lead_Id);
+
+      setQuotationMainId(mainDetails.id);
+      setEdition(mainDetails.edition ?? 0);
+
+      const formattedDate = formatLocalTime(
+        new Date(mainDetails.quotationDate || new Date())
+      );
+      setQuotationDate(formattedDate);
+      setStatus(mainDetails.status);
+
+      // ---------------------------
+      // 2️⃣ PREPARE LIFT DETAILS
+      // ---------------------------
+      const formattedRevisedLifts = liftDetails.map((lift) => ({
+        //...lift,
+        id: lift.id,
+        enquiryId: lift.enquiryId,
+        saved: true,
+        fullyFilled: true,
+        source: "revision",
+        data: lift,
+        fieldLabels: null,
+        quotationDate: formatLocalTime(
+          new Date(lift.quotationDate || mainDetails.quotationDate || new Date())
+        ),
+      }));
+
+      // Apply revised lifts
+      setLifts(formattedRevisedLifts);
+
+      console.log("🚀 Revision Lifts Loaded:", formattedRevisedLifts);
+
+      toast.success(
+        `Loaded ${formattedRevisedLifts.length} revised lift(s) successfully.`
+      );
+
+    } catch (err) {
+      console.error("❌ Failed to load lifts:", err);
+      toast.error("Failed to fetch revised quotation data.");
+    }
+  }
 
   const fetchExistingOrEnquiry = async () => {
     // Early exit if dependencies are missing
@@ -133,7 +211,7 @@ export default function QuotationAddPage() {
           : new Date();
 
         setQuotationDate(formatLocalTime(quoteDate));
-        setEdition(quotationMain.edition || "First");
+        setEdition(quotationMain.edition || 0);
         setQuotationMainId(quotationMain.id || null);
       } else if (missingLifts && missingLifts.length > 0) {
         // Case 2: No existing quotation, but new lifts from enquiry found
@@ -141,7 +219,7 @@ export default function QuotationAddPage() {
         mainQuoteDetails = storedPayload ? JSON.parse(storedPayload) : {};
 
         setQuotationDate(formatLocalTime(new Date()));
-        setEdition("First");
+        setEdition(0);
         setQuotationMainId(null);
       }
 
@@ -165,9 +243,11 @@ export default function QuotationAddPage() {
         // 1. Existing Lifts (from QuotationMain's liftDetails array)
         ...(firstQuotationMain?.liftDetails || []).map(liftDetail => ({
           // Spread all properties of the Lift Detail (QuotationLiftDetailResponseDTO)
-          ...liftDetail,
+          //...liftDetail,
 
           // Custom properties for UI state
+          id: liftDetail.id,
+          enquiryId: liftDetail.enquiryId,
           saved: true,
           fullyFilled: true,
           data: liftDetail, // Set the entire lift detail object as 'data' for easy access
@@ -187,6 +267,8 @@ export default function QuotationAddPage() {
         // 2. Missing Lifts (from Enquiry)
         ...missingLifts.map(lift => ({
           ...lift,
+          id: lift.id,
+          enquiryId: lift.enquiryId,
           saved: false,
           fullyFilled: false,
           data: null,
@@ -220,49 +302,21 @@ export default function QuotationAddPage() {
   };
 
 
-  const fetchRevision = async () => {
-    toast.success("Loaded revision data.");
-    // try {
-    //   const revisionData = await getRevisionData(lead_Id, combinedEnquiryId);
-
-    //   console.log("Revision Data:", revisionData);
-
-    //   // Map into same lift structure as fetchExistingOrEnquiry()
-    //   const revisionLifts = revisionData.liftDetails.map(lift => ({
-    //     ...lift,
-    //     saved: true,
-    //     fullyFilled: true,
-    //     source: "revision",
-    //     quotationDate: formatLocalTime(new Date(lift.quotationDate || new Date()))
-    //   }));
-
-    //   setQuotationMainDetails(revisionData);
-    //   setLifts(revisionLifts);
-
-    //   toast.success("Loaded revision data.");
-    // } catch (err) {
-    //   console.error("Failed to load revision:", err);
-    //   toast.error("Unable to load revision data.");
-    // }
-  };
-
-
-  // useEffect(() => {
-  //   // Only run when both params are available (or at least one changes)
-  //   if (lead_Id && combinedEnquiryId) {
-  //     fetchExistingOrEnquiry();
-  //   }
-  // }, [lead_Id, combinedEnquiryId]);
-
   useEffect(() => {
     if (!lead_Id || !combinedEnquiryId) return;
+    console.log("Fetching data for Lead ID:", lead_Id, "Combined Enquiry ID:", combinedEnquiryId, "Action:", action, "Quotation Main ID:", quotaionMainId);
+    const loadData = async () => {
+      if (action === "revise" || action === "editRevision") {
+        console.log("Action is revise/editRevision, fetching revision data...");
+        fetchRevisionsData();
+      } else if (action === "edit" || action === "") {
+        fetchExistingOrEnquiry();
+      }
+    };
 
-    if (action === "revision") {
-      fetchRevision();        // ⬅️ New function
-    } else {
-      fetchExistingOrEnquiry(); // Default = edit mode
-    }
-  }, [lead_Id, combinedEnquiryId, action]);
+    loadData();
+  }, [lead_Id, combinedEnquiryId, action, quotaionMainId, refreshKey]);
+
 
 
 
@@ -331,6 +385,144 @@ export default function QuotationAddPage() {
     toast.success(`Lift ${liftId} reset to initial state.`);
   };
 
+  /**
+ * Recursively sets all Entity IDs within the QuotationMainRequestDTO to null.
+ * This forces the backend (QuotationService) to create new database rows for the revision,
+ * ensuring the new revision is fully decoupled from the original's nested data.
+ * * @param {object} payload - The QuotationMainRequestDTO object.
+ * @returns {object} The modified payload with all IDs set to null.
+ */
+  const prepareRevisionPayload = (payload, liftQuotationNo) => {
+    console.log("🧹 Starting deep ID nulling for revision payload...");
+
+    // 1. Nullify the main QuotationMain ID (optional, but safe)
+    payload.id = null;
+
+    // Helper function to nullify IDs in a list
+    // Helper function to nullify IDs in a list
+    const nullifyIds = (list) => {
+      if (Array.isArray(list)) {
+        list.forEach(item => {
+          if (item) {
+            // Nullify the primary key (id) to force new row
+            if (item.id !== undefined) {
+              item.id = null;
+            }
+            // 💡 NEW: Nullify the Foreign Key (quotationLiftDetailId) if present
+            if (item.quotationLiftDetailId !== undefined) {
+              item.quotationLiftDetailId = null;
+            }
+          }
+        });
+      }
+    };
+
+    // 2. Iterate through all lift details and nullify IDs recursively
+    if (payload.liftDetails && payload.liftDetails.length > 0) {
+
+      // Use map to ensure the list is updated, though mutation within forEach is also fine 
+      // since we're modifying the objects in place.
+      payload.liftDetails.forEach(liftDTO => {
+
+        // 2.1. Nullify the QuotationLiftDetail ID
+        // liftDTO.id = null;
+
+        liftDTO.parentLiftId = liftDTO.id;
+
+        console.log("Setting liftQuotationNo from", liftDTO.liftQuotationNo, "to", liftQuotationNo);
+        liftDTO.liftQuotationNo = liftQuotationNo;
+
+        // 2.2. Nullify all nested Material IDs (QuotationLiftMaterial / SelectedQuotationMaterial)
+        nullifyIds(liftDTO.manualDetails);
+        nullifyIds(liftDTO.commonDetails);
+        nullifyIds(liftDTO.otherDetails);
+        nullifyIds(liftDTO.selectedMaterials);
+      });
+    }
+
+    console.log("✅ ID cleaning complete.");
+    return payload;
+  };
+
+  const prepareEditRevisionForMissingPayload = (payload, liftQuotationNo) => {
+    console.log("🛠 Preparing EDIT-REVISION payload for missing lift...");
+
+    if (!payload || !payload.liftDetails) {
+      console.warn("⚠ Payload missing liftDetails.");
+      return payload;
+    }
+
+    // Helper function to nullify IDs in a list
+    const nullifyIds = (list) => {
+      if (Array.isArray(list)) {
+        list.forEach(item => {
+          if (item) {
+            // Nullify the primary key (id) to force new row
+            if (item.id !== undefined) {
+              item.id = null;
+            }
+            // 💡 NEW: Nullify the Foreign Key (quotationLiftDetailId) if present
+            if (item.quotationLiftDetailId !== undefined) {
+              item.quotationLiftDetailId = null;
+            }
+          }
+        });
+      }
+    };
+
+    // 2. Iterate through all lift details and nullify IDs recursively
+    if (payload.liftDetails && payload.liftDetails.length > 0) {
+
+      // Use map to ensure the list is updated, though mutation within forEach is also fine 
+      // since we're modifying the objects in place.
+      payload.liftDetails.forEach(liftDTO => {
+
+        liftDTO.parentLiftId = liftDTO.id; // Retain original lift ID in parentLiftId
+
+        console.log("Setting liftQuotationNo from", liftDTO.liftQuotationNo, "to", liftQuotationNo);
+        liftDTO.liftQuotationNo = liftQuotationNo;
+
+        // 2.1. Nullify the QuotationLiftDetail ID
+        liftDTO.id = null;
+
+        // 2.2. Nullify all nested Material IDs (QuotationLiftMaterial / SelectedQuotationMaterial)
+        nullifyIds(liftDTO.manualDetails);
+        nullifyIds(liftDTO.commonDetails);
+        nullifyIds(liftDTO.otherDetails);
+        nullifyIds(liftDTO.selectedMaterials);
+
+
+      });
+    }
+
+    console.log("✅ ID cleaning complete.");
+    console.log("✅ Edit Revision Payload Prepared (missing Lifts Added):", payload);
+    return payload;
+  };
+
+  const prepareEditRevisionPayload = (payload, parentLiftId, liftQuotationNo) => {
+    console.log("🛠 Preparing EDIT-REVISION payload...");
+    console.log("📌 Received parentLiftId:", parentLiftId);
+
+    if (!payload || !payload.liftDetails) {
+      console.warn("⚠ Payload missing liftDetails.");
+      return payload;
+    }
+
+    // 2. Iterate through all lift details and set parentLiftId
+    if (payload.liftDetails && payload.liftDetails.length > 0) {
+      payload.liftDetails.forEach(liftDTO => {
+        console.log("Setting parentLiftId from", liftDTO.parentLiftId, "to", parentLiftId);
+        liftDTO.parentLiftId = parentLiftId; // Set the parent lift ID for revision tracking
+        console.log("Setting liftQuotationNo from", liftDTO.liftQuotationNo, "to", liftQuotationNo);
+        liftDTO.liftQuotationNo = liftQuotationNo; // Set the lift quotation number for revision tracking 
+      });
+    }
+
+    console.log("✅ ID cleaning complete.");
+    console.log("✅ Edit Revision Payload Prepared (No New Lifts Added already exists in db):", payload);
+    return payload;
+  };
 
   const handleSave = async (liftId, data, isValid, fieldLabels, options) => {
     const TOAST_ID = `save-quote-${liftId}`;
@@ -342,38 +534,149 @@ export default function QuotationAddPage() {
     console.log({ id: TOAST_ID }, "🔹 Saving lift:", liftId, "with data:", data);
 
 
-    const payloadForBackend = getPayload(
+    const liftToUpdate = lifts.find((lift) => {
+      const currentLiftId = lift.data?.id ?? lift.enquiryId;
+      return currentLiftId === liftId;
+    });
+
+    // 1. Get the base payload from the current state/data
+    let payloadForBackend = getPayload(
       liftId,
       data,
-      lifts.find((l) => l.enquiryId === liftId)
+      liftToUpdate
     );
-    console.log("📦 Payload ready for backend:", payloadForBackend);
+
+    // --- 🚨 Call the separate function for revision preparation ---
+    // if (action === "revise") {
+    //   payloadForBackend = prepareRevisionPayload(payloadForBackend);
+    // }
+
+    // if (action === "editRevision") {
+    //   payloadForBackend = prepareEditRevisionPayload(payloadForBackend);
+    // }
+    // --- End revision preparation ---
+
+    const originOfLift = payloadForBackend?.liftDetails?.[0]?.origin ?? "";
+
 
     try {
       toast.loading(`Saving quotation for Lift ${liftId}...`, { id: TOAST_ID });
       console.log(`Saving quotation for Lift ${liftId}...`);
 
-      // ✅ Call API service
-      const response = await saveQuotation(payloadForBackend);
-      // const response = null;
+      console.log(originOfLift, "<<<<<<<<----originOfLift---------action------------->>>>>>>>:", action);
 
-      console.log(response, "💾 Backend response for Lift", liftId);
+      let response = null;
+      // ✅ Call API service
+      // if (action === "revise") {
+      //   console.log("🚀 Calling createRevision for revision...");
+
+      //   //response = await createRevision(payloadForBackend, quotaionMainId);
+      //   console.log("💾 Backend response for Lift", liftId, response);
+      // }
+
+      // if (action === "editRevision" && originOfLift === "MISSING_FROM_PARENT") {
+
+
+      //   const missingLiftToRevise = payloadForBackend.liftDetails[0];
+      //   console.log("🚀 Calling addMissingRevisedLift for revision...", missingLiftToRevise);
+
+      //   // response = await addMissingRevisedLift(missingLiftToRevise, quotaionMainId);
+
+      //   console.log("💾 Backend response for Lift", liftId, response);
+      // }
+
+      // if (action === "" || (action === "editRevision" && originOfLift === "CURRENT_INCLUDED")) {
+      //   console.log("🚀 Calling saveQuotation for new/edit...");
+      //   // response = await saveQuotation(payloadForBackend);
+      //   console.log("💾 Backend response for Lift", liftId, response);
+      // }
+
+
+
+      if (action === "revise") {
+        console.log("🚀 Calling createRevision for revision...");
+
+
+        const liftQuotationNo = liftToUpdate.data?.liftQuotationNo || null;
+        // Creating a new revision
+        payloadForBackend = prepareRevisionPayload(payloadForBackend, liftQuotationNo);
+        console.log("📦 Payload ready for backend for revise:", payloadForBackend);
+        response = await createRevision(payloadForBackend, quotationMainId);
+
+      } else if (action === "editRevision") {
+        // Editing an existing revision
+        const originOfLift = payloadForBackend.liftDetails[0]?.origin;
+        console.log("🚀 originOfLift", originOfLift);
+
+        if (originOfLift === "MISSING_FROM_PARENT") {
+          console.log("🚀 Calling addMissingRevisedLift for revision...");
+          // This is a new lift added to revision
+          const liftQuotationNo = liftToUpdate.data?.liftQuotationNo || null;
+          payloadForBackend = prepareEditRevisionForMissingPayload(payloadForBackend, liftQuotationNo);
+          console.log("📦 Payload ready for backend for edit revision missing lift :", payloadForBackend);
+          const liftDetail = payloadForBackend.liftDetails[0];
+          response = await addMissingRevisedLift(liftDetail, quotationMainId);
+        } else {
+          console.log("🚀 Calling saveQuotation for edit revision which are in db...");
+          // Editing existing lift in revision
+          const parentLiftId = liftToUpdate.data?.parentLiftId || null;
+          const liftQuotationNo = liftToUpdate.data?.liftQuotationNo || null;
+          payloadForBackend = prepareEditRevisionPayload(payloadForBackend, parentLiftId, liftQuotationNo);
+          console.log("📦 Payload ready for backend for edit revision which are in db:", payloadForBackend);
+          response = await saveQuotation(payloadForBackend);
+        }
+
+      } else {
+        console.log("🚀 Calling saveQuotation new quotaion...");
+        console.log("📦 Payload ready for backend for new quotation :", payloadForBackend);
+        // New quotation OR Edit quotation
+        response = await saveQuotation(payloadForBackend);
+      }
+
+
+      console.log("✅ Backend response for Lift", liftId);
+      console.log("💾 Backend Response:", response);
       if (response?.success) {
         toast.success(`Quotation for Lift ${liftId} saved successfully!`, { id: TOAST_ID },);
         console.log("✅ Backend Response:", response);
 
-        // ⭐️ SUCCESS: Set saved: true and update lift data
-        setLifts((prev) =>
-          prev.map((lift) =>
-            lift.enquiryId === liftId
-              ? { ...lift, saved: true, fullyFilled: isValid, data, fieldLabels }
-              : lift
-          )
-        );
+        // // ⭐️ SUCCESS: Set saved: true and update lift data
+        // setLifts((prev) =>
+        //   prev.map((lift) =>
+        //     lift.enquiryId === liftId
+        //       ? { //...lift, 
+        //         id: lift.id,
+        //         enquiryId: lift.enquiryId,
+        //         saved: true,
+        //         fullyFilled: isValid,
+        //         source: lift.source,
+        //         data,
+        //         fieldLabels,
+        //       }
+        //       : lift
+        //   )
+        // );
 
         // 🌀 Now re-fetch everything from DB for accurate state
-        console.log("🔄 Refreshing lifts from database after save...");
-        await fetchExistingOrEnquiry();
+        // console.log("🔄 Refreshing lifts from database after save...");
+        // await fetchExistingOrEnquiry();
+
+        // 🔄 If action is "revise", switch to "editRevision" mode with the new quotation ID
+        if (action === "revise" && response.data?.id) {
+          const newQuotationId = response.data.id;
+          console.log("🔄 Switching from revise to editRevision mode with new quotation ID:", newQuotationId);
+
+          // Update URL to editRevision mode
+          const newUrl = `/dashboard/lead-management/enquiries/${id}/quotation/add/${combinedEnquiryId}?action=editRevision&id=${newQuotationId}`;
+          router.replace(newUrl);
+
+          toast.success("Revision created! Now in edit mode.", { duration: 3000 });
+        } else {
+          // For other actions, just refresh the data
+          console.log("🔄 Triggering automatic refresh via useEffect...");
+          setRefreshKey(prev => prev + 1);
+        }
+
 
         // Update quotationMainId if backend returns it
         // if (response.data?.id) {
@@ -385,7 +688,15 @@ export default function QuotationAddPage() {
         setLifts((prev) =>
           prev.map((lift) =>
             lift.enquiryId === liftId
-              ? { ...lift, saved: false, fullyFilled: isValid, data, fieldLabels }
+              ? {
+                //...lift, 
+                id: lift.id,
+                enquiryId: lift.enquiryId,
+                saved: false,
+                fullyFilled: isValid,
+                data,
+                fieldLabels
+              }
               : lift
           )
         );
@@ -397,7 +708,15 @@ export default function QuotationAddPage() {
       setLifts((prev) =>
         prev.map((lift) =>
           lift.enquiryId === liftId
-            ? { ...lift, saved: false, fullyFilled: isValid, data, fieldLabels }
+            ? {
+              // ...lift, 
+              id: lift.id,
+              enquiryId: lift.enquiryId,
+              saved: false,
+              fullyFilled: isValid,
+              data,
+              fieldLabels
+            }
             : lift
         )
       );
@@ -413,12 +732,13 @@ export default function QuotationAddPage() {
     console.log("*******leads********", leads);
     console.log("previous lift :", lift);
     console.log("Saving lift:", liftId, "with new data:", data);
+    console.log("Parent Lift ID from lift.data:", lift.data?.parentLiftId);
 
     if (lift.data != null) {
       console.log("previous lift selected materials:", lift.data.selectedMaterials);
     }
 
-    console.log("New lift selected materials:", data.selectedMaterials);
+    console.log(action, "New lift selected materials:", data.selectedMaterials);
 
     const liftDetailId = lift.id || null;
     console.log("liftDetailId:", liftDetailId);
@@ -456,7 +776,7 @@ export default function QuotationAddPage() {
       siteName: site || "Unknown",
       siteId: siteId || null,
 
-      edition: edition || "First",
+      edition: edition || 0,
       // totalBasicAmount: quotationPrice,
       // totalGSTAmount: 0,
       totalQuotationAmount: quotationPrice,
@@ -479,6 +799,8 @@ export default function QuotationAddPage() {
           enquiryId: data.enquiryId || lift.enquiryId || null, // Use data.enquiryId
           enquiryTypeId: data.enquiryTypeId || lift.enquiryTypeId || enquiryTypeId || null, // Use data.enquiryTypeId
           enqDate: data.enqDate || lift.enqDate || quotationDate || null, // Use data.enqDate
+
+          origin: data.origin || lift.origin || "",
 
           // ***************** LIFT SPECIFICATION **************
           // liftQuantity: Number(data.liftQuantity) || 1,
@@ -560,7 +882,8 @@ export default function QuotationAddPage() {
           installationAmountRuleId: data.installationAmountRuleId || "",
 
           // ******************* PRICE FIELDS (Breakdowns) ************
-          cabinPrice: Number(data.cabinPrice) || 0,
+          // cabinPrice: Number(data.cabinPrice) || 0,
+          cabinPrice: Number(data.cabinSubTypePrice) || 0,
           lightFittingPrice: Number(data.lightFittingPrice) || 0,
           cabinFlooringPrice: Number(data.cabinFlooringPrice) || 0, // Added
           cabinCeilingPrice: Number(data.cabinCeilingPrice) || 0, // Added
@@ -717,47 +1040,10 @@ export default function QuotationAddPage() {
     }
   };
 
-
-  // const handleSaveAll = () => {
-  //   const quotationPayload = {
-  //     // lead: id,
-  //     leadId: payload.leadId, //searchParams.get("lead"),
-  //     combinedEnquiryId: payload.combinedEnquiryId,
-  //     enquiryTypeId: payload.enquiryTypeId,
-  //     customer: payload.customer,
-  //     site: payload.site, // searchParams.get("site"),
-  //     quotationNo: "",
-  //     edition: edition,
-  //     quotationDate: quotationDate,
-  //     totalBasicAmount: quotationPrice,
-  //     totalGSTAmount: 0,
-  //     totalQuotationAmount: quotationPrice,
-  //     status: "Draft",
-  //     createdBy: userId,
-  //     // modifiedBy: userId,
-  //     // tenant: tenant,
-  //     // quotationDate: "22-07-2025",
-  //     lifts: lifts.map((lift) => ({
-  //       enquiryId: lift.enquiryId,
-  //       ...lift.data,
-  //     })),
-  //   };
-
-  //   console.log("Quotation Payload:", quotationPayload);
-
-  //   // You can now POST this to your backend
-  //   // fetch(`/api/quotation/save`, {
-  //   //   method: 'POST',
-  //   //   headers: { 'Content-Type': 'application/json' },
-  //   //   body: JSON.stringify(quotationPayload),
-  //   // }).then(res => ...)
-
-  //   toast.success("Quotation data ready to be saved!");
-  // };
-
   const allLiftsFullyFilled = lifts.every((l) => l.fullyFilled);
 
   const handleRepeatChange = (liftIndex, field, value) => {
+    console.log("Repeat Settings Change:", { liftIndex, field, value });
     setRepeatSettings((prev) => {
       const updated = [...prev];
       updated[liftIndex] = {
@@ -769,101 +1055,6 @@ export default function QuotationAddPage() {
     });
   };
 
-  // const handleRepeat = (liftIndex) => {
-  //   // 1. Identify Target and Source Lifts
-  //   const targetLift = lifts[liftIndex];
-  //   // We use the numeric enquiryId directly for comparison and state tracking
-  //   const targetEnquiryId = targetLift.enquiryId;
-
-  //   const fromLiftNumber = Number(repeatSettings[liftIndex].from);
-
-  //   // 2. Validation and Error Handling (Restored)
-
-  //   // Validate if a valid source lift number was entered
-  //   if (!fromLiftNumber) {
-  //     toast.error("Please select a lift number to copy from.");
-  //     return;
-  //   }
-
-  //   // Validate if the source lift number is less than the current lift number
-  //   if (fromLiftNumber >= targetEnquiryId) {
-  //     toast.error("Please select a valid lift number that is less than the current lift.");
-  //     return;
-  //   }
-
-  //   // Find the source lift
-  //   const fromLift = lifts.find((l) => l.enquiryId === fromLiftNumber);
-
-  //   // Validate if the source lift exists and has saved data
-  //   if (!fromLift || !fromLift.data) {
-  //     toast.error(`Lift ${fromLiftNumber} has no data to copy.`);
-  //     return;
-  //   }
-
-  //   // 3. Perform the Main State Update (Cleansing IDs)
-  //   setLifts((prev) => {
-  //     const newLiftsArray = prev.map((lift) => {
-  //       // Check if this is the lift we are updating
-  //       if (lift.enquiryId === targetEnquiryId) {
-
-  //         const isTargetLiftSaved = !!lift.data;
-
-  //         // 3a. Preserve the unique identifying data of the target lift
-  //         const preservedUniqueData = {
-  //           id: lift.data?.id || null, // ID of the target lift's main data entry (if previously saved)
-  //           liftQuotationNo: lift.data?.liftQuotationNo || null,
-  //           quotationNo: lift.data?.quotationNo || null,
-  //           enquiryId: lift.enquiryId,
-  //         };
-
-  //         // 3b. Destructure and get data fields from the source lift (fromLift)
-  //         const { id, enquiryId, liftQuotationNo, isSaved, isFinalized, quotationDate, data, ...restFromLift } = fromLift;
-  //         // Capture selectedMaterials and other data fields from the source lift's data
-  //         const { id: sourceDataId, enquiryId: sourceDataEnquiryId, quotationNo: sourceDataQuotationNo, liftQuotationNo: sourceDataLiftQuotationNo, selectedMaterials, ...restData } = data || {};
-
-  //         // 3c. Deep Cleansing: Remove database-managed IDs from selectedMaterials
-  //         const cleanedMaterials = (selectedMaterials || []).map(material => {
-  //           // Set IDs to null so the backend treats them as new records for the target lift
-  //           return {
-  //             ...material,
-  //             id: null,
-  //             quotationLiftDetailId: null, // Clear the foreign key to the source lift
-  //           };
-  //         });
-
-  //         // 3d. Construct the updated lift object
-  //         const updatedLift = {
-  //           ...lift,
-  //           ...restFromLift, // Copy main lift properties (e.g., fields outside of 'data')
-  //           saved: isTargetLiftSaved ? lift.saved : false,
-  //           fullyFilled: false,
-  //           // Use cleansed selectedMaterials and preserved IDs
-  //           data: {
-  //             ...restData,
-  //             selectedMaterials: cleanedMaterials,
-  //             ...preservedUniqueData // Apply target lift's unique IDs
-  //           },
-  //           fieldLabels: fromLift.fieldLabels ? { ...fromLift.fieldLabels } : undefined,
-  //         };
-
-  //         return updatedLift;
-  //       }
-  //       return lift;
-  //     });
-
-  //     return newLiftsArray;
-  //   });
-
-  //   // 4. Trigger Side Effects
-
-  //   // Set the ID to trigger the useEffect that opens the modal
-  //   setModalEnquiryId(targetEnquiryId);
-
-  //   toast.success(
-  //     `Specification copied from Lift ${fromLiftNumber} to Lift ${targetEnquiryId}. Review and save your changes.`,
-  //     { duration: 5000 }
-  //   );
-  // };
 
 
   const handleRepeat = (liftIndex) => {
@@ -916,6 +1107,9 @@ export default function QuotationAddPage() {
             liftQuotationNo: lift.data?.liftQuotationNo || null,
             quotationNo: lift.data?.quotationNo || null,
             enquiryId: lift.enquiryId,
+            parentLiftId: lift.data?.parentLiftId || null, // Preserve parent lift ID for revision tracking
+            origin: lift.data?.origin || null,
+            quotationMainId: lift.data?.quotationMainId || null,
           };
 
           // 3b. Destructure and get data fields from the source lift (fromLift)
@@ -949,8 +1143,10 @@ export default function QuotationAddPage() {
 
           // 3d. Construct the updated lift object
           const updatedLift = {
-            ...lift,
+            //...lift,
             ...restFromLift, // Copy main lift properties (e.g., fields outside of 'data')
+            id: lift.id,
+            enquiryId: lift.enquiryId,
             saved: isTargetLiftSaved ? lift.saved : false,
             fullyFilled: false,
             // Use cleansed selectedMaterials and preserved IDs
@@ -1004,349 +1200,20 @@ export default function QuotationAddPage() {
     // Dependency array must watch both the trigger ID and the source data
   }, [modalEnquiryId, lifts, openModal]);
 
-  // const handleRepeat = (liftIndex) => {
-  //     const targetLift = lifts[liftIndex];
-  //     const targetEnquiryId = targetLift.enquiryId; // Use the number for simple comparison later
-
-  //     const fromLiftNumber = Number(repeatSettings[liftIndex].from);
-
-  //     // ... (Validation logic remains) ...
-
-  //     const fromLift = lifts.find((l) => l.enquiryId === fromLiftNumber);
-  //     // ... (Error handling remains) ...
-
-  //     // Perform the main state update
-  //     setLifts((prev) => {
-  //         const newLiftsArray = prev.map((lift) => {
-  //             // CRITICAL: Ensure comparison matches how you find it elsewhere
-  //             if (lift.enquiryId === targetEnquiryId) { 
-  //                 // --- Your complete update logic for 'updatedLift' ---
-  //                 const isTargetLiftSaved = !!lift.data;
-  //                 const preservedUniqueData = {
-  //                     id: lift.data?.id || null,
-  //                     liftQuotationNo: lift.data?.liftQuotationNo || null,
-  //                     quotationNo: lift.data?.quotationNo || null,
-  //                     enquiryId: lift.enquiryId,
-  //                 };
-
-  //                 const { id, enquiryId, liftQuotationNo, isSaved, isFinalized, quotationDate, data, ...restFromLift } = fromLift;
-  //                 const { id: sourceDataId, enquiryId: sourceDataEnquiryId, quotationNo: sourceDataQuotationNo, liftQuotationNo: sourceDataLiftQuotationNo, ...restData } = data || {};
-
-  //                 const updatedLift = {
-  //                     ...lift, 
-  //                     ...restFromLift,
-  //                     saved: isTargetLiftSaved ? lift.saved : false,
-  //                     fullyFilled: false,
-  //                     data: { ...restData, ...preservedUniqueData },
-  //                     fieldLabels: fromLift.fieldLabels ? { ...fromLift.fieldLabels } : undefined,
-  //                 };
-
-  //                 return updatedLift;
-  //             }
-  //             return lift;
-  //         });
-
-  //         return newLiftsArray;
-  //     });
-
-  //     // 🎯 Trigger the side effect using the ID
-  //     setModalEnquiryId(targetEnquiryId);
-
-  //     toast.success(
-  //         `Specification copied from Lift ${fromLiftNumber}. Review and save your changes.`,
-  //         { duration: 5000 }
-  //     );
-  // };
-
-  // useEffect(() => {
-  //     // 1. Check if a modal is pending to be opened
-  //     if (modalEnquiryId) {
-
-  //         // 2. Find the target lift data from the newly updated 'lifts' state
-  //         const targetLiftData = lifts.find(l => l.enquiryId === modalEnquiryId);
-
-  //         if (targetLiftData) {
-  //             // 3. Open the modal with the found data
-  //             openModal(targetLiftData);
-
-  //             // 4. Reset the trigger ID
-  //             setModalEnquiryId(null);
-  //         }
-  //         // If targetLiftData is NOT found, the component hasn't finished rendering 
-  //         // with the new `lifts` state yet. The effect will simply run again 
-  //         // once `lifts` *does* update.
-  //     }
-
-  // // Dependency array watches both the target ID (trigger) and the main data (source)
-  // }, [modalEnquiryId, lifts]);
-
-  // const handleRepeat = (liftIndex) => {
-  //   const fromLiftNumber = Number(repeatSettings[liftIndex].from);
-  //   if (!fromLiftNumber || fromLiftNumber >= lifts[liftIndex].enquiryId) {
-  //     toast.error("Please select a valid lift number less than current lift.");
-  //     return;
-  //   }
-  //   // Find the lift to copy from
-  //   const fromLift = lifts.find((l) => l.enquiryId === fromLiftNumber);
-  //   if (!fromLift || !fromLift.data) {
-  //     toast.error(`Lift ${fromLiftNumber} has no data to copy.`);
-  //     return;
-  //   }
-
-  //   console.log("---before repeate......---->", lifts);
-
-  //   setLifts((prev) =>
-  //     prev.map((lift, index) => {
-  //       if (lift.enquiryId === prev[liftIndex].enquiryId) {
-  //         // 1. UNIQUE IDENTIFIERS OF THE TARGET LIFT (The lift being repeated INTO)
-  //         const targetLift = lift;
-  //         const isTargetLiftSaved = !!targetLift.data; // Check if target lift has existing data
-
-  //         // Preserve the existing unique IDs if the target lift has been saved
-  //         const preservedUniqueData = {
-  //           id: targetLift.data?.id || null, // Preserve lift detail ID from DB
-  //           liftQuotationNo: targetLift.data?.liftQuotationNo || null, // Preserve unique lift quote number
-  //           quotationNo: targetLift.data?.quotationNo || null, // Preserve unique main quote number
-  //           enquiryId: targetLift.enquiryId, // Always keep the correct enquiry ID
-  //           // Optionally preserve other key unique IDs like 'quotationMainId' or 'quotLiftDetailId'
-  //         };
-
-  //         // 2. EXCLUDE UNIQUE IDENTIFIERS FROM THE SOURCE LIFT (The lift being copied FROM)
-
-  //         // Exclude top-level unique fields from source lift
-  //         const {
-  //           id,
-  //           enquiryId,
-  //           liftQuotationNo,
-  //           isSaved,
-  //           isFinalized,
-  //           quotationDate,
-  //           data,
-  //           ...restFromLift // This contains specification data outside the nested 'data' object
-  //         } = fromLift;
-
-  //         // Exclude unique fields from the nested 'data' object of the source lift
-  //         const {
-  //           id: sourceDataId,
-  //           enquiryId: sourceDataEnquiryId,
-  //           quotationNo: sourceDataQuotationNo,
-  //           liftQuotationNo: sourceDataLiftQuotationNo,
-  //           ...restData // This contains all generic specifications (the parts we WANT to copy)
-  //         } = data || {};
-
-  //         // 3. COMBINE: Target unique IDs + Source specifications
-  //         return {
-  //           ...targetLift, // Start with the target lift's existing properties
-  //           ...restFromLift, // Copy specification-related top-level fields from source
-  //           // Reset status fields since the data is new/changed
-  //           saved: isTargetLiftSaved ? targetLift.saved : false, // Keep saved status if it was already saved, else set to false
-  //           fullyFilled: false, // The repeated data needs to be validated/saved again
-
-  //           data: {
-  //             ...restData, // ✅ Copy the generic SPECIFICATIONS from the source lift
-
-  //             // ⭐️ Override with the unique IDs of the TARGET lift (Scenario 1 & 2 handled here) ⭐️
-  //             ...preservedUniqueData,
-
-  //             // If the target lift was previously unsaved and had a half-filled 'data' object, 
-  //             // this merge ensures that any unique fields from the old 'lift.data' are overwritten by 'preservedUniqueData'
-  //           },
-
-  //           fieldLabels: fromLift.fieldLabels
-  //             ? { ...fromLift.fieldLabels }
-  //             : undefined,
-  //         };
-  //       }
-  //       return lift;
-  //     })
-  //   );
-
-
-  //   console.log(`🔁 Repeated data from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}`);
-  //   // Note: The console.log here will likely show the *old* state due to closure/async state updates.
-  //   // console.log("Updated lift data:", lifts[liftIndex]); 
-
-  //   toast.success(
-  //     `Specification repeated from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}.`
-  //   );
-
-  //   handleSave(lifts[liftIndex].enquiryId, lifts[liftIndex].data, isValid, fieldLabels, options);
-  // };
-
-
-  // const handleRepeat = (liftIndex) => {
-  //   const fromLiftNumber = Number(repeatSettings[liftIndex].from);
-
-  //   if (!fromLiftNumber || fromLiftNumber >= lifts[liftIndex].enquiryId) {
-  //     toast.error("Please select a valid lift number less than current lift.");
-  //     return;
-  //   }
-
-  //   // 🔍 Lift to copy FROM
-  //   const fromLift = lifts.find((l) => l.enquiryId === fromLiftNumber);
-
-  //   if (!fromLift || !fromLift.data) {
-  //     toast.error(`Lift ${fromLiftNumber} has no data to copy.`);
-  //     return;
-  //   }
-
-  //   setLifts((prev) =>
-  //     prev.map((lift) => {
-  //       if (lift.enquiryId !== prev[liftIndex].enquiryId) return lift;
-
-  //       // -------------------------------
-  //       // 1️⃣ Determine whether target lift is already saved or not
-  //       // -------------------------------
-  //       const targetIsSaved = lift.data?.id ? true : false;
-
-  //       // -------------------------------
-  //       // 2️⃣ Remove fields that should never be copied
-  //       // -------------------------------
-  //       const {
-  //         id,
-  //         enquiryId,
-  //         liftQuotationNo,
-  //         quotationNo,
-  //         data,
-  //         quotationDate,
-  //         isFinalized,
-  //         ...restFromLift
-  //       } = fromLift;
-
-  //       const {
-  //         id: dataId,
-  //         enquiryId: dataEnquiryId,
-  //         quotationNo: dataQuotationNo,
-  //         liftQuotationNo: dataLiftQuotationNo,
-  //         ...restData
-  //       } = fromLift.data;
-
-  //       // -------------------------------
-  //       // 3️⃣ Apply scenario based rules
-  //       // -------------------------------
-  //       const finalData = {
-  //         ...restData,
-  //         // Keep or reset id/liftQuotationNo based on scenario
-  //         id: targetIsSaved ? lift.data.id : null,
-  //         liftQuotationNo: targetIsSaved ? lift.data.liftQuotationNo : null,
-  //         quotationNo: targetIsSaved ? lift.data.quotationNo : null,
-  //       };
-
-  //       return {
-  //         ...lift,            // keep top-level identity of the target lift
-  //         ...restFromLift,    // copy specification fields
-
-  //         data: finalData,
-
-  //         fieldLabels: fromLift.fieldLabels
-  //           ? { ...fromLift.fieldLabels }
-  //           : undefined,
-
-  //         saved: fromLift.saved,
-  //         fullyFilled: fromLift.fullyFilled,
-  //       };
-  //     })
-  //   );
-
-  //   console.log(`🔁 Repeated data from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}`);
-  //   console.log("Updated lift data:", lifts[liftIndex]);
-
-  //   toast.success(
-  //     `Specification repeated from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}.`
-  //   );
-  // };
-
-
-  // const handleRepeat = (liftIndex) => {
-  //   const fromLiftNumber = Number(repeatSettings[liftIndex].from);
-  //   if (!fromLiftNumber || fromLiftNumber >= lifts[liftIndex].enquiryId) {
-  //     toast.error("Please select a valid lift number less than current lift.");
-  //     return;
-  //   }
-  //   // Find the lift to copy from
-  //   const fromLift = lifts.find((l) => l.enquiryId === fromLiftNumber);
-  //   if (!fromLift || !fromLift.data) {
-  //     toast.error(`Lift ${fromLiftNumber} has no data to copy.`);
-  //     return;
-  //   }
-  //   // Copy data from fromLift to current lift
-  //   // setLifts((prev) =>
-  //   //   prev.map((lift) =>
-  //   //     lift.enquiryId === lifts[liftIndex].enquiryId
-  //   //       ? {
-  //   //         ...lift,
-  //   //         data: { ...fromLift.data },
-  //   //         fieldLabels: fromLift.fieldLabels
-  //   //           ? { ...fromLift.fieldLabels }
-  //   //           : undefined,
-  //   //         saved: fromLift.saved,
-  //   //         fullyFilled: fromLift.fullyFilled,
-  //   //       }
-  //   //       : lift
-  //   //   )
-  //   // );
-
-  //   console.log("---before repeate......---->",lifts);
-
-  //   setLifts((prev) =>
-  //     prev.map((lift) => {
-  //        if (lift.enquiryId !== prev[liftIndex].enquiryId) return lift;
-
-  //       if (lift.enquiryId === prev[liftIndex].enquiryId) {
-  //         // 🧹 Exclude unwanted top-level fields
-  //         const {
-  //           id,
-  //           enquiryId,
-  //           liftQuotationNo,
-  //           isSaved,
-  //           isFinalized,
-  //           quotationDate,
-  //           data,
-  //           ...restFromLift
-  //         } = fromLift;
-
-  //         // 🧹 Exclude id & enquiryId inside nested data
-  //         const { 
-  //           id: dataId, 
-  //           enquiryId: dataEnquiryId,
-  //           quotationNo: dataQuotationNo,         // <-- EXCLUDE MAIN QUOTE NUMBER
-  //           liftQuotationNo: dataLiftQuotationNo, 
-  //           ...restData 
-  //         } = data || {};
-
-  //         return {
-  //           ...lift, // keep original id, enquiryId, quotationNo, etc.
-  //           ...restFromLift, // copy everything else except excluded fields
-  //           data: {
-  //             ...lift.data, // keep existing data props that shouldn't change
-  //             ...restData, // copy rest of data except id/enquiryId
-  //           },
-  //           fieldLabels: fromLift.fieldLabels
-  //             ? { ...fromLift.fieldLabels }
-  //             : undefined,
-  //           saved: fromLift.saved,
-  //           fullyFilled: fromLift.fullyFilled,
-  //         };
-  //       }
-  //       return lift;
-  //     })
-  //   );
-
-
-  //   console.log(`🔁 Repeated data from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}`);
-  //   console.log("Updated lift data:", lifts[liftIndex]);
-
-  //   toast.success(
-  //     `Specification repeated from Lift ${fromLiftNumber} to Lift ${lifts[liftIndex].enquiryId}.`
-  //   );
-  // };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* ---- PAGE TITLE ---- */}
       <div className="mb-8 text-center">
         <h2 className="text-3xl font-bold text-gray-800">
-          Add Quotation{" "}
+          {action === "revise"
+            ? "🔄 Revise"
+            : action === "editRevision" && edition == 0
+              ? "✏️ Edit Original"
+              : action === "editRevision"
+                ? "🔄 Edit Revised"
+                : "ADD New "
+          } Quotation{" "}
           {payload?.enquiryTypeName && (
             <span className="text-blue-600">
               [{payload.enquiryTypeName}]
@@ -1378,7 +1245,7 @@ export default function QuotationAddPage() {
                 setQuotationDate(newDate);
                 setLifts((prevLifts) =>
                   prevLifts.map((lift) => ({
-                    ...lift,
+                    //...lift,
                     quotationDate: newDate,
                     data: { ...lift.data, quotationDate: newDate },
                   }))
@@ -1393,9 +1260,11 @@ export default function QuotationAddPage() {
             <label className="font-semibold">Edition:</label>
             <input
               type="text"
-              value={edition}
+              value={Number(edition) === 0 ? "Original" : edition}
               onChange={(e) => setEdition(e.target.value)}
               className="border border-gray-300 p-1.5 rounded w-1/2 focus:ring-2 focus:ring-blue-400 outline-none"
+              // disabled={Number(edition) >= 1}
+              disabled
             />
           </div>
 
@@ -1423,7 +1292,7 @@ export default function QuotationAddPage() {
             <label className="font-semibold">Customer:</label>
             <input
               type="text"
-              value={customer}
+              value={customer || ""}
               readOnly
               className="border border-gray-200 p-1.5 rounded w-1/2 bg-gray-100 text-gray-600"
             />
@@ -1434,7 +1303,7 @@ export default function QuotationAddPage() {
             <label className="font-semibold">Site:</label>
             <input
               type="text"
-              value={site}
+              value={site || ""}
               readOnly
               className="border border-gray-200 p-1.5 rounded w-1/2 bg-gray-100 text-gray-600"
             />
@@ -1444,65 +1313,120 @@ export default function QuotationAddPage() {
 
       {/* ---- LIFT LIST SECTION ---- */}
       <div className="space-y-4">
-        {lifts.map((lift, index) => (
-          <div
-            key={lift.enquiryId}
-            className="border border-gray-200 bg-white shadow-sm hover:shadow-md rounded-xl p-4 transition-all duration-200 w-full lg:w-3/4 mx-auto"
-          >
-            <div className="flex flex-col lg:flex-row justify-between gap-3">
-              {/* Title + Price + Status */}
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="text-lg font-semibold text-gray-800">
-                    Lift {index + 1} (ID: {lift.enquiryId})
-                  </div>
+        {(() => {
+          // Sort lifts when in editRevision mode
+          let sortedLifts = [...lifts];
 
-                  {/* Dynamic Status Display */}
-                  {/* Determine status based on isFinalized and isSaved */}
-                  {(() => {
-                    // console.log("Lift status check:", lift);
-                    const { isSaved, isFinalized, fullyFilled, id } = lift;
-                    // console.log("..............isSaved:", isSaved, "isFinalized:", isFinalized, "fullyFilled:", fullyFilled, "id:", id);
+          if (action === "editRevision") {
+            sortedLifts = lifts.sort((a, b) => {
+              const originA = a.origin || a.data?.origin || "CURRENT_INCLUDED";
+              const originB = b.origin || b.data?.origin || "CURRENT_INCLUDED";
 
-                    let statusText = "⚠️ Incomplete";
-                    let statusClass = "bg-red-100 text-red-700";
+              // MISSING_FROM_PARENT lifts go to the end
+              if (originA === "MISSING_FROM_PARENT" && originB !== "MISSING_FROM_PARENT") {
+                return 1; // a comes after b
+              }
+              if (originA !== "MISSING_FROM_PARENT" && originB === "MISSING_FROM_PARENT") {
+                return -1; // a comes before b
+              }
 
-                    if (isSaved && isFinalized) {
-                      // ✅ Case 1: Both saved and finalized
-                      statusText = "🎉 Finalized";
-                      statusClass = "bg-purple-100 text-purple-700 font-bold";
-                    }
-                    else if (!isSaved && !isFinalized && fullyFilled && id != null) {
-                      // ✅ Case 2: Lift filled, enter in DB but status not saved
-                      statusText = "📝 Drafted & read to Save";
-                      statusClass = "bg-green-100 text-green-700";
-                    }
-                    else if (isSaved && !isFinalized && fullyFilled && id != null) {
-                      // ✅ Case 3: Lift filled, enter in DB,  status saved and not finalized
-                      statusText = "💾 Saved";
-                      statusClass = "bg-blue-100 text-blue-700";
-                    }
-                    else if (!isSaved && !isFinalized && fullyFilled && id == null) {
-                      // ✅ Case 4: Filled but not yet saved in DB
-                      statusText = "🟡 Ready to Add (New)";
-                      statusClass = "bg-yellow-100 text-yellow-700";
-                    }
-                    else if (!isSaved && !isFinalized && !fullyFilled && id == null) {
-                      // ✅ Case 4: Not saved, not filled, not in DB
-                      statusText = "⚠️ Incomplete";
-                      statusClass = "bg-red-100 text-red-700";
-                    }
+              // If both are MISSING_FROM_PARENT, sort by ID
+              if (originA === "MISSING_FROM_PARENT" && originB === "MISSING_FROM_PARENT") {
+                const idA = a.data?.id || a.id || 0;
+                const idB = b.data?.id || b.id || 0;
+                return idA - idB;
+              }
 
-                    return (
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${statusClass}`}>
-                        {statusText}
+              // Otherwise, maintain original order
+              return 0;
+            });
+          }
+
+          return sortedLifts.map((lift, index) => {
+            const origin = lift.origin || lift.data?.origin || "CURRENT_INCLUDED";
+            const keyId = lift.id || lift.data?.id || lift.enquiryId;
+            return (
+              <div
+                // key={lift?.enquiryId ?? lift.data?.id} 
+                key={lift.data?.id ?? lift?.enquiryId}
+                className="border border-gray-200 bg-white shadow-sm hover:shadow-md rounded-xl p-4 transition-all duration-200 w-full lg:w-3/4 mx-auto"
+              >
+                {console.log(lift.data?.id, "<---data----enquiryId----enquiry-->", lift?.enquiryId)}
+                {console.log(lift, "------------key------------", lift?.enquiryId || lift.data?.id)}
+                <div className="flex flex-col lg:flex-row justify-between gap-3">
+                  {/* Title + Price + Status */}
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-lg font-semibold text-gray-800">
+                        Lift {index + 1} (ID: {lift.data?.id || lift.data?.enquiryId || lift?.enquiryId})
                       </div>
-                    );
-                  })()}
 
-                </div>
+                      {/* Dynamic Status Display */}
+                      {/* Determine status based on isFinalized and isSaved */}
+                      {(() => {
+                        // console.log("Lift status check:", lift);
 
-                {/* <div className="flex items-center gap-3">
+                        const { id: outerId, fullyFilled } = lift;
+                        const { isSaved, isFinalized, id: innerId } = lift.data ?? {};
+
+                        // console.log("Outer ID:", outerId, "Inner ID:", innerId, "isSaved:", isSaved, "fullyFilled:", fullyFilled);
+                        // const id = innerId || outerId;
+
+                        // console.log("..............isSaved:", isSaved, "isFinalized:", isFinalized, "fullyFilled:", fullyFilled, "id:", id);
+
+
+
+
+                        if (origin === "MISSING_FROM_PARENT") {
+                          // This lift was removed from the current edition, but shown for comparison.
+                          // It should have a distinct visual treatment and a final status.
+                          return (
+                            <div className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700 border border-red-700 w-[250px]" >
+                              Not yet revised(Included From parent lift [Quotation ID: {lift.data?.quotationMainId
+                              }])
+                            </div>
+                          );
+                        }
+
+                        let statusText = "⚠️ Incomplete";
+                        let statusClass = "bg-red-100 text-red-700";
+
+                        if (isSaved && isFinalized) {
+                          // ✅ Case 1: Both saved and finalized
+                          statusText = "🎉 Finalized";
+                          statusClass = "bg-purple-100 text-purple-700 font-bold";
+                        }
+                        else if (!isSaved && !isFinalized && fullyFilled && id != null) {
+                          // ✅ Case 2: Lift filled, enter in DB but status not saved
+                          statusText = "📝 Drafted & read to Save";
+                          statusClass = "bg-green-100 text-green-700";
+                        }
+                        else if (isSaved && !isFinalized && fullyFilled && id != null) {
+                          // ✅ Case 3: Lift filled, enter in DB,  status saved and not finalized
+                          statusText = "💾 Saved";
+                          statusClass = "bg-blue-100 text-blue-700";
+                        }
+                        else if (!isSaved && !isFinalized && fullyFilled && id == null) {
+                          // ✅ Case 4: Filled but not yet saved in DB
+                          statusText = "🟡 Ready to Add (New)";
+                          statusClass = "bg-yellow-100 text-yellow-700";
+                        }
+                        else if (!isSaved && !isFinalized && !fullyFilled && id == null) {
+                          // ✅ Case 4: Not saved, not filled, not in DB
+                          statusText = "⚠️ Incomplete";
+                          statusClass = "bg-red-100 text-red-700";
+                        }
+
+                        return (
+                          <div className={`px-3 py-1 rounded-full text-sm font-medium ${statusClass}`}>
+                            {statusText}
+                          </div>
+                        );
+                      })()}
+
+                    </div>
+
+                    {/* <div className="flex items-center gap-3">
                   <div className="text-lg font-semibold text-gray-800">
                     Lift {index + 1} (ID: {lift.enquiryId})
                   </div>
@@ -1522,82 +1446,129 @@ export default function QuotationAddPage() {
                         : "⚠️ Incomplete"}
                   </div>
                 </div> */}
-                <div className="text-sm text-blue-600 mt-1">
-                  Price: ₹ {lift.data?.totalAmount ?? "0"}
+                    <div className="text-sm text-blue-600 mt-1">
+                      Price: ₹ {lift.data?.totalAmount ?? "0"}
+                    </div>
+                  </div>
+
+
+                  {/* Repeat Lift */}
+                  {index !== 0 && (
+                    <div className="flex flex-col lg:flex-row items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Repeat Specification:
+                      </label>
+                      <select
+                        value={repeatSettings[index]?.from || ""}
+                        onChange={(e) =>
+                          handleRepeatChange(index, "from", e.target.value)
+                        }
+                        className="border rounded px-2 py-1 text-sm bg-white cursor-pointer focus:ring-2 focus:ring-blue-400"
+                      >
+                        <option value="">Select</option>
+                        {lifts
+                          .filter((prevLift) => {
+                            console.log(prevLift, "**********prevLift***********")
+                            // const prevLiftId = prevLift.data?.id || prevLift.data?.enquiryId || prevLift.enquiryId;
+                            // // const currentLiftId = lifts[index].data?.id || lifts[index].enquiryId;
+
+                            // const currentLiftId = lifts[index].data?.id || lifts[index].data?.enquiryId || lifts[index].enquiryId;
+
+                            const prevLiftId = prevLift.enquiryId;
+                            // const currentLiftId = lifts[index].data?.id || lifts[index].enquiryId;
+
+                            const currentLiftId = lifts[index].enquiryId;
+
+                            console.log(prevLiftId, "**********currentLiftId***********", currentLiftId)
+
+                            return prevLiftId < currentLiftId;
+                          })
+                          .map((prevLift) => {
+                            // 🎯 Helper function to determine the correct ID (data.id if exists, otherwise enquiryId)
+                            { console.log(prevLift, "**********prevLift inside map***********") }
+                            // const liftId = prevLift.data?.id || prevLift.data?.enquiryId || prevLift.enquiryId;
+
+                            const liftId = prevLift.enquiryId;
+
+                            { console.log(liftId, "**********prevLift inside map***********") }
+
+                            return (
+                              <option
+                                key={liftId}
+                                value={liftId} // Value is the unique ID (data.id or enquiryId)
+                              >
+                                {/* Display Lift [Enquiry ID] - used for human-readable display */}
+                                Lift {index}
+                              </option>
+                            );
+                          })}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRepeat(index)}
+                        disabled={!repeatSettings[index]?.checked}
+                        className={`px-3 py-1 rounded text-sm transition-colors duration-200 ${repeatSettings[index]?.checked
+                          ? "bg-blue-600 text-white hover:bg-blue-700"
+                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          }`}
+                      >
+                        Repeat
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 items-center">
+                    {!lift.isFinalized && (
+                      console.log("--------lift action button----", origin, action),
+                      <button
+                        onClick={() => openModal(lift)}
+                        className={`px-4 py-2 h-9 rounded transition-all flex items-center justify-center text-white font-medium whitespace-nowrap
+                      ${action === "revise" ? "bg-yellow-600 hover:bg-yellow-700" :
+                            action === "editRevision" && origin === "MISSING_FROM_PARENT" ? "bg-orange-600 hover:bg-orange-700" :
+                              "bg-blue-500 hover:bg-blue-600"}
+                    `}
+                      >
+                        {console.log("--------lift action button inside----", origin, action)}
+                        {
+                          action === ""
+                            ? "✏️ Edit"
+                            : action === "revise"
+                              ? "🔄 Revise"
+                              : action === "editRevision" && origin === "MISSING_FROM_PARENT"
+                                ? "🔄 Revise Original"
+                                : action === "editRevision" && origin === "CURRENT_INCLUDED" && edition == 0
+                                  ? "✏️ Edit Original"
+                                  : "✏️ Edit Revised"
+                        }
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        if (!lift.data) {
+                          toast.error("Please fill quotation details first!");
+                          return;
+                        }
+                        setPreviewData({
+                          id: lift.enquiryId,
+                          data: lift.data,
+                          fieldLabels: lift.fieldLabels || {},
+                        });
+                      }}
+                      className="bg-gray-200 hover:bg-gray-300 px-4 h-9 rounded flex items-center justify-center"
+                    >
+                      👁️ Preview
+                    </button>
+                  </div>
+
+
                 </div>
               </div>
-
-
-              {/* Repeat Lift */}
-              {index !== 0 && (
-                <div className="flex flex-col lg:flex-row items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Repeat Specification:
-                  </label>
-                  <select
-                    value={repeatSettings[index]?.from || ""}
-                    onChange={(e) =>
-                      handleRepeatChange(index, "from", e.target.value)
-                    }
-                    className="border rounded px-2 py-1 text-sm bg-white cursor-pointer focus:ring-2 focus:ring-blue-400"
-                  >
-                    <option value="">Select</option>
-                    {lifts
-                      .filter((l) => l.enquiryId < lifts[index].enquiryId)
-                      .map((prevLift) => (
-                        <option key={prevLift.enquiryId} value={prevLift.enquiryId}>
-                          Lift {prevLift.enquiryId}
-                        </option>
-                      ))}
-                  </select>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRepeat(index)}
-                    disabled={!repeatSettings[index]?.checked}
-                    className={`px-3 py-1 rounded text-sm transition-colors duration-200 ${repeatSettings[index]?.checked
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      }`}
-                  >
-                    Repeat
-                  </button>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                {!lift.isFinalized && (
-                  <button
-                    onClick={() => openModal(lift)}
-                    className="bg-blue-500 text-white px-4 h-9 rounded hover:bg-blue-600 transition-all flex items-center justify-center"
-                  >
-                    ✏️ Edit
-                  </button>
-                )}
-
-                <button
-                  onClick={() => {
-                    if (!lift.data) {
-                      toast.error("Please fill quotation details first!");
-                      return;
-                    }
-                    setPreviewData({
-                      id: lift.enquiryId,
-                      data: lift.data,
-                      fieldLabels: lift.fieldLabels || {},
-                    });
-                  }}
-                  className="bg-gray-200 hover:bg-gray-300 px-4 h-9 rounded flex items-center justify-center"
-                >
-                  👁️ Preview
-                </button>
-              </div>
-
-
-            </div>
-          </div>
-        ))}
+            );
+          });
+        })()}
       </div>
 
       {/* ---- SUMMARY & ACTIONS ---- */}
@@ -1635,12 +1606,25 @@ export default function QuotationAddPage() {
       {/* ---- MODALS ---- */}
       {modalOpen && (
         <LiftModal
+          // key={
+          //   selectedLift?.enquiryId +
+          //   (selectedLift?.data ? JSON.stringify(selectedLift.data).length : 0)
+          // }
+
+          // key={
+          //   selectedLift?.data?.enquiryId + // Safely access the nested enquiryId
+          //   (selectedLift?.data ? JSON.stringify(selectedLift.data).length : 0)
+          // }
+
           key={
-            selectedLift?.enquiryId +
-            (selectedLift?.data ? JSON.stringify(selectedLift.data).length : 0)
+            selectedLift?.data?.enquiryId +
+            "_" +
+            JSON.stringify(selectedLift?.data || {}).length
           }
+
           lift={selectedLift}
           setLifts={setLifts}
+          action={action}
           onClose={() => setModalOpen(false)}
           onSave={handleSave}
           quotationDate={quotationDate}

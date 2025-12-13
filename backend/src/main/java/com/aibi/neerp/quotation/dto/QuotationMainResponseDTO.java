@@ -14,10 +14,12 @@ public class QuotationMainResponseDTO {
     private Integer id;
     private String quotationNo;
     private LocalDateTime quotationDate;
-    private String edition;
+    private Integer edition;
     private Double totalAmount;
     private String status;
+    private Integer parentQuotationId;   // For displaying history chain
     private String remarks;
+    private Integer jobStatus;
 
     // 🔹 Lead & Enquiry
     private Integer leadId;
@@ -44,21 +46,31 @@ public class QuotationMainResponseDTO {
     private String siteAdder;
 
     // 🔹 Created / Approved info
-    private Integer createdByEmployeeId;
-    private String createdByEmployeeName;
     private String employeeContactNumber;
     private Integer employeeRoleId;
     private String employeeRoleName;
 
+    private Integer createdByEmployeeId;
+    private String createdByEmployeeName;
     private LocalDateTime createdAt;
+
     private Boolean isFinalized;
     private Integer finalizedByEmployeeId;
     private String finalizedByEmployeeName;
     private LocalDateTime finalizedAt;
+
     private Boolean isDeleted;
     private Integer deletedByEmployeeId;
     private String deletedByEmployeeName;
     private LocalDateTime deletedAt;
+
+    private Boolean isSuperseded;
+    private Integer supersededByEmployeeId;
+    private String supersededByEmployeeName;
+    private LocalDateTime supersededAt;
+
+    // 🔹 Finalization check for revision group
+    private Boolean hasAnyRevisionFinalized; // True if this quotation or any of its revisions are finalized
 
     // 🔹 Child details
     private List<QuotationLiftDetailResponseDTO> liftDetails;

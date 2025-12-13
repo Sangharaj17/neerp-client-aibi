@@ -12,11 +12,12 @@ import { API_ENDPOINTS } from "@/utils/apiEndpoints";
 import { decodeHtmlEntities } from "@/utils/validation";
 import { calculateLiftMaterialPrices, calculateFloorPrices } from "@/utils/liftCalculations";
 import useLiftForm from "./hooks/useLiftForm";
-import { fetchCabinSubTypes, fetchCarEntranceTypes, fetchLandingEntranceSubType, fetchCarEntranceSubTypes, getOptionPrice, PriceBelowSelect, getLabel, fetchControlPanelTypes, fetchLOP, fetchCOP, fetchCapacityDimension, fetchRopingTypePrice, fetchFastner, fetchInstallationRule, calculateTotal, fetchOtherMaterialsByMainId, fetchOtherMaterialExcludeOthers, clearError, handleRefresh, fetchGuideRails, fetchBracketTypes, fetchWireRopes, fetchLoads, fetchTax } from "./liftService";
+import { fetchCabinSubTypes, fetchCarEntranceTypes, fetchLandingEntranceSubType, fetchCarEntranceSubTypes, getOptionPrice, PriceBelowSelect, getLabel, fetchControlPanelTypes, fetchLOP, fetchCOP, fetchCapacityDimension, fetchRopingTypePrice, fetchFastner, fetchInstallationRule, calculateTotal, fetchOtherMaterialsByMainId, fetchOtherMaterialExcludeOthers, clearError, handleRefresh, fetchGuideRails, fetchBracketTypes, fetchWireRopes, fetchLoads, fetchTax, fetchAirSystemPrice } from "./liftService";
 import { RefreshCcw } from "lucide-react";
+import { safeNumber } from "@/utils/common";
 
 
-export default function LiftModal({ lift, onClose, onSave }) {
+export default function LiftModal({ lift, action, onClose, onSave }) {
   const [activeTab, setActiveTab] = useState(0);
   const [errorTabs, setErrorTabs] = useState([]);
   const [errors, setErrors] = useState({});
@@ -38,10 +39,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
     (msg) => typeof msg === "string" && msg.trim() !== ""
   );
 
-
-  useEffect(() => {
-    setIsInitialLoad(true);
-  }, [lift.enquiryId]); // or whatever identifies the current record
+  console.log("------action---------->", action);
 
   const handleLoadComplete = useCallback(() => {
     // This is the function passed as 'onUserActivity'
@@ -69,7 +67,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
     }`;
 
   const liftRatePriceKeys = [
-    "cabinPrice",
+    // "cabinPrice",
+    "cabinSubTypePrice",
     "airSystemPrice",
     "carEntrancePrice",
     "landingEntrancePrice1",
@@ -92,7 +91,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
   ];
 
   const priceKeys = [
-    "cabinPrice",//-----
+    // "cabinPrice",//-----
+    "cabinSubTypePrice",//-----
     "lightFittingPrice",
     "cabinFlooringPrice",
     "cabinCeilingPrice",
@@ -220,7 +220,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
     'guideRailMaterial',//setPrice name concat with Material
     'cabinFlooringMaterial',
     'cabinCeilingMaterial',
-    'cabinMaterial',
+    'cabinSubTypeMaterial',
+    'lightFittingMaterial',
     'landingEntrance1Material',
     'landingEntrance2Material',
     'controlPanelTypeMaterial',
@@ -230,6 +231,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
     'lopTypeMaterial',
     'copTypeMaterial',
     'airSystemMaterial',
+
+
+    "landingEntranceSubType2_fromFloor",
+    "landingEntranceSubType2_toFloor",
     // ... add all other calculated materials here
   ];
 
@@ -281,11 +286,28 @@ export default function LiftModal({ lift, onClose, onSave }) {
     setFormData,
     handleChange,
     handleCheckbox,
-    calculations,
+    //calculations,//---------------------uncommet to show tab totals
     // errors,
     // setErrors,
     markFormTouched,
   } = useLiftForm(lift, setErrors, liftRatePriceKeys, initialOptions, handleLoadComplete);
+
+
+  useEffect(() => {
+    setIsInitialLoad(true);
+
+    const selectedMater = lift?.data?.selectedMaterials || [];
+    // setSelectedMaterials(selectedMater);
+
+    setFormData((prev) => ({
+      ...prev,
+      selectedMaterials: selectedMater
+    }));
+
+    console.log("------selectedMater in use effect-------->", selectedMater);
+
+  }, []); // or whatever identifies the current record
+
 
   // const {
   //   formData,
@@ -308,34 +330,36 @@ export default function LiftModal({ lift, onClose, onSave }) {
   // }, priceKeys.map((key) => formData[key])); // auto dependency array
 
   useEffect(() => {
-    console.log("---change--------------");
+    // console.log("---change--------------");
+
     const liftRateTotal = liftRatePriceKeys.reduce(
       (sum, key) => sum + Number(formData[key] || 0),
       0
     );
 
-    console.log("---liftRatePriceKeys--------------", liftRatePriceKeys);
-    console.log("---****************------------");
-    console.log(liftRateTotal, "---priceKeys--------------", priceKeys);
+    // console.log("---liftRatePriceKeys--------------", liftRatePriceKeys);
+    // console.log("---****************------------");
+    // console.log(liftRateTotal, "---priceKeys--------------", priceKeys);
+
     const adjustedPriceKeys1 = priceKeys.filter(
       (key) => !liftRatePriceKeys.includes(key)
     );
 
     setAdjustedPriceKeys(adjustedPriceKeys1);
 
-    console.log("Keys included in 'total':", adjustedPriceKeys1);
+    // console.log("Keys included in 'total':", adjustedPriceKeys1);
 
     // Check if carEntrancePrice is in the filtered list
-    console.log("Is carEntrancePrice in 'total' keys?", adjustedPriceKeys1.includes("carEntrancePrice"));
+    // console.log("Is carEntrancePrice in 'total' keys?", adjustedPriceKeys1.includes("carEntrancePrice"));
 
     const total = adjustedPriceKeys1.reduce((sum, key) => {
       if (key === "carEntrancePrice") {
-        console.log("CarEntrancePrice being summed:", formData[key]);
+        // console.log("CarEntrancePrice being summed:", formData[key]);
       }
       return sum + Number(formData[key] || 0);
     }, 0);
 
-    console.log("Total ===>:", total);
+    // console.log("Total ===>:", total);
 
     const liftQuantity = Number(formData.liftQuantity || 0);
     const taxRate = Number(formData.tax || 18);
@@ -371,6 +395,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
     const totalIncludingTax = totalWithLiftRateWithoutGST + (totalWithLiftRateWithoutGST * taxRate) / 100;
 
+    const taxAmt = (totalWithLiftRateWithoutGST * taxRate) / 100;
+
     const loadPerAmtPer = Number(formData.loadPerAmt || 0);
     const loadAmt = (totalIncludingTax * loadPerAmtPer) / 100;
 
@@ -394,6 +420,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         totalAmountWithoutGST: parseFloat(totalWithLiftRateWithoutGST.toFixed(2)),
         totalAmountWithoutLoad: parseFloat(totalIncludingTax.toFixed(2)),
         totalAmount: parseFloat((totalIncludingTax + loadAmt).toFixed(2)),
+        taxAmt: parseFloat(taxAmt.toFixed(2)),
         loadAmt: parseFloat(loadAmt.toFixed(2)),
         commercialTotal: parseFloat(commercialTotal.toFixed(2)),
         commercialTaxAmount: parseFloat(commercialTaxAmount.toFixed(2)),
@@ -407,8 +434,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
       return updates;
     });
 
-    console.log("Total (with decimals):", total.toFixed(2));
-    console.log("Total incl. GST:", totalIncludingTax.toFixed(2));
+    // console.log("Total (with decimals):", total.toFixed(2));
+    // console.log("Total incl. GST:", totalIncludingTax.toFixed(2));
   }, [...priceKeys.map((key) => formData[key]),
   formData.liftQuantity,
   formData.tax,
@@ -430,6 +457,163 @@ export default function LiftModal({ lift, onClose, onSave }) {
   formData.numberLockSystem,
   formData.thumbLockSystem,
   formData.installationAmount, formData.carEntranceSubType,]);
+
+
+
+  //************************************************************************************************************ */
+
+  // ============================
+  // ⭐ AUTO UPDATE MATERIALS ⭐
+  // when liftType, floors, capacityType, etc. change
+  // ============================
+  // useEffect(() => {
+  //   if (!initialOptions) return;
+
+  //   // Create a temp copy of formData to avoid stale state
+  //   const temp = { ...formData };
+
+  //   // ---- Recalculate Landing Entrance Materials (1 & 2) ----
+  //   updateLandingEntranceMaterials(temp, handleMaterialChange);
+
+  //   // ---- Recalculate all other dropdown-based materials ----
+  //   Object.entries(DROPDOWN_MAP).forEach(([field, config]) => {
+  //     const selectedValue = temp[field];
+  //     if (!selectedValue) {
+  //       // field not selected → clear this material
+  //       handleMaterialChange(config.itemMainName, null);
+  //       return;
+  //     }
+
+  //     // Load options
+  //     const options = initialOptions[config.optionsKey] || [];
+  //     const idKey = config.id || "id";
+  //     const selectedOption = options.find(
+  //       (o) => String(o[idKey]) === String(selectedValue)
+  //     );
+  //     if (!selectedOption) return;
+
+  //     let quantity = Number(selectedOption.quantity || 1);
+  //     let unitPrice = Number(selectedOption.price || selectedOption.prize || 0);
+  //     let totalPrice = unitPrice * quantity;
+
+  //     // ==== CUSTOM FIX: Recompute Landing Entrance 1 ====
+  //     if (field === "landingEntranceSubType1") {
+  //       const count = Number(temp.landingEntranceCount) || Number(temp.openings);
+  //       quantity = count;
+  //       totalPrice = quantity * unitPrice;
+  //     }
+
+  //     // ==== CUSTOM FIX: Recompute Landing Entrance 2 ====
+  //     if (field === "landingEntranceSubType2") {
+  //       const from = Number(temp.landingEntranceSubType2_fromFloor);
+  //       const to = Number(temp.landingEntranceSubType2_toFloor);
+  //       const openings = Number(temp.openings);
+  //       const used = Number(temp.landingEntranceCount);
+
+  //       let count = 0;
+  //       if (from > 0 && to > 0 && to >= from) {
+  //         count = to - from + 1;
+  //       } else {
+  //         count = openings - used;
+  //       }
+  //       quantity = count;
+  //       totalPrice = quantity * unitPrice;
+  //     }
+
+  //     // ---- Build Material Object ----
+  //     let displayName;
+  //     if (Array.isArray(config.nameKey)) {
+  //       displayName = config.nameKey.map(k => selectedOption[k] || "").join(" ");
+  //     } else {
+  //       displayName = selectedOption[config.nameKey] || selectedOption.name || "";
+  //     }
+
+  //     const materialObj = createMaterialObject(
+  //       selectedOption[idKey],
+  //       displayName,
+  //       config.itemMainName,
+  //       totalPrice,
+  //       quantity,
+  //       config.itemUnit,
+  //       temp
+  //     );
+
+  //     // ---- Update selectedMaterials ----
+  //     handleMaterialChange(config.itemMainName, materialObj);
+
+  //     // ---- Update price in formData for UI (PriceBelowSelect) ----
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       [config.priceFieldName]: totalPrice,
+  //     }));
+  //   });
+
+  // }, [
+  //   formData.liftType,
+  //   formData.openings,
+  //   formData.floors,
+  //   formData.capacityType,
+  //   formData.capacity,
+  //   formData.stops,
+  //   formData.landingEntranceCount,
+  //   formData.landingEntranceSubType2_fromFloor,
+  //   formData.landingEntranceSubType2_toFloor,
+  // ]);
+
+
+  //   /**
+  //  * Manages the addition, update, or removal of a structured material object
+  //  * in the master formData.selectedMaterials array.
+  //  * @param {string} materialType - The name of the material to find/replace (e.g., "Cop Type").
+  //  * @param {object | null} newMaterialObject - The new material object or null to remove/clear.
+  //  */
+  //   // New Utility Function (Define this outside of your component)
+  //   const removeMaterialTypes = (currentMaterials, typesToRemove) => {
+  //     if (!typesToRemove || typesToRemove.length === 0) {
+  //       return currentMaterials;
+  //     }
+
+  //     const typesToRemoveLower = typesToRemove.map(type => type.toLowerCase());
+
+  //     return (currentMaterials || []).filter(item =>
+  //       // Keep the item if its type is NOT in the list of types we want to remove
+  //       !typesToRemoveLower.includes(item.materialType?.toLowerCase())
+  //     );
+  //   };
+
+  const handleMaterialChange = useCallback((materialType, newMaterialObject) => {
+    console.log("---handleMaterialChange called---", materialType, newMaterialObject);
+    if (!materialType) return;
+
+    setFormData(prev => {
+      const prevMaterials = prev.selectedMaterials || [];
+
+      // Remove any existing item of same type (case-insensitive)
+      const materialsToKeep = prevMaterials.filter(item =>
+        item.materialType?.toLowerCase() !== materialType.toLowerCase()
+      );
+
+      // If null, we are clearing this material
+      if (!newMaterialObject) {
+        const resulting = materialsToKeep;
+        if (JSON.stringify(resulting) === JSON.stringify(prevMaterials)) return prev;
+        return { ...prev, selectedMaterials: resulting };
+      }
+
+      // Validate newMaterialObject
+      if (!newMaterialObject.materialId) {
+        // nothing to add
+        if (materialsToKeep.length === prevMaterials.length) return prev;
+        return { ...prev, selectedMaterials: materialsToKeep };
+      }
+
+      const newSelected = [...materialsToKeep, newMaterialObject];
+      if (JSON.stringify(newSelected) === JSON.stringify(prevMaterials)) return prev;
+
+      return { ...prev, selectedMaterials: newSelected };
+    });
+  }, [setFormData]);
+  // setFormData is stable from useLiftForm, so no further dependencies
 
 
   /**
@@ -486,15 +670,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
     ]);
   };
 
-  /**
-   * Updates or adds a single material item to the selectedMaterials array based on its materialType.
-   * It filters out existing items of the same type and adds the new item.
-   *
-   * @param {Array} currentMaterials - The existing formData.selectedMaterials array.
-   * @param {string} materialTypeToReplace - The materialType string (e.g., "fastener", "guiderail") to filter out.
-   * @param {object} newMaterialObject - The new material object to add/update.
-   * @returns {Array} The new, merged selectedMaterials array.
-   */
+
   const updateSelectedMaterial = (
     currentMaterials = [],
     materialTypeToReplace,
@@ -518,123 +694,958 @@ export default function LiftModal({ lift, onClose, onSave }) {
     return newSelectedMaterials;
   };
 
+  // useMaterialSync(formData, setFormData, selectedMaterialKeys);
 
 
+  const DROPDOWN_MAP = {
+    // --- Existing Material Dropdowns ---
+    cabinSubType: {
+      itemMainName: "Cabin SubType",
+      nameKey: "cabinSubName", // Used to get the name from the option object
+      itemUnit: "Unit", // Unit for the calculated quantity/material
+      optionsKey: "cabinSubTypes", // Key to access options from initialOptions
+      priceFieldName: 'cabinSubTypePrice', // Field in formData to store the price
+      // Note: The UI logic for price calculation for this is complex due to capacity/weight,
+      // but the map defines the structure for generic material logic.
+    },
+    lightFitting: {
+      itemMainName: "Light Fitting",
+      nameKey: "name", // Used to get the name from the option object
+      itemUnit: "Unit",
+      optionsKey: "lightFittings",
+      priceFieldName: 'lightFittingPrice',
+    },
+    cabinFlooring: {
+      itemMainName: "Cabin Flooring",
+      nameKey: "flooringName", // Matches the key used in the option tag: {opt.flooringName}
+      itemUnit: "Unit",
+      optionsKey: "cabinFlooring",
+      priceFieldName: 'cabinFlooringPrice',
+    },
+    // --- New Material Dropdowns (Added/Updated) ---
+    cabinCeiling: {
+      id: "ceilingId",
+      itemMainName: "Cabin Ceiling", // MaterialType name for the DB object (PriceBelowSelect prop)
+      nameKey: "ceilingName", // Matches the key used in the option tag: {opt.ceilingName}
+      itemUnit: "Unit",
+      optionsKey: "cabinCeiling",
+      priceFieldName: 'cabinCeilingPrice',
+    },
+    airType: {
+      itemMainName: "Air System", // MaterialType name for the DB object (PriceBelowSelect prop)
+      nameKey: "name", // Matches the key used in the option tag: {opt.name}
+      itemUnit: "Unit", // Unit is typically "Unit" for a system
+      optionsKey: "airType",
+      priceFieldName: 'airSystemPrice', // Matches the setPrice prop in PriceBelowSelect
+    },
+
+    // --- Non-Material Dropdowns (Price tracking logic is in PriceBelowSelect, but we can map the fields) ---
+    carEntrance: {
+      itemMainName: "Car Entrance Type", // MaterialType name for the DB object (PriceBelowSelect prop)
+      nameKey: "carDoorType", // Matches the key used in the option tag: {opt.carDoorType}
+      itemUnit: "Unit", // Not explicitly used for price calc, but good for consistency
+      optionsKey: "carEntranceTypes",
+      priceFieldName: 'carEntranceTypePrice', // Dummy price key (as noted in JSX comments)
+    },
+    carEntranceSubType: {
+      itemMainName: "Car Entrance Sub Type", // MaterialType name for the DB object (PriceBelowSelect prop)
+      nameKey: "carDoorSubType", // Matches the key used in the option tag: {opt.carDoorSubType}
+      itemUnit: "Unit",
+      optionsKey: "carEntranceSubTypes",
+      priceFieldName: 'carEntrancePrice', // Actual price key for this door type
+    },
+    landingEntranceSubType1: {
+      itemMainName: "Landing Entrance 1", // MaterialType name for the DB object (PriceBelowSelect prop)
+      nameKey: "name", // Matches the key used in the option tag: {opt.name}
+      itemUnit: "Opening", // Matches the itemUnit prop in PriceBelowSelect
+      optionsKey: "landingEntranceSubTypes",
+      priceFieldName: 'landingEntrancePrice1',
+    },
+    landingEntranceSubType2: {
+      itemMainName: "Landing Entrance 2", // MaterialType name for the DB object (PriceBelowSelect prop)
+      nameKey: "name", // Matches the key used in the option tag: {opt.name}
+      itemUnit: "Opening", // Matches the itemUnit prop in PriceBelowSelect
+      optionsKey: "landingEntranceSubTypes",
+      priceFieldName: 'landingEntrancePrice2',
+    },
+    controlPanelType: {
+      itemMainName: "Control Panel Type",
+      nameKey: "controlPanelType", // Matches the key used in the option tag: {opt.controlPanelType}
+      itemUnit: "Unit",
+      optionsKey: "controlPanelTypes",
+      priceFieldName: 'controlPanelTypePrice',
+    },
+    guideRail: {
+      itemMainName: "Guide Rail",
+      nameKey: "counterWeightName", // Matches the key used in the option tag: {decodeHtmlEntities(opt.counterWeightName)}
+      itemUnit: "Unit", // The unit for this is complex (per stop/floor), but a placeholder 'Unit' is fine for the map.
+      optionsKey: "guideRail",
+      priceFieldName: 'guideRailPrice',
+    },
+    bracketType: {
+      itemMainName: "Bracket Type",
+      nameKey: ["bracketTypeName", "carBracketSubType"], // Matches PriceBelowSelect's nameKey (composite)
+      itemUnit: "Set", // Matches PriceBelowSelect's itemUnit
+      optionsKey: "bracketTypes",
+      priceFieldName: 'bracketTypePrice', // Matches PriceBelowSelect's setPrice
+    },
+    // ropingType: {
+    //   itemMainName: "Wire Roping Type", // Derived from label prop in Select
+    //   nameKey: ["wireRopeTypeName", "wireRopeName"], // Derived from option tag content
+    //   itemUnit: "Unit", // Default unit, as PriceBelowSelect is missing the prop for this one, but a different priceField is used.
+    //   optionsKey: "wireRopes",
+    //   priceFieldName: 'wireRopePrice', // Matches PriceBelowSelect's setPrice
+    // },
+    lopType: {
+      itemMainName: "Lop Type",
+      nameKey: "name", // Matches option tag content and PriceBelowSelect's nameKey
+      itemUnit: "Set", // Matches PriceBelowSelect's itemUnit
+      optionsKey: "lopTypes",
+      priceFieldName: 'lopTypePrice', // Matches PriceBelowSelect's setPrice
+    },
+    copType: {
+      itemMainName: "Cop Type",
+      nameKey: "copName", // Matches option tag content and PriceBelowSelect's nameKey
+      itemUnit: "Unit", // Matches PriceBelowSelect's itemUnit
+      optionsKey: "copTypes",
+      priceFieldName: 'copTypePrice', // Matches PriceBelowSelect's setPrice
+    },
+  };
+
+  // You will need a helper function to create the material object, 
+  // using the price logic you had before.
+  const createMaterialObject = (
+    materialId,
+    selectedName,
+    itemMainName,
+    totalPrice,
+    quantity,
+    itemUnit,
+    formData
+  ) => {
+    const existingMaterials = formData.selectedMaterials || [];
+    const existingIndex = existingMaterials.findIndex(
+      (item) => item.materialType?.toLowerCase() === itemMainName?.toLowerCase()
+    );
+
+    const lead = formData.leadId;
+    const operator = formData.liftType;
+    const unitPrice = quantity > 0 ? totalPrice / quantity : 0;
+
+    return {
+      id: existingIndex !== -1 ? existingMaterials[existingIndex].id : null,
+      leadId: lead,
+      quotationLiftDetailId: formData.quotLiftDetailId || null,
+      materialId: materialId,
+      materialName: selectedName,
+      materialDisplayName: selectedName,
+      quantity: quantity,
+      quantityUnit: itemUnit,
+      unitPrice: unitPrice,
+      price: totalPrice,
+      operatorType: operator,
+      materialType: itemMainName,
+    };
+  };
+
+  // const handleDropdownChange = (e) => {
+  //     const { name, value } = e.target;
+  //     const config = DROPDOWN_MAP[name];
+
+  //     // Create a local object reflecting the state *after* this change
+  //     let currentFormData = { ...formData, [name]: value }; 
+
+  //     console.log("---handleDropdownChange--------------", name, value, config);
+
+  //     let totalPrice = 0;
+  //     let quantity = 0;
+  //     let selectedName = '';
+  //     let materialId = null;
+
+  //     // Configuration constants
+  //     const type1Config = DROPDOWN_MAP.landingEntranceSubType1;
+  //     const type2Config = DROPDOWN_MAP.landingEntranceSubType2;
+
+  //     // ==========================================================
+  //     // ✅ 1. CUSTOM LOGIC: Handle Counts and Floor changes
+  //     // ==========================================================
+
+  //     let updateData = { [name]: value };
+
+  //     if (name === 'landingEntranceCount') {
+  //         // Reset LE2 form fields to ensure blank/zero state
+  //         const resetFields = {
+  //             landingEntranceSubType2: "",
+  //             landingEntrancePrice2: 0,
+  //             landingEntranceSubType2_fromFloor: "",
+  //             landingEntranceSubType2_toFloor: "",
+  //         };
+
+  //         updateData = {
+  //             ...updateData,
+  //             ...resetFields,
+  //         };
+  //         currentFormData = { ...currentFormData, ...resetFields };
+
+  //         // 🎯 ACTION: Set Landing Entrance 2 material to ZERO (DO NOT REMOVE)
+  //         const zeroMaterialObject = createMaterialObject(
+  //             null, // ID is cleared
+  //             type2Config.itemMainName + ' (Cleared)',
+  //             type2Config.itemMainName,
+  //             0,
+  //             0,
+  //             type2Config.itemUnit,
+  //             currentFormData
+  //         );
+  //         console.log(`--------Clearing materialObject for ${name} change-------->`, zeroMaterialObject);
+  //         handleMaterialChange(type2Config.itemMainName, zeroMaterialObject);
+  //     }
 
 
-  // useEffect(() => {
+  //         console.log(`--------updateData-------->`, updateData);
 
-  //   // const total = priceKeys.reduce((sum, key) => sum + Number(formData[key] || 0), 0);
-
-  //   const liftRateTotal = liftRatePriceKeys.reduce(
-  //     (sum, key) => sum + Number(formData[key] || 0),
-  //     0
-  //   );
-
-  //   // ✅ 2. Calculate totalAmount (includes all price keys)
-  //   // const total = priceKeys.reduce(
-  //   //   (sum, key) => sum + Number(formData[key] || 0),
-  //   //   0
-  //   // );
-
-  //   // Step 1: Filter out liftRatePriceKeys from priceKeys
-  //   const adjustedPriceKeys1 = priceKeys.filter(
-  //     (key) => !liftRatePriceKeys.includes(key)
-  //   );
-
-  //   setAdjustedPriceKeys(adjustedPriceKeys1);
-
-  //   console.log("=adjustedPriceKeys=====>", adjustedPriceKeys);
-
-  //   // Step 2: Add 'liftRate' to represent the total of liftRatePriceKeys
-  //   // adjustedPriceKeys.push("liftRate");
-
-  //   // ✅ Now use adjustedPriceKeys instead of original priceKeys
-  //   const total = adjustedPriceKeys.reduce((sum, key) => {
-  //     // if (key === "liftRate") return sum + liftRateTotal;
-  //     return sum + Number(formData[key] || 0);
-  //   }, 0);
+  //     // Update formData with the new value(s) immediately.
+  //     setFormData(prev => ({ ...prev, ...updateData }));
 
 
-  //   // Commercial total (rate1 + all extras)
-  //   const liftQuantity = Number(formData.liftQuantity || 0);
-  //   // const rate = liftRateTotal;
-  //   // const rate = Number(formData.liftRate || total);
-  //   // const rate1 = rate * liftQuantity;
-  //   console.log("=rate=====>", liftRateTotal, "====total===>", total);
+  //     // --- 2. Generic Dropdown Logic (Runs only if config exists) ---
+  //     if (config) {
+  //         const options = initialOptions[config.optionsKey] || [];
+  //         const idKey = config.id || 'id';
+  //         const selectedOption = options.find(o => String(o[idKey]) === String(value));
 
-  //   const commercialTotal =
-  //     liftRateTotal +
-  //     Number(formData.fabricatedStructure || 0) * liftQuantity +
-  //     Number(formData.ardAmount || 0) * liftQuantity +
-  //     Number(formData.overloadDevice || 0) * liftQuantity +
-  //     Number(formData.pwdAmount || 0) * liftQuantity +
-  //     Number(formData.transportCharges || 0) * liftQuantity +
-  //     Number(formData.otherCharges || 0) * liftQuantity +
-  //     Number(formData.powerBackup || 0) * liftQuantity +
-  //     Number(formData.bambooScaffolding || 0) * liftQuantity +
-  //     Number(formData.electricalWork || 0) * liftQuantity +
-  //     Number(formData.ibeamChannel || 0) * liftQuantity +
-  //     Number(formData.duplexSystem || 0) * liftQuantity +
-  //     Number(formData.telephonicIntercom || 0) * liftQuantity +
-  //     Number(formData.gsmIntercom || 0) * liftQuantity +
-  //     Number(formData.numberLockSystem || 0) * liftQuantity +
-  //     Number(formData.thumbLockSystem || 0) * liftQuantity +
-  //     Number(formData.installationAmount || 0) * liftQuantity;
+  //         //------------------------------------------------------
+  //         // ⭐ SPECIALIZED ROPING LOGIC 
+  //         //------------------------------------------------------
+  //         if (name === "ropingType") {
+  //             const selectedRope = initialOptions.wireRopes?.find(r => String(r.id) === String(value));
+  //             if (!selectedRope) return;
 
-  //   // Tax amount (18%)
-  //   // const commercialTaxAmount = Math.floor((commercialTotal * 18) / 100);
-  //   const taxRate = Number(formData.tax || 18);
-  //   const commercialTaxAmount = Math.floor((commercialTotal * taxRate) / 100);
+  //             const wireRopeUnitPrice = selectedRope.price || selectedRope.prize || 0;
+  //             const wireRopePrice = wireRopeUnitPrice * 1;
+  //             const ropingTypePrice = selectedRope.ropingTypePrice || selectedRope.mechanismPrice || 0;
 
-  //   const commercialFinalAmount = commercialTotal + commercialTaxAmount;
+  //             setFormData(prev => ({
+  //                 ...prev,
+  //                 wireRopePrice: wireRopePrice,
+  //                 ropingTypePrice: ropingTypePrice,
+  //             }));
 
-  //   const totalIncludingTax = (total + Math.floor((total * taxRate) / 100));
+  //             // Create/update both material objects
+  //             handleMaterialChange("RopingType", createMaterialObject(selectedRope.id, `${selectedRope.wireRopeTypeName} | Mechanism`, "RopingType", ropingTypePrice, 1, "Set", currentFormData));
+  //             handleMaterialChange("WireRope", createMaterialObject(selectedRope.id, `${selectedRope.wireRopeName}`, "WireRope", wireRopePrice, 1, "Unit", currentFormData));
+  //             return;
+  //         }
 
-  //   const loadPerAmtPer = formData.loadPerAmt;
+  //         if (selectedOption) {
+  //             const unitPrice = selectedOption.price || selectedOption.prize || 0;
+  //             quantity = Number(selectedOption.quantity || 1);
+  //             totalPrice = unitPrice * quantity;
 
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     totalAmountWithoutGST: total,
-  //     totalAmount: totalIncludingTax,
-  //     loadAmt: ((totalIncludingTax * loadPerAmtPer) / 100),
-  //     liftRate: liftRateTotal,
-  //     // liftRate: Number(formData.liftRate || rate),
-  //     commercialTotal: commercialTotal, // new commercial calc
-  //     commercialTaxAmount: commercialTaxAmount,
-  //     commercialFinalAmount: commercialFinalAmount,
-  //   }));
+  //             // ==========================================================
+  //             // ✅ CUSTOM LOGIC: Air System (Defer material update to useEffect)
+  //             if (name === 'airType') {
+  //                 return; // Only update state, exit generic material logic
+  //             }
+  //             // ==========================================================
 
-  //   const priceList = priceKeys.map((key) => `${key}: ${formData[key]}`);
-  //   console.log("total Amount Include: ", priceList.join("\n"));
-  //   console.log("total Amount : ", total);
+  //             // ==========================================================
+  //             // ✅ CUSTOM LOGIC: Landing Entrance 1/2 Quantity Calculation
+  //             if (name === 'landingEntranceSubType1') {
+  //                 const count = Number(currentFormData.landingEntranceCount) || Number(currentFormData.openings) || 1;
+  //                 quantity = count;
+  //                 totalPrice = unitPrice * quantity;
+  //             } else if (name === 'landingEntranceSubType2') {
+  //                 const fromFloor = Number(currentFormData.landingEntranceSubType2_fromFloor);
+  //                 const toFloor = Number(currentFormData.landingEntranceSubType2_toFloor);
+  //                 const openings = Number(currentFormData.openings) || 0;
+  //                 const usedCount = Number(currentFormData.landingEntranceCount) || 0;
 
-  //   console.log("--------------------");
+  //                 let calculatedCount = 0;
+  //                 if (fromFloor > 0 && toFloor > 0 && toFloor >= fromFloor) {
+  //                     calculatedCount = toFloor - fromFloor + 1;
+  //                 } else {
+  //                     calculatedCount = openings - usedCount;
+  //                 }
+  //                 quantity = Math.max(0, calculatedCount);
+  //                 totalPrice = unitPrice * quantity;
+  //             }
+  //             // ==========================================================
 
-  //   const liftRatePriceList = liftRatePriceKeys.map((key) => `${key}: ${formData[key]}`);
-  //   console.log("lift Rate Amount Include: ", liftRatePriceList.join("\n"));
-  //   console.log("lift Rate Amount : ", liftRateTotal);
-  // }, [...priceKeys.map((key) => formData[key])]);
+  //             materialId = selectedOption[idKey];
+
+  //             // Determine selected name
+  //             let nameValue;
+  //             if (Array.isArray(config.nameKey)) {
+  //                 nameValue = config.nameKey.map(key => selectedOption[key] || '').join(' ');
+  //             } else {
+  //                 nameValue = selectedOption[config.nameKey] || selectedOption.name || '';
+  //             }
+  //             selectedName = nameValue;
+
+  //             setFormData(prev => ({ ...prev, [config.priceFieldName]: totalPrice }));
+  //         }
+
+  //         // --- Material Object Creation and Callback (Generic) ---
+  //         if (materialId) {
+  //             const materialObject = createMaterialObject(
+  //                 materialId,
+  //                 selectedName,
+  //                 config.itemMainName,
+  //                 totalPrice,
+  //                 quantity,
+  //                 config.itemUnit,
+  //                 currentFormData
+  //             );
+  //             console.log(`--------materialObject to add/update for ${name}-------->`, materialObject);
+  //             handleMaterialChange(config.itemMainName, materialObject);
+  //         } else {
+  //             // 🎯 ACTION: Handle selection cleared (set to zero material instead of null)
+  //             const zeroMaterialObject = createMaterialObject(
+  //                 null, 
+  //                 config.itemMainName + ' (Deselected)',
+  //                 config.itemMainName,
+  //                 0,
+  //                 0,
+  //                 config.itemUnit,
+  //                 currentFormData
+  //             );
+  //             handleMaterialChange(config.itemMainName, zeroMaterialObject);
+  //             setFormData(prev => ({ ...prev, [config.priceFieldName]: 0 }));
+  //         }
+  //     }
 
 
+  //     // ==========================================================
+  //     // ✅ 3. CUSTOM SYNC LOGIC: Recalculate Landing Entrance Prices
+  //     // ==========================================================
 
+  //     // 3.1. Sync Landing Entrance 1 when Count or LE1 selection changes
+  //     if (name === 'landingEntranceCount' || name === 'landingEntranceSubType1') {
+  //         const type1Id = currentFormData.landingEntranceSubType1;
 
-  useMaterialSync(formData, setFormData, selectedMaterialKeys);
+  //         if (type1Id) {
+  //             const type1Options = initialOptions[type1Config.optionsKey] || [];
+  //             const type1SelectedOption = type1Options.find(o => String(o.id) === String(type1Id));
 
-  const handlePriceAutoUpdate = (e) => {
-    const name = e.target.name;
-    const value = e.target.value;
+  //             if (type1SelectedOption) {
+  //                 const currentCount = Number(currentFormData.landingEntranceCount) || Number(currentFormData.openings) || 1;
+  //                 const unitPrice = type1SelectedOption.price || type1SelectedOption.prize || 0;
+  //                 const newTotalPrice = unitPrice * currentCount;
 
-    if (name === "carEntranceSubType") {
-      const item = initialOptions.carEntranceSubTypes.find(x => x.id == value);
-      if (item) {
+  //                 const materialObject = createMaterialObject(
+  //                     type1SelectedOption.id,
+  //                     type1SelectedOption[type1Config.nameKey] || type1SelectedOption.name || '',
+  //                     type1Config.itemMainName,
+  //                     newTotalPrice,
+  //                     currentCount,
+  //                     type1Config.itemUnit,
+  //                     currentFormData
+  //                 );
+  //                 handleMaterialChange(type1Config.itemMainName, materialObject);
+  //                 setFormData(prev => ({ ...prev, [type1Config.priceFieldName]: newTotalPrice }));
+  //             }
+  //         }
+  //         // No need for explicit zeroing in the else block here, as it's handled in the generic logic 
+  //         // when 'landingEntranceSubType1' is the changed field, or if count is changed, 
+  //         // the generic logic will update LE1 via the 'landingEntranceSubType1' check above if it's selected.
+  //     }
+
+  //     // 3.2. Sync Landing Entrance 2 when Floor range, LE2 selection, or LE Count changes
+  //     if (name === 'landingEntranceSubType2_fromFloor' || name === 'landingEntranceSubType2_toFloor' || name === 'landingEntranceSubType2' || name === 'landingEntranceCount') {
+  //         const type2Id = currentFormData.landingEntranceSubType2; 
+
+  //         if (type2Id) {
+  //             const type2Options = initialOptions[type2Config.optionsKey] || [];
+  //             const type2SelectedOption = type2Options.find(o => String(o.id) === String(type2Id));
+
+  //             if (type2SelectedOption) {
+  //                 // Recalculate based on currentFormData values (which include the latest floor/count updates)
+  //                 const fromFloor = Number(currentFormData.landingEntranceSubType2_fromFloor);
+  //                 const toFloor = Number(currentFormData.landingEntranceSubType2_toFloor);
+  //                 const openings = Number(currentFormData.openings) || 0;
+  //                 const usedCount = Number(currentFormData.landingEntranceCount) || 0;
+
+  //                 let calculatedCount = 0;
+  //                 if (fromFloor > 0 && toFloor > 0 && toFloor >= fromFloor) {
+  //                     calculatedCount = toFloor - fromFloor + 1;
+  //                 } else {
+  //                     calculatedCount = openings - usedCount;
+  //                 }
+
+  //                 const quantity = Math.max(0, calculatedCount);
+  //                 const unitPrice = type2SelectedOption.price || type2SelectedOption.prize || 0;
+  //                 const newTotalPrice = unitPrice * quantity;
+
+  //                 setFormData(prev => ({ ...prev, [type2Config.priceFieldName]: newTotalPrice }));
+
+  //                 const materialObject = createMaterialObject(
+  //                     type2SelectedOption.id,
+  //                     type2SelectedOption[type2Config.nameKey] || type2SelectedOption.name || '',
+  //                     type2Config.itemMainName,
+  //                     newTotalPrice,
+  //                     quantity,
+  //                     type2Config.itemUnit,
+  //                     currentFormData
+  //                 );
+  //                 handleMaterialChange(type2Config.itemMainName, materialObject);
+  //             }
+  //             // If type2Id exists but selectedOption is null (invalid), it falls through and 
+  //             // should remain a zero material (handled in the LE Count reset or generic logic zeroing).
+  //         } else if (name === 'landingEntranceSubType2') {
+  //             // If LE2 was explicitly deselected (type2Id is empty and name is LE2 dropdown), zero it out
+  //             const zeroMaterialObject = createMaterialObject(null, type2Config.itemMainName + ' (Cleared)', type2Config.itemMainName, 0, 0, type2Config.itemUnit, currentFormData);
+  //         console.log(`--------landingEntranceSubType2 landingEntranceSubType2-------->`, zeroMaterialObject);
+  //             handleMaterialChange(type2Config.itemMainName, zeroMaterialObject);
+  //             setFormData(prev => ({ ...prev, [type2Config.priceFieldName]: 0 }));
+  //         }
+  //         // If name is landingEntranceCount, the zeroing was already done in section 1.
+  //     }
+  // };
+
+  const handleDropdownChange = (e) => {
+    const { name, value } = e.target;
+    const config = DROPDOWN_MAP[name];
+
+    // NOTE: We DO NOT return here, because custom logic (like landingEntranceCount) 
+    // might need to run even if 'config' is null.
+
+    console.log("---handleDropdownChange--------------", name, value, config);
+
+    let totalPrice = 0;
+    let quantity = 0;
+    let selectedName = '';
+    let materialId = null;
+
+    // ✅ RUN GENERIC DROPDOWN LOGIC ONLY IF CONFIG EXISTS
+    if (config) {
+      // Retrieve options from initialOptions using the map
+      const options = initialOptions[config.optionsKey] || [];
+      // Find the selected option object
+      const idKey = config.id || 'id';
+      const selectedOption = options.find(o => String(o[idKey]) === String(value));
+
+      console.log("---selectedOption--------------", selectedOption);
+
+      //------------------------------------------------------
+      // ⭐ SPECIALIZED ROPING LOGIC (Overrides generic logic)
+      //------------------------------------------------------
+      if (name === "ropingType") {
+        const selectedRope = initialOptions.wireRopes?.find(
+          r => String(r.id) === String(value)
+        );
+
+        if (!selectedRope) return;
+
+        const wireRopeUnitPrice =
+          selectedRope.price || selectedRope.prize || 0;
+
+        const ropeQty = 1; // Wire rope always quantity = 1 (unless you defined otherwise)
+        const wireRopePrice = wireRopeUnitPrice * ropeQty;
+
+        // 🔵 Calculate Roping Mechanism Price
+        const ropingMechPrice =
+          selectedRope.ropingTypePrice ||
+          selectedRope.mechanismPrice ||
+          0;
+
+        const ropingTypePrice = ropingMechPrice; // quantity = 1
+
+        // Store BOTH prices into formData  
         setFormData(prev => ({
           ...prev,
-          carEntrancePrice: item.price || 0
+          wireRopePrice: wireRopePrice,
+          ropingTypePrice: ropingTypePrice,
         }));
+
+        //------------------------------------------------------
+        // 1️⃣ ADD / UPDATE ROPING MECHANISM MATERIAL
+        //------------------------------------------------------
+        handleMaterialChange(
+          "RopingType",
+          createMaterialObject(
+            selectedRope.id,
+            `${selectedRope.wireRopeTypeName} | Mechanism`,
+            "RopingType",
+            ropingTypePrice,
+            1,
+            "Set",
+            formData
+          )
+        );
+
+        //------------------------------------------------------
+        // 2️⃣ ADD / UPDATE WIRE ROPE MATERIAL
+        //------------------------------------------------------
+        handleMaterialChange(
+          "WireRope",
+          createMaterialObject(
+            selectedRope.id,
+            `${selectedRope.wireRopeName}`,
+            "WireRope",
+            wireRopePrice,
+            1,
+            "Unit",
+            formData
+          )
+        );
+
+        return; // 🚫 stop generic logic from overriding our 2-material logic
+      }
+
+
+      if (selectedOption) {
+        // --- Material Calculation (Simple/Default Logic) ---
+        const unitPrice = selectedOption.price || selectedOption.prize || 0;
+
+        // Use selected option's quantity key, or default to 1
+        quantity = Number(selectedOption.quantity || 1);
+        totalPrice = unitPrice * quantity;
+
+        // ==========================================================
+        // ✅ CUSTOM LOGIC: Handle Landing Entrance 1 quantity and price
+        if (name === 'landingEntranceSubType1') {
+          // Use the value from the companion count field (which might be "ALL" == formData.openings)
+          const count = Number(formData.landingEntranceCount) || Number(formData.openings) || 1;
+          quantity = count;
+          totalPrice = unitPrice * quantity; // Recalculate based on the determined count
+        } else if (name === 'landingEntranceSubType2') {
+          // Calculate count based on selected floors, or the total remaining floors
+          const fromFloor = Number(formData.landingEntranceSubType2_fromFloor);
+          const toFloor = Number(formData.landingEntranceSubType2_toFloor);
+          const openings = Number(formData.openings) || 0;
+          const usedCount = Number(formData.landingEntranceCount) || 0;
+
+          let calculatedCount = 0;
+          if (fromFloor > 0 && toFloor > 0 && toFloor >= fromFloor) {
+            calculatedCount = toFloor - fromFloor + 1;
+          } else {
+            // Fallback: If floors aren't selected, use the total remaining floors
+            calculatedCount = openings - usedCount;
+          }
+
+          quantity = calculatedCount;
+          totalPrice = unitPrice * quantity; // Recalculate based on floor difference
+        }
+        // ==========================================================
+
+        if (name === 'airType' && formData[config.priceFieldName]) {
+          // totalPrice = Number(formData[config.priceFieldName]);
+          // setFormData(prev => ({ ...prev, [name]: value }));
+          // return; // 🚫 Exit the generic logic early for airType
+          return setFormData(prev => ({ ...prev, airType: value }));
+        }
+
+        materialId = selectedOption[idKey];
+        // Handle cases where nameKey is an array (like bracketType)
+        let nameValue;
+        if (Array.isArray(config.nameKey)) {
+          nameValue = config.nameKey.map(key => selectedOption[key] || '').join(' ');
+        } else {
+          nameValue = selectedOption[config.nameKey] || selectedOption.name || '';
+        }
+        selectedName = nameValue;
+
+        // OPTIONAL: Immediately update the price field in formData 
+        // setFormData(prev => ({ ...prev, [config.priceFieldName]: totalPrice }));
+      }
+
+      // --- Material Object Creation and Callback ---
+      if (materialId) {
+        const materialObject = createMaterialObject(
+          materialId,
+          selectedName,
+          config.itemMainName,
+          totalPrice,
+          quantity,
+          config.itemUnit,
+          formData // Pass current formData for metadata (leadId, liftType, etc.)
+        );
+        console.log("--------materialObject to add/update-------->", materialObject);
+        handleMaterialChange(config.itemMainName, materialObject);
+      } else {
+        // Selection cleared
+        handleMaterialChange(config.itemMainName, null);
       }
     }
+
+
+    // ==========================================================
+    // ✅ CUSTOM LOGIC: Update Landing Entrance 1 when Count changes
+    // This logic runs even if 'config' was null (i.e., for 'landingEntranceCount').
+
+    // if (name === 'landingEntranceCount' && formData.landingEntranceSubType1) {
+    //   // Get the details of the selected Landing Entrance Type 1
+    //   const type1Config = DROPDOWN_MAP.landingEntranceSubType1;
+    //   const type1Options = initialOptions[type1Config.optionsKey] || [];
+    //   const type1SelectedOption = type1Options.find(o => String(o.id) === String(formData.landingEntranceSubType1));
+
+    //   if (type1SelectedOption) {
+    //     const count = Number(value) || Number(formData.openings) || 1; // 'value' is the new count
+    //     const unitPrice = type1SelectedOption.price || type1SelectedOption.prize || 0;
+    //     const newTotalPrice = unitPrice * count;
+
+    //     // Re-create the material object for Landing Entrance 1
+    //     const materialObject = createMaterialObject(
+    //       type1SelectedOption.id,
+    //       type1SelectedOption[type1Config.nameKey] || type1SelectedOption.name || '',
+    //       type1Config.itemMainName,
+    //       newTotalPrice,
+    //       count,
+    //       type1Config.itemUnit,
+    //       formData
+    //     );
+    //     console.log("--------Forced materialObject update for Landing Entrance 1-------->", materialObject);
+    //     handleMaterialChange(type1Config.itemMainName, materialObject);
+
+    //     // Ensure price in formData is updated for display in PriceBelowSelect
+    //     setFormData(prev => ({ ...prev, [type1Config.priceFieldName]: newTotalPrice }));
+    //   }
+    // }
+
+
+    // =====================================================================
+    // ⭐ LANDING ENTRANCE SYNC ENGINE (Works for ALL cases)
+    // =====================================================================
+    if (
+      name === "landingEntranceCount" ||
+      name === "landingEntranceSubType2_fromFloor" ||
+      name === "landingEntranceSubType2_toFloor" ||
+      name === "landingEntranceSubType2" ||
+      name === "landingEntranceSubType1"
+    ) {
+      setFormData(prev => {
+        const openings = Number(prev.openings) || 0;
+        // const count =
+        //   name === "landingEntranceCount"
+        //     ? Number(value)
+        //     : Number(prev.landingEntranceCount);
+
+        // const subType1 = name === "landingEntranceSubType1" ? value : prev.landingEntranceSubType1;
+        // const subType2 = name === "landingEntranceSubType2" ? value : prev.landingEntranceSubType2;
+
+        // let from = name === "landingEntranceSubType2_fromFloor"
+        //   ? Number(value)
+        //   : Number(prev.landingEntranceSubType2_fromFloor);
+
+        // let to = name === "landingEntranceSubType2_toFloor"
+        //   ? Number(value)
+        //   : Number(prev.landingEntranceSubType2_toFloor);
+
+
+        let count = 0;
+        let subType1 = "";
+        let subType2 = "";
+        let from = 0;
+        let to = 0;
+
+        if (name === "landingEntranceCount") {
+            count = Number(value);
+            subType1 = prev.landingEntranceSubType1;
+            subType2 = prev.landingEntranceSubType2;
+            from = Number(value) + 1;
+            to = openings;
+
+        }
+
+        if (
+          name === "landingEntranceSubType2_fromFloor") {
+            count = Number(value)-1;
+            subType1 = prev.landingEntranceSubType1;
+            subType2 = prev.landingEntranceSubType2;
+            from = Number(value);
+            to = openings;
+
+        }
+
+        if (
+          name === "landingEntranceSubType1") {
+            count = prev.landingEntranceCount;
+            subType1 = Number(value);
+            subType2 = prev.landingEntranceSubType2;
+            from = prev.landingEntranceSubType2_fromFloor;
+            to = prev.landingEntranceSubType2_toFloor;
+
+        }
+
+        if (
+          name === "landingEntranceSubType2") {
+            count = prev.landingEntranceCount;
+            subType1 = prev.landingEntranceSubType1;
+            subType2 = Number(value);
+            from = prev.landingEntranceSubType2_fromFloor;
+            to = prev.landingEntranceSubType2_toFloor;
+
+        }
+
+
+
+        let patch = {};
+
+        // ==============================================================  
+        // 1️⃣ CASE: landingEntranceCount === openings → ALL FLOORS  
+        // ==============================================================  
+        // if (count === openings) {
+        //   // Reset LE2 completely
+        //   patch = {
+        //     landingEntranceCount: openings,
+        //     landingEntranceSubType2: "",
+        //     landingEntranceSubType2_fromFloor: 0,
+        //     landingEntranceSubType2_toFloor: 0,
+        //     landingEntrancePrice2: 0,
+        //   };
+
+        //   // Update LE2 material → REMOVE IT
+        //   handleMaterialChange(
+        //     "Landing Entrance 2",
+        //     createMaterialObject(
+        //       "",                // materialId
+        //       "",                // materialName
+        //       "Landing Entrance 2",
+        //       0,                 // total price
+        //       0,                 // qty
+        //       "Opening",
+        //       prev
+        //     )
+        //   );
+
+        //   // Update LE1 (ALL floors)
+        //   if (subType1) {
+        //     const cfg1 = DROPDOWN_MAP.landingEntranceSubType1;
+        //     const opts1 = initialOptions[cfg1.optionsKey] || [];
+        //     const s1 = opts1.find(o => String(o.id) === String(subType1));
+
+        //     if (s1) {
+        //       const unit = s1.price || s1.prize || 0;
+        //       const total1 = openings * unit;
+
+        //       patch[cfg1.priceFieldName] = total1;
+
+        //       handleMaterialChange(
+        //         cfg1.itemMainName,
+        //         createMaterialObject(
+        //           s1.id,
+        //           s1[cfg1.nameKey] || s1.name,
+        //           cfg1.itemMainName,
+        //           total1,
+        //           openings,
+        //           cfg1.itemUnit,
+        //           prev
+        //         )
+        //       );
+        //     }
+        //   }
+
+        //   return { ...prev, ...patch };
+        // }
+
+        // ==============================================================  
+        // 2️⃣ PARTIAL SPLIT MODE (count < openings)  
+        // ==============================================================  
+
+
+
+
+        // Auto-correct floors
+        console.log("---LE SYNC ENGINE INPUTS---", { count, openings, from, to, openings });
+        console.log("---LE SYNC ENGINE PREV---", (!from || from <= count), (!to || to < from));
+        if (!from || from <= count) from = count + 1;
+        if (!to || to < from) to = openings;
+
+        const qty2 = to - from + 1;       // LE2 quantity
+        const qty1 = openings - qty2;     // LE1 quantity
+
+        patch = {
+          landingEntranceCount: count,
+          landingEntranceSubType2_fromFloor: from,
+          landingEntranceSubType2_toFloor: to,
+        };
+
+        console.log((count === openings), "---LE SYNC ENGINE ---", { count, openings, from, to, qty1, qty2 });
+
+        if (count === openings) {
+          patch = {
+            ...patch,
+            landingEntranceSubType2: "",
+            landingEntrancePrice2: 0,
+          };
+        }
+        console.log("---LE SYNC ENGINE PATCH---", patch);
+
+        console.log("---LE SYNC ENGINE SUBTYPES---", { subType1, subType2 });
+
+        // ---------------------------------------------------------------
+        // 2A️⃣ UPDATE LE2 PRICE + MATERIAL  
+        // ---------------------------------------------------------------
+        if (subType2) {
+          const cfg2 = DROPDOWN_MAP.landingEntranceSubType2;
+          const opts2 = initialOptions[cfg2.optionsKey] || [];
+          const s2 = opts2.find(o => String(o.id) === String(subType2));
+
+          console.log(cfg2, "---LE SYNC ENGINE SUBTYPE2 OPTION---", { s2, opts2 });
+          if (s2) {
+            const unit = s2.price || s2.prize || 0;
+            const total2 = unit * qty2;
+
+            console.log("---LE SYNC ENGINE SUBTYPE2 TOTAL---", { unit, qty2, total2 });
+
+            patch[cfg2.priceFieldName] = total2;
+            console.log("---LE SYNC ENGINE SUBTYPE2 PATCH---", patch);
+
+            let name2 = s2[cfg2.nameKey] || s2.name;
+            if (count === openings) {
+              name2 = "";
+            }
+
+            handleMaterialChange(
+              cfg2.itemMainName,
+              createMaterialObject(
+                s2.id,
+                // s2[cfg2.nameKey] || s2.name,
+                name2,
+                cfg2.itemMainName,
+                total2,
+                qty2,
+                cfg2.itemUnit,
+                prev
+              )
+            );
+          }
+        }
+
+        // ---------------------------------------------------------------
+        // 2B️⃣ UPDATE LE1 PRICE + MATERIAL  
+        // ---------------------------------------------------------------
+        if (subType1) {
+          const cfg1 = DROPDOWN_MAP.landingEntranceSubType1;
+          const opts1 = initialOptions[cfg1.optionsKey] || [];
+          const s1 = opts1.find(o => String(o.id) === String(subType1));
+
+          console.log(cfg1, "---LE SYNC ENGINE SUBTYPE1 OPTION---", { s1, opts1 });
+          if (s1) {
+            const unit = s1.price || s1.prize || 0;
+            const total1 = unit * qty1;
+
+            patch[cfg1.priceFieldName] = total1;
+
+            handleMaterialChange(
+              cfg1.itemMainName,
+              createMaterialObject(
+                s1.id,
+                s1[cfg1.nameKey] || s1.name,
+                cfg1.itemMainName,
+                total1,
+                qty1,
+                cfg1.itemUnit,
+                prev
+              )
+            );
+          }
+        }
+
+        return { ...prev, ...patch };
+      });
+    }
+
+
   };
+
+
+  // const updateLandingEntranceMaterials = (formDataForCalc, handleMaterialChange) => {
+  //   console.log("----updateLandingEntranceMaterials called----", formDataForCalc);
+  //   const openings = Number(formDataForCalc.openings) || 0;
+  //   // ---------- Material 1: Landing Entrance 1 ----------
+  //   const le1Config = DROPDOWN_MAP.landingEntranceSubType1;
+  //   const le1Value = formDataForCalc.landingEntranceSubType1;
+  //   if (le1Value) {
+  //     const options = initialOptions[le1Config.optionsKey] || [];
+  //     const selectedOption = options.find(o => String(o.id) === String(le1Value));
+  //     if (selectedOption) {
+  //       // quantity for material1 is landingEntranceCount (or fallback to openings)
+  //       const count = Math.max(0, Number(formDataForCalc.landingEntranceCount) || 0);
+  //       const unitPrice = Number(selectedOption.price || selectedOption.prize || 0);
+  //       const totalPrice = unitPrice * (count || 1);
+  //       const name = selectedOption[le1Config.nameKey] || selectedOption.name || "";
+  //       const mat = createMaterialObject(
+  //         selectedOption.id,
+  //         name,
+  //         le1Config.itemMainName,
+  //         totalPrice,
+  //         count,
+  //         le1Config.itemUnit,
+  //         formDataForCalc
+  //       );
+  //       handleMaterialChange(le1Config.itemMainName, mat);
+  //       // also update price field inside formData for PriceBelowSelect display (caller should setFormData)
+  //     } else {
+  //       // If option not found, clear the material
+  //       handleMaterialChange(le1Config.itemMainName, null);
+  //     }
+  //   } else {
+  //     handleMaterialChange(le1Config.itemMainName, null);
+  //   }
+
+  //   // ---------- Material 2: Landing Entrance 2 ----------
+  //   const le2Config = DROPDOWN_MAP.landingEntranceSubType2;
+  //   const le2Value = formDataForCalc.landingEntranceSubType2;
+  //   if (le2Value) {
+  //     const options2 = initialOptions[le2Config.optionsKey] || [];
+  //     const selectedOption2 = options2.find(o => String(o.id) === String(le2Value));
+  //     if (selectedOption2) {
+  //       // quantity for material2 depends on from/to floors
+  //       const fromFloor = Number(formDataForCalc.landingEntranceSubType2_fromFloor) || 0;
+  //       const toFloor = Number(formDataForCalc.landingEntranceSubType2_toFloor) || 0;
+
+  //       let count = 0;
+  //       if (fromFloor > 0 && toFloor > 0 && toFloor >= fromFloor) {
+  //         count = toFloor - fromFloor + 1;
+  //       } else {
+  //         // fallback = remaining floors
+  //         const used = Number(formDataForCalc.landingEntranceCount) || 0;
+  //         count = Math.max(0, (openings - used));
+  //       }
+
+  //       const unitPrice = Number(selectedOption2.price || selectedOption2.prize || 0);
+  //       const totalPrice = unitPrice * (count || 1);
+  //       const name2 = selectedOption2[le2Config.nameKey] || selectedOption2.name || "";
+
+  //       const mat2 = createMaterialObject(
+  //         selectedOption2.id,
+  //         name2,
+  //         le2Config.itemMainName,
+  //         totalPrice,
+  //         count,
+  //         le2Config.itemUnit,
+  //         formDataForCalc
+  //       );
+
+  //       handleMaterialChange(le2Config.itemMainName, mat2);
+  //     } else {
+  //       handleMaterialChange(le2Config.itemMainName, null);
+  //     }
+  //   } else {
+  //     handleMaterialChange(le2Config.itemMainName, null);
+  //   }
+  // };
+
+  //************************************************************************************************************ */
+
+
+
+  // const handlePriceAutoUpdate = (e) => {
+  //   const name = e.target.name;
+  //   const value = e.target.value;
+
+  //   if (name === "carEntranceSubType") {
+  //     const item = initialOptions.carEntranceSubTypes.find(x => x.id == value);
+  //     if (item) {
+  //       setFormData(prev => ({
+  //         ...prev,
+  //         carEntrancePrice: item.price || 0
+  //       }));
+  //     }
+  //   }
+  // };
 
 
   const loadWireRope = async () => {
@@ -737,126 +1748,413 @@ export default function LiftModal({ lift, onClose, onSave }) {
     }
   };
 
-  // 🔹 Effect for lift/material prices
+  // const handleAddMaterial = (material) => {
+  //   console.log("Material Added:", material);
+
+  //   setSelectedMaterials((prev) => {
+  //     // prevent duplicates
+  //     const exists = prev.some(m => m.optionId === material.optionId);
+  //     if (exists) return prev;
+
+  //     return [...prev, material];
+  //   });
+  // };
+
+  const fetchMaterialPrices = async () => {
+    if (!formData.liftType || !formData.capacityType || !formData.capacityValue || !formData.typeOfLift) return;
+
+    // const materialResults = await calculateLiftMaterialPrices({
+    //   liftType: formData.liftType,
+    //   capacityType: formData.capacityType,
+    //   capacityValue: formData.capacityValue,
+    //   typeOfLift: formData.typeOfLift,
+    //   cabinType: formData.cabinType,
+    // });
+    const existingSelectedMaterials = formData.selectedMaterials || [];
+
+    // const existingMachineItems = existingSelectedMaterials.filter(item => {
+    //   return item.materialType?.toLowerCase() === "machine";
+    // });
+
+    // // Get the first existing Fastener item to preserve its ID
+    // const existingItem = existingMachineItems[0];
+
+    // 2. Find existing 'Machine' material to pass its DB ID
+    const existingMachineIndex = existingSelectedMaterials.findIndex(item =>
+      item.materialType?.toLowerCase() === "machine".toLowerCase()
+    );
+    const existingMachineItem = existingMachineIndex !== -1 ? existingSelectedMaterials[existingMachineIndex] : undefined;
+
+    // --- 2. Get existing ARD item ---
+    const existingArdIndex = existingSelectedMaterials.findIndex(item =>
+      item.materialType?.toLowerCase() === "ard".toLowerCase() // Use "ard" here
+    );
+    // Note: We don't pass this to calculateLiftMaterialPrices, but we need it for ID preservation
+    const existingArdItem = existingArdIndex !== -1 ? existingSelectedMaterials[existingArdIndex] : undefined;
+    console.log("==========existingArdAmount=====00000000=======>", formData.ardAmount);
+    const materialResults = await calculateLiftMaterialPrices({
+      liftType: formData.liftType,
+      capacityType: formData.capacityType,
+      capacityValue: formData.capacityValue,
+      typeOfLift: formData.typeOfLift,
+      floors: formData.floors,
+      leadID: formData.leadId,
+      existingItem: existingMachineItem,
+      existingArd: existingArdItem,
+      existingArdAmount: formData.ardAmount,
+      setErrors,
+    });
+
+    setFormData(prev => {
+      // 1. Get the current list of materials from the PREVIOUS state
+      const existingSelectedMaterials = prev.selectedMaterials || [];
+      let updatedSelectedMaterials = [...existingSelectedMaterials];
+
+      // --- RE-LOCATE ARD/MACHINE UPDATE LOGIC HERE ---
+
+      // (A) Find existing ARD/Machine indexes again based on prev.selectedMaterials
+      const existingArdIndex = existingSelectedMaterials.findIndex(item => item.materialType?.toLowerCase() === "ard");
+      const existingMachineIndex = existingSelectedMaterials.findIndex(item => item.materialType?.toLowerCase() === "machine");
+
+      // (B) Process ARD Material (Using materialResults which is calculated outside)
+      let newArdSelectedMaterials = materialResults.ardMaterial;
+      if (newArdSelectedMaterials) { /* ... ID setup ... */ }
+      if (newArdSelectedMaterials && materialResults.ardPrice > 0) {
+        if (existingArdIndex !== -1) {
+          updatedSelectedMaterials[existingArdIndex] = newArdSelectedMaterials;
+        } else {
+          updatedSelectedMaterials.push(newArdSelectedMaterials);
+        }
+      } else if (existingArdIndex !== -1) {
+        updatedSelectedMaterials.splice(existingArdIndex, 1);
+      }
+
+      // (C) Process Machine Material (Using materialResults which is calculated outside)
+      let newMachineSelectedMaterials = materialResults.machineMaterial;
+      if (newMachineSelectedMaterials) { /* ... ID setup ... */ }
+      if (newMachineSelectedMaterials && materialResults.machinePrice > 0) {
+        if (existingMachineIndex !== -1) {
+          updatedSelectedMaterials[existingMachineIndex] = newMachineSelectedMaterials;
+        } else {
+          updatedSelectedMaterials.push(newMachineSelectedMaterials);
+        }
+      } else if (existingMachineIndex !== -1) {
+        updatedSelectedMaterials.splice(existingMachineIndex, 1);
+      }
+
+      // --- END OF RE-LOCATED LOGIC ---
+
+      // Note: You must ensure leadId and quotationId are available in `prev` or outside
+
+      return {
+        ...prev,
+        ardAmount: materialResults.ardPrice,
+        machinePrice: materialResults.machinePrice,
+        selectedMaterials: updatedSelectedMaterials, // Save the final merged array
+      };
+    });
+
+  };
+
+  // // 🔹 Effect for lift/material prices
+  // useEffect(() => {
+  //   // const fetchMaterialPrices = async () => {
+  //   if (!formData.liftType || !formData.capacityType || !formData.capacityValue || !formData.typeOfLift || !formData.floors || !formData.floorSelections) return;
+
+  //   const fetchMaterialPrices = async () => {
+  //     if (!formData.liftType || !formData.capacityType || !formData.capacityValue || !formData.typeOfLift) return;
+
+  //     // const materialResults = await calculateLiftMaterialPrices({
+  //     //   liftType: formData.liftType,
+  //     //   capacityType: formData.capacityType,
+  //     //   capacityValue: formData.capacityValue,
+  //     //   typeOfLift: formData.typeOfLift,
+  //     //   cabinType: formData.cabinType,
+  //     // });
+  //     const existingSelectedMaterials = formData.selectedMaterials || [];
+
+  //     // const existingMachineItems = existingSelectedMaterials.filter(item => {
+  //     //   return item.materialType?.toLowerCase() === "machine";
+  //     // });
+
+  //     // // Get the first existing Fastener item to preserve its ID
+  //     // const existingItem = existingMachineItems[0];
+
+  //     // 2. Find existing 'Machine' material to pass its DB ID
+  //     const existingMachineIndex = existingSelectedMaterials.findIndex(item =>
+  //       item.materialType?.toLowerCase() === "machine".toLowerCase()
+  //     );
+  //     const existingMachineItem = existingMachineIndex !== -1 ? existingSelectedMaterials[existingMachineIndex] : undefined;
+
+  //     // --- 2. Get existing ARD item ---
+  //     const existingArdIndex = existingSelectedMaterials.findIndex(item =>
+  //       item.materialType?.toLowerCase() === "ard".toLowerCase() // Use "ard" here
+  //     );
+  //     // Note: We don't pass this to calculateLiftMaterialPrices, but we need it for ID preservation
+  //     const existingArdItem = existingArdIndex !== -1 ? existingSelectedMaterials[existingArdIndex] : undefined;
+  //     console.log("==========existingArdAmount=====00000000=======>", formData.ardAmount);
+  //     const materialResults = await calculateLiftMaterialPrices({
+  //       liftType: formData.liftType,
+  //       capacityType: formData.capacityType,
+  //       capacityValue: formData.capacityValue,
+  //       typeOfLift: formData.typeOfLift,
+  //       floors: formData.floors,
+  //       leadID: formData.leadId,
+  //       existingItem: existingMachineItem,
+  //       existingArd: existingArdItem,
+  //       existingArdAmount: formData.ardAmount,
+  //       setErrors,
+  //     });
+
+  //     setFormData(prev => {
+  //       // 1. Get the current list of materials from the PREVIOUS state
+  //       const existingSelectedMaterials = prev.selectedMaterials || [];
+  //       let updatedSelectedMaterials = [...existingSelectedMaterials];
+
+  //       // --- RE-LOCATE ARD/MACHINE UPDATE LOGIC HERE ---
+
+  //       // (A) Find existing ARD/Machine indexes again based on prev.selectedMaterials
+  //       const existingArdIndex = existingSelectedMaterials.findIndex(item => item.materialType?.toLowerCase() === "ard");
+  //       const existingMachineIndex = existingSelectedMaterials.findIndex(item => item.materialType?.toLowerCase() === "machine");
+
+  //       // (B) Process ARD Material (Using materialResults which is calculated outside)
+  //       let newArdSelectedMaterials = materialResults.ardMaterial;
+  //       if (newArdSelectedMaterials) { /* ... ID setup ... */ }
+  //       if (newArdSelectedMaterials && materialResults.ardPrice > 0) {
+  //         if (existingArdIndex !== -1) {
+  //           updatedSelectedMaterials[existingArdIndex] = newArdSelectedMaterials;
+  //         } else {
+  //           updatedSelectedMaterials.push(newArdSelectedMaterials);
+  //         }
+  //       } else if (existingArdIndex !== -1) {
+  //         updatedSelectedMaterials.splice(existingArdIndex, 1);
+  //       }
+
+  //       // (C) Process Machine Material (Using materialResults which is calculated outside)
+  //       let newMachineSelectedMaterials = materialResults.machineMaterial;
+  //       if (newMachineSelectedMaterials) { /* ... ID setup ... */ }
+  //       if (newMachineSelectedMaterials && materialResults.machinePrice > 0) {
+  //         if (existingMachineIndex !== -1) {
+  //           updatedSelectedMaterials[existingMachineIndex] = newMachineSelectedMaterials;
+  //         } else {
+  //           updatedSelectedMaterials.push(newMachineSelectedMaterials);
+  //         }
+  //       } else if (existingMachineIndex !== -1) {
+  //         updatedSelectedMaterials.splice(existingMachineIndex, 1);
+  //       }
+
+  //       // --- END OF RE-LOCATED LOGIC ---
+
+  //       // Note: You must ensure leadId and quotationId are available in `prev` or outside
+
+  //       return {
+  //         ...prev,
+  //         ardAmount: materialResults.ardPrice,
+  //         machinePrice: materialResults.machinePrice,
+  //         selectedMaterials: updatedSelectedMaterials, // Save the final merged array
+  //       };
+  //     });
+
+  //   };
+
+  //   fetchMaterialPrices();
+  //   loadControlPanelTypes();
+  //   loadGuideRails();
+  //   loadBracketTypes();
+  //   loadWireRope();
+  //   // }, [formData.liftType, formData.capacityType, formData.capacityValue, formData.typeOfLift, formData.cabinType]);
+  // }, [formData.liftType, formData.capacityType, formData.capacityValue, formData.typeOfLift, formData.floors, formData.floorSelections, setErrors]);
+
+
+
+
+
+  //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // useEffect(() => {
+  //   const loadAirSystemPrice = async () => {
+  //     if (!formData.airType || !formData.capacityType || !formData.capacityValue) return;
+
+  //     const result = await fetchAirSystemPrice({
+  //       airTypeId: formData.airType,
+  //       capacityTypeId: formData.capacityType,
+  //       personId: formData.capacityType === 1 ? formData.capacityValue : null,
+  //       weightId: formData.capacityType === 2 ? formData.capacityValue : null,
+  //       // setErrors,
+  //     });
+
+  //     if (!result.success) {
+  //       const message = result.message;
+  //       setErrors((prev) => ({ ...prev, airSystemPrice: message }));
+  //       toast.error(message);
+  //     } else {
+  //       // Clear the error on success
+  //       setErrors((prev) => {
+  //         const updated = { ...prev };
+  //         delete updated.airSystemPrice;
+  //         return updated;
+  //       });
+  //     }
+
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       airSystem: result.airSystemId,
+  //       airSystemPrice: result.price,
+  //     }));
+
+  //     if (!result.success) {
+  //       toast.error(result.message);
+  //     }
+  //   };
+
+  //   loadAirSystemPrice();
+  // }, [formData.airType, formData.capacityType, formData.capacityValue]);
+
+
+
+  // New useEffect to sync Air System price and create material object
+  // useEffect(() => {
+  //   const AIR_SYSTEM_CONFIG = DROPDOWN_MAP.airType;
+
+  //   // Check if an Air System is selected and a valid price is available
+  //   if (formData.airType && formData.airSystemPrice) {
+  //     const materialPrice = Number(formData.airSystemPrice);
+
+  //     // Find the selected option to get its name and ID for the material object
+  //     const options = initialOptions[AIR_SYSTEM_CONFIG.optionsKey] || [];
+  //     const selectedOption = options.find(o => String(o.id) === String(formData.airType));
+
+  //     if (selectedOption && materialPrice > 0) {
+  //       // Get the name of the selected Air System
+  //       const selectedName = selectedOption[AIR_SYSTEM_CONFIG.nameKey] || selectedOption.name || 'Air System';
+
+  //       // Create the material object with the CORRECT, newly calculated price
+  //       const materialObject = createMaterialObject(
+  //         formData.airSystem, // Use the airSystem ID saved from the fetch
+  //         selectedName,
+  //         AIR_SYSTEM_CONFIG.itemMainName,
+  //         materialPrice, // Use the dynamically calculated price
+  //         1, // Quantity is 1 for a system (as per your map)
+  //         AIR_SYSTEM_CONFIG.itemUnit,
+  //         formData
+  //       );
+
+  //       console.log("---SYNC: Air System material updated via useEffect with new price:", materialPrice);
+  //       handleMaterialChange(AIR_SYSTEM_CONFIG.itemMainName, materialObject);
+  //     } else {
+  //       // If price is 0 or no option found, remove/clear the material
+  //       handleMaterialChange(AIR_SYSTEM_CONFIG.itemMainName, null);
+  //     }
+  //   } else {
+  //     // If airType is cleared, ensure the material is also cleared
+  //     handleMaterialChange(AIR_SYSTEM_CONFIG.itemMainName, null);
+  //   }
+  // }, [
+  //   formData.airSystemPrice, // 🎯 Watch the calculated price
+  //   formData.airType,
+  //   formData.airSystem, // Ensure the materialId is correct if it changes
+  //   formData.capacityType,
+  //   formData.capacityValue,
+  //   initialOptions,
+  //   handleMaterialChange, // Assuming this is memoized/stable
+  //   formData // To ensure all metadata is current
+  // ]);
+
   useEffect(() => {
-    // const fetchMaterialPrices = async () => {
-    //   if (!formData.liftType || !formData.capacityType || !formData.capacityValue || !formData.typeOfLift || !formData.cabinType) return;
+    const loadAirSystemPrice = async () => {
+      if (!formData.airType || !formData.capacityType || !formData.capacityValue) return;
 
-    const fetchMaterialPrices = async () => {
-      if (!formData.liftType || !formData.capacityType || !formData.capacityValue || !formData.typeOfLift) return;
-
-      // const materialResults = await calculateLiftMaterialPrices({
-      //   liftType: formData.liftType,
-      //   capacityType: formData.capacityType,
-      //   capacityValue: formData.capacityValue,
-      //   typeOfLift: formData.typeOfLift,
-      //   cabinType: formData.cabinType,
-      // });
-      const existingSelectedMaterials = formData.selectedMaterials || [];
-
-      // const existingMachineItems = existingSelectedMaterials.filter(item => {
-      //   return item.materialType?.toLowerCase() === "machine";
-      // });
-
-      // // Get the first existing Fastener item to preserve its ID
-      // const existingItem = existingMachineItems[0];
-
-      // 2. Find existing 'Machine' material to pass its DB ID
-      const existingMachineIndex = existingSelectedMaterials.findIndex(item =>
-        item.materialType?.toLowerCase() === "machine".toLowerCase()
-      );
-      const existingMachineItem = existingMachineIndex !== -1 ? existingSelectedMaterials[existingMachineIndex] : undefined;
-
-      // --- 2. Get existing ARD item ---
-      const existingArdIndex = existingSelectedMaterials.findIndex(item =>
-        item.materialType?.toLowerCase() === "ard".toLowerCase() // Use "ard" here
-      );
-      // Note: We don't pass this to calculateLiftMaterialPrices, but we need it for ID preservation
-      const existingArdItem = existingArdIndex !== -1 ? existingSelectedMaterials[existingArdIndex] : undefined;
-      console.log("==========existingArdAmount=====00000000=======>", formData.ardAmount);
-      const materialResults = await calculateLiftMaterialPrices({
-        liftType: formData.liftType,
-        capacityType: formData.capacityType,
-        capacityValue: formData.capacityValue,
-        typeOfLift: formData.typeOfLift,
-        floors: formData.floors,
-        leadID: formData.leadId,
-        existingItem: existingMachineItem,
-        existingArd: existingArdItem,
-        existingArdAmount: formData.ardAmount,
-        setErrors,
+      const result = await fetchAirSystemPrice({
+        airTypeId: formData.airType,
+        capacityTypeId: formData.capacityType,
+        personId: formData.capacityType === 1 ? formData.capacityValue : null,
+        weightId: formData.capacityType === 2 ? formData.capacityValue : null,
       });
 
-      setFormData(prev => {
-        // 1. Get the current list of materials from the PREVIOUS state
-        const existingSelectedMaterials = prev.selectedMaterials || [];
-        let updatedSelectedMaterials = [...existingSelectedMaterials];
+      if (!result.success) {
+        const message = result.message;
+        setErrors(prev => ({ ...prev, airSystemPrice: message }));
+        toast.error(message);
+      } else {
+        // Clear error
+        setErrors(prev => {
+          const updated = { ...prev };
+          delete updated.airSystemPrice;
+          return updated;
+        });
+      }
 
-        // --- RE-LOCATE ARD/MACHINE UPDATE LOGIC HERE ---
+      // 1️⃣ Update form price
+      setFormData(prev => ({
+        ...prev,
+        airSystem: result.airSystemId,
+        airSystemPrice: result.price,
+      }));
 
-        // (A) Find existing ARD/Machine indexes again based on prev.selectedMaterials
-        const existingArdIndex = existingSelectedMaterials.findIndex(item => item.materialType?.toLowerCase() === "ard");
-        const existingMachineIndex = existingSelectedMaterials.findIndex(item => item.materialType?.toLowerCase() === "machine");
-
-        // (B) Process ARD Material (Using materialResults which is calculated outside)
-        let newArdSelectedMaterials = materialResults.ardMaterial;
-        if (newArdSelectedMaterials) { /* ... ID setup ... */ }
-        if (newArdSelectedMaterials && materialResults.ardPrice > 0) {
-          if (existingArdIndex !== -1) {
-            updatedSelectedMaterials[existingArdIndex] = newArdSelectedMaterials;
-          } else {
-            updatedSelectedMaterials.push(newArdSelectedMaterials);
-          }
-        } else if (existingArdIndex !== -1) {
-          updatedSelectedMaterials.splice(existingArdIndex, 1);
-        }
-
-        // (C) Process Machine Material (Using materialResults which is calculated outside)
-        let newMachineSelectedMaterials = materialResults.machineMaterial;
-        if (newMachineSelectedMaterials) { /* ... ID setup ... */ }
-        if (newMachineSelectedMaterials && materialResults.machinePrice > 0) {
-          if (existingMachineIndex !== -1) {
-            updatedSelectedMaterials[existingMachineIndex] = newMachineSelectedMaterials;
-          } else {
-            updatedSelectedMaterials.push(newMachineSelectedMaterials);
-          }
-        } else if (existingMachineIndex !== -1) {
-          updatedSelectedMaterials.splice(existingMachineIndex, 1);
-        }
-
-        // --- END OF RE-LOCATED LOGIC ---
-
-        // Note: You must ensure leadId and quotationId are available in `prev` or outside
-
-        return {
-          ...prev,
-          ardAmount: materialResults.ardPrice,
-          machinePrice: materialResults.machinePrice,
-          selectedMaterials: updatedSelectedMaterials, // Save the final merged array
-        };
-      });
-
+      const selectedName = result.airTypeName;
+      const materialType = DROPDOWN_MAP.airType.itemMainName;
+      const newPrice = result.price;
+      console.log(initialOptions, "--initialOptions.airType---------", formData.airType, "---SYNC: Air System material updated via useEffect with new price:", newPrice);
+      // 2️⃣ Update material price so it matches new formData price
+      //(materialId: any, selectedName: any, itemMainName: any, totalPrice: any, quantity: any, itemUnit: any, formData: any) => {
+      handleMaterialChange(
+        materialType,
+        createMaterialObject(
+          formData.airType,                      // materialId
+          // initialOptions.airType?.find(a => a.id == formData.airType)?.name || "",                            // selectedName
+          selectedName,                          // selectedName
+          materialType,                           // itemMainName
+          newPrice,                               // totalPrice
+          1,                                     // quantity
+          "Unit",
+          formData
+        )
+      );
     };
 
+    loadAirSystemPrice();
+  }, [formData.airType, formData.capacityType, formData.capacityValue]);
+
+
+
+  useEffect(() => {
+    if (!formData.liftType ||
+      !formData.capacityType ||
+      !formData.capacityValue ||
+      !formData.typeOfLift ||
+      !formData.floors ||
+      !formData.floorSelections) return;
+
     fetchMaterialPrices();
+  }, [
+    formData.liftType,
+    formData.capacityType,
+    formData.capacityValue,
+    formData.typeOfLift,
+    formData.floors,
+    formData.floorSelections
+  ]);
+
+
+
+  useEffect(() => {
     loadControlPanelTypes();
     loadGuideRails();
     loadBracketTypes();
     loadWireRope();
-    // }, [formData.liftType, formData.capacityType, formData.capacityValue, formData.typeOfLift, formData.cabinType]);
-  }, [formData.liftType, formData.capacityType, formData.capacityValue, formData.typeOfLift, formData.floors, formData.floorSelections, setErrors]);
+  }, [
+    formData.liftType,
+    formData.capacityType,
+    formData.capacityValue,
+    formData.typeOfLift,
+    formData.floors
+  ]);
 
-  // useEffect(() => {
-  //   // Only update liftRate if it's not explicitly set or equals previous totalAmount
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     liftRate: prev.totalAmount, // set liftRate = totalAmount if liftRate is null/undefined
-  //   }));
-  // }, [formData.totalAmount]);
 
 
   // 🔹 Effect for floor-based prices
   useEffect(() => {
+    if (!formData.floors || !formData.floorDesignations) return;
+
     const fetchFloorPrices = async () => {
       if (!formData.floorDesignations || !formData.floors) return;
 
@@ -901,7 +2199,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
               ...material,
               id: existingItem?.id || null,
               leadId: prev.leadId, // Use prev.leadId
-              quotationLiftDetailId: prev.quotationId, // Use prev.quotationId
+              quotationLiftDetailId: prev?.quotationId || null, // Use prev.quotationId
               operatorType: prev.liftType,
             };
 
@@ -934,98 +2232,9 @@ export default function LiftModal({ lift, onClose, onSave }) {
   }, [formData.floorDesignations, formData.floors]);
 
 
-  // useEffect(() => {
-  //   const fetchFastenerPrice = async () => {
-  //     if (!formData.floors && !formData.floorDesignations) return;
-
-  //     // Get the floor-1
-  //     const selectedFloor = Number(formData.floors);
-  //     const targetFloor = selectedFloor > 1 ? selectedFloor - 1 : 1;
-
-  //     const fasteners = await fetchFastner(targetFloor);
-  //     //console.log("========fasteners======>",fasteners)
-
-  //     // Assuming API returns an array and you pick the first item
-  //     if (fasteners.length > 0) {
-  //       const fastener = fasteners[0];
-  //       setFormData((prev) => ({
-  //         ...prev,
-  //         fastenerPrice: fastener.price || 0,
-  //         fastenerType: fastener.id || "",
-  //       }));
-  //     } else {
-  //       setFormData((prev) => ({
-  //         ...prev,
-  //         fastenerPrice: fasteners.price || 0,
-  //         fastenerType: fasteners.id || "",
-  //       }));
-  //     }
-  //   };
-
-  //   fetchFastenerPrice();
-
-
-  //   const fetchTruffingRuleAndPrice = async () => {
-  //     if (!formData.floors) return;
-
-  //     const floorNumber = Number(formData.floors);
-  //     const targetFloor = floorNumber > 1 ? floorNumber - 1 : 1;
-
-
-  //     // Fetch Other Material rule for mainId = 1
-  //     const response = await fetchOtherMaterialsByMainId(1);
-
-  //     if (response.success && response.data && response.data.length > 0) {
-  //       const material = response.data[0]; // pick first item
-  //       const ruleExpression = material.otherMaterialMainRule; // e.g., "9 + (floor - 1) * 2"
-  //       const basePrice = material.price || 0;
-
-  //       if (ruleExpression) {
-  //         // Evaluate rule safely
-  //         const quantity = evaluateRule(ruleExpression, targetFloor);
-
-  //         setFormData(prev => ({
-  //           ...prev,
-  //           truffingQty: quantity,
-  //           truffingPrice: quantity * basePrice,
-  //           truffingType: material.otherMaterialName,
-  //         }));
-  //       }
-  //     }
-  //   };
-
-  //   fetchTruffingRuleAndPrice();
-  // }, [formData.floors, formData.floorDesignations]);
-
-
-  // useEffect(() => {
-  //   if (
-  //     formData.openings &&
-  //     formData.landingEntranceCount &&
-  //     !formData.landingEntranceSubType2_fromFloor &&
-  //     !formData.landingEntranceSubType2_toFloor
-  //   ) {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       landingEntranceSubType2_fromFloor: Number(formData.landingEntranceCount) + 1,
-  //       landingEntranceSubType2_toFloor: Number(formData.openings),
-  //     }));
-  //   }
-  // }, [formData.openings, formData.landingEntranceCount, formData.landingEntranceSubType2_fromFloor, formData.landingEntranceSubType2_toFloor]);
-
-  //   useEffect(() => {
-  //   if (formData.openings && formData.landingEntranceCount) {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       landingEntranceSubType2_fromFloor: Number(formData.landingEntranceCount) + 1,
-  //       landingEntranceSubType2_toFloor: Number(formData.openings),
-  //     }));
-  //   }
-  // }, [formData.openings, formData.landingEntranceCount]);
-
-  // In your component's useEffect
-
   useEffect(() => {
+    if (!formData.floors || !formData.floorDesignations) return;
+
     const floorNumber = Number(formData.floors);
     if (!floorNumber) return;
 
@@ -1067,6 +2276,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
             materialDisplayName: fastener.fastenerName,
             quantity: 1,
             quantityUnit: "Set",
+            unitPrice: fastener.price || 0,//-----as quantity=1
             price: fastener.price || 0,
             operatorType: existingItem?.operatorType || liftType,
             materialType: "Fastener", // Use the exact string "Fastener"
@@ -1186,22 +2396,29 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
   // 🔹 When capacityType / capacityValue / cabinType changes
   useEffect(() => {
-    // Reset dependent fields when capacity type/value changes
-    // const defaultAirSystem = lift.data?.airSystem
-    // ? safeNumber(lift.data.airSystem)
-    // : ""; // or "" if you prefer empty
 
-    setFormData((prev) => ({
-      ...prev,
-      // totalAmount: prev.totalAmount - prev.ardPrice - prev.machinePrice,
-      // ardPrice: 0,
-      ardAmount: 0,
-      machinePrice: 0,
-      cabinPrice: 0,
-      //cabinSubType: "",
-      // airSystem: "",
-      // airSystemPrice: 0,
-    }));
+    if (!formData.capacityType || !formData.capacityValue || !formData.cabinType) return;
+
+    setFormData((prev) => {
+      // Avoid unnecessary re-render if all are already zero
+      if (
+        prev.ardAmount === 0 &&
+        prev.machinePrice === 0 &&
+        // prev.cabinPrice === 0
+        prev.cabinSubTypePrice === 0
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        ardAmount: 0,
+        machinePrice: 0,
+        // cabinPrice: 0,
+        cabinSubTypePrice: 0,
+      };
+    });
+
 
     loadCabinSubTypes();
   }, [formData.capacityType, formData.capacityValue, formData.cabinType]);
@@ -1217,13 +2434,15 @@ export default function LiftModal({ lift, onClose, onSave }) {
   //   }
   // }, [initialOptions.cabinSubTypes]);
 
-  const loadEntranceOptions = async () => {
+  const loadEntranceOptions = async (liftType) => {
     if (!formData.liftType) return;
+
+    const operatorTypeId = Number(liftType);
 
     try {
       const [carTypes, landingTypes] = await Promise.all([
-        fetchCarEntranceTypes(formData.liftType, setErrors),
-        fetchLandingEntranceSubType(formData.liftType, setErrors),
+        fetchCarEntranceTypes(operatorTypeId, setErrors),
+        fetchLandingEntranceSubType(operatorTypeId, setErrors),
       ]);
 
       setInitialOptions(prev => ({
@@ -1247,82 +2466,14 @@ export default function LiftModal({ lift, onClose, onSave }) {
     }
   };
 
-  //   const loadOtherMaterialsOld = async () => {
-  //     if (!formData.liftType) return; // wait until operatorId is selected
 
-  //     try {
-  //       const materials = await fetchOtherMaterialExcludeOthers(formData.liftType, setErrors);
+  const loadOtherMaterials = useCallback(async (liftType) => {
+    // if (!formData.liftType) return; // wait until operatorId (liftType) is selected
 
-  //       console.log("Fetched Other Materials:", materials);
+    // const liftType = Number(formData.liftType);
+    const operatorTypeId = Number(liftType);
+    console.log("Operator ID for filtering ManualPrice:", operatorTypeId);
 
-  //       const noOfStops = parseFloat(formData.stops) || 1;
-
-  //       // ✅ Separate materials based on main type
-  //       const defaultMaterials = materials.filter(
-  //         (item) =>
-  //           item.otherMaterialMainName &&
-  //           item.otherMaterialMainName.toLowerCase() === "CommonPrice"
-  //       );
-  //       console.log(noOfStops,"Fetched CommonPrice:", defaultMaterials);
-
-  //       const operatorMaterials = materials.filter(
-  //         (item) =>
-  //           item.otherMaterialMainName &&
-  //           item.otherMaterialMainName.toLowerCase() === "ManualPrice"
-  //       );
-  //       console.log("Fetched ManualPrice:", operatorMaterials);
-
-  //       // ✅ Calculate total (sum of quantity × price) - COMMON PRICE
-  //       const commonPrice = defaultMaterials.reduce((acc, item) => {
-  //         const qty = parseFloat(item.quantity) || 0;
-  //         const price = parseFloat(item.price) || 0;
-  //         let itemTotal = qty * price; // Default calculation
-
-  //         // 👇 NEW LOGIC: Apply additional multiplier if it's "Magnet SQR Material"
-  //         if (item.otherMaterialName && item.otherMaterialName.toLowerCase() === "magnet sqr material") {
-  //             itemTotal = itemTotal * noOfStops;
-  //         }
-
-  //         return acc + itemTotal;
-  //       }, 0);
-
-  //       // ✅ Calculate total (sum of quantity × price) - MANUAL PRICE
-  //       const manualPrice = operatorMaterials.reduce((acc, item) => {
-  //         const qty = parseFloat(item.quantity) || 0;
-  //         const price = parseFloat(item.price) || 0;
-  //         let itemTotal = qty * price; // Default calculation
-
-  //         // 👇 NEW LOGIC: Apply additional multiplier if it's "Magnet SQR Material"
-  //         if (item.otherMaterialName && item.otherMaterialName.toLowerCase() === "magnet sqr material") {
-  //             itemTotal = itemTotal * noOfStops;
-  //         }
-
-  //         return acc + itemTotal;
-  //       }, 0);
-
-  //       setManualDetails(operatorMaterials);
-  //       setCommonDetails(defaultMaterials);
-
-  //       console.log("🧮 Manual Price (Default):", manualPrice);
-  //       console.log("🧮 Common Price (DefaultOperator):", commonPrice);
-
-  //       // ✅ Update form data
-  //       setFormData((prev) => ({
-  //         ...prev,
-  //         manualDetails: operatorMaterials,
-  //         commonDetails: defaultMaterials,
-  //         manualPrice,
-  //         commonPrice,
-  //       }));
-  //     } catch (err) {
-  //       console.error("Error fetching Other Materials (excluding Others)", err);
-  //     }
-  //   };
-
-  const loadOtherMaterials = useCallback(async () => {
-    if (!formData.liftType) return; // wait until operatorId (liftType) is selected
-
-    const liftType = Number(formData.liftType);
     const existingSelectedMaterials = formData.selectedMaterials || [];
     const leadId = formData.leadId;
     const quotLiftDetailId = formData.quotationId;
@@ -1342,12 +2493,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
       );
 
       // ✅ ManualPrice → only include records matching selected operator
-      console.log("Operator ID for filtering ManualPrice:", formData.liftType);
+      console.log("Operator ID for filtering ManualPrice:", operatorTypeId);
       const manualDetails = materials.filter(
         (item) =>
           item.otherMaterialMainName &&
           item.otherMaterialMainName.toLowerCase() === "manualprice".toLowerCase() &&
-          item.operatorTypeId === liftType // filter by selected operator
+          item.operatorTypeId === operatorTypeId // filter by selected operator
       );
 
       const otherDetails = materials.filter(
@@ -1394,23 +2545,6 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
           return newAccumulator;
         }, 0);
-      // const calcTotal = (list) =>
-      //   list.reduce((acc, item) => {
-      //     const qty = parseFloat(item.quantity) || 0;
-      //     const price = parseFloat(item.price) || 0;
-      //     // return acc + qty * price;
-
-      //     let calculatedPrice = price * qty;
-
-
-      //     // Apply special rule here for Magnet SQR Material total calculation
-      //     if (item.otherMaterialName?.toLowerCase() === "magnet sqr material") {
-      //       calculatedPrice = price * qty * noofStops;
-      //       console.log(calculatedPrice, "---------otherMaterialName--------", item.otherMaterialName?.toLowerCase());
-      //     }
-
-      //     return acc + calculatedPrice;
-      //   }, 0); 
 
       const commonPrice = calcTotal(commonDetails);
       const manualPrice = calcTotal(manualDetails);
@@ -1432,11 +2566,16 @@ export default function LiftModal({ lift, onClose, onSave }) {
         ...otherDetails,
       ];
 
+      console.log("--existingSelectedMaterials--------->", existingSelectedMaterials);
+
+      console.log("--allMaterialsToSave--------->", allMaterialsToSave);
       // 5. Mapping and ID Persistence
       const finalSelectedMaterials = allMaterialsToSave.map(item => {
         const existingMaterial = existingSelectedMaterials.find(
-          (m) => m.materialId === item.id
+          (m) => m.materialId === item.id && m.materialType?.toLowerCase() === item.otherMaterialMainName?.toLowerCase()
         );
+
+        console.log("--existingMaterial--------->", existingMaterial);
 
         const itemPrice = Number(item.price) || 0;
         const itemQuantity = Number(item.quantity) || 0;
@@ -1447,6 +2586,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
         if (item.otherMaterialName?.toLowerCase() === "magnet sqr material") {
           itemTotalPrize = itemPrice * itemQuantity * noofStops;
         }
+
+        const unitPrice = finalQunatity > 0 ? itemTotalPrize / finalQunatity : 0;
 
         return {
           // Use the database ID if it exists, otherwise null for a new insert
@@ -1459,15 +2600,16 @@ export default function LiftModal({ lift, onClose, onSave }) {
           // materialName: item.otherMaterialName +" / "+ item.otherMaterialDisplayName,
           quantity: finalQunatity,
           quantityUnit: itemQuantityUnit,
+          unitPrice: unitPrice,
           price: itemTotalPrize || 0,
-          operatorType: item.operatorTypeId || liftType,
+          operatorType: operatorTypeId || null,
           materialType: item.otherMaterialMainName || "",
         };
       });
 
       console.log("Final Selected Materials to Save:", finalSelectedMaterials);
 
-      setSelectedMaterials(finalSelectedMaterials);
+      // setSelectedMaterials(finalSelectedMaterials);
       // *****************************************************
 
       // setFormData((prev) => ({
@@ -1494,6 +2636,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
           ...finalSelectedMaterials,
         ];
 
+        console.log("newSelectedMaterials Selected Materials to Save:", newSelectedMaterials);
         return {
           ...prev,
           commonDetails,
@@ -1515,72 +2658,71 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
   // 🔹 Fetch Car Entrance, Landing Entrance Types when liftType changes
   useEffect(() => {
-    loadEntranceOptions();
-
-    // const loadOtherMaterials = async () => {
-    //   if (!formData.liftType) return; // wait until operatorId is selected
-
-    //   try {
-    //     const materials = await fetchOtherMaterialExcludeOthers(formData.liftType, setErrors);
-
-    //     // ✅ Compute total price (price × quantity for each material)
-    //     const totalPrice = materials.reduce((acc, item) => {
-    //       const qty = parseFloat(item.quantity) || 0;
-    //       const price = parseFloat(item.price) || 0;
-    //       return acc + qty * price;
-    //     }, 0);
-
-    //     console.log("Fetched Other Materials:", materials);
-    //     console.log("🧮 Total Price:", totalPrice);
-
-    //     // Optionally reset dependent fields when operator changes
-    //     setFormData(prev => ({
-    //       ...prev,
-    //       manualPrice: totalPrice, // clear selected material
-    //     }));
-    //   } catch (err) {
-    //     console.error("Error fetching Other Materials (excluding Others)", err);
-    //   }
-    // };
-
-    loadOtherMaterials();
+    if (!formData.liftType) return;
+    loadEntranceOptions(formData.liftType);
+    loadOtherMaterials(formData.liftType);
   }, [formData.liftType]);
 
+  // A. Update the original function to just fetch and update options
+  // Remove the setFormData call from here
+  const loadCarEntranceSubTypes = async (carEntranceId) => {
+    if (!carEntranceId) return [];
 
-  const loadCarEntranceSubTypes = async () => {
-    if (!formData.carEntrance) return;
+    const subTypes = await fetchCarEntranceSubTypes(carEntranceId, setErrors);
 
-    const subTypes = await fetchCarEntranceSubTypes(formData.carEntrance, setErrors);
+    // Update the options list
     setInitialOptions(prev => ({ ...prev, carEntranceSubTypes: subTypes }));
 
-
-    if (!isInitialLoad) {
-      setFormData(prev => ({ ...prev, carEntranceSubType: "" }));
-    }
+    // Return the list for the useEffect to handle state restoration/clearing
+    return subTypes;
   };
 
   // 🔹 Fetch Car Entrance SubTypes when carEntrance changes
+  // 🔹 Fetch Car Entrance SubTypes when carEntrance changes
   useEffect(() => {
-    if (!formData.carEntrance) return;
+    if (!formData.carEntrance) {
+      // Clear options when carEntrance is cleared (e.g., via handleChangeWithReset)
+      setInitialOptions(prev => ({ ...prev, carEntranceSubTypes: [] }));
+      return;
+    }
 
+    console.log("-----------formData.carEntrance----------------->>>>>>>>>", formData.carEntrance);
+
+    // Use the updated function signature
     loadCarEntranceSubTypes(formData.carEntrance).then((list) => {
-      if (!Array.isArray(list)) return; // safety
+      if (!Array.isArray(list) || list.length === 0) {
+        // If no list or empty, always clear the subType selection
+        setFormData(prev => ({ ...prev, carEntranceSubType: "" }));
+        return;
+      }
 
-      // Restore saved value only if exists in loaded list
+      // --- State Restoration and Validation Logic ---
+
+      // Scenario 1: Saved value exists, check validity
       if (formData.carEntranceSubType) {
-        const exists = list.some(
-          (opt) => opt.id === Number(formData.carEntranceSubType)
-        );
+        const savedValue = Number(formData.carEntranceSubType);
+        const exists = list.some((opt) => opt.id === savedValue);
 
         if (!exists) {
-          setFormData(prev => ({
-            ...prev,
-            carEntranceSubType: ""
-          }));
+          // Saved value is invalid for the new carEntrance type -> clear it.
+          console.log(`Car Entrance SubType ${savedValue} not found in new list. Clearing.`);
+          setFormData(prev => ({ ...prev, carEntranceSubType: "" }));
         }
+        // If exists, do nothing, the value remains.
+
+        // Scenario 2: No saved value OR this is NOT an initial load
+      } else if (!isInitialLoad) {
+        // If the user manually changed carEntrance (and isInitialLoad is false),
+        // or if the saved value was already cleared/missing, 
+        // ensure the subType is cleared to force a re-selection.
+        setFormData(prev => ({ ...prev, carEntranceSubType: "" }));
       }
+
     });
-  }, [formData.carEntrance]);
+
+    // Dependencies: Ensure isInitialLoad is included so it re-evaluates the logic
+    // on first load, even if carEntrance doesn't change immediately.
+  }, [formData.carEntrance, isInitialLoad]);
 
 
   useEffect(() => {
@@ -1592,14 +2734,14 @@ export default function LiftModal({ lift, onClose, onSave }) {
     }
   }, [errors]);
 
-  const loadLOPOptions = async () => {
-    if (!formData.liftType || !formData.floors) return;
+  const loadLOPOptions = async (liftType, floors) => {
+    if (!liftType || !floors) return;
 
     try {
       // If formData.floors can be multiple, you may loop or pick the first floor
-      const floorId = Array.isArray(formData.floors) ? formData.floors[0] : formData.floors;
+      const floorId = Array.isArray(floors) ? floors[0] : floors;
 
-      const lopSubTypes = await fetchLOP(formData.liftType, floorId, setErrors);
+      const lopSubTypes = await fetchLOP(liftType, floorId, setErrors);
 
       setInitialOptions(prev => ({
         ...prev,
@@ -1618,14 +2760,14 @@ export default function LiftModal({ lift, onClose, onSave }) {
     }
   };
 
-  const loadCOPOptions = async () => {
-    if (!formData.liftType || !formData.floors) return;
+  const loadCOPOptions = async (liftType, floors) => {
+    if (!liftType || !floors) return;
 
     try {
       // If formData.floors can be multiple, you may loop or pick the first floor
-      const floorId = Array.isArray(formData.floors) ? formData.floors[0] : formData.floors;
+      const floorId = Array.isArray(floors) ? floors[0] : floors;
 
-      const copSubTypes = await fetchCOP(formData.liftType, floorId, setErrors);
+      const copSubTypes = await fetchCOP(liftType, floorId, setErrors);
 
       setInitialOptions(prev => ({
         ...prev,
@@ -1636,7 +2778,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
       if (!isInitialLoad) {
         setFormData(prev => ({
           ...prev,// reset selected COP
-          copTypes: "",
+          copType: "",
         }));
       }
     } catch (err) {
@@ -1645,10 +2787,11 @@ export default function LiftModal({ lift, onClose, onSave }) {
   };
 
   useEffect(() => {
-    const fetchInstallationAmt = async () => {
+    if (!formData.liftType || !formData.floors) return;
+    const fetchInstallationAmt = async (liftType, floors) => {
       if (!formData.floors || !formData.liftType) return;
 
-      const res = await fetchInstallationRule(formData.floors, formData.liftType, setErrors);
+      const res = await fetchInstallationRule(floors, liftType, setErrors);
 
       if (res.success && res.data) {
         setFormData((prev) => ({
@@ -1670,10 +2813,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
       }
     };
 
-    fetchInstallationAmt();
+    const liftType = Number(formData.liftType);
+    const floors = Number(formData.floors);
 
-    loadLOPOptions();
-    loadCOPOptions();
+    fetchInstallationAmt(liftType, floors);
+
+    loadLOPOptions(liftType, floors);
+    loadCOPOptions(liftType, floors);
   }, [formData.liftType, formData.floors]);
 
 
@@ -1814,70 +2960,6 @@ export default function LiftModal({ lift, onClose, onSave }) {
   };
 
 
-  // const fetchOptions = async (refreshField = null) => {
-  //   try {
-  //     // 🟢 Step 1: Prepare endpoints
-  //     const endpoints = {
-  //       operatorTypes: API_ENDPOINTS.OPERATOR,
-  //       liftTypes: API_ENDPOINTS.TYPE_OF_LIFT,
-  //       capacityTypes: API_ENDPOINTS.CAPACITY_TYPES,
-  //       personOptions: API_ENDPOINTS.PERSON_CAPACITY,
-  //       kgOptions: API_ENDPOINTS.WEIGHTS,
-  //       floors: API_ENDPOINTS.FLOORS,
-  //       speeds: API_ENDPOINTS.SPEED,
-  //       additionalFloors: API_ENDPOINTS.ADDITIONAL_FLOORS,
-  //       lightFittings: API_ENDPOINTS.LIGHT_FITTINGS,
-  //       cabinFlooring: API_ENDPOINTS.CABIN_FLOORING,
-  //       cabinCeiling: API_ENDPOINTS.CABIN_CEILING,
-  //       airSystem: API_ENDPOINTS.AIR_TYPE,
-  //       wiringHarness: API_ENDPOINTS.HARNESS,
-  //       guideRail: API_ENDPOINTS.GUIDE_RAIL,
-  //       bracketTypes: API_ENDPOINTS.BRACKETS,
-  //       wireRopes: API_ENDPOINTS.WIRE_ROPE,
-  //       manufacturers: API_ENDPOINTS.MANUFACTURER,
-  //       operationType: API_ENDPOINTS.OPERATION_TYPE,
-  //       capaDim: API_ENDPOINTS.CAPACITY_DIMENSIONS,
-  //       features: API_ENDPOINTS.FEATURES,
-  //       warranty: API_ENDPOINTS.WARRANTY,
-  //     };
-
-  //     // 🟢 Step 2: If refreshField provided → fetch only that
-  //     if (refreshField) {
-  //       const endpoint = endpoints[refreshField];
-  //       if (!endpoint) {
-  //         console.warn(`⚠️ No endpoint mapped for ${refreshField}`);
-  //         return;
-  //       }
-
-  //       const res = await axiosInstance.get(endpoint);
-  //       setInitialOptions((prev) => ({
-  //         ...prev,
-  //         [refreshField]: res.data?.data || res.data || [],
-  //       }));
-  //       return;
-  //     }
-
-  //     // 🟢 Step 3: If no refreshField → fetch all
-  //     const results = await Promise.all(
-  //       Object.values(endpoints).map((url) => axiosInstance.get(url))
-  //     );
-
-  //     // 🟢 Step 4: Map results back to keys
-  //     const newOptions = {};
-  //     Object.keys(endpoints).forEach((key, index) => {
-  //       newOptions[key] = results[index].data?.data || results[index].data || [];
-  //     });
-
-  //     setInitialOptions((prev) => ({
-  //       ...prev,
-  //       ...newOptions,
-  //     }));
-  //   } catch (err) {
-  //     console.error("Error fetching options:", err);
-  //     throw err;
-  //   }
-  // };
-
   const loadLoad = async (setFormData, setErrors) => {
     const loadAmount = await fetchLoads(setErrors);
 
@@ -1925,184 +3007,42 @@ export default function LiftModal({ lift, onClose, onSave }) {
     return () => { ignore = true };
   }, []);
 
-
-
-  // useEffect(() => {
-  //   fetchOptions();
-  //   const loadAmount = fetchLoads();
-  //   alert(loadAmount);
-  //   setInitialOptions(prev => ({
-  //       ...prev,
-  //       loadPerAmt: loadAmount,
-  //     }));
-  //   // expose for global refresh use
-  //   // window.fetchOptions = fetchOptions;
-  // }, []);
-
-
-
-  // useEffect(() => {
-  //   const fetchOptions = async () => {
-  //     try {
-  //       const [
-  //         operatorRes,
-  //         liftTypesRes,
-  //         capacityTypeRes,
-  //         personsRes,
-  //         weightRes,
-  //         floorsRes,
-  //         speedRes,
-  //         additionalRes,
-  //         lightFittingsRes,
-  //         cabinFlooringRes,
-  //         cabinCelingRes,
-  //         airRes,
-  //         //airSystemPriceRes,
-  //         //carDoorTypesRes,
-  //         //carDoorSubTypesRes,
-  //         //landingDoorTypesRes,
-  //         //landingDoorSubTypesRes,
-  //         //controlPanelTypesRes,
-  //         wiringHarnessRes,
-  //         guideRailRes,
-  //         bracketsTypesRes,
-  //         wireRopeRes,
-  //         //lopTypeRes,
-  //         //copTypeRes,
-  //         manufactureRes,
-  //         operationTypeRes,
-  //         capaDimRes,
-  //         featuresRes,
-  //         warrantyRes,
-  //       ] = await Promise.all([
-  //         axiosInstance.get(API_ENDPOINTS.OPERATOR),
-  //         axiosInstance.get(API_ENDPOINTS.TYPE_OF_LIFT),
-  //         axiosInstance.get(API_ENDPOINTS.CAPACITY_TYPES),
-  //         axiosInstance.get(API_ENDPOINTS.PERSON_CAPACITY),
-  //         axiosInstance.get(API_ENDPOINTS.WEIGHTS),
-  //         axiosInstance.get(API_ENDPOINTS.FLOORS),
-  //         axiosInstance.get(API_ENDPOINTS.SPEED),
-  //         axiosInstance.get(API_ENDPOINTS.ADDITIONAL_FLOORS),
-  //         axiosInstance.get(API_ENDPOINTS.LIGHT_FITTINGS),
-  //         axiosInstance.get(API_ENDPOINTS.CABIN_FLOORING),
-  //         axiosInstance.get(API_ENDPOINTS.CABIN_CEILING),
-  //         axiosInstance.get(API_ENDPOINTS.AIR_TYPE),
-  //         //axiosInstance.get(API_ENDPOINTS.AIR_SYSTEM),
-  //         //axiosInstance.get(API_ENDPOINTS.CAR_DOOR_TYPE),
-  //         //axiosInstance.get(API_ENDPOINTS.CAR_DOOR_SUBTYPE),
-  //         //axiosInstance.get(API_ENDPOINTS.LANDING_DOOR_TYPE),
-
-  //         //axiosInstance.get(API_ENDPOINTS.CONTROL_PANEL),
-  //         axiosInstance.get(API_ENDPOINTS.HARNESS),
-  //         axiosInstance.get(API_ENDPOINTS.GUIDE_RAIL),
-  //         axiosInstance.get(API_ENDPOINTS.BRACKETS),
-  //         axiosInstance.get(API_ENDPOINTS.WIRE_ROPE),
-  //         //axiosInstance.get(API_ENDPOINTS.LOP_SUBTYPE),
-  //         //axiosInstance.get(API_ENDPOINTS.COP_TYPE),
-  //         axiosInstance.get(API_ENDPOINTS.MANUFACTURER),
-  //         axiosInstance.get(API_ENDPOINTS.OPERATION_TYPE),
-  //         axiosInstance.get(API_ENDPOINTS.CAPACITY_DIMENSIONS),
-
-  //         axiosInstance.get(API_ENDPOINTS.FEATURES),
-  //         axiosInstance.get(API_ENDPOINTS.WARRANTY),
-  //       ]);
-
-  //       const additionalFloors = Array.isArray(additionalRes.data) ? additionalRes.data : [];
-
-  //       const additionalFloorIds = additionalFloors.map(f => f.id);
-  //       const additionalFloorCodes = additionalFloors.map(f => f.code);
-  //       console.log("additionalFloorCodes", additionalFloorCodes);
-  //       console.log("additionalFloors", additionalFloors);
-  //       console.log("additionalRes", additionalRes);
-
-  //       const labels = {};
-  //       additionalFloors.forEach(f => { labels[f.code] = f.label; });
-
-  //       const floorsData = Array.isArray(floorsRes.data?.data) ? floorsRes.data.data : [];
-  //       const totalFloorsCount = floorsData.length + additionalFloorCodes.length;
-
-  //       const allManufacturers = Object.values(manufactureRes.data.data || {}).flat();
-
-  //       //console.log(allManufacturers, "=====allManufacturers=======", warrantyRes.data, "in resoooooooooooo====", featuresRes.data);
-
-  //       setInitialOptions(prevOptions => ({
-  //         ...prevOptions,
-  //         personOptions: personsRes.data?.data || [],
-  //         kgOptions: weightRes.data?.data || [],
-  //         capacityTypes: capacityTypeRes.data?.data || [],
-  //         liftTypes: liftTypesRes.data?.data || [],
-  //         operatorTypes: operatorRes.data?.data || [],
-  //         floors: floorsData,
-  //         floorOptions: Array.from({ length: floorsData.length }, (_, i) => i + 1),
-  //         stopsOptions: totalFloorsCount > 1 ? Array.from({ length: totalFloorsCount }, (_, i) => i + 1) : [1],
-  //         openingOptions: Array.from({ length: 2 * totalFloorsCount }, (_, i) => i + 1),
-  //         speeds: speedRes.data || [],
-  //         floorAddOption: additionalFloors,
-  //         floorAddLabels: labels,
-  //         //cabinTypes: cabinTypesRes.data.data || [],
-  //         lightFittings: lightFittingsRes.data?.data || [],
-  //         cabinFlooring: cabinFlooringRes.data?.data || [],
-  //         cabinCeiling: cabinCelingRes.data?.data || [],
-  //         airSystem: airRes.data?.data || [],
-  //         //airSystemPrices: airSystemPriceRes.data?.data || [],
-  //         //carEntranceTypes: carDoorTypesRes.data?.data || [],
-  //         //carEntranceSubTypes: carDoorSubTypesRes.data?.data || [],
-  //         //landingEntrance: landingDoorTypesRes.data?.data || [],
-  //         //landingEntranceSubTypes: landingDoorSubTypesRes.data?.data || [],
-  //         //controlPanelTypes: controlPanelTypesRes.data?.data || [],
-  //         wiringHarness: wiringHarnessRes.data?.data || [],
-  //         guideRail: guideRailRes.data || [],
-  //         bracketTypes: bracketsTypesRes.data?.data || [],
-  //         wireRopes: wireRopeRes.data || [],
-  //         //lopTypes: lopTypeRes.data?.data || [],
-  //         //copTypes: copTypeRes.data || [],
-
-  //         manufacturers: allManufacturers,
-  //         operationType: operationTypeRes.data || [],
-  //         capaDim: capaDimRes.data || [],
-  //         features: featuresRes.data || [],
-  //         warranty: warrantyRes.data || [],
-  //       }));
-  //     } catch (err) {
-  //       console.error("Error fetching options", err);
-  //     }
-  //   };
-
-  //   fetchOptions();
-  // }, []);
-
   console.log("lift=====>", lift);
 
   useEffect(() => {
+    if (!formData.capacityType || !formData.capacityValue) return;
+
     const loadCapacityDimension = async () => {
-      if (formData.capacityType && formData.capacityValue) {
-        const dimension = await fetchCapacityDimension(
-          formData.capacityType,
-          formData.capacityValue,
-          setErrors
-        );
+      const type = formData.capacityType;
+      const value = formData.capacityValue;
 
-        if (!dimension) {
-          toast.error("No capacity dimension available for the selected values");
-          return;
-        }
+      const dimension = await fetchCapacityDimension(type, value, setErrors);
 
-        // Update formData with dimension fields
-        setFormData((prev) => ({
-          ...prev,
-          shaftWidth: dimension.shaftsWidth || "",
-          shaftDepth: dimension.shaftsDepth || "",
-          machineRoomDepth: dimension.reqMachineDepth || "",
-          machineRoomWidth: dimension.reqMachineWidth || "",
-          carInternalWidth: dimension.carInternalWidth || "",
-          carInternalDepth: dimension.carInternalDepth || "",
-          carInternalHeight: 2100,
-        }));
+      if (!dimension) {
+        toast.error("No capacity dimension available for the selected values");
+        return;
       }
+
+      // Prevent stale API response issues
+      if (type !== formData.capacityType || value !== formData.capacityValue) {
+        return; // user changed dropdown meanwhile
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        shaftWidth: dimension.shaftsWidth || "",
+        shaftDepth: dimension.shaftsDepth || "",
+        machineRoomDepth: dimension.reqMachineDepth || "",
+        machineRoomWidth: dimension.reqMachineWidth || "",
+        carInternalWidth: dimension.carInternalWidth || "",
+        carInternalDepth: dimension.carInternalDepth || "",
+        carInternalHeight: 2100,
+      }));
     };
 
     loadCapacityDimension();
-  }, [formData.capacityType, formData.capacityValue, setFormData]);
+    // }, [formData.capacityType, formData.capacityValue, setFormData]);
+  }, [formData.capacityType, formData.capacityValue]);
 
 
   useEffect(() => {
@@ -2111,14 +3051,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
   }, [formData]);
 
   useEffect(() => {
-    console.log("✅ Selected Materials Updated:", formData.selectedMaterials);
+    // 1. Safely access selectedMaterials or default to an empty array
+    const selectedMaterials = formData.selectedMaterials || [];
 
-    // const updatedFastener = formData.selectedMaterials.find(
-    //   item => item.materialType?.toLowerCase() === "fastener"
-    // );
-    // console.log("✅ Updated Fastener Item:", updatedFastener);
+    console.log("✅ Selected Materials Updated:", selectedMaterials);
 
-    const materialNames = formData.selectedMaterials
+    // Use the safe variable 'selectedMaterials'
+    const materialNames = selectedMaterials
       .map(item => item.materialName)
       // Filter out any null, undefined, or empty names just in case
       .filter(name => name);
@@ -2127,7 +3066,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
     console.log(materialNames.length, "✅ Selected Materials Names:", materialNames.join(', '));
 
 
-    const commonPriceItems = formData.selectedMaterials.filter(
+    const commonPriceItems = selectedMaterials.filter(
       // Filter items where materialType (case-insensitively) is "common price"
       item => item.materialType?.toLowerCase() === "commonprice"
     );
@@ -2137,54 +3076,62 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
     console.log(commonPriceItems, `📏 Length of 'commonPrice' materials: ${commonPriceLength}`);
 
-  }, [formData.selectedMaterials]);
+  }, [formData.selectedMaterials]); // Keep formData.selectedMaterials in dependency array
 
 
   //✅ Auto-update carTravel whenever floors change
+  // Auto-update carTravel, stops, openings & floorDesignations
   useEffect(() => {
-    console.log("in useeffect Current formData222:", formData);
-    const noOfFloors = Number(
-      formData.floors ? formData.floors : 0
-    );
+    console.log("in useEffect Current formData:", formData);
+
+    const noOfFloors = safeNumber(formData.floors || 0);
     const currentSelections = formData.floorSelections || [];
 
+    // console.log("noOfFloors:", noOfFloors, "currentSelections:", currentSelections);
     const updatedStops = noOfFloors + currentSelections.length;
-    //const updatedOpenings = updatedStops * 2;
     const updatedOpenings = updatedStops;
+    // console.log("updatedStops:", updatedStops, "updatedOpenings:", updatedOpenings);
+    
     const updatedCarTravel = noOfFloors > 0 ? (updatedStops - 1) * 3000 : 0;
 
-    // 🔹 If user selected a specific floor index (from dropdown)
+    // ---------- FLOOR DESIGNATION LOGIC ----------
     let updatedFloorDesignations = "";
 
-    // 1️⃣ If initialOptions.floors is ready, get designation from it
+    // If dropdown-loaded floors exist
     if (initialOptions.floors?.length) {
-      const selectedIndex = Math.max(0, Number(formData.floors) - 2);
-      const selectedFloor = initialOptions.floors[selectedIndex] || null;
-      updatedFloorDesignations = selectedFloor?.floorName || lift?.floorsDesignation || "";
+      const selectedIndex = Math.max(0, noOfFloors - 1);
+      const selectedFloor = initialOptions.floors[selectedIndex];
+      updatedFloorDesignations =
+        selectedFloor?.floorName || lift?.floorsDesignation || "";
     }
-    // 2️⃣ Fallback to lift data on initial load
+    // Fallback to lift data on first load
     else if (lift?.floorsDesignation) {
       updatedFloorDesignations = lift.floorsDesignation;
     }
 
-    if (!isInitialLoad) {
-      setFormData(prev => ({
-        ...prev,
-        stops: updatedStops,
-        openings: updatedOpenings,
-        carTravel: updatedCarTravel,
-        floorDesignations: updatedFloorDesignations,
-        landingEntranceCount: "",
-        landingEntranceSubType2: "",
-        landingEntranceSubType2_fromFloor: "",
-        landingEntranceSubType2_toFloor: "",
-        landingEntrancePrice1: 0,
-        landingEntrancePrice2: 0,
-        guideRail: "",
-        guideRailPrice: 0,
-      }));
-    }
-  }, [formData.floors, formData.floorSelections]); // ✅ depend on floors and floorSelections
+    // Prevent overwriting initial data during first render
+    if (isInitialLoad) return;
+
+    // ---------- UPDATE FORM DATA ----------
+    setFormData(prev => ({
+      ...prev,
+      stops: updatedStops,
+      openings: updatedOpenings,
+      carTravel: updatedCarTravel,
+      floorDesignations: updatedFloorDesignations,
+
+      // reset dependent fields
+      landingEntranceCount: "",
+      landingEntranceSubType2: "",
+      landingEntranceSubType2_fromFloor: "",
+      landingEntranceSubType2_toFloor: "",
+      landingEntrancePrice1: 0,
+      landingEntrancePrice2: 0,
+      guideRail: "",
+      guideRailPrice: 0,
+    }));
+  }, [formData.floors, formData.floorSelections]);
+  // ✅ depend on floors and floorSelections
 
   // Function to update the materials list with Roping Type (Counter Frame) and Wire Rope
   const updateRopingMaterials = (
@@ -2212,6 +3159,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         materialDisplayName: selectedRope.wireRopeTypeName + " | " + counterFrameRopeName,
         quantity: 1,
         quantityUnit: "Set",
+        unitPrice: ropingTypePrice, // as quantity =1 
         price: ropingTypePrice,
         operatorType: formData.liftType,
         materialType: ropingMaterialType,
@@ -2234,6 +3182,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
     // We'll use the passed wireRopePrice (which will be `prev.wireRopePrice` in the final setFormData)
 
     if (wireRopePrice > 0 && selectedRope) {
+      const unitPrice = selectedRope.wireRopeQty > 0 ? wireRopePrice / selectedRope.wireRopeQty : 0;
       const newWireRopeMaterial = {
         id: wireRopeIndex !== -1 ? updatedMaterials[wireRopeIndex].id : null,
         leadId: formData.leadId,
@@ -2245,6 +3194,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
         quantity: selectedRope.wireRopeQty,
         quantityUnit: "mtrs",
         // price: wireRopePrice * selectedRope.wireRopeQty,
+        unitPrice: unitPrice,
         price: wireRopePrice,
         operatorType: formData.liftType,
         materialType: wireRopeMaterialType,
@@ -2263,111 +3213,725 @@ export default function LiftModal({ lift, onClose, onSave }) {
   };
 
   // Reset dependent fields on change
+  // const handleChangeWithReset = (e) => {
+  //   const { name, value } = e.target;
+
+  //   // 🔹 Only mark form as interacted if it’s still initial load
+  //   if (isInitialLoad) setIsInitialLoad(false);
+
+  //   setFormData((prev) => {
+  //     let updated = { ...prev, [name]: value };
+
+  //     if (name === "capacityType") {
+  //       updated.capacityValue = "";
+  //       // updated.ardPrice = 0;
+  //       updated.ardAmount = 0;
+  //       updated.machinePrice = 0;
+  //       // updated.cabinPrice = 0;
+  //       updated.cabinSubTypePrice = 0;
+  //       updated.shaftWidth = 0;
+  //       updated.shaftDepth = 0;
+  //       updated.reqMachineDepth = 0;
+  //       updated.reqMachineWidth = 0;
+  //       updated.carInternalWidth = 0;
+  //       updated.carInternalDepth = 0;
+  //       updated.carInternalHeight = 0;
+  //       updated.ropingType = "";
+  //       updated.ropingTypePrice = 0;
+  //       updated.wireRopePrice = 0;
+  //     }
+
+  //     if (name === "capacityValue") {
+  //       updated.ropingType = "";
+  //       updated.ropingTypePrice = 0;
+  //       updated.wireRopePrice = 0;
+  //     }
+
+  //     if (name === "floors") {
+  //       updated.stops = "";
+  //       updated.openings = "";
+  //       updated.floorDesignations = "";
+  //       updated.ropingType = "";
+  //       updated.ropingTypePrice = 0;
+  //       updated.wireRopePrice = 0;
+  //       updated.fastenerType = "";
+  //       updated.fastenerPrice = 0;
+  //     }
+
+  //     if (name === "liftType") {
+  //       updated.carEntrance = "";
+  //       updated.capacityValue = "";
+  //       updated.carEntranceSubType = "";
+  //       updated.landingEntranceSubType1 = "";
+  //       updated.landingEntranceSubType2 = "";
+
+  //       // Clear all associated dependent prices
+  //       updated.ropingTypePrice = 0;
+  //       updated.wireRopePrice = 0;
+  //       updated.carEntrancePrice = 0;
+  //       updated.landingEntrancePrice1 = 0;
+  //       updated.landingEntrancePrice2 = 0;
+  //       updated.machinePrice = 0;
+  //       updated.ardAmount = 0;
+
+  //       // Clear all selections dependent on Lift Type
+  //       updated.ropingType = "";
+  //       updated.guideRail = "";
+  //       updated.bracketType = "";
+
+  //       // -----------------------------------------------------------------
+  //       // ✅ GUARANTEED SYNCHRONOUS BULK MATERIAL REMOVAL
+  //       // Use the utility function to filter selectedMaterials based on the new state
+  //       // -----------------------------------------------------------------
+  //       const materialTypesToClear = [
+  //         "Car Entrance Type",
+  //         "Car Entrance Sub Type",
+  //         "Landing Entrance 1",
+  //         "Landing Entrance 2",
+  //         "RopingType",
+  //         "WireRope",
+  //         "Machine",
+  //         "ARD",
+  //         "Guide Rail",
+  //         "Bracket Type",
+  //         "Control Panel Type",
+  //       ];
+
+  //       // This is the CRITICAL STEP: Filter the materials synchronously.
+  //       materialTypesToClear.forEach(type => {
+  //         // Passing 'null' ensures handleMaterialChange filters this item out.
+  //         handleMaterialChange(type, null);
+  //       });
+  //       // -----------------------------------------------------------------
+
+  //       // We do NOT need to run handleMaterialChange(type, null) outside setFormData anymore 
+  //       // for these materials, because the clearing is done here in one atomic update.
+  //       console.log("Updated formData in handleChangeWithReset for liftType:", updated.selectedMaterials);
+  //     }
+
+  //     if (name === "carEntrance") {
+  //       updated.carEntranceSubType = "";
+  //     }
+
+  //     if (name === "landingEntranceSubType1" && value === "") {
+  //       updated.landingEntranceCount = Number(prev.openings) || 0;
+  //     }
+
+  //     if (name === "landingEntranceCount") {
+  //       const openings = Number(prev.openings) || 0;
+  //       if (Number(value) === openings) {
+  //         updated.landingEntranceSubType2_fromFloor = 0;
+  //         updated.landingEntranceSubType2_toFloor = 0;
+  //       } else {
+  //         updated.landingEntranceSubType2_fromFloor = Number(value) + 1 || "";
+  //         updated.landingEntranceSubType2_toFloor = openings || "";
+  //       }
+  //     }
+
+  //     if (name === "landingEntranceSubType2_fromFloor") {
+  //       const fromFloor = Number(value); // The new "from" floor
+  //       // The count for SubType 1 is From Floor - 1 (since floors are 1-indexed)
+  //       const newCount = Math.max(0, fromFloor - 1);
+
+  //       // Update the landingEntranceCount field
+  //       updated.landingEntranceCount = newCount;
+
+  //       // Ensure toFloor remains valid; if from > prev.toFloor, set to max openings
+  //       const prevTo = Number(prev.landingEntranceSubType2_toFloor) || 0;
+  //       if (fromFloor > prevTo) {
+  //         updated.landingEntranceSubType2_toFloor = Number(prev.openings) || fromFloor;
+  //       } else if (fromFloor === 0) {
+  //         updated.landingEntranceSubType2_toFloor = 0;
+  //       }
+  //     }
+
+  //     if (name === "landingEntranceSubType2_toFloor") {
+  //       const toFloor = Number(value) || 0;
+  //       const fromFloor = Number(prev.landingEntranceSubType2_fromFloor) || 0;
+
+  //       if (toFloor < fromFloor) {
+  //         updated.landingEntranceSubType2_fromFloor = toFloor;
+  //         updated.landingEntranceCount = Math.max(0, toFloor - 1);
+  //       } else if (toFloor === 0) {
+  //         updated.landingEntranceSubType2_fromFloor = 0;
+  //         updated.landingEntranceCount = Number(prev.openings) || 0;
+  //       }
+  //     }
+
+  //     // ✅ Reset when ropingType set back to "Please Select"
+  //     if (name === "ropingType" && value === "") {
+  //       updated.ropingTypePrice = 0;
+  //       updated.wireRopePrice = 0;
+  //     }
+
+  //     console.log("Updated formData in handleChangeWithReset:", updated.selectedMaterials);
+  //     return updated;
+  //   });
+
+  //   // AFTER state is scheduled, create a temp copy reflecting new values so calculations use latest values immediately
+  //   const tempFormData = { ...formData, [name]: value };
+
+  //   // Also mirror the same dependent updates into tempFormData (must match the setFormData logic above)
+  //   if (name === "landingEntranceSubType1" && value === "") {
+  //     tempFormData.landingEntranceCount = Number(formData.openings) || 0;
+  //   }
+  //   if (name === "landingEntranceCount") {
+  //     const openings = Number(formData.openings) || 0;
+  //     if (Number(value) === openings) {
+  //       tempFormData.landingEntranceSubType2_fromFloor = 0;
+  //       tempFormData.landingEntranceSubType2_toFloor = 0;
+  //     } else {
+  //       tempFormData.landingEntranceSubType2_fromFloor = Number(value) + 1 || "";
+  //       tempFormData.landingEntranceSubType2_toFloor = openings || "";
+  //     }
+  //   }
+  //   if (name === "landingEntranceSubType2_fromFloor") {
+  //     const fromFloor = Number(value) || 0;
+  //     tempFormData.landingEntranceCount = Math.max(0, fromFloor - 1);
+  //     const prevTo = Number(formData.landingEntranceSubType2_toFloor) || 0;
+  //     if (fromFloor > prevTo) {
+  //       tempFormData.landingEntranceSubType2_toFloor = Number(formData.openings) || fromFloor;
+  //     } else if (fromFloor === 0) {
+  //       tempFormData.landingEntranceSubType2_toFloor = 0;
+  //     }
+  //   }
+  //   if (name === "landingEntranceSubType2_toFloor") {
+  //     const toFloor = Number(value) || 0;
+  //     const fromFloor = Number(formData.landingEntranceSubType2_fromFloor) || 0;
+  //     if (toFloor < fromFloor) {
+  //       tempFormData.landingEntranceSubType2_fromFloor = toFloor;
+  //       tempFormData.landingEntranceCount = Math.max(0, toFloor - 1);
+  //     } else if (toFloor === 0) {
+  //       tempFormData.landingEntranceSubType2_fromFloor = 0;
+  //       tempFormData.landingEntranceCount = Number(formData.openings) || 0;
+  //     }
+  //   }
+
+  //   // Now update landing entrance materials based on tempFormData
+  //   updateLandingEntranceMaterials(tempFormData, handleMaterialChange);
+
+  //   // Also update price display fields for UI: compute price numbers and set them in formData
+  //   // (We update them with setFormData so PriceBelowSelect shows updated price immediately)
+  //   // To avoid race conditions, compute then set once:
+  //   setTimeout(() => {
+  //     // compute LE1 price and LE2 price and set formData fields
+  //     const temp = { ...formData, [name]: value, ...tempFormData };
+  //     // compute price for LE1
+  //     const le1Opt = (initialOptions[DROPDOWN_MAP.landingEntranceSubType1.optionsKey] || [])
+  //       .find(o => String(o.id) === String(temp.landingEntranceSubType1));
+  //     if (le1Opt) {
+  //       const count = Math.max(0, Number(temp.landingEntranceCount) || 0);
+  //       const price = (Number(le1Opt.price || le1Opt.prize || 0) * (count || 1));
+  //       setFormData(prev => ({ ...prev, [DROPDOWN_MAP.landingEntranceSubType1.priceFieldName]: price }));
+  //     } else {
+  //       setFormData(prev => ({ ...prev, [DROPDOWN_MAP.landingEntranceSubType1.priceFieldName]: 0 }));
+  //     }
+  //     // compute price for LE2
+  //     const le2Opt = (initialOptions[DROPDOWN_MAP.landingEntranceSubType2.optionsKey] || [])
+  //       .find(o => String(o.id) === String(temp.landingEntranceSubType2));
+  //     if (le2Opt) {
+  //       const fromFloor = Number(temp.landingEntranceSubType2_fromFloor) || 0;
+  //       const toFloor = Number(temp.landingEntranceSubType2_toFloor) || 0;
+  //       let cnt = 0;
+  //       if (fromFloor > 0 && toFloor > 0 && toFloor >= fromFloor) {
+  //         cnt = toFloor - fromFloor + 1;
+  //       } else {
+  //         const used = Number(temp.landingEntranceCount) || 0;
+  //         cnt = Math.max(0, (Number(temp.openings) || 0) - used);
+  //       }
+  //       const price2 = (Number(le2Opt.price || le2Opt.prize || 0) * (cnt || 1));
+  //       setFormData(prev => ({ ...prev, [DROPDOWN_MAP.landingEntranceSubType2.priceFieldName]: price2 }));
+  //     } else {
+  //       setFormData(prev => ({ ...prev, [DROPDOWN_MAP.landingEntranceSubType2.priceFieldName]: 0 }));
+  //     }
+  //   }, 0);
+
+  //   // ✅ CLEAR ERROR MESSAGE when a valid value is selected
+  //   setErrors((prevErrors) => {
+  //     if (!prevErrors[name]) return prevErrors;
+  //     const newErrors = { ...prevErrors };
+  //     delete newErrors[name];
+  //     return newErrors;
+  //   });
+
+  //   // ✅ Only run async fetch if ropingType has a real value
+  //   if (name === "ropingType" && value) {
+  //     if (!formData.capacityType || !formData.capacityValue) {
+  //       toast.error("Please select Capacity Type and Capacity Value first");
+  //       return;
+  //     }
+
+  //     const selectedRope = initialOptions.wireRopes.find(
+  //       (opt) => String(opt.id) === String(value)
+  //     );
+
+  //     const ropeTypeId = selectedRope?.wireRopeTypeId || null;
+
+  //     if (!ropeTypeId) {
+  //       toast.error("Invalid Rope selection");
+  //       return;
+  //     }
+
+  //     fetchRopingTypePrice(
+  //       ropeTypeId,
+  //       formData.capacityType,
+  //       formData.capacityValue,
+  //       formData.typeOfLift,
+  //       setErrors
+  //     ).then((result) => {
+  //       console.log(ropeTypeId, "-----selectedRope-------", selectedRope);
+  //       console.log("-----internalCalculation-------", result);
+  //       const ropingPrice = result.price;
+  //       const counterFrameRopeName = result.name;
+  //       const message = "No price set";
+
+  //       let newOverloadDeviceValue = formData.overloadDevice; // Default to current value
+  //       if (selectedRope && selectedRope.wireRopeTypeName) {
+  //         const ropingName = selectedRope.wireRopeTypeName;
+  //         if (ropingName.includes("1:1")) {
+  //           newOverloadDeviceValue = 9000;
+  //         } else if (ropingName.includes("2:1")) {
+  //           newOverloadDeviceValue = 13500;
+  //         }
+  //       }
+
+  //       if (ropingPrice === 0) {
+  //         // Set the error if the price is exactly 0
+  //         setErrors((prev) => ({ ...prev, ropingTypePrice: message }));
+  //         toast.error(message);
+  //       } else {
+  //         // Clear the error on success (if not already cleared by the service)
+  //         setErrors((prev) => {
+  //           const updated = { ...prev };
+  //           delete updated.ropingTypePrice;
+  //           return updated;
+  //         });
+  //       }
+  //       // setFormData((prev) => ({
+  //       //   ...prev,
+  //       //   ropingTypePrice: price,
+  //       // }));
+
+  //       setFormData((prev) => {
+  //         // Get the Wire Rope price already set by the PriceBelowSelect component 
+  //         // OR the previous value if PriceBelowSelect hasn't updated yet.
+  //         const currentWireRopePrice = prev.wireRopePrice || 0;
+
+  //         // ✅ CALL THE MATERIAL UPDATE FUNCTION
+  //         const updatedSelectedMaterials = updateRopingMaterials(
+  //           prev.selectedMaterials || [],
+  //           prev, // Pass the previous form data (which includes leadId, quotationId)
+  //           ropingPrice,
+  //           currentWireRopePrice,
+  //           selectedRope,
+  //           counterFrameRopeName
+  //         );
+
+  //         return {
+  //           ...prev,
+  //           ropingTypePrice: ropingPrice,
+  //           overloadDevice: newOverloadDeviceValue,
+  //           selectedMaterials: updatedSelectedMaterials, // Save the merged list
+  //         };
+  //       });
+
+  //     });
+  //   }
+  // };
+
+
+
   const handleChangeWithReset = (e) => {
     const { name, value } = e.target;
 
-    // 🔹 Only mark form as interacted if it’s still initial load
     if (isInitialLoad) setIsInitialLoad(false);
 
-    setFormData((prev) => {
+    // -------------------------------------------------------------------
+    // 🔹 RESET GROUPS DEFINITIONS (YOUR NEW RULES)
+    // -------------------------------------------------------------------
+
+    const RESET_BY_CAPACITY_TYPE = {
+      ropingType: "",
+      ropingTypePrice: 0,
+      wireRopePrice: 0,
+      controlPanelType: "",
+      controlPanelTypePrice: 0,
+      ardAmount: 0,
+      cabinSubType: "",
+      cabinSubTypePrice: 0,
+      capacityValue: "",
+      shaftWidth: 0,
+      shaftDepth: 0,
+      reqMachineDepth: 0,
+      reqMachineWidth: 0,
+      carInternalWidth: 0,
+      carInternalDepth: 0,
+      carInternalHeight: 0,
+    };
+
+    const RESET_BY_FLOORS = {
+      stops: "",
+      openings: "",
+      floorDesignations: "",
+      ropingType: "",
+      ropingTypePrice: 0,
+      wireRopePrice: 0,
+      bracketType: "",
+      bracketTypePrice: 0,
+      wiringHarnessPrice: 0,
+      governorPrice: 0,
+      fastenerType: "",
+      fastenerPrice: 0,
+      truffingPrice: 0,
+      truffingQty: 0,
+      truffingType: "",
+      guideRail: "",
+      guideRailPrice: 0,
+      installationAmount: 0,
+      copType: "",
+      copTypePrice: 0,
+      lopType: "",
+      lopTypePrice: 0,
+    };
+
+
+    const RESET_BY_LIFT_TYPE_ONLY = {
+      capacityValue: "",
+      machinePrice: 0,
+      carEntrance: "",
+      carEntranceSubType: "",
+      carEntrancePrice: 0,
+      airType: "",
+      airSystem: "",
+      airSystemPrice: 0,
+      landingEntranceSubType1: "",
+      landingEntranceCount: 0,
+      landingEntrancePrice1: 0,
+      landingEntranceSubType2: "",
+      landingEntrancePrice2: 0,
+
+      // 🔹 Always reset COP/LOP when liftType changes
+      copType: "",
+      copTypePrice: 0,
+      lopType: "",
+      lopTypePrice: 0,
+    };
+
+    const RESET_BY_LIFT_TYPE = {
+      ...RESET_BY_LIFT_TYPE_ONLY,
+      ...RESET_BY_CAPACITY_TYPE,
+    }
+
+    // 🔥 MATERIAL CLEAR GROUPS 
+    const MATERIAL_CLEAR_CAPACITY_TYPE = [
+      "RopingType",
+      "Control Panel Type",
+      "ARD",
+      "Cabin SubType"
+    ];
+
+    const MATERIAL_CLEAR_FLOORS = [
+      "WireRope",
+      "Bracket Type",
+      "Harness",
+      "Governor",
+      "Fastener",
+      "Truffing",
+      "Guide Rail",
+      "Installation Amount",
+      "COP",
+      "LOP"
+    ];
+
+    const MATERIAL_CLEAR_LIFT_TYPE_ONLY = [
+      "Machine",
+      "Car Entrance Type",
+      "Car Entrance Sub Type",
+      "Landing Entrance 1",
+      "Landing Entrance 2",
+      "Air System",
+      "COP",
+      "LOP"
+    ];
+
+    const MATERIAL_CLEAR_LIFT_TYPE = [
+      ...MATERIAL_CLEAR_LIFT_TYPE_ONLY,
+      ...MATERIAL_CLEAR_CAPACITY_TYPE,
+    ];
+
+    // -------------------------------------------------------------------
+    // 🔹 BUILD UPDATED STATE
+    // -------------------------------------------------------------------
+    setFormData(prev => {
       let updated = { ...prev, [name]: value };
 
       if (name === "capacityType") {
-        updated.capacityValue = "";
-        // updated.ardPrice = 0;
-        updated.ardAmount = 0;
-        updated.machinePrice = 0;
-        updated.cabinPrice = 0;
-        updated.shaftWidth = 0;
-        updated.shaftDepth = 0;
-        updated.reqMachineDepth = 0;
-        updated.reqMachineWidth = 0;
-        updated.carInternalWidth = 0;
-        updated.carInternalDepth = 0;
-        updated.carInternalHeight = 0;
-        updated.ropingType = "";
-        updated.ropingTypePrice = 0;
-        updated.wireRopePrice = 0;
-      }
-
-      if (name === "capacityValue") {
-        updated.ropingType = "";
-        updated.ropingTypePrice = 0;
-        updated.wireRopePrice = 0;
+        Object.assign(updated, RESET_BY_CAPACITY_TYPE);
+        MATERIAL_CLEAR_CAPACITY_TYPE.forEach(type => handleMaterialChange(type, null));
       }
 
       if (name === "floors") {
-        updated.stops = "";
-        updated.openings = "";
-        updated.floorDesignations = "";
-        updated.ropingType = "";
-        updated.ropingTypePrice = 0;
-        updated.wireRopePrice = 0;
-        updated.fastenerType = "";
-        updated.fastenerPrice = 0;
+        Object.assign(updated, RESET_BY_FLOORS);
+        MATERIAL_CLEAR_FLOORS.forEach(type => handleMaterialChange(type, null));
       }
 
       if (name === "liftType") {
-        updated.carEntrance = "";
-        updated.capacityValue = "";
-        updated.carEntranceSubType = "";
-        updated.landingEntranceSubType1 = "";
-        updated.landingEntranceSubType2 = "";
+        Object.assign(updated, RESET_BY_LIFT_TYPE);
+        MATERIAL_CLEAR_LIFT_TYPE.forEach(type => handleMaterialChange(type, null));
       }
 
+      // 🔹 carEntrance resets subtype
       if (name === "carEntrance") {
         updated.carEntranceSubType = "";
+        updated.carEntrancePrice = 0;
       }
 
-      if (name === "landingEntranceSubType1" && value === "") {
-        updated.landingEntranceCount = Number(prev.openings) || 0;
-      }
+      // 🔹 landing entrance sub-type logic preserved
+      // if (name === "landingEntranceSubType1" && value === "") {
+      //   updated.landingEntranceCount = Number(prev.openings) || 0;
+      // }
 
-      if (name === "landingEntranceCount") {
-        const openings = Number(prev.openings) || 0;
-        if (Number(value) === openings) {
-          updated.landingEntranceSubType2_fromFloor = 0;
-          updated.landingEntranceSubType2_toFloor = 0;
-        } else {
-          updated.landingEntranceSubType2_fromFloor = Number(value) + 1 || "";
-          updated.landingEntranceSubType2_toFloor = openings || "";
-        }
-      }
+      // if (name === "landingEntranceCount") {
+      //   const openings = Number(prev.openings) || 0;
+      //   if (Number(value) === openings) {
+      //     updated.landingEntranceSubType2_fromFloor = 0;
+      //     updated.landingEntranceSubType2_toFloor = 0;
+      //   } else {
+      //     updated.landingEntranceSubType2_fromFloor = Number(value) + 1;
+      //     updated.landingEntranceSubType2_toFloor = openings;
+      //   }
+      // }
 
-      // ✅ Reset when ropingType set back to "Please Select"
+      // if (name === "landingEntranceSubType2_fromFloor") {
+      //   const fromFloor = Number(value); // The new "from" floor
+      //   // The count for SubType 1 is From Floor - 1 (since floors are 1-indexed)
+      //   const newCount = Math.max(0, fromFloor - 1);
+
+      //   // Update the landingEntranceCount field
+      //   updated.landingEntranceCount = newCount;
+
+      //   // Ensure toFloor remains valid; if from > prev.toFloor, set to max openings
+      //   const prevTo = Number(prev.landingEntranceSubType2_toFloor) || 0;
+      //   if (fromFloor > prevTo) {
+      //     updated.landingEntranceSubType2_toFloor = Number(prev.openings) || fromFloor;
+      //   } else if (fromFloor === 0) {
+      //     updated.landingEntranceSubType2_toFloor = 0;
+      //   }
+      // }
+
+      // if (name === "landingEntranceSubType2_toFloor") {
+      //   const toFloor = Number(value) || 0;
+      //   const fromFloor = Number(prev.landingEntranceSubType2_fromFloor) || 0;
+
+      //   if (toFloor < fromFloor) {
+      //     updated.landingEntranceSubType2_fromFloor = toFloor;
+      //     updated.landingEntranceCount = Math.max(0, toFloor - 1);
+      //   } else if (toFloor === 0) {
+      //     updated.landingEntranceSubType2_fromFloor = 0;
+      //     updated.landingEntranceCount = Number(prev.openings) || 0;
+      //   }
+      // }
+
+
       if (name === "ropingType" && value === "") {
         updated.ropingTypePrice = 0;
         updated.wireRopePrice = 0;
       }
 
+      // // ============================================================
+      // // UNIVERSAL LANDING ENTRANCE LOGIC (100% MATCHES PriceBelowSelect)
+      // // ============================================================
+
+      // const totalOpenings = Number(updated.openings) || 0;
+
+      // // ----- 1. COUNT CHANGES -----
+      // if (name === "landingEntranceCount") {
+      //   const cnt = Number(value);
+
+      //   console.log("");
+      //   // If LE1 covers all floors → remove LE2
+      //   if (cnt === totalOpenings) {
+      //     updated.landingEntranceSubType2 = "";
+      //     updated.landingEntrancePrice2 = 0;
+      //     updated.landingEntranceSubType2_fromFloor = 0;
+      //     updated.landingEntranceSubType2_toFloor = 0;
+      //   } else {
+      //     updated.landingEntranceSubType2_fromFloor = cnt + 1;
+      //     updated.landingEntranceSubType2_toFloor = totalOpenings;
+      //   }
+      // }
+
+      // // ----- 2. If LE1 is empty → remove LE2 -----
+      // if (!updated.landingEntranceSubType1) {
+      //   updated.landingEntranceSubType2 = "";
+      //   updated.landingEntrancePrice2 = 0;
+      //   updated.landingEntranceSubType2_fromFloor = 0;
+      //   updated.landingEntranceSubType2_toFloor = 0;
+      // }
+
+      // // ============================================================
+      // // PRICE CALC — LE1 (always based on: landingEntranceCount OR totalOpenings)
+      // // ============================================================
+
+      // console.log("Calculating LE Prices...", updated);
+      // const le1 = initialOptions.landingEntranceSubTypes?.find(
+      //   o => String(o.id) === String(updated.landingEntranceSubType1)
+      // );
+
+      // console.log("Calculating LE Prices..le1-----------.", le1);
+
+      // if (le1) {
+      //   const floors1 =
+      //     Number(updated.landingEntranceCount) || totalOpenings;
+
+      //   updated.landingEntrancePrice1 = le1.price || le1.prize * floors1;
+      // } else {
+      //   updated.landingEntrancePrice1 = 0;
+      // }
+
+      // console.log(updated.landingEntrancePrice1, "Calculating LE1 ...", updated);
+      // // ============================================================
+      // // PRICE CALC — LE2 (always based on from/to floors OR remaining)
+      // // ============================================================
+
+      // const le2 = initialOptions.landingEntranceSubTypes?.find(
+      //   o => String(o.id) === String(updated.landingEntranceSubType2)
+      // );
+
+      // if (le2) {
+      //   let floors2 = Math.max(totalOpenings - (Number(updated.landingEntranceCount) || 0), 0);
+
+      //   const fromF = Number(updated.landingEntranceSubType2_fromFloor);
+      //   const toF = Number(updated.landingEntranceSubType2_toFloor);
+
+      //   if (fromF > 0 && toF >= fromF) {
+      //     floors2 = toF - fromF + 1;
+      //   }
+
+      //   updated.landingEntrancePrice2 = le2.price * floors2;
+      // } else {
+      //   updated.landingEntrancePrice2 = 0;
+      // }
+
+      // // ============================================================
+      // // UNIVERSAL LANDING ENTRANCE LOGIC (100% MATCHES PriceBelowSelect)
+      // // ============================================================
+
+
+      console.log("FINAL UPDATED LE:", updated);
+
       return updated;
     });
 
-    // ✅ CLEAR ERROR MESSAGE when a valid value is selected
-    setErrors((prevErrors) => {
-      if (!prevErrors[name]) return prevErrors;
-      const newErrors = { ...prevErrors };
-      delete newErrors[name];
-      return newErrors;
+    // -------------------------------------------------------------------
+    // 🔹 Perform dependent calculations (same logic as before)
+    // -------------------------------------------------------------------
+
+    // const temp = { ...formData, [name]: value };
+
+    // console.log("Temp formData for calculations:----00000000----", temp);
+    // // Also mirror the same dependent updates into temp (must match the setFormData logic above)
+    // if (name === "landingEntranceSubType1" && value === "") {
+    //   temp.landingEntranceCount = Number(formData.openings) || 0;
+    // }
+    // if (name === "landingEntranceCount") {
+    //   const openings = Number(formData.openings) || 0;
+    //   if (Number(value) === openings) {
+    //     temp.landingEntranceSubType2_fromFloor = 0;
+    //     temp.landingEntranceSubType2_toFloor = 0;
+    //   } else {
+    //     temp.landingEntranceSubType2_fromFloor = Number(value) + 1 || "";
+    //     temp.landingEntranceSubType2_toFloor = openings || "";
+    //   }
+    // }
+    // if (name === "landingEntranceSubType2_fromFloor") {
+    //   const fromFloor = Number(value) || 0;
+    //   temp.landingEntranceCount = Math.max(0, fromFloor - 1);
+    //   const prevTo = Number(formData.landingEntranceSubType2_toFloor) || 0;
+    //   if (fromFloor > prevTo) {
+    //     temp.landingEntranceSubType2_toFloor = Number(formData.openings) || fromFloor;
+    //   } else if (fromFloor === 0) {
+    //     temp.landingEntranceSubType2_toFloor = 0;
+    //   }
+    // }
+    // if (name === "landingEntranceSubType2_toFloor") {
+    //   const toFloor = Number(value) || 0;
+    //   const fromFloor = Number(formData.landingEntranceSubType2_fromFloor) || 0;
+    //   if (toFloor < fromFloor) {
+    //     temp.landingEntranceSubType2_fromFloor = toFloor;
+    //     temp.landingEntranceCount = Math.max(0, toFloor - 1);
+    //   } else if (toFloor === 0) {
+    //     temp.landingEntranceSubType2_fromFloor = 0;
+    //     temp.landingEntranceCount = Number(formData.openings) || 0;
+    //   }
+    // }
+
+    // console.log("Temp formData for calculations:----111111----", temp);
+
+    // updateLandingEntranceMaterials(temp, handleMaterialChange);
+
+    // setTimeout(() => {
+    //   const le1Opt = (initialOptions[DROPDOWN_MAP.landingEntranceSubType1.optionsKey] || [])
+    //     .find(o => String(o.id) === String(temp.landingEntranceSubType1));
+
+    //   const le2Opt = (initialOptions[DROPDOWN_MAP.landingEntranceSubType2.optionsKey] || [])
+    //     .find(o => String(o.id) === String(temp.landingEntranceSubType2));
+
+    //   if (le1Opt) {
+    //     const count = Number(temp.landingEntranceCount) || 0;
+    //     setFormData(prev => ({
+    //       ...prev,
+    //       [DROPDOWN_MAP.landingEntranceSubType1.priceFieldName]: le1Opt.price * (count || 1)
+    //     }));
+    //   } else {
+    //     setFormData(prev => ({
+    //       ...prev,
+    //       [DROPDOWN_MAP.landingEntranceSubType1.priceFieldName]: 0
+    //     }));
+    //   }
+
+    //   if (le2Opt) {
+    //     let cnt = 0;
+    //     const fromFloor = Number(temp.landingEntranceSubType2_fromFloor);
+    //     const toFloor = Number(temp.landingEntranceSubType2_toFloor);
+
+    //     if (fromFloor > 0 && toFloor >= fromFloor) {
+    //       cnt = toFloor - fromFloor + 1;
+    //     } else {
+    //       const used = Number(temp.landingEntranceCount) || 0;
+    //       cnt = Math.max(0, Number(temp.openings || 0) - used);
+    //     }
+
+    //     setFormData(prev => ({
+    //       ...prev,
+    //       [DROPDOWN_MAP.landingEntranceSubType2.priceFieldName]: le2Opt.price * (cnt || 1)
+    //     }));
+    //   } else {
+    //     setFormData(prev => ({
+    //       ...prev,
+    //       [DROPDOWN_MAP.landingEntranceSubType2.priceFieldName]: 0
+    //     }));
+    //   }
+    // }, 0);
+
+    // -------------------------------------------------------------------
+    // 🔹 Clear error when valid value selected
+    // -------------------------------------------------------------------
+    setErrors(prev => {
+      if (!prev[name]) return prev;
+      const n = { ...prev };
+      delete n[name];
+      return n;
     });
 
-    // ✅ Only run async fetch if ropingType has a real value
+    // -------------------------------------------------------------------
+    // 🔹 Async: fetch roping type price
+    // -------------------------------------------------------------------
     if (name === "ropingType" && value) {
-      if (!formData.capacityType || !formData.capacityValue) {
-        toast.error("Please select Capacity Type and Capacity Value first");
-        return;
-      }
+      const selectedRope = initialOptions.wireRopes.find(o => String(o.id) === String(value));
+      const ropeTypeId = selectedRope?.wireRopeTypeId;
 
-      const selectedRope = initialOptions.wireRopes.find(
-        (opt) => String(opt.id) === String(value)
-      );
-
-      const ropeTypeId = selectedRope?.wireRopeTypeId || null;
-
-      if (!ropeTypeId) {
-        toast.error("Invalid Rope selection");
-        return;
-      }
+      if (!ropeTypeId) return toast.error("Invalid Rope selection");
 
       fetchRopingTypePrice(
         ropeTypeId,
@@ -2375,51 +3939,32 @@ export default function LiftModal({ lift, onClose, onSave }) {
         formData.capacityValue,
         formData.typeOfLift,
         setErrors
-      ).then((result) => {
-        console.log(ropeTypeId, "-----selectedRope-------", selectedRope);
-        console.log("-----internalCalculation-------", result);
+      ).then(result => {
         const ropingPrice = result.price;
         const counterFrameRopeName = result.name;
         const message = "No price set";
 
-        let newOverloadDeviceValue = formData.overloadDevice; // Default to current value
-        if (selectedRope && selectedRope.wireRopeTypeName) {
-          const ropingName = selectedRope.wireRopeTypeName;
-          if (ropingName.includes("1:1")) {
-            newOverloadDeviceValue = 9000;
-          } else if (ropingName.includes("2:1")) {
-            newOverloadDeviceValue = 13500;
-          }
-        }
+        let newOverload = formData.overloadDevice;
+        if (selectedRope?.wireRopeTypeName?.includes("1:1")) newOverload = 9000;
+        if (selectedRope?.wireRopeTypeName?.includes("2:1")) newOverload = 13500;
 
         if (ropingPrice === 0) {
-          // Set the error if the price is exactly 0
-          setErrors((prev) => ({ ...prev, ropingTypePrice: message }));
+          setErrors(prev => ({ ...prev, ropingTypePrice: message }));
           toast.error(message);
         } else {
-          // Clear the error on success (if not already cleared by the service)
-          setErrors((prev) => {
-            const updated = { ...prev };
-            delete updated.ropingTypePrice;
-            return updated;
+          setErrors(prev => {
+            const n = { ...prev };
+            delete n.ropingTypePrice;
+            return n;
           });
         }
-        // setFormData((prev) => ({
-        //   ...prev,
-        //   ropingTypePrice: price,
-        // }));
 
-        setFormData((prev) => {
-          // Get the Wire Rope price already set by the PriceBelowSelect component 
-          // OR the previous value if PriceBelowSelect hasn't updated yet.
-          const currentWireRopePrice = prev.wireRopePrice || 0;
-
-          // ✅ CALL THE MATERIAL UPDATE FUNCTION
-          const updatedSelectedMaterials = updateRopingMaterials(
+        setFormData(prev => {
+          const updatedMaterials = updateRopingMaterials(
             prev.selectedMaterials || [],
-            prev, // Pass the previous form data (which includes leadId, quotationId)
+            prev,
             ropingPrice,
-            currentWireRopePrice,
+            prev.wireRopePrice || 0,
             selectedRope,
             counterFrameRopeName
           );
@@ -2427,16 +3972,23 @@ export default function LiftModal({ lift, onClose, onSave }) {
           return {
             ...prev,
             ropingTypePrice: ropingPrice,
-            overloadDevice: newOverloadDeviceValue,
-            selectedMaterials: updatedSelectedMaterials, // Save the merged list
+            overloadDevice: newOverload,
+            selectedMaterials: updatedMaterials
           };
         });
-
       });
     }
   };
 
 
+
+  const removeMaterialsByTypes = (selectedMaterials, typesToRemove = []) => {
+    console.log("Removing material types:", typesToRemove);
+    console.log("Before removal, selectedMaterials:", selectedMaterials);
+    return selectedMaterials.filter(
+      (mat) => !typesToRemove.includes(mat.materialType)
+    );
+  };
 
   const isFieldEmpty = (value) => {
     if (Array.isArray(value)) return value.length === 0;
@@ -2582,130 +4134,6 @@ export default function LiftModal({ lift, onClose, onSave }) {
     return true;
   };
 
-
-  // const validate = () => {
-  //   const allFields = Object.values(tabFields).flat();
-
-  //   // const missing = allFields.filter((field) => {
-  //   //   const value = formData[field];
-  //   //   return Array.isArray(value) ? value.length === 0 : !value;
-  //   // });
-
-  //   // const missing = allFields.filter((field) => isFieldEmpty(formData[field]));
-
-  //   const missing = allFields.filter((field) => {
-  //     const value = formData[field];
-  //     const empty = isFieldEmpty(value);
-  //     if (empty) {
-  //       console.log("Empty field detected:", field, "value:", value);
-  //     }
-  //     return empty;
-  //   });
-
-  //   if (missing.length > 0) {
-  //     setErrors(
-  //       missing.reduce((acc, field) => {
-  //         acc[field] = "This field is required";
-  //         return acc;
-  //       }, {})
-  //     );
-  //     toast.dismiss();
-  //     toast.error("Please fill all required fields.");
-  //     return false;
-  //   }
-
-  //   // 👉 Custom validation rules
-  //   const newErrors = {};
-
-  //   // Stops ≤ Floors
-  //   if (formData.stops > (formData.floors + formData.floorSelections.length)) {
-  //     newErrors.stops = "No. of Stops cannot be greater than No. of Floors";
-  //   }
-
-  //   // Openings ≤ 2 × Floors
-  //   if (formData.openings > 2 * (formData.floors + formData.floorSelections.length)) {
-  //     newErrors.openings = "No. of Openings cannot exceed value of [ 2 × (No. of Floors + Additional Floors(T,B1,B2...)) ]";
-  //   }
-
-  //   // ✅ Landing Entrance conditional validation
-  //   if (
-  //     formData.landingEntranceCount &&
-  //     Number(formData.landingEntranceCount) !== Number(formData.openings)
-  //   ) {
-  //     // If not "ALL" floors → must fill subtype2 and range fields
-  //     if (isFieldEmpty(formData.landingEntranceSubType2)) {
-  //       newErrors.landingEntranceSubType2 = "Landing Entrance (Remaining Floor) is required";
-  //     }
-
-  //     if (isFieldEmpty(formData.landingEntranceSubType2_fromFloor)) {
-  //       newErrors.landingEntranceSubType2_fromFloor = "From Floor is required";
-  //     }
-
-  //     if (isFieldEmpty(formData.landingEntranceSubType2_toFloor)) {
-  //       newErrors.landingEntranceSubType2_toFloor = "To Floor is required";
-  //     }
-
-  //     // Validate logical range
-  //     if (
-  //       formData.landingEntranceSubType2_fromFloor &&
-  //       formData.landingEntranceSubType2_toFloor &&
-  //       Number(formData.landingEntranceSubType2_fromFloor) >
-  //       Number(formData.landingEntranceSubType2_toFloor)
-  //     ) {
-  //       newErrors.landingEntranceSubType2_fromFloor =
-  //         "From Floor cannot be greater than To Floor";
-  //     }
-  //   }
-
-
-  //   // ✅ Car internal width < Shaft width
-  //   if (
-  //     formData.carInternalWidth &&
-  //     formData.shaftWidth &&
-  //     Number(formData.carInternalWidth) >= Number(formData.shaftWidth)
-  //   ) {
-  //     newErrors.carInternalWidth =
-  //       "Car internal width must be less than Shaft width";
-  //   }
-
-  //   // ✅ Car internal depth < Shaft depth
-  //   if (
-  //     formData.carInternalDepth &&
-  //     formData.shaftDepth &&
-  //     Number(formData.carInternalDepth) >= Number(formData.shaftDepth)
-  //   ) {
-  //     newErrors.carInternalDepth =
-  //       "Car internal depth must be less than Shaft depth";
-  //     formData.pitDepth = 1500;
-  //     formData.carInternalHeight = 2100;
-  //     formData.mainSupplySystem = "415 Volts, 3 Phase, 50HZ A.C. (By Client)";
-  //     formData.auxlSupplySystem = "220/230 Volts, Single Phase 50Hz A.C. (By Client)";
-  //     formData.signals = "Alarm Bell, Up/Dn. Direction Indicators at all landings";
-  //   }
-
-  //   if (Object.keys(newErrors).length > 0) {
-  //     console.log(newErrors);
-  //     setErrors(newErrors);
-
-  //     // ✅ Determine which tabs have at least one error
-  //     const tabsWithErrors = Object.entries(tabFields)
-  //       .filter(([tabIndex, fields]) =>
-  //         fields.some((field) => newErrors[field])
-  //       )
-  //       .map(([tabIndex]) => parseInt(tabIndex));
-
-  //     setErrorTabs(tabsWithErrors); // ✅ updates which tabs show red dot
-
-
-  //     toast.dismiss();
-  //     toast.error("Please fix validation errors.");
-  //     return false;
-  //   }
-
-  //   setErrors({});
-  //   return true;
-  // };
-
   useEffect(() => {
     const tabsWithErrors = Object.entries(tabFields)
       .filter(([tabIndex, fields]) =>
@@ -2724,23 +4152,6 @@ export default function LiftModal({ lift, onClose, onSave }) {
       .map(([tabIndex]) => parseInt(tabIndex));
   }, [formData]);
 
-  // const handleSave = () => {
-  //   const isValid = validate();
-  //   if (!isValid) return;
-
-  //   const formattedDate = new Date(quotationDate).toISOString().split("T")[0];
-
-  //   const finalData = {
-  //     ...formData,
-  //     enqDate: formattedDate, // ✅ add this
-  //   };
-
-  //   console.log("=====before save=========>", finalData);
-
-  //   onSave(lift.enquiryId, finalData, isValid, tabFields, initialOptions);
-  // };
-
-
   const handleSave = () => {
     const isValid = validate();
     if (!isValid) return;
@@ -2748,7 +4159,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
     // onSave(lift.enquiryId, { ...formData, ...calculations }, true, {}); // Pass all data including calculations
     console.log(formData, "=====before save in handlesave=========>", lift);
     // onSave(lift.enquiryId, formData, isValid, tabFields, initialOptions);
-    onSave(lift.enquiryId, formData, isValid, tabFields, initialOptions);
+    // onSave(lift.enquiryId, formData, isValid, tabFields, initialOptions);
+
+    const lift_id = lift.data?.id ?? lift.enquiryId;
+    onSave(lift_id, formData, isValid, tabFields, initialOptions);
   };
 
   const handleCheckboxChange = () => {
@@ -2813,81 +4227,6 @@ export default function LiftModal({ lift, onClose, onSave }) {
   );
 
 
-  // const getComponentData = (manufacturers, componentId, fallbackLabel = "") => {
-  //   const filtered = manufacturers.filter((m) => m.componentId === componentId);
-  //   const componentName = filtered[0]?.componentName || fallbackLabel;
-  //   return { componentName, data: filtered };
-  // };
-
-  // const { componentName: vfdLabel, data: vfdManufacturers } = getComponentData(
-  //   initialOptions.manufacturers,
-  //   4,
-  //   "VFD - Main Drive" // fallback if not found
-  // );
-
-  // const { componentName: doorOperatorLabel, data: doorOperatorManufacturers } = getComponentData(
-  //   initialOptions.manufacturers,
-  //   12,
-  //   "Door Operator" // fallback if not found
-  // );
-
-  // const { componentName: mainMachineSetLabel, data: mainMachineSetManufacturers } = getComponentData(
-  //   initialOptions.manufacturers,
-  //   5,
-  //   "Main Machine Set" // fallback if not found
-  // );
-
-  // const { componentName: carRailsLabel, data: carRailsManufacturers } = getComponentData(
-  //   initialOptions.manufacturers,
-  //   6,
-  //   "Car Rails" // fallback if not found
-  // );
-
-  // const { componentName: counterWeightRailsLabel, data: counterWeightRailsManufacturers } = getComponentData(
-  //   initialOptions.manufacturers,
-  //   7,
-  //   "Counter Weight Rails" // fallback if not found
-  // );
-
-  // const { componentName: wireRopeLabel, data: wireRopeManufacturers } = getComponentData(
-  //   initialOptions.manufacturers,
-  //   8,
-  //   "Wire Rope" // fallback if not found
-  // );
-  //------------------------------------------------------------------
-
-  // const normalizeValue = (val) => {
-  //   if (val === undefined || val === null || val === "") return "";
-  //   // if number in string format, keep numeric but compatible with string comparison
-  //   const num = Number(val);
-  //   return Number.isNaN(num) ? val : num; // returns number if valid number, else original string
-  // };
-
-
-  // useEffect(() => {
-  //   if (!lift?.data) return;
-
-  //   const dropdownFields = [
-  //     "airSystem",
-  //     "carEntrance",
-  //     "carEntranceSubType",
-  //     "landingEntranceSubType1",
-  //     "landingEntranceSubType2",
-  //     "landingEntranceCount",
-  //     "landingEntranceSubType2_fromFloor",
-  //     "landingEntranceSubType2_toFloor"
-  //   ];
-
-  //   const updated = { ...formData };
-  //   dropdownFields.forEach((field) => {
-  //     updated[field] = normalizeValue(lift.data?.[field]);
-  //   });
-
-  //   setFormData((prev) => ({ ...prev, ...updated }));
-  // }, [lift]);
-
-  // Find the selected Roping Type object to get its display name
-
   const selectedRopingType = initialOptions.wireRopes.find(
     (opt) => String(opt.id) === String(formData.ropingType)
   );
@@ -2904,6 +4243,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
   // Construct the final contextual message
   const ropingContextMessage = `Price for ${capacityDisplayName} - ${selectedRopingType?.wireRopeTypeName || 'Rope Type'}`;
+
+
+  const operatorTypeNm = initialOptions.operatorTypes?.find(
+    (opt) => opt.id === Number(formData.liftType)
+  )?.name || "";
+
+  const machineContextMessage = `Price for  ${operatorTypeNm} ${capacityDisplayName}`;
 
 
   return (
@@ -3259,7 +4605,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="cabinSubType"
                   value={formData.cabinSubType}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e); // 1. Runs generic form state update, validation, etc.
+                    handleDropdownChange(e); // 2. Runs specific material calculation/update logic.
+                  }}
                   error={errors.cabinSubType}
                 >
                   <option key="" value="">
@@ -3283,7 +4632,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
                     null,
                     loadCabinSubTypes,
                     setFormData,
-                    ["cabinSubType", "cabinPrice"]
+                    // ["cabinSubType", "cabinPrice"]
+                    ["cabinSubType", "cabinSubTypePrice"]
                   )}
                   className="absolute right-1 top-[65px] text-blue-600 hover:text-blue-800 transition-colors"
                   title="Refresh Cabin SubType"
@@ -3295,22 +4645,26 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   options={initialOptions.cabinSubTypes}
                   formValue={formData.cabinSubType}
                   color={tabColors[activeTab]}
-                  setPrice="cabinPrice"
+                  // setPrice="cabinPrice"
+                  setPrice="cabinSubTypePrice"
 
-                  //add key in selectedMaterialKeys
-                  setName="cabinName"//formData. (name from formData)
-                  nameKey="cabinSubName"// key from dropdown used
-                  itemMainName="Cabin SubType"//name saved for materialType in selectedMaterial 
-                  itemUnit="Unit"
+                  // //add key in selectedMaterialKeys
+                  // setName="cabinSubTypeName"//formData. (name from formData)
+                  // nameKey="cabinSubName"// key from dropdown used
+                  // itemMainName="Cabin SubType"//name saved for materialType in selectedMaterial 
+                  // itemUnit="Unit"
 
-                  lead_id={formData.leadId}   // Pass leadId explicitly
-                  lift={formData.liftType}
+                  // lead_id={formData.leadId}   // Pass leadId explicitly
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   label={`Price for ${formData.capacityType === 1
                     ? initialOptions.personOptions?.find(opt => opt.id === Number(formData.capacityValue))?.displayName || ""
                     : initialOptions.kgOptions?.find(opt => opt.id === Number(formData.capacityValue))?.weightFull || ""
                     }`}
+
+                // onMaterialChange={handleMaterialChange}
+                // selectedMaterial={selectedMaterials}
                 />
                 {/* {tabColors.map((label, i) => (
                   <PriceDisplay
@@ -3327,7 +4681,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   label={getLabel("lightFitting", "Light Fitting")}
                   name="lightFitting"
                   value={formData.lightFitting}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e); // 1. Runs generic form state update, validation, etc.
+                    handleDropdownChange(e); // 2. Runs specific material calculation/update logic.
+                  }}
                   error={errors.lightFitting}
                 >
                   <option key="" value="">
@@ -3357,11 +4714,21 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   options={initialOptions.lightFittings}
                   formValue={formData.lightFitting}
                   setPrice="lightFittingPrice"
+
+                  //add key in selectedMaterialKeys
+                  //setName="lightFitting"//formData. (name from formData)
+                  //itemMainName="Light Fitting"//name saved for materialType in selectedMaterial 
+
+                  // setName="lightFittingName" //formData. (name from formData)
+                  // itemMainName="Light Fitting"
+
                   lead_id={formData.leadId}
                   lift={formData.liftType}
                   setFormData={setFormData}
                   formData={formData}
                   color={tabColors[activeTab]}
+
+                // onMaterialChange={handleMaterialChange}
                 />
               </div>
 
@@ -3370,7 +4737,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   label={getLabel("cabinFlooring", "Cabin Flooring")}
                   name="cabinFlooring"
                   value={formData.cabinFlooring}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e); // 1. Runs generic form state update, validation, etc.
+                    handleDropdownChange(e); // 2. Runs specific material calculation/update logic.
+                  }}
                   error={errors.cabinFlooring}
                 >
                   <option key="" value="">
@@ -3401,15 +4771,17 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   formValue={formData.cabinFlooring}
                   setPrice="cabinFlooringPrice"
 
-                  setName="cabinFlooringName"
-                  nameKey="flooringName"// key from dropdown used
-                  itemMainName="Cabin Flooring"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+                  // setName="cabinFlooringName"
+                  // nameKey="flooringName"// key from dropdown used
+                  // itemMainName="Cabin Flooring"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData}
                   color={tabColors[activeTab]}
+
+                // onMaterialChange={handleMaterialChange}
                 />
               </div>
 
@@ -3418,7 +4790,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   label={getLabel("cabinCeiling", "Cabin Ceiling")}
                   name="cabinCeiling"
                   value={formData.cabinCeiling}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e); // 1. Runs generic form state update, validation, etc.
+                    handleDropdownChange(e); // 2. Runs specific material calculation/update logic.
+                  }}
                   error={errors.cabinCeiling}
                 >
                   <option key="" value="">
@@ -3450,15 +4825,17 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   formValue={formData.cabinCeiling}
                   setPrice="cabinCeilingPrice"
 
-                  setName="cabinCeilingName"//formData. (name from formData)
-                  nameKey="ceilingName"// key from dropdown used
-                  itemMainName="Cabin Ceiling"//name saved for materialType in selectedMaterial 
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+                  // setName="cabinCeilingName"//formData. (name from formData)
+                  // nameKey="ceilingName"// key from dropdown used
+                  // itemMainName="Cabin Ceiling"//name saved for materialType in selectedMaterial 
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData}
                   color={tabColors[activeTab]}
+
+                // onMaterialChange={handleMaterialChange}
                 />
               </div>
 
@@ -3468,7 +4845,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="airType"
                   value={formData.airType}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e); // 1. Runs generic form state update, validation, etc.
+                    handleDropdownChange(e); // 2. Runs specific material calculation/update logic.
+                  }}
                   error={errors.airType}
                 >
                   <option key="" value="">
@@ -3500,11 +4880,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
                     options={initialOptions.airType}
                     formValue={formData.airType}
                     setPrice="airSystemPrice"
+
                     itemMainName="Air System"
                     setFormData={setFormData}
                     formData={formData}
-                    lead_id={formData.leadId}
-                    lift={formData.liftType}
+
+                    // lead_id={formData.leadId}
+                    // lift={formData.liftType}
 
                     label={`Price for ${formData.capacityType === 1
                       ? initialOptions.personOptions?.find(opt => opt.id === Number(formData.capacityValue))?.displayName || ""
@@ -3513,6 +4895,8 @@ export default function LiftModal({ lift, onClose, onSave }) {
                     color={tabColors[activeTab]}
                     isAirSystem={true}
                     priceVal={formData.airSystemPrice} // ✅ now updated only when user selects
+
+                  // onMaterialChange={handleMaterialChange}
                   />
                 )}
 
@@ -3525,7 +4909,11 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="carEntrance"
                   value={formData.carEntrance}
-                  onChange={handleChangeWithReset}
+
+                  onChange={(e) => {
+                    handleChangeWithReset(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.carEntrance}
                 >
                   <option key="" value="">
@@ -3558,11 +4946,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
 
                   // --- Crucial Props for Material Tracking ---
                   setPrice="carEntranceTypePrice" // Dummy price key (not the actual price key)
-                  setName="carEntranceTypeName" // Name tracker
-                  nameKey="carDoorType" // Key to pull the name from the option object
-                  itemMainName="Car Entrance Type" // MaterialType for the DB object
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+
+                  // setName="carEntranceTypeName" // Name tracker
+                  // nameKey="carDoorType" // Key to pull the name from the option object
+                  // itemMainName="Car Entrance Type" // MaterialType for the DB object
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData}
@@ -3577,7 +4966,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   label={getLabel("carEntranceSubType", "Car Entrance Sub Type")}
                   name="carEntranceSubType"
                   value={formData.carEntranceSubType}
-                  onChange={handleChangeWithReset}
+                  onChange={(e) => {
+                    handleChangeWithReset(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.carEntranceSubType}
                   required
                 >
@@ -3608,12 +5000,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   color={tabColors[activeTab]}
                   setPrice="carEntrancePrice"
 
-                  setName="carEntranceSubTypeName"
-                  nameKey="carDoorSubType"
-                  itemMainName="Car Entrance Sub Type"
-                  itemUnit="Unit"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+                  // setName="carEntranceSubTypeName"
+                  // nameKey="carDoorSubType"
+                  // itemMainName="Car Entrance Sub Type"
+                  // itemUnit="Unit"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData}
@@ -3639,7 +5031,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="landingEntranceSubType1"
                   value={formData.landingEntranceSubType1}
-                  onChange={handleChangeWithReset}
+                  onChange={(e) => {
+                    handleChangeWithReset(e); // Update form state and reset related fields
+                    handleDropdownChange(e); // ✅ Add/Update material
+                  }}
                   error={errors.landingEntranceSubType1}
                 >
                   <option key="" value="">
@@ -3676,7 +5071,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   )}
                   name="landingEntranceCount"
                   value={formData.landingEntranceCount || ""}
-                  onChange={handleChangeWithReset}
+                  // onChange={handleChangeWithReset}
+                  onChange={(e) => {
+                    handleChangeWithReset(e);
+                    handleDropdownChange(e);
+                  }}
+
                   className="mt-0"
                 //labelClassName="opacity-0"
                 >
@@ -3696,13 +5096,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   color={tabColors[activeTab]}
                   setPrice="landingEntrancePrice1"
 
-                  setName="landingEntranceSubType1Name" // Field to store the name
-                  // nameKey={["landingDoorTypeName", "name"]}
-                  itemMainName="Landing Entrance 1"     // MaterialType name for newMaterial object
-                  // ✅ Set the unit
-                  itemUnit="Opening"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+                  // setName="landingEntranceSubType1Name" // Field to store the name
+                  // // nameKey={["landingDoorTypeName", "name"]}
+                  // itemMainName="Landing Entrance 1"     // MaterialType name for newMaterial object
+                  // // ✅ Set the unit
+                  // itemUnit="Opening"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData} // 👈 pass full formData so we can use openings & count
@@ -3720,7 +5120,11 @@ export default function LiftModal({ lift, onClose, onSave }) {
                         label={getLabel("landingEntranceSubType2", "Landing Entrance (Remaining Floor)")}
                         name="landingEntranceSubType2"
                         value={formData.landingEntranceSubType2 || ""}
-                        onChange={handleChangeWithReset}
+                        // onChange={handleChangeWithReset}
+                        onChange={(e) => {
+                          handleChangeWithReset(e);
+                          handleDropdownChange(e);
+                        }}
                         error={errors.landingEntranceSubType2}
                         required
                       >
@@ -3763,7 +5167,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                         name="landingEntranceSubType2_fromFloor"
                         // value={formData.landingEntranceSubType2_fromFloor || (Number(formData.landingEntranceCount) + 1)}
                         value={formData.landingEntranceSubType2_fromFloor || ""}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          handleChangeWithReset(e);
+                          handleDropdownChange(e);
+                        }}
                         required
                       >
                         <option value="">Please Select</option>
@@ -3783,7 +5190,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                         name="landingEntranceSubType2_toFloor"
                         // value={formData.landingEntranceSubType2_toFloor || Number(formData.openings)}
                         value={formData.landingEntranceSubType2_toFloor || ""}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                          handleChange(e);
+                          handleDropdownChange(e);
+                        }}
                         required
                       >
                         <option value="">Please Select</option>
@@ -3805,12 +5215,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
                         color={tabColors[activeTab]}
                         setPrice="landingEntrancePrice2"
 
-                        setName="landingEntranceSubType2Name" // Field to store the name
-                        itemMainName="Landing Entrance 2"     // MaterialType name for newMaterial object
-                        // ✅ Set the unit
-                        itemUnit="Opening"
-                        lead_id={formData.leadId}
-                        lift={formData.liftType}
+                        // setName="landingEntranceSubType2Name" // Field to store the name
+                        // itemMainName="Landing Entrance 2"     // MaterialType name for newMaterial object
+                        // // ✅ Set the unit
+                        // itemUnit="Opening"
+                        // lead_id={formData.leadId}
+                        // lift={formData.liftType}
 
                         setFormData={setFormData}
                         formData={formData} // 👈 pass full formData so we can use openings & count
@@ -3847,7 +5257,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="controlPanelType"
                   value={formData.controlPanelType}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.controlPanelType}
                 >
                   <option key="" value="">
@@ -3879,11 +5292,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   color={tabColors[activeTab]}
                   // formValueNm=""
                   setPrice="controlPanelTypePrice"
-                  setName="controlPanelTypeName"
-                  nameKey="controlPanelType"
-                  itemMainName="Control Panel Type"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+
+                  // setName="controlPanelTypeName"
+                  // nameKey="controlPanelType"
+                  // itemMainName="Control Panel Type"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData}
@@ -4008,7 +5422,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="guideRail"
                   value={formData.guideRail}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.guideRail}
                 >
                   <option key="" value="">
@@ -4036,11 +5453,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   options={initialOptions.guideRail}
                   formValue={formData.guideRail}
                   setPrice="guideRailPrice"
-                  setName="guideRailName"
-                  nameKey="counterWeightName"
-                  itemMainName="Guide Rail"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+
+                  // setName="guideRailName"
+                  // nameKey="counterWeightName"
+                  // itemMainName="Guide Rail"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
+
                   setFormData={setFormData}
                   formData={formData}
                   color={tabColors[activeTab]}
@@ -4054,7 +5473,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="bracketType"
                   value={formData.bracketType || ""}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.bracketType}
                 >
                   <option key="" value="">
@@ -4085,11 +5507,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   setPrice="bracketTypePrice"
                   setName="bracketTypeName"
                   // nameKey="bracketTypeName"
-                  nameKey={["bracketTypeName", "carBracketSubType"]}
-                  itemMainName="Bracket Type"
-                  itemUnit="Set"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+
+                  // nameKey={["bracketTypeName", "carBracketSubType"]}
+                  // itemMainName="Bracket Type"
+                  // itemUnit="Set"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
+
                   setFormData={setFormData}
                   formData={formData}
                   color={tabColors[activeTab]}
@@ -4103,7 +5527,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="ropingType"
                   value={formData.ropingType || ""}
-                  onChange={handleChangeWithReset}
+                  onChange={(e) => {
+                    handleChangeWithReset(e);
+                    // handleDropdownChange(e);
+                  }}
                   error={errors.ropingType}
                 >
                   <option key="" value="">
@@ -4155,7 +5582,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="lopType"
                   value={formData.lopType}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.lopType}
                 >
                   <option key="" value="">
@@ -4183,12 +5613,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   formValue={formData.lopType}
                   setPrice="lopTypePrice"
 
-                  setName="lopTypeName"
-                  nameKey="name"
-                  itemMainName="Lop Type"
-                  itemUnit="Set"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+                  // setName="lopTypeName"
+                  // nameKey="name"
+                  // itemMainName="Lop Type"
+                  // itemUnit="Set"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
 
                   setFormData={setFormData}
@@ -4207,7 +5637,10 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   required
                   name="copType"
                   value={formData.copType}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    handleChange(e);
+                    handleDropdownChange(e);
+                  }}
                   error={errors.copType}
                 >
                   <option key="" value="">
@@ -4235,12 +5668,12 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   formValue={formData.copType}
                   setPrice="copTypePrice"
 
-                  setName="copTypeName"
-                  nameKey="copName"
-                  itemMainName="Cop Type"
-                  itemUnit="Unit"
-                  lead_id={formData.leadId}
-                  lift={formData.liftType}
+                  // setName="copTypeName"
+                  // nameKey="copName"
+                  // itemMainName="Cop Type"
+                  // itemUnit="Unit"
+                  // lead_id={formData.leadId}
+                  // lift={formData.liftType}
 
                   setFormData={setFormData}
                   formData={formData}
@@ -4942,20 +6375,21 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   onChange={handleChange}
                   error={errors.ardAmount}
                 />
-                {/* {formData.ardAmount && formData.capacityType && formData.capacityValue && (
+                {formData.ardAmount && formData.capacityType && formData.capacityValue && (
                   <PriceBelowSelect
                     label={`Price for ${formData.capacityType === 1
                       ? initialOptions.personOptions?.find(opt => opt.id === Number(formData.capacityValue))?.displayName || ""
                       : initialOptions.kgOptions?.find(opt => opt.id === Number(formData.capacityValue))?.weightFull || ""
                       }`}
                     color={tabColors[activeTab]}
-                    isArdSystem={true}
-                    showPrice={false}
-                  lead_id={formData.leadId}   
-                  lift={formData.liftType}
-                  priceVal={formData.ardAmount} // ✅ now updated only when user selects
+                    // isArdSystem={true}
+                    isOnlyLabel={true}
+                    // showPrice={false}
+                    lead_id={formData.leadId}
+                    lift={formData.liftType}
+                    priceVal={formData.ardAmount} // ✅ now updated only when user selects
                   />
-                )} */}
+                )}
               </div>
 
 
@@ -5012,6 +6446,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
                   <PriceBelowSelect
                     label={`Price for ${formData.floorDesignations}`}
                     color={tabColors[activeTab]}
+                    isOnlyLabel={true}
                     isAirSystem={true}
                     showPrice={false}
                   // priceVal={formData.installationAmount} // ✅ now updated only when user selects
@@ -5153,13 +6588,13 @@ export default function LiftModal({ lift, onClose, onSave }) {
           {/* Quotation Price on left */}
           <div className="flex flex-col text-gray-700">
             {/* Tab totals in one line */}
-            <div className="flex gap-6 text-sm tracking-wide font-medium flex-wrap">
+            {/* <div className="flex gap-6 text-sm tracking-wide font-medium flex-wrap">
               {tabLabels.map((label, i) => (
                 <span key={i} className={tabColors[i]}>
                   {label}: ₹ {calculations.tabTotals[`tab${i + 1}`].toLocaleString()}
                 </span>
               ))}
-            </div>
+            </div> */}
 
             {/* Grand total below */}
             {/* <div className="text-xl font-bold mt-2 text-rose-700">
@@ -5243,6 +6678,11 @@ export default function LiftModal({ lift, onClose, onSave }) {
             {/* Machine */}
             <p>
               <span className="font-medium text-gray-800">Machine:</span> ₹{formData.machinePrice}
+              {Number(formData.machinePrice) > 0 && formData.capacityValue && (
+                <span className="block text-[10px] text-red-600">
+                  {machineContextMessage}
+                </span>
+              )}
             </p>
 
             {/* Harness */}
@@ -5434,7 +6874,7 @@ export default function LiftModal({ lift, onClose, onSave }) {
             <div className="text-rose-700 text-base font-bold flex items-center gap-2 mr-4">
               ₹{formData.totalAmount.toLocaleString()}
               <span className="text-xs font-normal text-gray-500 ml-1">
-                [{formData.totalAmountWithoutLoad} + {formData.loadAmt}]
+                [{formData.totalAmountWithoutGST} + {(formData.totalAmountWithoutGST * formData.tax) / 100} + {formData.loadAmt}]
               </span>
               <SmallPopover>
                 <h3 className="text-sm font-bold mb-2 text-green-700">Total Breakdown</h3>

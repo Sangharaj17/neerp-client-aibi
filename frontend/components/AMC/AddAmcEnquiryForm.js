@@ -154,7 +154,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
           displayName: p.displayName,
           convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
         }));
-        console.log(response.data,'Formatted persons:', formatted);
+        console.log(response.data, 'Formatted persons:', formatted);
 
         setPersonOptions(formatted); // Directly set formatted array
       })
@@ -385,14 +385,14 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
     let lessByOne = lift.noOfStops - 1;
 
-   // alert("noOfStops-1: " + lessByOne);
+    // alert("noOfStops-1: " + lessByOne);
 
-     const selectedFloor = floorOption.find((opt) => {
-  const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
-  return num === Number(lessByOne);
-});
+    const selectedFloor = floorOption.find((opt) => {
+      const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
+      return num === Number(lessByOne);
+    });
 
-let floorId = selectedFloor ? selectedFloor.id : null;
+    let floorId = selectedFloor ? selectedFloor.id : null;
 
 
     return {
@@ -425,7 +425,7 @@ let floorId = selectedFloor ? selectedFloor.id : null;
   };
 
   // Add this state
-const [siteName, setSiteName] = useState(site);
+  const [siteName, setSiteName] = useState(site);
 
 
   const handleSubmitj = async (event) => {
@@ -498,11 +498,28 @@ const [siteName, setSiteName] = useState(site);
       const currentLift = updatedLifts[index];
 
       if (field === 'noOfFloors') {
+        const selectedFloor = floorOption.find(opt => String(opt.id) === value);
 
-        currentLift.noOfStops = value ? parseInt(value, 10) : 0;
-        currentLift.noOfOpenings = value ? parseInt(value, 10) : 0;
-        currentLift.floorsDesignation = value ? `G + ${parseInt(value, 10) - 1}` : '';
+        if (selectedFloor) {
+          currentLift.noOfStops = selectedFloor.id;
+          //currentLift.noOfOpenings = selectedFloor.id * 2;
+          currentLift.noOfOpenings = selectedFloor.id;
 
+          if (selectedFloor.id === 1) {
+            // For Floor 1, use its own name
+            currentLift.floorsDesignation = selectedFloor.name;
+          } else {
+            // Find the floor option with an ID one less than the selected one
+            const floorOneLess = floorOption.find(opt => opt.id === selectedFloor.id - 1);
+
+            // Use the name of that found option, or default to an empty string
+            currentLift.floorsDesignation = floorOneLess?.name || '';
+          }
+        } else {
+          currentLift.noOfStops = 0;
+          currentLift.noOfOpenings = 0;
+          currentLift.floorsDesignation = '';
+        }
       }
 
       // Handle floor selection changes
@@ -668,51 +685,51 @@ const [siteName, setSiteName] = useState(site);
 
         {/* Label + Dropdown */}
         <div className="flex items-center gap-6">
-  {/* Enquiry Type Select */}
-  <div className="flex items-center gap-2">
-    <label
-      htmlFor="enquiryTypeId"
-      className="text-gray-600 text-xs font-medium whitespace-nowrap"
-    >
-      Select Enquiry Type
-    </label>
-    <select
-      id="enquiryTypeId"
-      name="enquiryTypeId"
-      className="border text-sm rounded px-2 py-1"
-      value={typeId || ""}
-      onChange={handleEnquiryTypeChange}
-    >
-      <option value="" disabled>
-        Select
-      </option>
-      {enquiryTypes.map((type) => (
-        <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
-          {type.enquiryTypeName}
-        </option>
-      ))}
-    </select>
-  </div>
+          {/* Enquiry Type Select */}
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="enquiryTypeId"
+              className="text-gray-600 text-xs font-medium whitespace-nowrap"
+            >
+              Select Enquiry Type
+            </label>
+            <select
+              id="enquiryTypeId"
+              name="enquiryTypeId"
+              className="border text-sm rounded px-2 py-1"
+              value={typeId || ""}
+              onChange={handleEnquiryTypeChange}
+            >
+              <option value="" disabled>
+                Select
+              </option>
+              {enquiryTypes.map((type) => (
+                <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
+                  {type.enquiryTypeName}
+                </option>
+              ))}
+            </select>
+          </div>
 
-  {/* Site Name Input */}
-  <div className="flex items-center gap-2">
-    <label
-      htmlFor="siteName"
-      className="text-gray-600 text-xs font-medium whitespace-nowrap"
-    >
-      Site Name
-    </label>
-    <input
-      type="text"
-      id="siteName"
-      name="siteName"
-      value={siteName}
-      onChange={(e) => setSiteName(e.target.value)}
-      className="border text-sm rounded px-2 py-1"
-      placeholder="Enter site name"
-    />
-  </div>
-</div>
+          {/* Site Name Input */}
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="siteName"
+              className="text-gray-600 text-xs font-medium whitespace-nowrap"
+            >
+              Site Name
+            </label>
+            <input
+              type="text"
+              id="siteName"
+              name="siteName"
+              value={siteName}
+              onChange={(e) => setSiteName(e.target.value)}
+              className="border text-sm rounded px-2 py-1"
+              placeholder="Enter site name"
+            />
+          </div>
+        </div>
 
 
         {/* Floors info shifted right */}
@@ -953,7 +970,7 @@ const [siteName, setSiteName] = useState(site);
 
               {/* No. of Stops */}
               <Select
-              disabled
+                disabled
                 label="No. of Stops *"
                 value={String(lift.noOfStops || "")}
                 onChange={(e) => handleLiftChange(index, "noOfStops", Number(e.target.value))}
@@ -968,7 +985,7 @@ const [siteName, setSiteName] = useState(site);
 
               {/* No. of Openings */}
               <Select
-              disabled
+                disabled
                 label="No. of Openings *"
                 value={String(lift.noOfOpenings || "")}
                 onChange={(e) => handleLiftChange(index, "noOfOpenings", Number(e.target.value))}

@@ -12,6 +12,7 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
     floorDesignations,
     carTravel,
     stops,
+    floorSelectionLabels,
     shaftWidth,
     shaftDepth,
     machineRoomName,
@@ -43,7 +44,7 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
   const capacity = capacityType == 1 ? personCapacityName : weightName;
   const carTravel1 = carTravel / 1000;
   const carSize = `${carInternalWidth} mm Width, ${carInternalDepth} mm Depth`;
-  const noFloorLandingSecond = landingEntranceSubType2_toFloor - landingEntranceSubType2_fromFloor;
+  const noFloorLandingSecond = landingEntranceSubType2_toFloor - landingEntranceSubType2_fromFloor + 1;
   const carEnteranceSize = `${carInternalDepth} mm Depth, ${carInternalHeight} mm Height`;
 
   let liftHtml = `   
@@ -153,7 +154,7 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
         </tr>
 
         ${row("Car Travel", `${floorDesignations} rises – About ${carTravel1} M`)}
-        ${row("No. of Stops", `0${stops} Nos`)}
+        ${row("No. of Stops", `0${stops} Nos [${floorDesignations}, ${floorSelectionLabels}]` )}
         ${row("Shaft Size", `${shaftWidth} mm W × ${shaftDepth} mm D`)}
         ${row("Machine Room", machineRoomName)}
         ${row("Pit Depth", `${pitDepth} mm`)}
