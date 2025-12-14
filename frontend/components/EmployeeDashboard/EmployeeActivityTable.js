@@ -49,16 +49,16 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                 <table className="w-full text-sm text-left">
                     <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                         <tr>
-                            <th className="px-6 py-4 w-16">Sr No</th>
-                            <th className="px-6 py-4">Employee Name</th>
-                            <th className="px-6 py-4 text-center bg-blue-50/50">Assigned Service</th>
-                            <th className="px-6 py-4 text-center bg-blue-50/50">Unassigned Service</th>
-                            <th className="px-6 py-4 text-center bg-orange-50/50">Assigned Breakdown</th>
-                            <th className="px-6 py-4 text-center bg-orange-50/50">Unassigned Breakdown</th>
-                            <th className="px-6 py-4 text-center font-bold">Total Service</th>
-                            <th className="px-6 py-4 text-center font-bold">Total Breakdown</th>
-                            <th className="px-6 py-4 text-center">Total Assigned AMC</th>
-                            <th className="px-6 py-4"></th>
+                            <th className="px-4 py-2 w-16">Sr No</th>
+                            <th className="px-4 py-2">Employee Name</th>
+                            <th className="px-4 py-2 text-center bg-blue-50/50">Assigned Service</th>
+                            <th className="px-4 py-2 text-center bg-blue-50/50">Unassigned Service</th>
+                            <th className="px-4 py-2 text-center bg-orange-50/50">Assigned Breakdown</th>
+                            <th className="px-4 py-2 text-center bg-orange-50/50">Unassigned Breakdown</th>
+                            <th className="px-4 py-2 text-center font-bold">Total Service</th>
+                            <th className="px-4 py-2 text-center font-bold">Total Breakdown</th>
+                            <th className="px-4 py-2 text-center">Total Assigned AMC</th>
+                            <th className="px-4 py-2"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200">
@@ -68,35 +68,37 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                                 className="hover:bg-slate-50 transition-colors cursor-pointer group"
                                 onClick={() => onEmployeeClick(emp)}
                             >
-                                <td className="px-6 py-4 font-medium text-slate-500">
+                                <td className="px-4 py-2 font-medium text-slate-500">
                                     {index + 1}
                                 </td>
-                                <td className="px-6 py-4 font-medium text-slate-900">
+                                <td className="px-4 py-2 font-medium text-slate-900">
                                     {emp.empName}
                                 </td>
-                                <td className="px-6 py-4 text-center bg-blue-50/30 text-blue-700 font-medium">
+                                <td className="px-4 py-2 text-center bg-blue-50/30 text-blue-700 font-medium">
                                     {emp.assignedDoneServiceCounts || 0}
                                 </td>
-                                <td className="px-6 py-4 text-center bg-blue-50/30 text-blue-600">
+                                <td className="px-4 py-2 text-center bg-blue-50/30 text-blue-600">
                                     {emp.unassignedDoneServiceCounts || 0}
                                 </td>
-                                <td className="px-6 py-4 text-center bg-orange-50/30 text-orange-700 font-medium">
+                                <td className="px-4 py-2 text-center bg-orange-50/30 text-orange-700 font-medium">
                                     {emp.assignedDoneBreakdownCounts || 0}
                                 </td>
-                                <td className="px-6 py-4 text-center bg-orange-50/30 text-orange-600">
+                                <td className="px-4 py-2 text-center bg-orange-50/30 text-orange-600">
                                     {emp.unassignedDoneBreakdownCounts || 0}
                                 </td>
-                                <td className="px-6 py-4 text-center font-bold text-slate-700">
+                                <td className="px-4 py-2 text-center font-bold text-slate-700">
                                     {emp.totalServiceDoneCounts || 0}
                                 </td>
-                                <td className="px-6 py-4 text-center font-bold text-slate-700">
+                                <td className="px-4 py-2 text-center font-bold text-slate-700">
                                     {emp.totalBreakDownDoneCounts || 0}
                                 </td>
-                                <td className="px-6 py-4 text-center text-slate-500">
+                                <td className="px-4 py-2 text-center text-slate-500">
                                     {emp.totalAssignedAmcJobs || 0}
                                 </td>
-                                <td className="px-6 py-4 text-right">
-                                    <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors inline-block" />
+                                <td className="px-4 py-2 text-right">
+                                    <button className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 rounded text-xs font-semibold transition-colors shadow-sm">
+                                        View
+                                    </button>
                                 </td>
                             </tr>
                         ))}

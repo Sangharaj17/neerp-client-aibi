@@ -15,30 +15,69 @@ export default function TopEmployeesChart({ data }) {
     // Recharts expects array of objects
     const chartData = data.emplActivityDatas;
 
+    const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white p-3 border border-slate-100 shadow-xl rounded-lg">
+                    <p className="font-semibold text-slate-800 mb-2">{label}</p>
+                    {payload.map((entry, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm mb-1">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
+                            <span className="text-slate-500 capitalize">{entry.name}:</span>
+                            <span className="font-medium text-slate-700">{entry.value}</span>
+                        </div>
+                    ))}
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center text-sm font-medium">
+                        <span className="text-slate-500">Total:</span>
+                        <span className="text-slate-800">
+                            {payload.reduce((sum, entry) => sum + entry.value, 0)}
+                        </span>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
         <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm h-full">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Top Employees by Activity</h3>
+            <h3 className="text-lg font-semibold text-slate-800 mb-6">Top Employees by Activity</h3>
             <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         data={chartData}
-                        layout="vertical"
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+                        barSize={32}
                     >
-                        <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                        <XAxis type="number" />
-                        <YAxis
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis
                             dataKey="empname"
-                            type="category"
-                            width={150}
-                            tick={{ fontSize: 12 }}
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#64748b', fontSize: 12 }}
+                            dy={10}
                         />
-                        <Tooltip
-                            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        <YAxis
+                            axisLine={false}
+                            tickLine={false}
+                            tick={{ fill: '#64748b', fontSize: 12 }}
                         />
-                        <Legend />
-                        <Bar dataKey="serviceActivityCount" name="Service" stackId="a" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-                        <Bar dataKey="breakDownActivityCount" name="Breakdown" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
+                        <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                        <Bar
+                            dataKey="serviceActivityCount"
+                            name="Service"
+                            stackId="a"
+                            fill="#6366f1" // Indigo 500
+                            radius={[0, 0, 4, 4]} // Rounded bottom for bottom stack? No, usually middle is straight
+                        />
+                        <Bar
+                            dataKey="breakDownActivityCount"
+                            name="Breakdown"
+                            stackId="a"
+                            fill="#ec4899" // Pink 500
+                            radius={[4, 4, 0, 0]} // Rounded top
+                        />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
