@@ -82,50 +82,35 @@ public class EmplDashboardReportService {
 	 * Get top employees by activity data within a date range
 	 */
 	public TopEmplByActivityData topEmplByActivityData(LocalDate startDate, LocalDate endDate) {
-		try {
-			if (startDate == null || endDate == null) {
-				return TopEmplByActivityData.builder()
-						.emplActivityDatas(new ArrayList<>())
-						.build();
-			}
-			
-			if (startDate.isAfter(endDate)) {
-				return TopEmplByActivityData.builder()
-						.emplActivityDatas(new ArrayList<>())
-						.build();
-			}
-			
-			// Fetch filtered data directly from repository
-			List<AmcJobActivity> amcJobActivities = 
-					amcJobActivityRepository.findByActivityDateBetween(startDate, endDate);
-			
-			System.out.println("amcJobActivities size is");
-			System.out.println(amcJobActivities.size());
-			
-			List<AmcRenewalJobActivity> amcRenewalJobActivities = 
-					amcRenewalJobActivityRepository.findByActivityDateBetween(startDate, endDate);
-			
-			// Build activity count map
-			Map<Integer, EmplActivityData> empActivityMap = new HashMap<>();
-			processAmcJobActivities(empActivityMap, amcJobActivities);
-			processAmcRenewalJobActivities(empActivityMap, amcRenewalJobActivities);
-			
-			// Get top 10 employees by total activity count
-			List<EmplActivityData> top10Employees = empActivityMap.values().stream()
-					.sorted(Comparator.comparingInt(this::getTotalActivityCount).reversed())
-					.limit(TOP_EMPLOYEES_LIMIT)
-					.collect(Collectors.toList());
-			
-			return TopEmplByActivityData.builder()
-					.emplActivityDatas(top10Employees)
-					.build();
-					
-		} catch (Exception e) {
-			return TopEmplByActivityData.builder()
-					.emplActivityDatas(new ArrayList<>())
-					.build();
-		}
+
+	    if (startDate == null || endDate == null) {
+	        throw new IllegalArgumentException("Start date and end date must not be null");
+	    }
+
+	    if (startDate.isAfter(endDate)) {
+	        throw new IllegalArgumentException("Start date cannot be after end date");
+	    }
+
+	    List<AmcJobActivity> amcJobActivities =
+	            amcJobActivityRepository.findByActivityDateBetween(startDate, endDate);
+
+	    List<AmcRenewalJobActivity> amcRenewalJobActivities =
+	            amcRenewalJobActivityRepository.findByActivityDateBetween(startDate, endDate);
+
+	    Map<Integer, EmplActivityData> empActivityMap = new HashMap<>();
+	    processAmcJobActivities(empActivityMap, amcJobActivities);
+	    processAmcRenewalJobActivities(empActivityMap, amcRenewalJobActivities);
+
+	    List<EmplActivityData> top10Employees = empActivityMap.values().stream()
+	            .sorted(Comparator.comparingInt(this::getTotalActivityCount).reversed())
+	            .limit(TOP_EMPLOYEES_LIMIT)
+	            .collect(Collectors.toList());
+
+	    return TopEmplByActivityData.builder()
+	            .emplActivityDatas(top10Employees)
+	            .build();
 	}
+
 	
 	private void processAmcJobActivities(Map<Integer, EmplActivityData> empActivityMap, 
 			List<AmcJobActivity> amcJobActivities) {

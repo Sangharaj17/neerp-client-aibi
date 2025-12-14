@@ -36,41 +36,24 @@ public class EmployeeDashboardReportController {
      * @return TopEmplByActivityData containing top 10 employees
      */
     @GetMapping("/top-activity-employees")
-    public ResponseEntity<TopEmplByActivityData> getTopEmployeesByActivity(
+    public ResponseEntity<?> getTopEmployeesByActivity(
             @RequestParam("startDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam("endDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        try {
-            log.info("Fetching top employees by activity for date range: {} to {}", startDate, endDate);
-            
-            // Validate date parameters
-            if (startDate == null || endDate == null) {
-                log.warn("Invalid request: startDate or endDate is null");
-                return ResponseEntity.badRequest().build();
-            }
+        log.info("Fetching top employees by activity for date range: {} to {}", startDate, endDate);
 
-            if (startDate.isAfter(endDate)) {
-                log.warn("Invalid request: startDate {} is after endDate {}", startDate, endDate);
-                return ResponseEntity.badRequest().build();
-            }
+        TopEmplByActivityData result =
+                emplDashboardReportService.topEmplByActivityData(startDate, endDate);
 
-            TopEmplByActivityData result = emplDashboardReportService.topEmplByActivityData(startDate, endDate);
-            
-            if (result == null || result.getEmplActivityDatas() == null) {
-                log.info("No data found for date range: {} to {}", startDate, endDate);
-                return ResponseEntity.noContent().build();
-            }
-
-            log.info("Successfully retrieved {} top employees by activity", result.getEmplActivityDatas().size());
-            return ResponseEntity.ok(result);
-
-        } catch (Exception e) {
-            log.error("Error fetching top employees by activity for date range: {} to {}", startDate, endDate, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        if (result.getEmplActivityDatas().isEmpty()) {
+            return ResponseEntity.noContent().build();
         }
+
+        return ResponseEntity.ok(result);
     }
+
 
     /**
      * Get yearly monthly activity data for the last 12 months
