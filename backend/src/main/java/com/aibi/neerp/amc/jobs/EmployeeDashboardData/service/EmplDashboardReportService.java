@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.RouteMatcher.Route;
 
 import com.aibi.neerp.amc.common.entity.JobActivityType;
@@ -81,6 +82,7 @@ public class EmplDashboardReportService {
 	/**
 	 * Get top employees by activity data within a date range
 	 */
+	@Transactional
 	public TopEmplByActivityData topEmplByActivityData(LocalDate startDate, LocalDate endDate) {
 
 	    if (startDate == null || endDate == null) {
