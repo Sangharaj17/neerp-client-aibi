@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Search, Filter } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Filter, FileText } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading }) {
     const [searchTerm, setSearchTerm] = useState("");
@@ -11,6 +12,32 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
         e.stopPropagation(); // Prevent row click double trigger if row also has handler
         setNavigatingEmpId(emp.empId);
         onEmployeeClick(emp);
+    };
+
+    const handleExport = () => {
+        if (!data || data.length === 0) return;
+
+        // Use filteredData if search is active, otherwise all data
+        const dataToExport = searchTerm ? filteredData : data;
+
+        const excelData = dataToExport.map((emp, index) => ({
+            "Sr No": index + 1,
+            "Employee Name": emp.empName,
+            "Assigned Service": emp.assignedDoneServiceCounts || 0,
+            "Unassigned Service": emp.unassignedDoneServiceCounts || 0,
+            "Assigned Breakdown": emp.assignedDoneBreakdownCounts || 0,
+            "Unassigned Breakdown": emp.unassignedDoneBreakdownCounts || 0,
+            "Total Service": emp.totalServiceDoneCounts || 0,
+            "Total Breakdown": emp.totalBreakDownDoneCounts || 0,
+            "Total Assigned AMC": emp.totalAssignedAmcJobs || 0
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Employee_Activities");
+
+        const fileName = `Employee_Activity_Summary_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     };
 
     if (isLoading) {
@@ -40,15 +67,24 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                     Employee Activity Details <span className="text-slate-500 text-sm font-normal ml-2">({data.length} Employees)</span>
                 </h3>
 
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Search employee..."
-                        className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex gap-4 w-full sm:w-auto">
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors bg-white shadow-sm"
+                        title="Export to Excel"
+                    >
+                        <FileText className="w-4 h-4 text-green-600" /> Export
+                    </button>
+                    <div className="relative w-full sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search employee..."
+                            className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </div>
 

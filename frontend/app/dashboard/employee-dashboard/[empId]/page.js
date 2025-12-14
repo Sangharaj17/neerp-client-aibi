@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getActivities, getRenewalJobActivities } from '@/services/employeeDashboardApi';
 import dayjs from 'dayjs';
+import * as XLSX from 'xlsx';
 
 export default function EmployeeDetailsPage({ params }) {
     // Params and SearchParams
@@ -17,8 +18,8 @@ export default function EmployeeDetailsPage({ params }) {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const startDate = searchParams.get('startDate') || dayjs().startOf('month').format('YYYY-MM-DD');
-    const endDate = searchParams.get('endDate') || dayjs().endOf('month').format('YYYY-MM-DD');
+    const initialStartDate = searchParams.get('startDate') || dayjs().startOf('month').format('YYYY-MM-DD');
+    const initialEndDate = searchParams.get('endDate') || dayjs().endOf('month').format('YYYY-MM-DD');
     const empName = searchParams.get('empName') || 'Employee';
 
     // State
@@ -30,8 +31,8 @@ export default function EmployeeDetailsPage({ params }) {
 
     // Date filter state (default from URL or current month)
     const [filterDates, setFilterDates] = useState({
-        startDate: searchParams.get('startDate') || dayjs().startOf('month').format('YYYY-MM-DD'),
-        endDate: searchParams.get('endDate') || dayjs().endOf('month').format('YYYY-MM-DD')
+        startDate: initialStartDate,
+        endDate: initialEndDate
     });
 
     // Pagination State
@@ -55,6 +56,30 @@ export default function EmployeeDetailsPage({ params }) {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleExportToExcel = () => {
+        if (!activities || activities.length === 0) return;
+
+        // Flatten data for Excel
+        const excelData = activities.map((item, index) => ({
+            "Sr No": index + 1,
+            "Date": item.activityDate,
+            "Customer Name": item.customerName,
+            "Site Name": item.siteName,
+            "Site Address": item.siteaddress,
+            "Technicians": item.assignedTechnicians?.map(t => t.name).join(", ") || "",
+            "Status": "Completed",
+            "Description": item.description,
+            "Activity By": item.activityBy
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Activities");
+
+        const fileName = `Activity_Report_${empName.replace(/\s+/g, '_')}_${filterDates.startDate}_${filterDates.endDate}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     };
 
     const fetchData = async () => {
@@ -183,6 +208,15 @@ export default function EmployeeDetailsPage({ params }) {
                                 <AlertTriangle className="w-3.5 h-3.5" /> Breakdown
                             </button>
                         </div>
+
+                        {/* Export Button */}
+                        <button
+                            onClick={handleExportToExcel}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors bg-white shadow-sm"
+                            title="Export to Excel"
+                        >
+                            <FileText className="w-3.5 h-3.5 text-green-600" /> Export Excel
+                        </button>
                     </div>
 
                     {/* View Toggle */}
@@ -352,7 +386,7 @@ export default function EmployeeDetailsPage({ params }) {
                                         key={p}
                                         onClick={() => handlePageChange(p)}
                                         className={`w-8 h-8 rounded text-sm font-medium transition-colors ${currentPage === p
-                                            ? 'bg-blue-600 text-white shadow-sm'
+                                            ? 'bg-indigo-600 text-white shadow-sm'
                                             : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                                             }`}
                                     >
