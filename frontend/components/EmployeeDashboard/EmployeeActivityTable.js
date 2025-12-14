@@ -5,6 +5,13 @@ import { ChevronDown, ChevronRight, Search, Filter } from 'lucide-react';
 
 export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading }) {
     const [searchTerm, setSearchTerm] = useState("");
+    const [navigatingEmpId, setNavigatingEmpId] = useState(null);
+
+    const handleViewClick = (e, emp) => {
+        e.stopPropagation(); // Prevent row click double trigger if row also has handler
+        setNavigatingEmpId(emp.empId);
+        onEmployeeClick(emp);
+    };
 
     if (isLoading) {
         return (
@@ -38,7 +45,7 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                     <input
                         type="text"
                         placeholder="Search employee..."
-                        className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -66,7 +73,7 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                             <tr
                                 key={index}
                                 className="hover:bg-slate-50 transition-colors cursor-pointer group"
-                                onClick={() => onEmployeeClick(emp)}
+                                onClick={(e) => handleViewClick(e, emp)}
                             >
                                 <td className="px-4 py-2 font-medium text-slate-500">
                                     {index + 1}
@@ -96,8 +103,15 @@ export default function EmployeeActivityTable({ data, onEmployeeClick, isLoading
                                     {emp.totalAssignedAmcJobs || 0}
                                 </td>
                                 <td className="px-4 py-2 text-right">
-                                    <button className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 rounded text-xs font-semibold transition-colors shadow-sm">
-                                        View
+                                    <button
+                                        className="px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 rounded text-xs font-semibold transition-colors shadow-sm flex items-center justify-center min-w-[60px]"
+                                        disabled={navigatingEmpId === emp.empId}
+                                    >
+                                        {navigatingEmpId === emp.empId ? (
+                                            <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                                        ) : (
+                                            "View"
+                                        )}
                                     </button>
                                 </td>
                             </tr>
