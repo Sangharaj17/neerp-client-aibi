@@ -52,7 +52,8 @@ import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import lombok.AllArgsConstructor;
 
 @Service
-public class EmplDashboardReportService {
+	@Transactional(readOnly = true)
+	public class EmplDashboardReportService {
 	
 	private static final int TOP_EMPLOYEES_LIMIT = 10;
 	
@@ -82,7 +83,7 @@ public class EmplDashboardReportService {
 	/**
 	 * Get top employees by activity data within a date range
 	 */
-	//@Transactional
+	@Transactional
 	public TopEmplByActivityData topEmplByActivityData(LocalDate startDate, LocalDate endDate) {
 
 	    if (startDate == null || endDate == null) {
