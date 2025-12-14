@@ -82,7 +82,7 @@ public class EmplDashboardReportService {
 	/**
 	 * Get top employees by activity data within a date range
 	 */
-	@Transactional
+	//@Transactional
 	public TopEmplByActivityData topEmplByActivityData(LocalDate startDate, LocalDate endDate) {
 
 	    if (startDate == null || endDate == null) {
