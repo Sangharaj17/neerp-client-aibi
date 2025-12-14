@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import com.aibi.neerp.amc.common.entity.JobActivityType;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.leadmanagement.entity.Enquiry;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "tbl_amc_job_activity")
@@ -72,6 +73,7 @@ public class AmcJobActivity {
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
+    @JsonIgnore
     @Column(name = "signature_value", nullable = true)
     private byte[] signatureValue;
 
