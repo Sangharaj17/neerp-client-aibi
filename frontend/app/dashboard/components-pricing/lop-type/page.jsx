@@ -283,19 +283,21 @@ export default function LopTypeAndSubType() {
     //     subForm.lopType
     // );
     // Check for duplicate
-    const isDuplicate = lopSubTypes.some(
-      (t) =>
-        //t.name?.toUpperCase() === name &&
-        t.operatorTypeId === Number(subForm.operatorTypeId) &&
-        t.lopTypeId === Number(subForm.lopType) &&
-        t.floorId === Number(subForm.floor) &&
-        t.subTypeId !== editSubId
-    );
-    if (isDuplicate) {
-      toast.error(
-        "LOP SubType already exists with selected Operator, floor and Door Type."
+    if (!editSubId) {
+      const isDuplicate = lopSubTypes.some(
+        (t) =>
+          //t.name?.toUpperCase() === name &&
+          t.operatorTypeId === Number(subForm.operatorTypeId) &&
+          t.lopTypeId === Number(subForm.lopType) &&
+          t.floorId === Number(subForm.floor) &&
+          t.subTypeId !== editSubId
       );
-      return;
+      if (isDuplicate) {
+        toast.error(
+          "LOP SubType already exists with selected Operator, floor and Door Type."
+        );
+        return;
+      }
     }
 
     try {

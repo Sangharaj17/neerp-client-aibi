@@ -47,12 +47,14 @@ export default function CabinCeiling() {
       return;
     }
 
-    const isDuplicate = cabinCeilings.some(
-      (lt) => lt.ceilingName.toUpperCase() === name && lt.id !== editId
-    );
-    if (isDuplicate) {
-      toast.error("Cabin Ceiling already exists");
-      return;
+    if (!editId) {
+      const isDuplicate = cabinCeilings.some(
+        (lt) => lt.ceilingName.toUpperCase() === name && lt.id !== editId
+      );
+      if (isDuplicate) {
+        toast.error("Cabin Ceiling already exists");
+        return;
+      }
     }
 
     try {
@@ -231,15 +233,15 @@ export default function CabinCeiling() {
           >
             {editId ? "Update" : "ADD"}
           </button>
-          {editId && (
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-          )}
+          {/* {editId && ( */}
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          {/* )} */}
         </form>
       </div>
       <ReusableTable

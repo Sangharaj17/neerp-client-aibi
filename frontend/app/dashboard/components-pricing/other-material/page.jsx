@@ -868,9 +868,9 @@ export default function OtherMaterialPage() {
         icon={SlidersHorizontal}
       />
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-800 flex items-center gap-2 mb-3">
-          <SquareStack className="w-5 h-5 text-gray-600" />
+      <div className="bg-gray-100 border border-blue-200 rounded-lg p-6">
+        <h2 className="text-lg font-medium text-blue-800 flex items-center gap-2 mb-3">
+          <SquareStack className="w-5 h-5 text-blue-600" />
           Other Matrials Types
         </h2>
 
@@ -945,13 +945,16 @@ export default function OtherMaterialPage() {
       </div>
 
       {/* Form Section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h2 className="text-lg font-medium text-gray-800 flex items-center gap-2 mb-3">
+      <div className="bg-gray-100 border border-blue-200 rounded-lg p-6">
+        <h2 className="text-lg font-medium text-blue-800 flex items-center gap-2 mb-3">
           <SquareStack className="w-5 h-5 text-gray-600" />
           Other Matrials
         </h2>
         {/* Other material Type Form */}
-        <ResponsiveForm onSubmit={handleSubmit}>
+        <ResponsiveForm
+          onSubmit={handleSubmit}
+          className=" grid-cols-1 sm:grid-cols-2 lg:grid-cols-6"
+        >
           {/* <FormInput
             type="text"
             placeholder="Other Material Name"
@@ -1172,7 +1175,7 @@ export default function OtherMaterialPage() {
           onDelete={(id) => handleDelete(id)}
           searchTerm={typeSearch}
           onSearchChange={setTypeSearch}
-          height="250px"
+          height="450px"
           pageSize={10}
           combineActions={false}
           loading={loading}
