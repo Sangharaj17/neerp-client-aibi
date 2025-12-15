@@ -29,7 +29,7 @@ export async function POST(request) {
 
     // Validate email exists in backend first (optional - don't block if backend endpoints don't exist)
     const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-    
+
     try {
       // Check if email exists in backend (validate user exists)
       // This is optional - if backend endpoints don't exist, we'll still send the email
@@ -51,7 +51,7 @@ export async function POST(request) {
               'X-Tenant': tenant,
             },
           });
-          
+
           if (!userResponse.ok && userResponse.status === 404) {
             // Email doesn't exist - but we'll still send email for security (don't reveal if email exists)
           }
@@ -72,7 +72,7 @@ export async function POST(request) {
     // Store token in backend (required for validation)
     try {
       const storeUrl = `${backendUrl}/api/password-reset/store-token`;
-      
+
       const storeResponse = await fetch(storeUrl, {
         method: 'POST',
         headers: {
@@ -98,7 +98,7 @@ export async function POST(request) {
     const protocol = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '');
     const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || url.host;
     const baseUrl = `${protocol}://${host}`;
-    
+
     // Create reset link
     const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}`;
 
