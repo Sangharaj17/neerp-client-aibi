@@ -93,11 +93,13 @@ const NavigationAccordion = () => {
   useEffect(() => {
     const newOpenSections = {};
     menuSections.forEach(section => {
-      if (section.hasSubmenu && section.submenu) {
-        const isActive = section.submenu.some(item => pathname === item.href);
-        if (isActive) {
-          newOpenSections[section.id] = true;
-        }
+      // Check if any submenu item is active
+      const isSubmenuActive = section.hasSubmenu && section.submenu && section.submenu.some(item => pathname === item.href);
+      // Check if the section itself is active (for sections with both href and submenu)
+      const isParentActive = section.href && pathname === section.href;
+
+      if (isSubmenuActive || isParentActive) {
+        newOpenSections[section.id] = true;
       }
     });
     setOpenSections(newOpenSections);
@@ -190,6 +192,7 @@ const NavigationAccordion = () => {
       title: 'Components & Pricing',
       icon: Package,
       hasSubmenu: true,
+      href: '/dashboard/components-pricing',
       submenu: componentsPricingSubmenu,
     },
     {
@@ -316,22 +319,31 @@ const NavigationAccordion = () => {
             <div key={section.id}>
               {section.hasSubmenu ? (
                 <div className="space-y-0.5">
-                  <button
-                    onClick={() => toggleSection(section.id)}
-                    title={section.title}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                      ? 'text-slate-900 bg-slate-100'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  <div
+                    className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${isActive
+                      ? "text-slate-900 bg-slate-100"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                       }`}
+                    onClick={() => {
+                      toggleSection(section.id);
+                      if (section.href) {
+                        router.push(section.href);
+                      }
+                    }}
+                    title={section.title}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-slate-500'}`} />
+                      <Icon
+                        className={`w-4 h-4 ${isActive ? "text-slate-900" : "text-slate-500"
+                          }`}
+                      />
                       <span>{section.title}</span>
                     </div>
                     <ChevronRight
-                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-90" : ""
+                        }`}
                     />
-                  </button>
+                  </div>
 
                   {isOpen && (
                     <div className="pl-9 pr-2 py-1 space-y-0.5 animate-in slide-in-from-top-1 duration-200">

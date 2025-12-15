@@ -23,6 +23,7 @@ export default function AirManagement() {
   const [airTypeForm, setAirTypeForm] = useState({ name: "", status: true });
   const [editAirTypeId, setEditAirTypeId] = useState(null);
   const [airTypeSearch, setAirTypeSearch] = useState("");
+  const [airSystemSearch, setAirSystemSearch] = useState("");
 
   const [airSystems, setAirSystems] = useState([]);
   const [capacityTypes, setCapacityTypes] = useState([]);
@@ -59,7 +60,8 @@ export default function AirManagement() {
       label: "Status",
       sortable: true,
       align: "text-center",
-      render: (value) => (value ? "Active" : "Inactive"),
+      render: (item) =>
+        item.status === true || item.status === "true" ? "Active" : "Inactive",
     },
   ];
 
@@ -132,12 +134,11 @@ export default function AirManagement() {
   const fetchAirTypes = async () => {
     try {
       //const res = await axiosInstance.get("/api/air-type", {
-      const res = await axiosInstance.get(API_ENDPOINTS.AIR_TYPE, {
-      });
+      const res = await axiosInstance.get(API_ENDPOINTS.AIR_TYPE, {});
 
       if (res.data.success) {
         setAirTypes(res.data.data);
-        //console.log(res.data.data);
+        // console.log(res.data.data);
       }
     } catch (err) {
       console.error("Failed to fetch Air Types:", err);
@@ -147,8 +148,7 @@ export default function AirManagement() {
   const fetchAirSystems = async () => {
     try {
       // const res = await axiosInstance.get("/api/air-system", {
-      const res = await axiosInstance.get(API_ENDPOINTS.AIR_SYSTEM, {
-      });
+      const res = await axiosInstance.get(API_ENDPOINTS.AIR_SYSTEM, {});
 
       if (res.data.success) {
         setAirSystems(res.data.data);
@@ -163,12 +163,9 @@ export default function AirManagement() {
       const tenant = localStorage.getItem("tenant");
 
       const [capRes, personRes, weightRes] = await Promise.all([
-        axiosInstance.get(API_CAPACITY_URL, {
-        }),
-        axiosInstance.get(API_PERSON_CAPACITY_URL, {
-        }),
-        axiosInstance.get(API_WEIGHTS_URL, {
-        }),
+        axiosInstance.get(API_CAPACITY_URL, {}),
+        axiosInstance.get(API_PERSON_CAPACITY_URL, {}),
+        axiosInstance.get(API_WEIGHTS_URL, {}),
       ]);
 
       const capData = capRes.data;
@@ -230,8 +227,7 @@ export default function AirManagement() {
 
     const httpMethod = method.toLowerCase();
 
-    const res = await axiosInstance[httpMethod](url, airTypeForm, {
-    });
+    const res = await axiosInstance[httpMethod](url, airTypeForm, {});
 
     if (res.data.success) {
       toast.success(
@@ -411,13 +407,12 @@ export default function AirManagement() {
           //   type === "airType"
           //     ? `/api/air-type/${id}`
           //     : `/api/air-system/${id}`;
-          const url = 
-          type === "airType"
-            ? `${API_ENDPOINTS.AIR_TYPE}/${id}`
-            : `${API_ENDPOINTS.AIR_SYSTEM}/${id}`;
+          const url =
+            type === "airType"
+              ? `${API_ENDPOINTS.AIR_TYPE}/${id}`
+              : `${API_ENDPOINTS.AIR_SYSTEM}/${id}`;
 
-          const res = await axiosInstance.delete(url, {
-          });
+          const res = await axiosInstance.delete(url, {});
 
           const result = res.data;
 
@@ -537,31 +532,34 @@ export default function AirManagement() {
             <FormButton type="submit" variant="primary">
               {editAirTypeId ? "Update" : "Add"}
             </FormButton>
-            {editAirTypeId && (
-              <FormButton
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setEditAirTypeId(null);
-                  setAirTypeForm({ name: "", status: true });
-                }}
-              >
-                Cancel
-              </FormButton>
-            )}
+            {/* {editAirTypeId && ( */}
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setEditAirTypeId(null);
+                setAirTypeForm({ name: "", status: true });
+              }}
+            >
+              Cancel
+            </FormButton>
+            {/* )} */}
           </div>
         </ResponsiveForm>
 
         <ReusableTable
           title="Air Type List"
           columns={columnsAirType}
-          data={airTypes.map((t) => ({
-            ...t,
-            status: t.status ? "Active" : "Inactive",
-          }))}
+          data={airTypes}
           onEdit={(item) => {
-            setEditAirTypeId(item.id);
-            setAirTypeForm({ name: item.name, status: Boolean(item.status) });
+            const originalItem = airTypes.find((t) => t.id === item.id);
+            if (originalItem) {
+              setEditAirTypeId(originalItem.id);
+              setAirTypeForm({
+                name: originalItem.name,
+                status: originalItem.status,
+              });
+            }
           }}
           onDelete={(id) => handleDelete("airType", id)}
           searchTerm={airTypeSearch}
@@ -590,11 +588,13 @@ export default function AirManagement() {
             }
           >
             <option value="">Select Air Type</option>
-            {airTypes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
+            {airTypes
+              .filter((t) => t.status === true || t.status === "true")
+              .map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
           </FormSelect>
 
           {/* Capacity Type Select */}
@@ -674,17 +674,17 @@ export default function AirManagement() {
               {editAirSystemId ? "Update" : "Add"}
             </FormButton>
             {/* {editAirSystemId && ( */}
-              <FormButton
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setEditAirSystemId(null);
-                  setAirSystemForm(initialAirSystem);
-                  setDefaultCap();
-                }}
-              >
-                Cancel
-              </FormButton>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setEditAirSystemId(null);
+                setAirSystemForm(initialAirSystem);
+                setDefaultCap();
+              }}
+            >
+              Cancel
+            </FormButton>
             {/* )} */}
           </div>
         </ResponsiveForm>
@@ -695,18 +695,14 @@ export default function AirManagement() {
           columns={columnsAirSystem}
           data={transformedAirSystems}
           onEdit={(item) => {
-            let dynamicCapacityKey = {};
-            
-            // Assuming capacityTypeId: 1 is 'Person' (uses personCapacityId)
-            if (item.capacityTypeId === 1) {
-              // Map the database field 'personCapacityId' to the form field 'personId'
-              dynamicCapacityKey = { personId: item.personCapacityId };
-            
-            // Assuming capacityTypeId: 2 is 'Weight' (uses weightId)
-            } else if (item.capacityTypeId === 2) {
-              // Map the database field 'weightId' to the form field 'weightId'
-              dynamicCapacityKey = { weightId: item.weightId };
-            }
+            let dynamicCapacityKey = {}; // Assuming capacityTypeId: 1 is 'Person' (uses personCapacityId)
+            if (item.capacityTypeId === 1) {
+              // Map the database field 'personCapacityId' to the form field 'personId'
+              dynamicCapacityKey = { personId: item.personCapacityId }; // Assuming capacityTypeId: 2 is 'Weight' (uses weightId)
+            } else if (item.capacityTypeId === 2) {
+              // Map the database field 'weightId' to the form field 'weightId'
+              dynamicCapacityKey = { weightId: item.weightId };
+            }
             // This is the correct logic for editing an Air System
             setEditAirSystemId(item.id);
             setAirSystemForm({
@@ -720,7 +716,8 @@ export default function AirManagement() {
             });
           }}
           onDelete={(id) => handleDelete("airSystem", id)}
-          // Removed search-related props as they were tied to the wrong state
+          searchTerm={airSystemSearch}
+          onSearchChange={setAirSystemSearch}
           height="250px"
           pageSize={10}
           combineActions={false}

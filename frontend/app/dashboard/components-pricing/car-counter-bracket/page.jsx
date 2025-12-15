@@ -198,16 +198,20 @@ export default function WiringPluablebrackets() {
   };
 
   const handleTypeDelete = (id) => {
+    console.log("id", id);
     if (!id || isNaN(id)) {
       toast.error("Invalid ID for deletion.");
       return;
     }
+
+    console.log("bracketTypes", bracketTypes);
 
     const selected = bracketTypes.find((d) => d.id === id);
     if (!selected) {
       toast.error("Bracket not found.");
       return;
     }
+    console.log("selected", selected);
 
     const typeName = selected.name;
 
@@ -223,15 +227,16 @@ export default function WiringPluablebrackets() {
     }
 
     // confirmDeleteWithToast(selected.name, async () => {
-    const nm =
-      selected.bracketTypeName +
-      " - " +
-      selected.carBracketSubType +
-      " - " +
-      selected.floorName;
+    // const nm =
+    //   selected.bracketTypeName +
+    //   " - " +
+    //   selected.carBracketSubType +
+    //   " - " +
+    //   selected.floorName;
+    const nm = selected.name;
     confirmDeleteWithToast(nm, async () => {
       try {
-        await axiosInstance.delete(`/types/${id}`); // ✅ relative path, baseURL is already in axiosInstance
+        await axiosInstance.delete(`${API_TYPES}/${id}`); // ✅ relative path, baseURL is already in axiosInstance
 
         toast.success("Bracket Type deleted");
 
