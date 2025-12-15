@@ -262,6 +262,47 @@ public class AmcInvoiceService {
         return results.map(this::toResponseDto);
     }
 
+    public Page<AmcInvoiceResponseDto> getPendingInvoicesPaged(
+            String search, 
+            LocalDate date, 
+            int page, 
+            int size, 
+            String sortBy, 
+            String direction) {
+        
+        log.info("Fetching Pending AMC Invoices with search='{}', date='{}', page={}, size={}, sortBy={}, direction={}", 
+                 search, date, page, size, sortBy, direction);
+
+        // 1. Build Sort and Pageable
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // 2. Prepare search parameters
+        String finalSearch = (search == null || search.trim().isEmpty()) ? null : search; 
+
+        // 3. Calculate Current and Next Month
+        LocalDate today = LocalDate.now();
+        int currentMonth = today.get(ChronoField.MONTH_OF_YEAR); 
+        int nextMonth = today.plusMonths(1).get(ChronoField.MONTH_OF_YEAR); 
+        
+        String dateSearch = date != null ? date.toString() : null;
+
+        // 4. Execute the query
+        Page<AmcInvoice> results = invoiceRepository.findAllPendingInvoices(
+                finalSearch == null ? "" : finalSearch,
+                dateSearch, 
+                currentMonth, 
+                nextMonth,   
+                pageable
+        );
+
+        // 5. Convert to DTOs
+        return results.map(this::toResponseDto);
+    }
+
     // 2. Get Invoice by ID
     public AmcInvoiceResponseDto getInvoiceById(Integer id) {
         log.info("Service Call: Fetching invoice with ID: {}", id);

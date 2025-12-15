@@ -27,6 +27,14 @@ const initialSummary = {
   paymentTypeCounts: [],
 };
 
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2
+  }).format(amount || 0);
+};
+
 export default function PaymentsList() {
   const [payments, setPayments] = useState([]);
   const [summary, setSummary] = useState(initialSummary);
@@ -39,9 +47,9 @@ export default function PaymentsList() {
   const [sortDir, setSortDir] = useState("asc");
   const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  
+
   // NEW STATE for Accordion
-  const [showBreakdown, setShowBreakdown] = useState(false); 
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
     fetchPayments();
@@ -106,15 +114,6 @@ export default function PaymentsList() {
     }
   };
 
-  // --- UPDATED: Helper to format currency for Rupees (INR) ---
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR', // Changed to INR
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
   // Helper for date formatting (Existing)
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -131,17 +130,19 @@ export default function PaymentsList() {
 
   // --- Dashboard Card Component (Slightly modified icon) ---
   const DashboardCard = ({ title, value, icon: Icon, colorClass, loading }) => (
-    <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 transition duration-300 hover:shadow-xl">
+    <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</p>
           {loading ? (
-            <FaSpinner className="animate-spin text-xl mt-1 text-gray-400" />
+            <FaSpinner className="animate-spin text-xl mt-2 text-gray-400" />
           ) : (
-            <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+            // Added specific logic for 'value' to ensure currency format consistency if needed, 
+            // but 'value' passed is already formatted string or number in existing code.
+            <p className="text-2xl font-bold text-gray-900 mt-2 tracking-tight">{value}</p>
           )}
         </div>
-        <div className={`p-3 rounded-full ${colorClass} bg-opacity-10`}>
+        <div className={`p-3.5 rounded-lg ${colorClass} bg-opacity-10 shadow-inner`}>
           <Icon className={`w-6 h-6 ${colorClass}`} />
         </div>
       </div>
@@ -151,14 +152,25 @@ export default function PaymentsList() {
 
 
   return (
-    <div className="bg-gray-50 p-6 md:p-8 rounded-xl shadow-2xl ring-1 ring-gray-200 m-4">
-      
-      <h2 className="text-3xl font-extrabold text-gray-900 mb-8 border-b pb-2">
-        <span className="text-indigo-600">📊</span> Payments Overview Dashboard
-      </h2>
+    <div className="max-w-7xl mx-auto p-6 space-y-8">
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <span className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+              <FaMoneyBillWave className="w-5 h-5" />
+            </span>
+            Payment Invoices
+          </h2>
+          <p className="text-sm text-gray-500 mt-1 ml-1">Manage and track all payment transactions.</p>
+        </div>
+        <div className="flex gap-2">
+          {/* Future controls can go here */}
+        </div>
+      </div>
 
       {/* --- Dashboard Cards Section --- */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCard
           title="Total Payments"
           value={summaryLoading ? "" : summary.totalPaymentsCount.toLocaleString()}
@@ -177,214 +189,208 @@ export default function PaymentsList() {
           title="Uncleared Payments"
           value={summaryLoading ? "" : summary.unclearedPaymentsCount.toLocaleString()}
           icon={FaTimesCircle}
-          colorClass="text-red-600"
+          colorClass="text-red-500" // Adjusted red
           loading={summaryLoading}
         />
         <DashboardCard
-          title="Total Cleared Amount"
-          // UPDATED: Use the new formatCurrency with Rupee symbol
+          title="Total Amount"
           value={summaryLoading ? "" : formatCurrency(summary.totalClearedAmount)}
-          icon={FaRupeeSign} // UPDATED: Use Rupee Icon
-          colorClass="text-yellow-600"
+          icon={FaRupeeSign}
+          colorClass="text-amber-500" // Adjusted yellow to amber
           loading={summaryLoading}
         />
       </div>
-      
+
       {/* --- Payment Method Breakdown (Accordion) --- */}
-      <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200">
-        
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+
         {/* Accordion Header */}
         <button
-            onClick={() => setShowBreakdown(!showBreakdown)}
-            className="w-full flex justify-between items-center p-4 text-left border-b hover:bg-gray-50 transition-colors duration-150 rounded-t-xl"
-            aria-expanded={showBreakdown}
-            aria-controls="breakdown-content"
+          onClick={() => setShowBreakdown(!showBreakdown)}
+          className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-gray-50/50 transition-colors duration-200"
+          aria-expanded={showBreakdown}
+          aria-controls="breakdown-content"
         >
-            <h3 className="text-xl font-semibold text-gray-800">Payment Method Breakdown</h3>
-            {showBreakdown ? 
-                <FaChevronUp className="text-indigo-600 w-5 h-5 transition-transform" /> : 
-                <FaChevronDown className="text-indigo-600 w-5 h-5 transition-transform" />
-            }
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-md">
+              <FaMoneyBillWave className="w-4 h-4" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-800">Payment Breakdown</h3>
+          </div>
+          {showBreakdown ?
+            <FaChevronUp className="text-gray-400 w-4 h-4 transition-transform" /> :
+            <FaChevronDown className="text-gray-400 w-4 h-4 transition-transform" />
+          }
         </button>
-        
+
         {/* Accordion Content (Conditionally Rendered) */}
         {showBreakdown && (
-            <div id="breakdown-content" className="p-4 transition-all duration-300 ease-in-out">
-                {summaryLoading ? (
-                    <p className="text-gray-500 p-2"><FaSpinner className="animate-spin inline me-2" /> Loading breakdown...</p>
-                ) : summary.paymentTypeCounts.length > 0 ? (
-                    
-                    // UPDATED: Use a clean list/grid layout for breakdown
-                    <div className="space-y-3">
-                        {summary.paymentTypeCounts.map((type) => (
-                            <div 
-                                key={type.paymentType} 
-                                className="flex justify-between items-center p-3 bg-gray-50 border border-indigo-100 rounded-lg shadow-sm"
-                            >
-                                <div className="text-sm font-medium text-gray-700 flex items-center">
-                                    <span className="text-lg font-semibold text-indigo-700 me-3">{type.paymentType}:</span>
-                                    <span className="text-sm text-gray-600">{type.count} payments</span>
-                                </div>
-                                <span className="text-md font-bold text-gray-900">
-                                    {formatCurrency(type.totalAmount)}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+          <div id="breakdown-content" className="px-6 pb-6 pt-2 border-t border-gray-100 animate-in slide-in-from-top-1">
+            {summaryLoading ? (
+              <p className="text-gray-500 py-4 flex items-center text-sm"><FaSpinner className="animate-spin mr-2" /> Loading breakdown...</p>
+            ) : summary.paymentTypeCounts.length > 0 ? (
 
-                ) : (
-                    <p className="text-gray-500 p-2">No payment type breakdown available.</p>
-                )}
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                {summary.paymentTypeCounts.map((type) => (
+                  <div
+                    key={type.paymentType}
+                    className="flex justify-between items-center p-4 bg-gray-50/80 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors"
+                  >
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">{type.paymentType}</p>
+                      <p className="text-sm font-medium text-gray-900">{type.count} txns</p>
+                    </div>
+                    <span className="text-base font-bold text-gray-900 tracking-tight">
+                      {formatCurrency(type.totalAmount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+            ) : (
+              <p className="text-gray-500 py-4 text-sm">No payment type breakdown available.</p>
+            )}
+          </div>
         )}
       </div>
-      
+
       {/* --- Payments Transaction List (Original Content) --- */}
-      <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b pb-2 mt-8">
-        Transaction List
-      </h2>
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h3 className="text-lg font-bold text-gray-900">Transaction History</h3>
 
-      {/* Search and Records per page (Original Content) */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        
-        {/* Search Input Group */}
-        <div className="relative w-full md:w-80">
-          <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by invoice or customer..."
-            className="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out shadow-sm"
-            value={search}
-            onChange={(e) => {
-              setPage(0);
-              setSearch(e.target.value);
-            }}
-          />
-        </div>
-
-        {/* Records per page Select Group */}
-        <div className="flex items-center space-x-2">
-          <label htmlFor="size-select" className="text-gray-600 font-medium whitespace-nowrap">
-            Records per page:
-          </label>
-          <select
-            id="size-select"
-            value={size}
-            onChange={(e) => {
-              setPage(0);
-              setSize(Number(e.target.value));
-            }}
-            className="border border-gray-300 rounded-lg px-3 py-2 bg-white focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-          >
-            {[5, 10, 20, 50].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-      
-      {/* Table (Original Content) */}
-      <div className="overflow-x-auto shadow-lg rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          
-          <thead className="bg-gray-50">
-            <tr>
-              {[{ label: "ID", key: "paymentId" }, { label: "Date", key: "paymentDate" }, { label: "Invoice No", key: "invoiceNo" }, 
-                { label: "Pay For", key: "payFor" }, { label: "Payment Type", key: "paymentType" }, { label: "Amount Paid", key: "amountPaid" }, 
-                { label: "Cleared", key: "paymentCleared" }, { label: "Customer", key: "customerName" }, { label: "Site", key: "siteName" }]
-                .map(({ label, key }) => (
-                  <th 
-                    key={key}
-                    onClick={() => handleSort(key)} 
-                    className={`px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 cursor-pointer select-none transition duration-150 ease-in-out ${key === 'amountPaid' ? 'text-right' : ''} ${key === 'invoiceNo' || key === 'paymentType' ? 'hidden md:table-cell' : ''} hover:bg-gray-100`}
-                  >
-                    <div className="flex items-center">
-                        {label} {['paymentId', 'paymentDate', 'amountPaid'].includes(key) && getSortIcon(key)}
-                    </div>
-                  </th>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                className="w-full sm:w-64 pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                value={search}
+                onChange={(e) => {
+                  setPage(0);
+                  setSearch(e.target.value);
+                }}
+              />
+            </div>
+            <select
+              value={size}
+              onChange={(e) => {
+                setPage(0);
+                setSize(Number(e.target.value));
+              }}
+              className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 cursor-pointer"
+            >
+              {[5, 10, 20, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n} per page
+                </option>
               ))}
-            </tr>
-          </thead>
-          
-          <tbody className="bg-white divide-y divide-gray-200">
-            {loading ? (
-              <tr>
-                <td colSpan="9" className="p-6 text-center text-indigo-600 font-medium">
-                  <FaSpinner className="animate-spin inline me-2" />
-                  Loading payment data...
-                </td>
-              </tr>
-            ) : payments.length > 0 ? (
-              payments.map((p) => (
-                <tr key={p.paymentId} className="hover:bg-indigo-50 transition duration-150 ease-in-out">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{p.paymentId}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(p.paymentDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{p.invoiceNo}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.payFor}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm hidden md:table-cell">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.paymentType === 'CASH' ? 'bg-green-100 text-green-800' : p.paymentType === 'BANK_TRANSFER' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                        {p.paymentType}
-                    </span>
-                  </td>
-                  {/* UPDATED: Currency formatted with Rupees */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700 text-right">{formatCurrency(p.amountPaid)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${p.paymentCleared ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {p.paymentCleared ? 'Yes' : 'No'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{p.customerName || "-"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{p.siteName || "-"}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="9" className="p-6 text-center text-gray-500">
-                  <span className="text-2xl block mb-2">🤷‍♂️</span>
-                  No payments found for the current filter criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-      
-      {/* Pagination (Original Content) */}
-      <div className="flex flex-col md:flex-row justify-between items-center mt-6 p-4 border-t border-gray-200">
-        
-        {/* Total Records Info */}
-        <div className="text-sm text-gray-700 mb-3 md:mb-0">
-          Showing <b className="text-indigo-600">{(page * size) + 1} - {Math.min((page + 1) * size, totalElements)}</b> of <b className="text-indigo-600">{totalElements}</b> total records
+            </select>
+          </div>
         </div>
-        
-        {/* Pagination Controls */}
-        <div className="flex items-center space-x-3">
-          
-          <button
-            className={`p-2 border rounded-full transition duration-150 ease-in-out ${page === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 border-indigo-500 hover:bg-indigo-50'}`}
-            disabled={page === 0}
-            onClick={() => handlePageChange(page - 1)}
-            aria-label="Previous Page"
-          >
-            <FaChevronLeft className="w-4 h-4" />
-          </button>
-          
-          {/* Page Display */}
-          <span className="text-sm font-medium text-gray-700">
-            Page <b className="text-indigo-600">{page + 1}</b> of <b className="text-indigo-600">{totalPages || 1}</b>
-          </span>
-          
-          <button
-            className={`p-2 border rounded-full transition duration-150 ease-in-out ${page + 1 >= totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-indigo-600 border-indigo-500 hover:bg-indigo-50'}`}
-            disabled={page + 1 >= totalPages}
-            onClick={() => handlePageChange(page + 1)}
-            aria-label="Next Page"
-          >
-            <FaChevronRight className="w-4 h-4" />
-          </button>
-          
+
+        {/* Table (Original Content) */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50/50">
+              <tr>
+                {[{ label: "ID", key: "paymentId", align: 'left' }, { label: "Date", key: "paymentDate", align: 'left' }, { label: "Invoice No", key: "invoiceNo", align: 'left' },
+                { label: "Pay For", key: "payFor", align: 'left' }, { label: "Payment Type", key: "paymentType", align: 'left' }, { label: "Amount", key: "amountPaid", align: 'right' },
+                { label: "Status", key: "paymentCleared", align: 'center' }, { label: "Customer", key: "customerName", align: 'left' }, { label: "Site", key: "siteName", align: 'left' }]
+                  .map(({ label, key, align }) => (
+                    <th
+                      key={key}
+                      onClick={() => handleSort(key)}
+                      className={`px-6 py-4 text-${align} text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer transition-colors hover:text-indigo-600 hover:bg-gray-100 ${key === 'invoiceNo' || key === 'paymentType' ? 'hidden md:table-cell' : ''}`}
+                    >
+                      <div className={`flex items-center gap-1 ${align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start'}`}>
+                        {label} {['paymentId', 'paymentDate', 'amountPaid'].includes(key) && getSortIcon(key)}
+                      </div>
+                    </th>
+                  ))}
+              </tr>
+            </thead>
+
+            <tbody className="bg-white divide-y divide-gray-100 text-sm">
+              {loading ? (
+                <tr>
+                  <td colSpan="9" className="p-12 text-center text-indigo-600">
+                    <div className="flex flex-col items-center justify-center">
+                      <FaSpinner className="animate-spin w-8 h-8 mb-2" />
+                      <span className="text-sm font-medium">Loading transactions...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : payments.length > 0 ? (
+                payments.map((p) => (
+                  <tr key={p.paymentId} className="group hover:bg-indigo-50/30 transition duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">#{p.paymentId}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{formatDate(p.paymentDate)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500 font-medium hidden md:table-cell">{p.invoiceNo}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{p.payFor}</td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs font-semibold rounded-full border ${p.paymentType === 'CASH' ? 'bg-green-50 text-green-700 border-green-100' : p.paymentType === 'BANK_TRANSFER' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
+                        {p.paymentType}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-900 text-right tracking-tight">{formatCurrency(p.amountPaid)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className={`px-2.5 py-0.5 inline-flex text-xs font-semibold rounded-full border ${p.paymentCleared ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'}`}>
+                        {p.paymentCleared ? 'Cleared' : 'Pending'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-medium">{p.customerName || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{p.siteName || "-"}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="9" className="p-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center">
+                      <span className="text-3xl mb-2 opacity-50">📋</span>
+                      <p className="font-medium">No payments found</p>
+                      <p className="text-xs mt-1">Try adjusting your search criteria</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination (Original Content) */}
+        <div className="flex flex-col md:flex-row justify-between items-center px-6 py-4 border-t border-gray-100 bg-gray-50/30">
+
+          <div className="text-xs text-gray-500 mb-3 md:mb-0 font-medium">
+            Showing <span className="text-gray-900">{(page * size) + 1} - {Math.min((page + 1) * size, totalElements)}</span> of <span className="text-gray-900">{totalElements}</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+
+            <button
+              className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={page === 0}
+              onClick={() => handlePageChange(page - 1)}
+              aria-label="Previous Page"
+            >
+              <FaChevronLeft className="w-3.5 h-3.5" />
+            </button>
+
+            <span className="text-xs font-medium text-gray-700 px-2">
+              Page {page + 1} of {totalPages || 1}
+            </span>
+
+            <button
+              className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={page + 1 >= totalPages}
+              onClick={() => handlePageChange(page + 1)}
+              aria-label="Next Page"
+            >
+              <FaChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+          </div>
         </div>
       </div>
     </div>

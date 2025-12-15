@@ -4,7 +4,7 @@ import { X, User } from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import { toast } from "react-hot-toast";
 
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { getTenant } from "@/utils/tenant";
 
 export default function AddJobForm() {
@@ -159,8 +159,24 @@ export default function AddJobForm() {
   //   fetchJobs();
   // }, []);
 
-  useEffect(() => {
 
+
+
+  // ✅ Handle search filtering
+  const handleJobSearch = (value) => {
+    setJobSearch(value);
+    console.log(value, "handleJobSearch");
+    console.log(jobDetails, "jobDetails");
+    const filtered = jobDetails.filter((job) =>
+      job.selectDetailForJob?.toLowerCase().includes(value.toLowerCase())
+    );
+    console.log(filtered, "filtered");
+    setFilteredJobs(filtered);
+  };
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
     async function fetchJobs() {
       try {
         if (selectedJobType === "New Installation") {
@@ -185,6 +201,16 @@ export default function AddJobForm() {
           // Store combined data in your states
           setJobDetails(combinedJobs);
           setFilteredJobs(combinedJobs);
+
+          // Auto-selection Logic
+          const rId = searchParams.get('renewalQuotationId');
+          if (rId && combinedJobs.length > 0) {
+            const targetJob = combinedJobs.find(job => job.amcRenewalQuatationId == rId);
+            if (targetJob) {
+              setSelectedJob(targetJob);
+              setJobSearch(targetJob.selectDetailForJob);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching jobs:", error);
@@ -192,20 +218,15 @@ export default function AddJobForm() {
     }
 
     fetchJobs();
-  }, [selectedJobType]);
+  }, [selectedJobType, searchParams]); // Add searchParams dependency
 
-
-  // ✅ Handle search filtering
-  const handleJobSearch = (value) => {
-    setJobSearch(value);
-    console.log(value, "handleJobSearch");
-    console.log(jobDetails, "jobDetails");
-    const filtered = jobDetails.filter((job) =>
-      job.selectDetailForJob.toLowerCase().includes(value.toLowerCase())
-    );
-    console.log(filtered, "filtered");
-    setFilteredJobs(filtered);
-  };
+  // Handle Initial Param Setup
+  useEffect(() => {
+    const type = searchParams.get('jobType');
+    if (type === 'AMC') {
+      setSelectedJobType('AMC'); // Ensure this matches one of the option values
+    }
+  }, [searchParams]);
 
   const [jobDetailsData, setJobDetailsData] = useState(null);
 
