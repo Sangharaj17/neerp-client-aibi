@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { Search, ChevronDown, CheckCircle, XCircle, IndianRupee, Calendar, CreditCard, Loader2, Info, FileText } from 'lucide-react'; // Added FileText icon
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 import toast from "react-hot-toast";
 // Helper function to get the current date in YYYY-MM-DD format
 const getCurrentDate = () => new Date().toISOString().split("T")[0];
 
 export default function AddPayment() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [jobType, setJobType] = useState(""); // "amc" or "new"
   const [jobs, setJobs] = useState([]);
@@ -378,6 +379,7 @@ export default function AddPayment() {
 
       // Clear the form after successful submission
       resetForm();
+      router.push('/dashboard/jobs/amc-payments');
 
     } catch (error) {
       console.error("Error submitting payment:", error.response ? error.response.data : error.message);
