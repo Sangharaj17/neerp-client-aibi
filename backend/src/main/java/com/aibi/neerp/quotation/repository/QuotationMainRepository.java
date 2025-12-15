@@ -120,14 +120,32 @@ public interface QuotationMainRepository extends JpaRepository<QuotationMain, In
             @Param("combinedEnquiryId") Integer combinedEnquiryId
     );
 
-    List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
+//    List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
 
-    @Query(value = "SELECT COUNT(*) FROM tbl_quotation_main " +
-            "WHERE is_deleted = false " +
-            "AND edition = 0 " +
-            "AND parent_quotation_id IS NULL",
+//    List<QuotationMain>
+//    findByIsFinalizedTrueAndIsDeletedFalseAndJobStatusNotOrderByIdDesc(Integer jobStatus);
+
+    //    @Query(value = "SELECT COUNT(*) FROM tbl_quotation_main " +
+//            "WHERE is_deleted = false " +
+//            "AND edition = 0 " +
+//            "AND is_finalized = false " +
+//            "AND parent_quotation_id IS NULL",
+//            nativeQuery = true)
+    @Query(value = "SELECT COUNT(qm.id) " +
+            "FROM tbl_quotation_main qm " +
+            "WHERE qm.is_deleted = false " +
+            "AND qm.edition = 0 " +
+            "AND qm.parent_quotation_id IS NULL " +
+            "AND NOT EXISTS (" +
+            "    SELECT 1 " +
+            "    FROM tbl_quotation_main revision " +
+            "    WHERE revision.is_finalized = true " + // CRITICAL: Check for TRUE finalization
+            "      AND revision.lead_id = qm.lead_id " +
+            "      AND revision.combined_enquiry_id = qm.combined_enquiry_id " +
+            ")",
             nativeQuery = true)
     Long countAllActiveQuotations();
 
 
+    List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseAndJobStatusIsNullOrderByIdDesc();
 }

@@ -394,6 +394,12 @@ export default function WireRope() {
       price,
     } = form;
 
+    const priceValue = Number(form.price);
+    if (priceValue < 0) {
+      toast.error("Price cannot be a negative value.");
+      return;
+    }
+
     if (!machineTypeId) {
       toast.error("Machine Type must be selected.");
       return;

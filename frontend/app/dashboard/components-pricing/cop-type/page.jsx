@@ -141,6 +141,12 @@ export default function COPtypePage() {
       return;
     }
 
+    const priceValue = Number(form.price);
+    if (priceValue < 0) {
+      toast.error("Price cannot be a negative value.");
+      return;
+    }
+
     //console.log(JSON.stringify(cops, null, 2)+"-----"+editId+"==========="+form.operatorTypeId+"----"+form.floor);
     const isDuplicate = cops.some(
       (lt) =>
@@ -317,13 +323,13 @@ export default function COPtypePage() {
             </FormButton>
 
             {/* {editId && ( */}
-              <FormButton
-                type="button"
-                variant="secondary"
-                onClick={handleCancel}
-              >
-                Cancel
-              </FormButton>
+            <FormButton
+              type="button"
+              variant="secondary"
+              onClick={handleCancel}
+            >
+              Cancel
+            </FormButton>
             {/* )} */}
           </div>
         </ResponsiveForm>

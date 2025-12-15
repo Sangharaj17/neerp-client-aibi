@@ -322,7 +322,7 @@ public class QuotationController {
 
 
     // =========================================================
-    // 🔹 GET ALL FINALIZED & NOT DELETED QUOTATIONS (NO LIFTS)
+    // 🔹 GET ALL FINALIZED & NOT DELETED QUOTATIONS (NO LIFTS) To Add Job
     // =========================================================
     @GetMapping("/finalized-active")
     public ResponseEntity<ApiResponse<List<QuotationMinimalDTO>>> getFinalizedActiveQuotations() {

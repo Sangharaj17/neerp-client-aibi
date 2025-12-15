@@ -210,7 +210,20 @@ export default function NiJobList() {
         </select>
       </div>
 
-      <div className="overflow-x-auto rounded-lg shadow-lg">
+      <div className="relative overflow-x-auto rounded-lg shadow-lg">
+
+
+        {/* Container Loader */}
+        {loadingBtn && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg">
+            <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/30 flex flex-col items-center gap-3">
+              <Loader2 className="h-10 w-10 text-white animate-spin" />
+              <p className="text-white text-sm font-semibold">Loading...</p>
+            </div>
+          </div>
+        )}
+
+
         <table className="min-w-full bg-white text-sm">
           <thead className="bg-indigo-100 text-gray-700 uppercase text-xs font-semibold">
             <tr>
@@ -263,7 +276,11 @@ export default function NiJobList() {
 
                   <td className="px-3 py-2 text-center">
                     <div className="flex items-center justify-center gap-3">
-                      <button title="View" onClick={() => router.push(`/dashboard/jobs/ni_job_list/view/${job.jobId}`)}>
+                      <button title="View"
+                        onClick={() => {
+                          setLoadingBtn(`view-${job.jobId}`);
+                          router.push(`/dashboard/jobs/ni_job_list/view/${job.jobId}`);
+                        }}>
                         <Eye className="w-4 h-4 text-blue-500" />
                       </button>
                       <button title="Invoice"><FileText className="w-4 h-4 text-green-500" /></button>

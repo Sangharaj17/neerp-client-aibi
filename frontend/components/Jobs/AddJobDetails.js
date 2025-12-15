@@ -63,6 +63,9 @@ export default function AddJobForm() {
   const [userId, setUserId] = useState(0);
   const [isSuccessLoading, setIsSuccessLoading] = useState(false);
 
+
+  const [startDate, setStartDate] = useState("");
+
   useEffect(() => {
     const tenant = getTenant();
     const storedId = localStorage.getItem(tenant ? `${tenant}_userId` : "userId");
@@ -232,6 +235,15 @@ export default function AddJobForm() {
       //setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (jobDetailsData && selectedJobType === "New Installation") {
+      // Set today's date in YYYY-MM-DD format
+      const today = new Date().toISOString().split("T")[0];
+      // setStartDate(jobDetailsData?.startDate || today);
+      setStartDate(today);
+    }
+  }, [jobDetailsData]);
 
   const fetchRenewalJobDetails = async () => {
     //setLoading(true);
@@ -455,8 +467,12 @@ export default function AddJobForm() {
         toast.error("Please select a Sales Executive.");
         return;
       }
-      if (!jobDetailsData?.startDate) {
-        toast.error("Start Date is missing.");
+      // if (!jobDetailsData?.startDate) {
+      //   toast.error("Start Date is missing.");
+      //   return;
+      // }
+      if (!startDate) {
+        toast.error("Please select a Start Date.");
         return;
       }
       if (!jobStatus) {
@@ -472,10 +488,10 @@ export default function AddJobForm() {
         return;
       }
 
-      console.log("jobDetailsData", jobDetailsData);
-      console.log("selectedJob", selectedJob);
-      console.log("selectedEngineers", selectedEngineers);
-      console.log("selectedSalesPerson", selectedSalesPerson);
+      // console.log("jobDetailsData", jobDetailsData);
+      // console.log("selectedJob", selectedJob);
+      // console.log("selectedEngineers", selectedEngineers);
+      // console.log("selectedSalesPerson", selectedSalesPerson);
 
       const selectedEngineerId = selectedEngineers.length > 0 ? selectedEngineers[0].employeeId : null;
 
@@ -505,7 +521,9 @@ export default function AddJobForm() {
         paymentTerm: paymentTerm, // selected from dropdown
         customerGstNo: gstNumber,
 
-        startDate: jobDetailsData?.startDate || null,
+        //startDate: jobDetailsData?.startDate || null,
+        startDate: startDate,
+
         // dealDate: "", // Not captured in form
         // isHandover: false,
         // handoverDate: null,
@@ -513,8 +531,8 @@ export default function AddJobForm() {
         // pwdActDate: null
       };
 
-      console.log("requestDto", requestDto);
-      console.log("jobTypeId", jobTypeId);
+      // console.log("requestDto", requestDto);
+      // console.log("jobTypeId", jobTypeId);
 
       toast.loading("Saving New Installation job...");
 
@@ -642,7 +660,25 @@ export default function AddJobForm() {
       {/* Show below fields only when a job is selected */}
       {
         selectedJob && (
-          <>
+          <div className="relative">
+
+
+            {isSuccessLoading && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-xl">
+                <div className="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/30 flex flex-col items-center gap-3">
+
+                  {/* Spinner */}
+                  <div className="h-12 w-12 rounded-full border-4 border-white/30 border-t-white animate-spin"></div>
+
+                  {/* Text */}
+                  <h2 className="text-white text-sm font-semibold tracking-wide animate-pulse">
+                    Processing...
+                  </h2>
+
+                </div>
+              </div>
+            )}
+
             {/* Remaining Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               {/* Job Amount */}
@@ -713,12 +749,21 @@ export default function AddJobForm() {
 
               <div>
                 <label className="block text-sm font-medium mb-1">Start Date<span className="text-red-500">*</span></label>
-                <input
-                  type="date"
-                  readOnly
-                  value={jobDetailsData ? jobDetailsData.startDate : ""}
-                  className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
-                />
+                {selectedJobType !== "New Installation" ? (
+                  <input
+                    type="date"
+                    readOnly
+                    value={jobDetailsData ? jobDetailsData.startDate : ""}
+                    className="w-full border rounded-lg p-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+                  />
+                ) : (
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full border rounded-lg p-2"
+                  />
+                )}
               </div>
 
 
@@ -1036,19 +1081,6 @@ export default function AddJobForm() {
               }} className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700">
                 Submit
               </button>
-            </div>
-          </>
-        )
-      }
-      {/* Full Page Glass Loader */}
-      {
-        isSuccessLoading && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm transition-opacity duration-300">
-            <div className="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl p-8 shadow-2xl border border-white border-opacity-30 flex flex-col items-center">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
-              <h2 className="text-white text-xl font-bold tracking-wider animate-pulse">
-                Processing...
-              </h2>
             </div>
           </div>
         )

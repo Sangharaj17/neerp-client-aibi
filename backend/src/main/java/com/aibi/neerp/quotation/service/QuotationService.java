@@ -5,17 +5,13 @@ import com.aibi.neerp.componentpricing.payload.ApiResponse;
 import com.aibi.neerp.customer.repository.CustomerRepository;
 import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.exception.ResourceNotFoundException;
-import com.aibi.neerp.leadmanagement.entity.Enquiry;
-import com.aibi.neerp.leadmanagement.repository.EnquiryRepository;
+import com.aibi.neerp.leadmanagement.entity.*;
+import com.aibi.neerp.leadmanagement.repository.*;
 import com.aibi.neerp.quotation.dto.*;
 import com.aibi.neerp.quotation.entity.*;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.employeemanagement.entity.Employee;
-import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
-import com.aibi.neerp.leadmanagement.entity.NewLeads;
-import com.aibi.neerp.leadmanagement.repository.CombinedEnquiryRepository;
-import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
 import com.aibi.neerp.quotation.mapper.QuotationEntityToResponseDTO;
 import com.aibi.neerp.quotation.mapper.QuotationRequestDTOtoEntity;
 import com.aibi.neerp.quotation.repository.QuotationLiftDetailRepository;
@@ -32,7 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import jakarta.persistence.PersistenceContext;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -59,6 +55,7 @@ public class QuotationService {
     private final EnquiryRepository enquiryRepository;
     private final CustomerRepository customerRepository;
     private final SiteRepository siteRepository;
+    private final LeadStatusRepository leadStatusRepository;
 
     @Autowired
     private final QuotationRevisionService clonerService;
@@ -1048,6 +1045,7 @@ public class QuotationService {
     // =========================================================
     // 🔹 FINALIZE QUOTATION
     // =========================================================
+    @Transactional(rollbackFor = Exception.class)
     public ApiResponse<Void> finalizeQuotation(Integer quotationId, Integer finalizedByEmployeeId) {
         try {
             QuotationMain quotation = quotationMainRepository.findById(quotationId)
@@ -1068,8 +1066,24 @@ public class QuotationService {
             quotation.setFinalizedBy(finalizingEmployee);
 
 
-            // ************** add or update customer ***************************
             NewLeads lead = quotation.getLead();
+
+            // ************** UPDATE LEAD STAGE TO CLOSED ***************************
+            LeadStatus closedStatus = leadStatusRepository
+                    .findByStatusNameIgnoreCase("Closed")
+                    .orElseThrow(() -> new RuntimeException("LeadStatus 'Closed' not found"));
+
+
+            lead.setLeadStatus(closedStatus);
+            lead.setStatus("CLOSED"); // optional text column
+//            lead.setReason("Quotation Finalized");
+
+            newLeadsRepository.save(lead);
+
+            log.info("Lead ID {} moved to CLOSED status after quotation finalization",
+                    lead.getLeadId());
+
+            // ************** add or update customer ***************************
             Customer customer = customerRepository.findByLead_LeadId(lead.getLeadId());
             if (customer == null) {
                 // ✅ 4A. Create New Customer
@@ -1152,10 +1166,12 @@ public class QuotationService {
 
         } catch (RuntimeException ex) {
             log.error("Finalization failed for Quotation ID {}: {}", quotationId, ex.getMessage());
-            return new ApiResponse<>(false, ex.getMessage(), null);
+//            return new ApiResponse<>(false, ex.getMessage(), null);
+            throw new RuntimeException("Finalization failed due to: " + ex.getMessage(), ex);
         } catch (Exception ex) {
             log.error("An unexpected error occurred during finalization of Quotation ID {}: {}", quotationId, ex.getMessage(), ex);
-            return new ApiResponse<>(false, "An unexpected server error occurred during finalization.", null);
+//            return new ApiResponse<>(false, "An unexpected server error occurred during finalization.", null);
+            throw new RuntimeException("An unexpected server error occurred during finalization.", ex);
         }
     }
 
@@ -1206,8 +1222,17 @@ public class QuotationService {
 
         try {
             // Fetch ONLY finalized + active quotations
+//            List<QuotationMain> quotations =
+//                    quotationMainRepository.findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
+
+//            List<QuotationMain> quotations =
+//                    quotationMainRepository
+//                            .findByIsFinalizedTrueAndIsDeletedFalseAndJobStatusNotOrderByIdDesc(1);
+
             List<QuotationMain> quotations =
-                    quotationMainRepository.findByIsFinalizedTrueAndIsDeletedFalseOrderByIdDesc();
+                    quotationMainRepository
+                            .findByIsFinalizedTrueAndIsDeletedFalseAndJobStatusIsNullOrderByIdDesc();
+
 
             // Map to minimal DTO
             List<QuotationMinimalDTO> dtoList = quotations.stream()
