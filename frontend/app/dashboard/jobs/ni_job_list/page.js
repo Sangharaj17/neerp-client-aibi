@@ -188,6 +188,19 @@ export default function NiJobList() {
 
   return (
     <div className="p-4 bg-gray-10 min-h-screen">
+
+
+
+      {/* Container Loader */}
+      {loadingBtn && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg">
+          <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/30 flex flex-col items-center gap-3">
+            <Loader2 className="h-10 w-10 text-white animate-spin" />
+            <p className="text-white text-sm font-semibold">Loading...</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
         <input
           type="text"
@@ -211,18 +224,6 @@ export default function NiJobList() {
       </div>
 
       <div className="relative overflow-x-auto rounded-lg shadow-lg">
-
-
-        {/* Container Loader */}
-        {loadingBtn && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg">
-            <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/30 flex flex-col items-center gap-3">
-              <Loader2 className="h-10 w-10 text-white animate-spin" />
-              <p className="text-white text-sm font-semibold">Loading...</p>
-            </div>
-          </div>
-        )}
-
 
         <table className="min-w-full bg-white text-sm">
           <thead className="bg-indigo-100 text-gray-700 uppercase text-xs font-semibold">
