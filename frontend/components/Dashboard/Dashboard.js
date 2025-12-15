@@ -408,8 +408,7 @@ const Dashboard = () => {
           })}
         </div>
 
-        {/* Pending Invoices List */}
-        <PendingInvoicesList />
+
 
         {/* Tabs Section - To Do & Activity List */}
         <div className="bg-white rounded-lg border border-gray-200 mb-8">
@@ -791,6 +790,11 @@ const Dashboard = () => {
               )
             )}
           </div>
+        </div>
+
+        {/* Pending Invoices List */}
+        <div className="mt-8">
+          <PendingInvoicesList />
         </div>
 
       </div>
