@@ -107,6 +107,58 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
             @Param("nextMonth") int nextMonth,       
             Pageable pageable
         );
+        
+        @Query("""
+            SELECT DISTINCT i
+            FROM AmcInvoice i
+           
+            LEFT JOIN i.enquiryType e
+            LEFT JOIN i.amcJob j 
+            LEFT JOIN j.site js 
+            LEFT JOIN j.customer jc 
+            
+            LEFT JOIN i.amcRenewalJob r
+            LEFT JOIN r.site rs
+            LEFT JOIN r.customer rc
+            
+            WHERE (:search IS NULL OR (
+            
+                LOWER(e.enquiryTypeName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+                LOWER(i.invoiceNo) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                LOWER(i.payFor) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                CAST(i.totalAmt AS string) LIKE CONCAT('%', :search, '%') OR
+                
+                LOWER(js.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                LOWER(js.siteAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                LOWER(jc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                
+                LOWER(rs.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                LOWER(rs.siteAddress) LIKE LOWER(CONCAT('%', :search, '%')) OR
+                LOWER(rc.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+            ))
+           
+            AND (:dateSearch IS NULL OR :dateSearch = '' OR i.invoiceDate = CAST(:dateSearch AS date))
+            
+            AND i.isCleared = 0
+            
+          AND (
+                i.invoiceDate < CURRENT_DATE() 
+                OR 
+                (
+                    FUNCTION('DATE_PART', 'month', i.invoiceDate) = :currentMonth OR
+                    FUNCTION('DATE_PART', 'month', i.invoiceDate) = :nextMonth
+                )
+            )
+          
+        """)
+        Page<AmcInvoice> findAllPendingInvoices(
+            @Param("search") String search,
+            @Param("dateSearch") String dateSearch,
+            @Param("currentMonth") int currentMonth, 
+            @Param("nextMonth") int nextMonth,       
+            Pageable pageable
+        );
 	
 	
 	// Simple JPA method to count invoices based on the isCleared status

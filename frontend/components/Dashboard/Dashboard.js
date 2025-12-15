@@ -25,6 +25,7 @@ import BreakdownTodos from './BreakdownTodos';
 import ActionModal from '../AMC/ActionModal';
 import AddJobActivityForm from '../Jobs/AddJobActivityForm';
 import AddRenewalJobActivityForm from '../Jobs/AddRenewalJobActivityForm';
+import PendingInvoicesList from './PendingInvoicesList';
 
 // Helper function to get the assigned employee names as a string
 const getAssignedEmployees = (employees) => {
@@ -406,6 +407,9 @@ const Dashboard = () => {
             );
           })}
         </div>
+
+        {/* Pending Invoices List */}
+        <PendingInvoicesList />
 
         {/* Tabs Section - To Do & Activity List */}
         <div className="bg-white rounded-lg border border-gray-200 mb-8">

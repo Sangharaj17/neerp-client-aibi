@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { Search, ChevronDown, CheckCircle, XCircle, IndianRupee, Calendar, CreditCard, Loader2, Info, FileText } from 'lucide-react'; // Added FileText icon
+import { useSearchParams } from "next/navigation";
 
 import toast from "react-hot-toast";
 // Helper function to get the current date in YYYY-MM-DD format
 const getCurrentDate = () => new Date().toISOString().split("T")[0];
 
 export default function AddPayment() {
+  const searchParams = useSearchParams();
   const [jobType, setJobType] = useState(""); // "amc" or "new"
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -34,27 +36,14 @@ export default function AddPayment() {
   // ---------------------------------------------
 
   // --- Utility Functions (Keeping existing logic) ---
-const handleJobTypeChange = async (e) => {
-  const selected = e.target.value;
-  // Reset states
-  setJobType(selected);
-  setJobSearch("");
-  setSelectedJob(null);
-  setInvoices([]);
-  setSelectedInvoice(null);
-  setJobs([]);
-  setFilteredJobs([]);
-  setLoading(true);
-
-  try {
+  // Helper to fetch jobs based on type
+  const fetchJobsByType = async (selected) => {
     if (selected === "amc") {
-      // Logic for AMC / Renewal
       const [activeJobsRes, renewalJobsRes] = await Promise.all([
         axiosInstance.get("/api/payments/getAllActiveJobs"),
         axiosInstance.get("/api/payments/getAllActiveRenewalJobs"),
       ]);
-
-      const mergedData = [
+      return [
         ...activeJobsRes.data.map((j) => ({
           id: j.jobId,
           selectDetailForJob: `${j.customerName} - ${j.siteName} (Job)`,
@@ -68,70 +57,64 @@ const handleJobTypeChange = async (e) => {
           mailId: j.mailId,
         })),
       ];
-
-      setJobs(mergedData);
-      setFilteredJobs(mergedData);
-
     } else if (selected === "new") {
-      // Logic for New Installation
       const res = await axiosInstance.get("/api/payments/getAllActiveJobs");
-      const jobsList = res.data.map((j) => ({
+      return res.data.map((j) => ({
         id: j.jobId,
         selectDetailForJob: `${j.customerName} - ${j.siteName} (Job)`,
         type: "job",
         mailId: j.mailId,
       }));
-      setJobs(jobsList);
-      setFilteredJobs(jobsList);
-
     } else if (selected === "materialRepair") {
-      // Logic for Material Repair
-      const res = await axiosInstance.get(
-        "/api/payments/materialRepairQuotationsDropdownForAddPayments"
-      );
-      const jobsList = res.data.map((j) => ({
-        id: j.materialRepairQid, // Use materialRepairQid as the ID
+      const res = await axiosInstance.get("/api/payments/materialRepairQuotationsDropdownForAddPayments");
+      return res.data.map((j) => ({
+        id: j.materialRepairQid,
         selectDetailForJob: `${j.customerName} - ${j.siteName} (Material Repair)`,
         type: "materialRepair",
         mailId: j.mailId,
       }));
-      setJobs(jobsList);
-      setFilteredJobs(jobsList);
-
     } else if (selected === "onCall") {
-      // Logic for On Call
-      const res = await axiosInstance.get(
-        "/api/payments/oncallQuotationsDropdownForAddPayments"
-      );
-      const jobsList = res.data.map((j) => ({
-        id: j.oncallQid, // Use oncallQid as the ID
+      const res = await axiosInstance.get("/api/payments/oncallQuotationsDropdownForAddPayments");
+      return res.data.map((j) => ({
+        id: j.oncallQid,
         selectDetailForJob: `${j.customerName} - ${j.siteName} (On Call)`,
         type: "onCall",
         mailId: j.mailId,
       }));
-      setJobs(jobsList);
-      setFilteredJobs(jobsList);
-
     } else if (selected === "modernization") {
-      // Logic for Modernization
-      const res = await axiosInstance.get(
-        "/api/payments/modernizationQuotationsDropdownForAddPayments"
-      );
-      const jobsList = res.data.map((j) => ({
-        id: j.modernizationQid, // Use modernizationQid as the ID
+      const res = await axiosInstance.get("/api/payments/modernizationQuotationsDropdownForAddPayments");
+      return res.data.map((j) => ({
+        id: j.modernizationQid,
         selectDetailForJob: `${j.customerName} - ${j.siteName} (Modernization)`,
         type: "modernization",
         mailId: j.mailId,
       }));
+    }
+    return [];
+  };
+
+  const handleJobTypeChange = async (e) => {
+    const selected = e.target.value;
+    // Reset states
+    setJobType(selected);
+    setJobSearch("");
+    setSelectedJob(null);
+    setInvoices([]);
+    setSelectedInvoice(null);
+    setJobs([]);
+    setFilteredJobs([]);
+    setLoading(true);
+
+    try {
+      const jobsList = await fetchJobsByType(selected);
       setJobs(jobsList);
       setFilteredJobs(jobsList);
+    } catch (error) {
+      console.error(`Error fetching jobs for ${selected}:`, error);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error(`Error fetching jobs for ${selected}:`, error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleJobSearch = (value) => {
     setJobSearch(value);
@@ -152,57 +135,118 @@ const handleJobTypeChange = async (e) => {
     setLoadingInvoices(true);
 
     try {
-        let apiUrl = '';
-        
-        // Determine the correct API endpoint based on job.type
-        switch (job.type) {
-            case "renewal":
-                apiUrl = `/api/payments/invoices/by-renewal-job/${job.id}`;
-                break;
-            case "job": // This covers "new" and "amc" jobs that aren't renewals
-                apiUrl = `/api/payments/invoices/by-job/${job.id}`;
-                break;
-            case "materialRepair":
-                // Corresponds to the backend API: /api/payments/invoices/by-materialQid/{materialQuotationId}
-                apiUrl = `/api/payments/invoices/by-materialQid/${job.id}`;
-                break;
-            case "onCall":
-                // Corresponds to the backend API: /api/payments/invoices/by-oncallQid/{onCallQuotationId}
-                apiUrl = `/api/payments/invoices/by-oncallQid/${job.id}`;
-                break;
-            case "modernization":
-                // Corresponds to the backend API: /api/payments/invoices/by-modernizationQid/{modernizationId}
-                apiUrl = `/api/payments/invoices/by-modernizationQid/${job.id}`;
-                break;
-            default:
-                console.error("Unknown job type:", job.type);
-                setInvoices([]);
-                setLoadingInvoices(false);
-                return; // Exit the function if type is unknown
+      let apiUrl = '';
+
+      // Determine the correct API endpoint based on job.type
+      switch (job.type) {
+        case "renewal":
+          apiUrl = `/api/payments/invoices/by-renewal-job/${job.id}`;
+          break;
+        case "job": // This covers "new" and "amc" jobs that aren't renewals
+          apiUrl = `/api/payments/invoices/by-job/${job.id}`;
+          break;
+        case "materialRepair":
+          // Corresponds to the backend API: /api/payments/invoices/by-materialQid/{materialQuotationId}
+          apiUrl = `/api/payments/invoices/by-materialQid/${job.id}`;
+          break;
+        case "onCall":
+          // Corresponds to the backend API: /api/payments/invoices/by-oncallQid/{onCallQuotationId}
+          apiUrl = `/api/payments/invoices/by-oncallQid/${job.id}`;
+          break;
+        case "modernization":
+          // Corresponds to the backend API: /api/payments/invoices/by-modernizationQid/{modernizationId}
+          apiUrl = `/api/payments/invoices/by-modernizationQid/${job.id}`;
+          break;
+        default:
+          console.error("Unknown job type:", job.type);
+          setInvoices([]);
+          setLoadingInvoices(false);
+          return [];
+      }
+
+      const res = await axiosInstance.get(apiUrl);
+      let validInvoices = [];
+
+      if (res?.data && Array.isArray(res.data)) {
+        // Your backend is designed to return UNCLEARED invoices already,
+        // but we'll keep the frontend filter for robustness (inv.isCleared !== 1)
+        validInvoices = res.data.filter(inv => inv.isCleared !== 1);
+        setInvoices(validInvoices);
+
+        // Auto-select if only one uncleared invoice
+        if (validInvoices.length === 1) {
+          setSelectedInvoice(validInvoices[0]);
         }
-
-        const res = await axiosInstance.get(apiUrl);
-
-        if (res?.data && Array.isArray(res.data)) {
-            // Your backend is designed to return UNCLEARED invoices already,
-            // but we'll keep the frontend filter for robustness (inv.isCleared !== 1)
-            const unclearedInvoices = res.data.filter(inv => inv.isCleared !== 1);
-            setInvoices(unclearedInvoices);
-
-            // Auto-select if only one uncleared invoice
-            if (unclearedInvoices.length === 1) {
-                setSelectedInvoice(unclearedInvoices[0]);
-            }
-        } else {
-            setInvoices([]);
-        }
-    } catch (error) {
-        console.error("Error fetching invoices:", error);
+      } else {
         setInvoices([]);
+      }
+      return validInvoices;
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      setInvoices([]);
+      return [];
     } finally {
-        setLoadingInvoices(false);
+      setLoadingInvoices(false);
     }
-};
+  };
+
+  // Effect to handle Auto-Selection from URL Params
+  useEffect(() => {
+    const autoSelect = async () => {
+      const typeParam = searchParams.get('jobType');
+      const idParam = searchParams.get('jobId');
+      const invIdParam = searchParams.get('invoiceId');
+      const isRenewalParam = searchParams.get('isRenewal');
+
+      if (typeParam && idParam) {
+        setJobType(typeParam);
+        setLoading(true);
+        try {
+          // 1. Fetch Jobs for Type
+          const jobsList = await fetchJobsByType(typeParam);
+          setJobs(jobsList);
+          setFilteredJobs(jobsList);
+
+          // 2. Find specific job
+          // For 'amc', we need to distinguish between 'job' and 'renewal'
+          // For others, type matches broadly
+          let targetJob = null;
+
+          if (typeParam === 'amc') {
+            if (isRenewalParam === 'true') {
+              targetJob = jobsList.find(j => j.id.toString() === idParam && j.type === 'renewal');
+            } else {
+              targetJob = jobsList.find(j => j.id.toString() === idParam && j.type === 'job');
+            }
+          } else {
+            // For 'new', 'materialRepair' etc., simple ID match is usually enough
+            // But 'new' also returns type 'job', so we match ID.
+            // Ideally check type too if possible, but ID is unique within the filtered list usually.
+            targetJob = jobsList.find(j => j.id.toString() === idParam);
+          }
+
+          if (targetJob) {
+            // 3. Select Job & Fetch Invoices
+            const invoicesList = await handleJobSelect(targetJob);
+
+            // 4. Select specific Invoice
+            if (invIdParam && invoicesList && invoicesList.length > 0) {
+              const targetInvoice = invoicesList.find(i => i.invoiceId.toString() === invIdParam);
+              if (targetInvoice) {
+                setSelectedInvoice(targetInvoice);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error in auto-selection:", error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    autoSelect();
+  }, [searchParams]);
 
   // Function to handle payment type change and reset extra fields for 'Cash'
   const handlePaymentTypeChange = (type) => {
@@ -247,35 +291,35 @@ const handleJobTypeChange = async (e) => {
 
     // Frontend validation check
     if (requiresInstrumentDetails && (!instrumentNo || !bankName || !branchName)) {
-        alert("Please fill in all required payment instrument details.");
-        return;
+      alert("Please fill in all required payment instrument details.");
+      return;
     }
 
     // Determine payFor based on job type
-let payForValue = "";
+    let payForValue = "";
 
-if (selectedJob.type === "renewal") {
-    // This handles renewal jobs selected under the "AMC / Renewal" category
-    payForValue = "AMC Renewal Payment";
-} else if (selectedJob.type === "job" && jobType === "amc") {
-    // This handles AMC jobs selected under the "AMC / Renewal" category
-    payForValue = "AMC Job Payment";
-} else if (selectedJob.type === "job" && jobType === "new") {
-    // This handles New Installation jobs selected under the "New Installation" category
-    payForValue = "New Installation Payment";
-} else if (selectedJob.type === "materialRepair") {
-    // Handle Material Repair
-    payForValue = "Material Repair Payment";
-} else if (selectedJob.type === "onCall") {
-    // Handle On Call
-    payForValue = "On Call Payment";
-} else if (selectedJob.type === "modernization") {
-    // Handle Modernization
-    payForValue = "Modernization Payment";
-} else {
-    // Optional: Default or error case if type is unknown
-    payForValue = "Unspecified Payment"; 
-}
+    if (selectedJob.type === "renewal") {
+      // This handles renewal jobs selected under the "AMC / Renewal" category
+      payForValue = "AMC Renewal Payment";
+    } else if (selectedJob.type === "job" && jobType === "amc") {
+      // This handles AMC jobs selected under the "AMC / Renewal" category
+      payForValue = "AMC Job Payment";
+    } else if (selectedJob.type === "job" && jobType === "new") {
+      // This handles New Installation jobs selected under the "New Installation" category
+      payForValue = "New Installation Payment";
+    } else if (selectedJob.type === "materialRepair") {
+      // Handle Material Repair
+      payForValue = "Material Repair Payment";
+    } else if (selectedJob.type === "onCall") {
+      // Handle On Call
+      payForValue = "On Call Payment";
+    } else if (selectedJob.type === "modernization") {
+      // Handle Modernization
+      payForValue = "Modernization Payment";
+    } else {
+      // Optional: Default or error case if type is unknown
+      payForValue = "Unspecified Payment";
+    }
 
 
     const paymentPayload = {
@@ -303,18 +347,18 @@ if (selectedJob.type === "renewal") {
     // For this update, we will map 'instrumentNo' to 'chequeNo' for Cheque, and leave instrument details as is for DD/NEFT, 
     // relying on the backend to correctly process based on paymentType.
     if (paymentType === "Cheque") {
-        paymentPayload.chequeNo = instrumentNo;
+      paymentPayload.chequeNo = instrumentNo;
     } else if (["DD", "NEFT"].includes(paymentType)) {
-        // Since AmcJobPaymentRequestDto only has chequeNo, we'll map all to chequeNo for simplicity,
-        // but a proper DTO would use a generic field like 'instrumentNo' or 'transactionRef'
-        // For now, we'll use a temporary field or rely on the backend to handle the generic instrument details
-        // Since DTO has only 'chequeNo', 'bankName', 'branchName', we map the DD/NEFT details to them for the API.
-        paymentPayload.chequeNo = instrumentNo; // Use chequeNo as generic instrument/transaction no.
+      // Since AmcJobPaymentRequestDto only has chequeNo, we'll map all to chequeNo for simplicity,
+      // but a proper DTO would use a generic field like 'instrumentNo' or 'transactionRef'
+      // For now, we'll use a temporary field or rely on the backend to handle the generic instrument details
+      // Since DTO has only 'chequeNo', 'bankName', 'branchName', we map the DD/NEFT details to them for the API.
+      paymentPayload.chequeNo = instrumentNo; // Use chequeNo as generic instrument/transaction no.
     } else {
-        // For Cash, clear instrument-related fields
-        paymentPayload.chequeNo = null;
-        paymentPayload.bankName = null;
-        paymentPayload.branchName = null;
+      // For Cash, clear instrument-related fields
+      paymentPayload.chequeNo = null;
+      paymentPayload.bankName = null;
+      paymentPayload.branchName = null;
     }
 
     console.log("Submitting Payment Payload:", paymentPayload);
@@ -322,25 +366,25 @@ if (selectedJob.type === "renewal") {
     setIsSubmitting(true);
 
     try {
-        const response = await axiosInstance.post(
-            "/api/payments/createPayment",
-            paymentPayload
-        );
+      const response = await axiosInstance.post(
+        "/api/payments/createPayment",
+        paymentPayload
+      );
 
-        console.log("API Response:", response.data);
-        setSubmitStatus('success');
+      console.log("API Response:", response.data);
+      setSubmitStatus('success');
       //  alert(`Success! Payment recorded for Invoice ${selectedInvoice.invoiceNo}.`);
-        toast.success(`Payment recorded for Invoice ${selectedInvoice.invoiceNo}.`);
+      toast.success(`Payment recorded for Invoice ${selectedInvoice.invoiceNo}.`);
 
-        // Clear the form after successful submission
-        resetForm();
+      // Clear the form after successful submission
+      resetForm();
 
     } catch (error) {
-        console.error("Error submitting payment:", error.response ? error.response.data : error.message);
-        setSubmitStatus('error');
-        alert(`Error: Failed to record payment. ${error.response?.data?.message || error.message}`);
+      console.error("Error submitting payment:", error.response ? error.response.data : error.message);
+      setSubmitStatus('error');
+      alert(`Error: Failed to record payment. ${error.response?.data?.message || error.message}`);
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
   // --- End Utility Functions ---
@@ -351,7 +395,7 @@ if (selectedJob.type === "renewal") {
   return (
     <div className="p-6 md:p-10 bg-gray-10 min-h-screen">
       <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center">
-          <IndianRupee className="w-7 h-7 mr-3 text-blue-600" />
+        <IndianRupee className="w-7 h-7 mr-3 text-blue-600" />
         Record New Customer Payment
       </h2>
 
@@ -362,14 +406,14 @@ if (selectedJob.type === "renewal") {
           {/* COLUMN 1: Job Type Selection & Search Card (Always visible) */}
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-fit">
             <h3 className="text-xl font-semibold mb-5 text-gray-700 flex items-center">
-              <Info className="w-5 h-5 mr-2 text-blue-500"/>
+              <Info className="w-5 h-5 mr-2 text-blue-500" />
               1. Select Job Type and Search
             </h3>
 
-                      {/* Job Type Selection */}
+            {/* Job Type Selection */}
             <div className="mb-6 flex flex-wrap gap-4 items-center">
               <p className="text-md font-medium text-gray-600">Category:</p>
-              
+
               {/* AMC / Renewal */}
               <label className="flex items-center cursor-pointer">
                 <input
@@ -382,7 +426,7 @@ if (selectedJob.type === "renewal") {
                 />
                 <span className="text-gray-700 font-medium">AMC / Renewal</span>
               </label>
-              
+
               {/* New Installation */}
               <label className="flex items-center cursor-pointer">
                 <input
@@ -395,7 +439,7 @@ if (selectedJob.type === "renewal") {
                 />
                 <span className="text-gray-700 font-medium">New Installation</span>
               </label>
-              
+
               {/* Material Repair */}
               <label className="flex items-center cursor-pointer">
                 <input
@@ -408,7 +452,7 @@ if (selectedJob.type === "renewal") {
                 />
                 <span className="text-gray-700 font-medium">Material Repair</span>
               </label>
-              
+
               {/* On Call */}
               <label className="flex items-center cursor-pointer">
                 <input
@@ -421,7 +465,7 @@ if (selectedJob.type === "renewal") {
                 />
                 <span className="text-gray-700 font-medium">On Call</span>
               </label>
-              
+
               {/* Modernization */}
               <label className="flex items-center cursor-pointer">
                 <input
@@ -506,8 +550,8 @@ if (selectedJob.type === "renewal") {
           {selectedJob && (
             <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
               <h3 className="text-xl font-semibold mb-5 text-gray-700 flex items-center">
-                  <CreditCard className="w-5 h-5 mr-2 text-blue-500"/>
-                  2. Select Invoice to Pay
+                <CreditCard className="w-5 h-5 mr-2 text-blue-500" />
+                2. Select Invoice to Pay
               </h3>
 
               {loadingInvoices && (
@@ -523,10 +567,9 @@ if (selectedJob.type === "renewal") {
                     <div
                       key={idx}
                       onClick={() => setSelectedInvoice(inv)}
-                      className={`border rounded-xl p-4 shadow-sm cursor-pointer transition-all duration-200 relative ${
-                          selectedInvoice?.invoiceId === inv.invoiceId
-                            ? "border-blue-600 ring-4 ring-blue-100 bg-blue-50"
-                            : "border-gray-300 hover:shadow-md hover:border-blue-400 bg-white"
+                      className={`border rounded-xl p-4 shadow-sm cursor-pointer transition-all duration-200 relative ${selectedInvoice?.invoiceId === inv.invoiceId
+                        ? "border-blue-600 ring-4 ring-blue-100 bg-blue-50"
+                        : "border-gray-300 hover:shadow-md hover:border-blue-400 bg-white"
                         }`}
                     >
                       <p className="font-extrabold text-lg text-gray-900 mb-1 leading-tight">
@@ -539,8 +582,7 @@ if (selectedJob.type === "renewal") {
                         **Amount:** ₹{inv.totalAmt ? inv.totalAmt.toLocaleString('en-IN') : 0}
                       </p>
                       <div
-                        className={`text-xs font-medium mt-2 p-1 rounded inline-flex items-center ${
-                            inv.isCleared === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        className={`text-xs font-medium mt-2 p-1 rounded inline-flex items-center ${inv.isCleared === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                           }`}
                       >
                         {inv.isCleared === 1 ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
@@ -570,22 +612,22 @@ if (selectedJob.type === "renewal") {
         {selectedInvoice && (
           <div className="bg-white border rounded-xl shadow-lg p-6 border-gray-200">
             <h3 className="text-xl font-semibold mb-6 text-gray-700 flex items-center">
-                <IndianRupee className="w-5 h-5 mr-2 text-blue-500"/>
-                3. Enter Payment Information
+              <IndianRupee className="w-5 h-5 mr-2 text-blue-500" />
+              3. Enter Payment Information
             </h3>
 
             {/* Success/Error Message */}
             {submitStatus === 'success' && (
-                <div className="p-3 mb-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center">
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Payment recorded successfully!
-                </div>
+              <div className="p-3 mb-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                Payment recorded successfully!
+              </div>
             )}
             {submitStatus === 'error' && (
-                <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center">
-                    <XCircle className="w-5 h-5 mr-2" />
-                    Failed to record payment. Please check the console for details.
-                </div>
+              <div className="p-3 mb-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center">
+                <XCircle className="w-5 h-5 mr-2" />
+                Failed to record payment. Please check the console for details.
+              </div>
             )}
 
             <div className="grid md:grid-cols-4 gap-6">
@@ -645,80 +687,79 @@ if (selectedJob.type === "renewal") {
                       className="text-red-500 focus:ring-red-500"
                     />
                     <span className="text-gray-700 font-medium">No</span>
-                    </label>
+                  </label>
                 </div>
               </div>
             </div>
 
             <div className="mt-8">
               <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
-                  <CreditCard className="w-4 h-4 mr-1" /> Select Payment Type*
+                <CreditCard className="w-4 h-4 mr-1" /> Select Payment Type*
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {["Cash", "Cheque", "DD", "NEFT"].map((type) => (
-                      <div
-                          key={type}
-                          onClick={() => handlePaymentTypeChange(type)} // Use the new handler
-                          className={`border rounded-lg p-3 text-center cursor-pointer transition-all duration-200 font-medium ${
-                              paymentType === type
-                                  ? "bg-blue-600 text-white shadow-md border-blue-600"
-                                  : "hover:bg-blue-50 hover:text-blue-700 border-gray-300 text-gray-700"
-                            }`}
-                      >
-                          {type}
-                      </div>
-                  ))}
+                {["Cash", "Cheque", "DD", "NEFT"].map((type) => (
+                  <div
+                    key={type}
+                    onClick={() => handlePaymentTypeChange(type)} // Use the new handler
+                    className={`border rounded-lg p-3 text-center cursor-pointer transition-all duration-200 font-medium ${paymentType === type
+                      ? "bg-blue-600 text-white shadow-md border-blue-600"
+                      : "hover:bg-blue-50 hover:text-blue-700 border-gray-300 text-gray-700"
+                      }`}
+                  >
+                    {type}
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* --- NEW CONDITIONAL FIELDS --- */}
             {showInstrumentDetails && (
-                <div className="mt-8 grid md:grid-cols-3 gap-6 border-t pt-6 border-gray-200">
-                    {/* Instrument/Transaction No. */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
-                            <FileText className="w-4 h-4 mr-1" /> {paymentType} No. / Transaction No.*
-                        </label>
-                        <input
-                            type="text"
-                            value={instrumentNo}
-                            onChange={(e) => setInstrumentNo(e.target.value)}
-                            placeholder={`Enter ${paymentType} No. or Transaction ID`}
-                            required={showInstrumentDetails}
-                            className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Bank Name */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
-                            <Info className="w-4 h-4 mr-1" /> Bank Name*
-                        </label>
-                        <input
-                            type="text"
-                            value={bankName}
-                            onChange={(e) => setBankName(e.target.value)}
-                            placeholder="e.g., State Bank of India"
-                            required={showInstrumentDetails}
-                            className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* Branch Name */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
-                            <Info className="w-4 h-4 mr-1" /> Branch Name*
-                        </label>
-                        <input
-                            type="text"
-                            value={branchName}
-                            onChange={(e) => setBranchName(e.target.value)}
-                            placeholder="e.g., Mumbai Fort Branch"
-                            required={showInstrumentDetails}
-                            className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
+              <div className="mt-8 grid md:grid-cols-3 gap-6 border-t pt-6 border-gray-200">
+                {/* Instrument/Transaction No. */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                    <FileText className="w-4 h-4 mr-1" /> {paymentType} No. / Transaction No.*
+                  </label>
+                  <input
+                    type="text"
+                    value={instrumentNo}
+                    onChange={(e) => setInstrumentNo(e.target.value)}
+                    placeholder={`Enter ${paymentType} No. or Transaction ID`}
+                    required={showInstrumentDetails}
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
+
+                {/* Bank Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                    <Info className="w-4 h-4 mr-1" /> Bank Name*
+                  </label>
+                  <input
+                    type="text"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    placeholder="e.g., State Bank of India"
+                    required={showInstrumentDetails}
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Branch Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 flex items-center">
+                    <Info className="w-4 h-4 mr-1" /> Branch Name*
+                  </label>
+                  <input
+                    type="text"
+                    value={branchName}
+                    onChange={(e) => setBranchName(e.target.value)}
+                    placeholder="e.g., Mumbai Fort Branch"
+                    required={showInstrumentDetails}
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-white focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
             )}
             {/* --- END CONDITIONAL FIELDS --- */}
 
@@ -726,20 +767,19 @@ if (selectedJob.type === "renewal") {
             {/* Submit Button */}
             <div className="mt-10 pt-6 border-t border-gray-200">
               <button
-                  type="submit"
-                  disabled={isSubmitting || !selectedInvoice || (showInstrumentDetails && (!instrumentNo || !bankName || !branchName))}
-                  className={`w-full py-3 px-4 rounded-lg text-white font-semibold flex items-center justify-center transition duration-200 ${
-                      isSubmitting || !selectedInvoice || (showInstrumentDetails && (!instrumentNo || !bankName || !branchName))
-                          ? 'bg-blue-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 shadow-md'
+                type="submit"
+                disabled={isSubmitting || !selectedInvoice || (showInstrumentDetails && (!instrumentNo || !bankName || !branchName))}
+                className={`w-full py-3 px-4 rounded-lg text-white font-semibold flex items-center justify-center transition duration-200 ${isSubmitting || !selectedInvoice || (showInstrumentDetails && (!instrumentNo || !bankName || !branchName))
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-md'
                   }`}
               >
-                  {isSubmitting ? (
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  ) : (
-                      <IndianRupee className="w-5 h-5 mr-2" />
-                  )}
-                  {isSubmitting ? 'Processing Payment...' : 'Record Payment'}
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <IndianRupee className="w-5 h-5 mr-2" />
+                )}
+                {isSubmitting ? 'Processing Payment...' : 'Record Payment'}
               </button>
             </div>
           </div>

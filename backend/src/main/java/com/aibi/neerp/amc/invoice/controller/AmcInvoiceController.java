@@ -45,7 +45,21 @@ public class AmcInvoiceController {
         // Call the refactored service method
         return invoiceService.getInvoicesPaged(search, dateSearch, page, size, sortBy, direction);
     }
+
+// API 1a: GET All Pending Invoices (isCleared == 0)
+@GetMapping("/getAllPendingInvoices")
+public Page<AmcInvoiceResponseDto> getAllPendingInvoices(
+        @RequestParam(required = false) String search,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateSearch,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "invoiceDate") String sortBy, 
+        @RequestParam(defaultValue = "desc") String direction 
+) {
+    log.info("Request received to fetch Pending AMC Invoices with search='{}', date='{}'", search, dateSearch);
     
+    return invoiceService.getPendingInvoicesPaged(search, dateSearch, page, size, sortBy, direction);
+}    
  // API 2: GET Invoice Summary Counts (New Method)
     // Endpoint: GET /api/amc/invoices/counts
     @GetMapping("/counts")
