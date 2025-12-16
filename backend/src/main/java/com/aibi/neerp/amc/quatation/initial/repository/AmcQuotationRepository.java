@@ -14,8 +14,32 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AmcQuotationRepository extends JpaRepository<AmcQuotation, Integer> {
 
+//	@Query("""
+//		    SELECT DISTINCT q
+//		    FROM AmcQuotation q
+//		    LEFT JOIN q.customer c
+//		    LEFT JOIN q.site s
+//		    LEFT JOIN q.createdBy e
+//		    LEFT JOIN q.lead l
+//		    LEFT JOIN l.area a
+//		    LEFT JOIN q.makeOfElevator m
+//		    WHERE (:search IS NULL OR :search = '' OR (
+//		        LOWER(l.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(s.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(e.employeeName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(a.areaName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(m.name) LIKE LOWER(CONCAT('%', :search, '%'))
+//		    ))
+//		    AND (:dateSearch IS NULL OR :dateSearch = '' OR q.quatationDate = CAST(:dateSearch AS date))
+//		""")
+//		Page<AmcQuotation> searchAll(
+//		    @Param("search") String search, 
+//		    @Param("dateSearch") String dateSearch, 
+//		    Pageable pageable
+//		);
+	
 	@Query("""
-		    SELECT DISTINCT q
+		    SELECT q
 		    FROM AmcQuotation q
 		    LEFT JOIN q.customer c
 		    LEFT JOIN q.site s
@@ -37,6 +61,8 @@ public interface AmcQuotationRepository extends JpaRepository<AmcQuotation, Inte
 		    @Param("dateSearch") String dateSearch, 
 		    Pageable pageable
 		);
+
+
 
     
     
