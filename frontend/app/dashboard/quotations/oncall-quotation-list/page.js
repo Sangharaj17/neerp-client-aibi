@@ -76,6 +76,10 @@ export default function OncallList() {
     fetchOncalls();
   }, [page, size, sortBy, direction, fetchOncalls]);
 
+  useEffect(() => {
+    fetchOncalls();
+  }, [isEditModalOpen]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (page === 0) {
@@ -423,14 +427,14 @@ export default function OncallList() {
                       {item.oncallDto.isFinal ? (
                         <FaThumbsUp
                           className="inline-block text-green-500 cursor-pointer hover:text-green-600 transition"
-                          title="Finalized - Click to Revert to Draft"
+                          title="Finalized"
                           size={18}
                         //onClick={() => handleAction('Toggle Final', item.oncallDto.id, item.oncallDto.isFinal)}
                         />
                       ) : (
                         <FaThumbsDown
                           className="inline-block text-red-500 cursor-pointer hover:text-red-600 transition"
-                          title="Draft - Click to Finalize"
+                          title="Click to Finalize"
                           size={18}
                           onClick={() => handleAction('Toggle Final', item.oncallDto.id, item.oncallDto.isFinal)}
                         />
@@ -453,12 +457,23 @@ export default function OncallList() {
 
                         {/* Edit */}
                         <button
-                          title="Edit"
-                          className="text-sky-500 hover:text-sky-600 transition"
+                          title={
+                            item.oncallDto.isFinal
+                              ? 'Cannot edit because this record is final'
+                              : 'Edit'
+                          }
+                          disabled={item.oncallDto.isFinal === true}
+                          className={`transition 
+    ${item.oncallDto.isFinal
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-sky-500 hover:text-sky-600'
+                            }`}
                           onClick={() => handleAction('Edit', item.oncallDto.id)}
                         >
                           <FaEdit size={16} />
                         </button>
+
+
 
                         {/* PDF Button: Letter Head FT */}
                         <button
@@ -597,7 +612,13 @@ export default function OncallList() {
         onCancel={() => setIsInvoiceModalOpen(false)}
         title="Invoice Oncall Quotation"
       >
-        <OncallInvoicePrint invoiceId={selectedIdForInvoice} />
+        <OncallInvoicePrint
+          invoiceId={selectedIdForInvoice}
+          onBackToList={() => {
+            setIsInvoiceModalOpen(false);
+            // fetchModernizations();
+          }}
+        />
       </ActionModal>
       {/* --------------------------- */}
 

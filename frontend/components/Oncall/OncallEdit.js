@@ -7,9 +7,9 @@ import { toast } from 'react-hot-toast';
 import { FaPlus, FaTrashAlt, FaCode, FaSave } from 'react-icons/fa';
 
 // Component name changed from ModernizationEdit to OncallEdit
-const OncallEdit = ({ id }) => {
+const OncallEdit = ({ id, onSave }) => {
   const router = useRouter();
-  
+
   // Base API path
   const API_BASE_PATH = '/api/oncall';
 
@@ -46,17 +46,17 @@ const OncallEdit = ({ id }) => {
 
   const calculateTotals = useCallback((items, gstPercent, gstApplicable) => {
     const subtotal = items.reduce(
-        (sum, d) => sum + (parseFloat(d.amount) || 0),
-        0
+      (sum, d) => sum + (parseFloat(d.amount) || 0),
+      0
     );
     const gstAmount =
-        gstApplicable === 'yes' ? (subtotal * (gstPercent || 0)) / 100 : 0;
+      gstApplicable === 'yes' ? (subtotal * (gstPercent || 0)) / 100 : 0;
     const amountWithGst = subtotal + gstAmount;
 
     return {
-        subtotal: Number(subtotal.toFixed(2)),
-        gstAmount: Number(gstAmount.toFixed(2)),
-        amountWithGst: Number(amountWithGst.toFixed(2)),
+      subtotal: Number(subtotal.toFixed(2)),
+      gstAmount: Number(gstAmount.toFixed(2)),
+      amountWithGst: Number(amountWithGst.toFixed(2)),
     };
   }, []);
 
@@ -78,7 +78,7 @@ const OncallEdit = ({ id }) => {
         );
 
         // 🛑 CRITICAL CORRECTION: Access data via 'oncallDto'
-        const oncallQuotation = data.oncallDto || {}; 
+        const oncallQuotation = data.oncallDto || {};
         const combinedEnquiryId = oncallQuotation.combinedEnquiryId;
 
         setForm((prev) => ({
@@ -191,7 +191,7 @@ const OncallEdit = ({ id }) => {
     const payload = {
       // 🛑 CRITICAL CORRECTION: Renamed object property to 'oncallDto' for consistency 
       // with the DTO structure if the backend PUT endpoint expects the same structure
-      oncallDto: { 
+      oncallDto: {
         ...form,
         gstPercentage: Number(form.gstPercentage),
         subtotal: form.subtotal,
@@ -207,7 +207,7 @@ const OncallEdit = ({ id }) => {
         amount: Number(d.amount) || 0,
       })),
     };
-    
+
     // Note: If your backend PUT endpoint only accepts a simple structure like { oncall: {...}, details: [...] } 
     // despite the GET returning OncallResponseDto, you should revert the payload key to 'oncall'.
     // I'm assuming for API consistency (GET/PUT), it should be 'oncallDto'. If the update fails, 
@@ -217,6 +217,7 @@ const OncallEdit = ({ id }) => {
       // 3. UPDATE OnCall Quotation API call
       await axiosInstance.put(`${API_BASE_PATH}/${form.id}`, payload); // API path and payload structure updated
       toast.success('Oncall Quotation updated successfully');
+      onSave();
       // Assuming 'onSave' is passed as a prop from OncallList, use it if available
       // router.push('/dashboard/quotations/OncallList'); // Redirect URL updated (Commented out if used in modal)
     } catch (error) {
@@ -296,72 +297,72 @@ const OncallEdit = ({ id }) => {
             className={`${inputStyle} w-full h-24 mt-4`}
           />
         </section>
-        
+
         {/* HSN/SAC, GST, Warranty Controls */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-end">
-            {/* Global HSN/SAC Code Input */}
-            <div className="relative col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">Global HSN/SAC Code</label>
-                <div className="flex items-center">
-                    <input
-                        type="text"
-                        name="hsnSacCode"
-                        placeholder="HSN/SAC Code"
-                        value={form.hsnSacCode}
-                        onChange={handleChange}
-                        className={`${inputStyle} pl-8`}
-                        required
-                    />
-                    <FaCode className="absolute left-2.5 text-gray-400 h-4 w-4" />
-                </div>
+          {/* Global HSN/SAC Code Input */}
+          <div className="relative col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">Global HSN/SAC Code</label>
+            <div className="flex items-center">
+              <input
+                type="text"
+                name="hsnSacCode"
+                placeholder="HSN/SAC Code"
+                value={form.hsnSacCode}
+                onChange={handleChange}
+                className={`${inputStyle} pl-8`}
+                required
+              />
+              <FaCode className="absolute left-2.5 text-gray-400 h-4 w-4" />
             </div>
+          </div>
 
-            {/* GST Applicable Select */}
-            <div className="col-span-1">
-                    <label className="text-xs text-gray-500 block mb-1">GST Applicable</label>
-                <select
-                    name="gstApplicable"
-                    value={form.gstApplicable}
-                    onChange={handleChange}
-                    className={inputStyle}
-                    required
-                >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                </select>
-            </div>
-            
-            {/* GST Percentage Input */}
-            <div className="relative col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">GST Percentage</label>
-                <input
-                    type="number"
-                    name="gstPercentage"
-                    placeholder="GST %"
-                    value={form.gstPercentage}
-                    onChange={handleChange}
-                    className={inputStyle}
-                    readOnly={form.gstApplicable === 'no'}
-                    disabled={form.gstApplicable === 'no'}
-                    min="0"
-                    step="0.01"
-                />
-                <span className="absolute right-3 top-[34px] transform -translate-y-1/2 text-gray-500 font-semibold">%</span>
-            </div>
+          {/* GST Applicable Select */}
+          <div className="col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">GST Applicable</label>
+            <select
+              name="gstApplicable"
+              value={form.gstApplicable}
+              onChange={handleChange}
+              className={inputStyle}
+              required
+            >
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
 
-            {/* Warranty Input */}
-            <div className="col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">Warranty Period</label>
-                <input
-                    name="warranty"
-                    placeholder="Warranty Period"
-                    value={form.warranty}
-                    onChange={handleChange}
-                    className={inputStyle}
-                />
-            </div>
+          {/* GST Percentage Input */}
+          <div className="relative col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">GST Percentage</label>
+            <input
+              type="number"
+              name="gstPercentage"
+              placeholder="GST %"
+              value={form.gstPercentage}
+              onChange={handleChange}
+              className={inputStyle}
+              readOnly={form.gstApplicable === 'no'}
+              disabled={form.gstApplicable === 'no'}
+              min="0"
+              step="0.01"
+            />
+            <span className="absolute right-3 top-[34px] transform -translate-y-1/2 text-gray-500 font-semibold">%</span>
+          </div>
+
+          {/* Warranty Input */}
+          <div className="col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">Warranty Period</label>
+            <input
+              name="warranty"
+              placeholder="Warranty Period"
+              value={form.warranty}
+              onChange={handleChange}
+              className={inputStyle}
+            />
+          </div>
         </div>
-        
+
         {/* Details */}
         <section>
           <div className="flex justify-between items-center mb-4">

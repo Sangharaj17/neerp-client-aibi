@@ -6,7 +6,7 @@ import axiosInstance from '@/utils/axiosInstance';
 import { toast } from 'react-hot-toast';
 import { FaPlus, FaTrashAlt, FaCode, FaSave } from 'react-icons/fa';
 
-const ModernizationEdit = ({ id }) => {
+const ModernizationEdit = ({ id, onSave }) => {
   const router = useRouter();
 
   // ---------------- STATE ----------------
@@ -204,7 +204,8 @@ const ModernizationEdit = ({ id }) => {
     try {
       await axiosInstance.put(`/api/modernization/update/${form.id}`, payload);
       toast.success('Quotation updated successfully');
-      router.push('/dashboard/quotations/ModernizationList');
+      onSave();
+      //router.push('/dashboard/quotations/ModernizationList');
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || 'Update failed');
@@ -282,74 +283,74 @@ const ModernizationEdit = ({ id }) => {
             className={`${inputStyle} w-full h-24 mt-4`}
           />
         </section>
-        
+
         {/* HSN/SAC, GST, Warranty Controls (5 column layout changed to 4) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-end">
-            {/* Global HSN/SAC Code Input */}
-            <div className="relative col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">Global HSN/SAC Code</label>
-                <div className="flex items-center">
-                     <input
-                         type="text"
-                         name="hsnSacCode"
-                         placeholder="HSN/SAC Code"
-                         value={form.hsnSacCode}
-                         onChange={handleChange}
-                         className={`${inputStyle} pl-8`}
-                         required
-                     />
-                     <FaCode className="absolute left-2.5 text-gray-400 h-4 w-4" />
-                </div>
+          {/* Global HSN/SAC Code Input */}
+          <div className="relative col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">Global HSN/SAC Code</label>
+            <div className="flex items-center">
+              <input
+                type="text"
+                name="hsnSacCode"
+                placeholder="HSN/SAC Code"
+                value={form.hsnSacCode}
+                onChange={handleChange}
+                className={`${inputStyle} pl-8`}
+                required
+              />
+              <FaCode className="absolute left-2.5 text-gray-400 h-4 w-4" />
             </div>
+          </div>
 
-            {/* GST Applicable Select */}
-            <div className="col-span-1">
-                 <label className="text-xs text-gray-500 block mb-1">GST Applicable</label>
-                <select
-                    name="gstApplicable"
-                    value={form.gstApplicable}
-                    onChange={handleChange}
-                    className={inputStyle}
-                    required
-                >
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                </select>
-            </div>
-            
-            {/* GST Percentage Input */}
-            <div className="relative col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">GST Percentage</label>
-                <input
-                    type="number"
-                    name="gstPercentage"
-                    placeholder="GST %"
-                    value={form.gstPercentage}
-                    onChange={handleChange}
-                    className={inputStyle}
-                    readOnly={form.gstApplicable === 'no'}
-                    disabled={form.gstApplicable === 'no'}
-                    min="0"
-                    step="0.01"
-                />
-                <span className="absolute right-3 top-[34px] transform -translate-y-1/2 text-gray-500 font-semibold">%</span>
-            </div>
+          {/* GST Applicable Select */}
+          <div className="col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">GST Applicable</label>
+            <select
+              name="gstApplicable"
+              value={form.gstApplicable}
+              onChange={handleChange}
+              className={inputStyle}
+              required
+            >
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
 
-            {/* Warranty Input */}
-            <div className="col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">Warranty Period</label>
-                <input
-                    name="warranty"
-                    placeholder="Warranty Period"
-                    value={form.warranty}
-                    onChange={handleChange}
-                    className={inputStyle}
-                />
-            </div>
-            
-            {/* The 5th column for "Mark as Final" has been removed, adjusting the grid to 'md:grid-cols-4' */}
+          {/* GST Percentage Input */}
+          <div className="relative col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">GST Percentage</label>
+            <input
+              type="number"
+              name="gstPercentage"
+              placeholder="GST %"
+              value={form.gstPercentage}
+              onChange={handleChange}
+              className={inputStyle}
+              readOnly={form.gstApplicable === 'no'}
+              disabled={form.gstApplicable === 'no'}
+              min="0"
+              step="0.01"
+            />
+            <span className="absolute right-3 top-[34px] transform -translate-y-1/2 text-gray-500 font-semibold">%</span>
+          </div>
+
+          {/* Warranty Input */}
+          <div className="col-span-1">
+            <label className="text-xs text-gray-500 block mb-1">Warranty Period</label>
+            <input
+              name="warranty"
+              placeholder="Warranty Period"
+              value={form.warranty}
+              onChange={handleChange}
+              className={inputStyle}
+            />
+          </div>
+
+          {/* The 5th column for "Mark as Final" has been removed, adjusting the grid to 'md:grid-cols-4' */}
         </div>
-        
+
         {/* Details */}
         <section>
           <div className="flex justify-between items-center mb-4">

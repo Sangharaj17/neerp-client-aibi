@@ -421,14 +421,14 @@ export default function ModernizationList() {
                       {item.modernization.isFinal ? (
                         <FaThumbsUp
                           className="inline-block text-green-500 cursor-pointer hover:text-green-600 transition"
-                          title="Finalized - Click to Revert to Draft"
+                          title="Finalized"
                           size={18}
                         //onClick={() => handleAction('Toggle Final', item.modernization.id, item.modernization.isFinal)}
                         />
                       ) : (
                         <FaThumbsDown
                           className="inline-block text-red-500 cursor-pointer hover:text-red-600 transition"
-                          title="Draft - Click to Finalize"
+                          title="Click to Finalize"
                           size={18}
                           onClick={() => handleAction('Toggle Final', item.modernization.id, item.modernization.isFinal)}
                         />
@@ -446,13 +446,24 @@ export default function ModernizationList() {
                         >
                           <FaEye size={16} />
                         </button>
+                        {/* Edit */}
                         <button
-                          title="Edit"
-                          className="text-sky-500 hover:text-sky-600 transition"
+                          title={
+                            item.modernization.isFinal
+                              ? 'Cannot edit because this record is final'
+                              : 'Edit'
+                          }
+                          disabled={item.modernization.isFinal === true}
+                          className={`transition 
+    ${item.modernization.isFinal
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-sky-500 hover:text-sky-600'
+                            }`}
                           onClick={() => handleAction('Edit', item.modernization.id)}
                         >
                           <FaEdit size={16} />
                         </button>
+
 
                         {/* Separate Button for Letter Head FT */}
                         <button
@@ -575,7 +586,10 @@ export default function ModernizationList() {
         onCancel={() => setIsEditModalOpen(false)}
         title="Edit Modernization Quotation"
       >
-        <ModernizationEdit id={selectedIdForEdit} />
+        <ModernizationEdit id={selectedIdForEdit} onSave={() => {
+          setIsEditModalOpen(false);
+          fetchModernizations();
+        }} />
       </ActionModal>
       {/* --------------------------- */}
       <ActionModal
@@ -583,7 +597,12 @@ export default function ModernizationList() {
         onCancel={() => setIsInvoiceModalOpen(false)}
         title="Invoice Modernization Quotation"
       >
-        <ModernizationInvoicePrint invoiceId={selectedIdForInvoice} />
+        <ModernizationInvoicePrint invoiceId={selectedIdForInvoice}
+          onBackToList={() => {
+            setIsInvoiceModalOpen(false);
+            // fetchModernizations();
+          }}
+        />
       </ActionModal>
       {/* --------------------------- */}
 

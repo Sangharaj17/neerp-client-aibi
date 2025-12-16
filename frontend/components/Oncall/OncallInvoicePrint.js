@@ -9,11 +9,11 @@ const formatCurrency = (amount) => {
 };
 
 // Component name changed from ModernizationInvoicePrint to OncallInvoicePrint
-const OncallInvoicePrint = ({ invoiceId = 2 }) => { // invoiceId should be onCallId now
+const OncallInvoicePrint = ({ invoiceId = 2, onBackToList }) => { // invoiceId should be onCallId now
   const [invoiceData, setInvoiceData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Base API path
   const API_BASE_PATH = '/api/oncall';
 
@@ -24,7 +24,7 @@ const OncallInvoicePrint = ({ invoiceId = 2 }) => { // invoiceId should be onCal
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         // API path updated to the new Oncall endpoint: /api/oncall/invoice/{onCallId}
@@ -85,9 +85,14 @@ const OncallInvoicePrint = ({ invoiceId = 2 }) => { // invoiceId should be onCal
       <div className="w-full max-w-[210mm] mx-auto p-4 bg-white shadow-xl font-sans text-gray-800 print:shadow-none print:p-0">
         {/* Header (Print Controls) */}
         <div className="mb-4 border-b border-gray-300 pb-3 print:hidden flex justify-between items-center">
-          <a href="#" className="text-blue-600 hover:underline text-sm">
-            <span className="font-semibold">Back To List</span> &gt;&gt;
-          </a>
+          <button
+            type="button"
+            onClick={onBackToList}
+            className="text-blue-600 hover:underline text-sm font-semibold"
+          >
+            Back To List &gt;&gt;
+          </button>
+
           <button
             onClick={() => window.print()}
             className="py-1.5 px-4 border border-blue-500 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition text-sm font-medium"
@@ -282,7 +287,9 @@ const OncallInvoicePrint = ({ invoiceId = 2 }) => { // invoiceId should be onCal
 
         {/* Close Button */}
         <div className="flex justify-end pt-4 print:hidden">
-          <button className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button
+            onClick={onBackToList}
+            className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
             Close Preview
           </button>
         </div>
