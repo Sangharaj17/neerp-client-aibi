@@ -2,10 +2,12 @@ package com.aibi.neerp.config;
 
 import com.aibi.neerp.amc.common.entity.ContractType;
 import com.aibi.neerp.amc.common.entity.ElevatorMake;
+import com.aibi.neerp.amc.common.entity.JobActivityType;
 import com.aibi.neerp.amc.common.entity.NumberOfService;
 import com.aibi.neerp.amc.common.entity.PaymentTerm;
 import com.aibi.neerp.amc.common.repository.ContractTypeRepository;
 import com.aibi.neerp.amc.common.repository.ElevatorMakeRepository;
+import com.aibi.neerp.amc.common.repository.JobActivityTypeRepository;
 import com.aibi.neerp.amc.common.repository.NumberOfServiceRepository;
 import com.aibi.neerp.amc.common.repository.PaymentTermRepository;
 import com.aibi.neerp.componentpricing.dto.FloorRequestDTO;
@@ -53,6 +55,7 @@ public class TenantDefaultDataInitializer {
     private final AdditionalFloorsRepository additionalFloorsRepository;
     private final AirTypeRepository airTypeRepository;
     private final FloorService floorService;
+    private final JobActivityTypeRepository jobActivityTypeRepository;
     // Removed: private final DatabaseColumnNamingFixer columnNamingFixer;
 
     @Autowired(required = false)
@@ -74,7 +77,8 @@ public class TenantDefaultDataInitializer {
                                         ComponentRepository componentRepository,
                                         AdditionalFloorsRepository additionalFloorsRepository,
                                         AirTypeRepository airTypeRepository,
-                                        FloorService floorService
+                                        FloorService floorService,
+                                        JobActivityTypeRepository jobActivityTypeRepository
             /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
         this.unitRepository = unitRepository;
         this.capacityTypeRepository = capacityTypeRepository;
@@ -93,6 +97,7 @@ public class TenantDefaultDataInitializer {
         this.additionalFloorsRepository = additionalFloorsRepository;
         this.airTypeRepository = airTypeRepository;
         this.floorService = floorService;
+        this.jobActivityTypeRepository = jobActivityTypeRepository;
         // Removed: this.columnNamingFixer = columnNamingFixer;
     }
 
@@ -168,6 +173,10 @@ public class TenantDefaultDataInitializer {
             System.out.println("[DataInit] Step 16/16: Inserting AirTypes...");
             insertDefaultAirTypes();
             System.out.println("[DataInit] Step 16/16: ✅ Completed");
+             
+            System.out.println("[DataInit] Step 17/17: Inserting JobActivityTypes...");
+            insertDefaultJobActivityTypes();
+            System.out.println("[DataInit] Step 17/17: ✅ Completed");
 
             // Explicitly flush to ensure data is saved
             if (entityManager != null) {
@@ -799,5 +808,35 @@ public class TenantDefaultDataInitializer {
             throw e;
         }
     }
+    
+    private void insertDefaultJobActivityTypes() {
+        insertJobActivityTypeIfNotExists("service", "Regular service activity");
+        insertJobActivityTypeIfNotExists("breakdown", "Breakdown repair activity");
+    }
+
+    private void insertJobActivityTypeIfNotExists(String name, String description) {
+        try {
+            boolean exists = jobActivityTypeRepository.existsByActivityNameIgnoreCase(name);
+            System.out.println("[DataInit] Checking JobActivityType '" + name + "', exists: " + exists);
+
+            if (!exists) {
+                JobActivityType type = new JobActivityType();
+                type.setActivityName(name);
+                type.setDescription(description);
+                type.setIsActive(true);
+
+                jobActivityTypeRepository.save(type);
+                System.out.println("[DataInit] ✅ Inserted JobActivityType: " + name);
+            } else {
+                System.out.println("[DataInit] JobActivityType '" + name + "' already exists, skipping");
+            }
+        } catch (Exception e) {
+            System.err.println("[DataInit] Error inserting JobActivityType '" + name + "': " + e.getMessage());
+            throw e;
+        }
+    }
+
+
+    
 
 }
