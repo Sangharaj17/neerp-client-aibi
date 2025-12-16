@@ -34,115 +34,115 @@ export default function AMCQuotationList() {
     fetchQuotations();
   }, [currentPage, searchTerm, pageSize, sortColumn, sortDirection, refreshKey]);
 
-//   const fetchQuotations = async () => {
-//   try {
-//     setLoading(true);
-//     setError(null);
+  //   const fetchQuotations = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
 
-//     const params = {
-//       search: searchTerm,
-//       page: currentPage,
-//       size: pageSize,
-//       sort: `${sortColumn},${sortDirection}`,
-//     };
+  //     const params = {
+  //       search: searchTerm,
+  //       page: currentPage,
+  //       size: pageSize,
+  //       sort: `${sortColumn},${sortDirection}`,
+  //     };
 
-//     let dateSearch = "2025-09-24";
+  //     let dateSearch = "2025-09-24";
 
-//     //dateSearch = null;
+  //     //dateSearch = null;
 
-//     if (dateSearch) {
-//       params.dateSearch = dateSearch; // send only if user selected a date
-//     }
+  //     if (dateSearch) {
+  //       params.dateSearch = dateSearch; // send only if user selected a date
+  //     }
 
-//     const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+  //     const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
 
-//     setQuotations(response.data.content);
-//     setTotalPages(response.data.totalPages);
-//     setTotalElements(response.data.totalElements);
-//   } catch (err) {
-//     console.error('Error fetching quotations:', err);
-//     setError('Failed to load quotations. Please try again later.');
-//   } finally {
-//     setLoading(false);
-//   }
-// };
+  //     setQuotations(response.data.content);
+  //     setTotalPages(response.data.totalPages);
+  //     setTotalElements(response.data.totalElements);
+  //   } catch (err) {
+  //     console.error('Error fetching quotations:', err);
+  //     setError('Failed to load quotations. Please try again later.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-const fetchQuotations = async () => {
-  try {
-    setLoading(true);
-    setError(null);
+  const fetchQuotations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    // Regex to check if searchTerm is a date in YYYY-MM-DD format
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    let dateSearch = "";
-    let textSearch = searchTerm; // separate variable for non-date search
+      // Regex to check if searchTerm is a date in YYYY-MM-DD format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      let dateSearch = "";
+      let textSearch = searchTerm; // separate variable for non-date search
 
-    // If user enters a date, use it as dateSearch
-    if (dateRegex.test(searchTerm)) {
-      dateSearch = searchTerm;
-      textSearch = ""; // clear text search if it's a date
+      // If user enters a date, use it as dateSearch
+      if (dateRegex.test(searchTerm)) {
+        dateSearch = searchTerm;
+        textSearch = ""; // clear text search if it's a date
+      }
+
+      const params = {
+        search: textSearch,
+        page: currentPage,
+        size: pageSize,
+        sort: `${sortColumn},${sortDirection}`,
+      };
+
+      if (dateSearch) {
+        params.dateSearch = dateSearch; // include only if date is present
+      }
+
+      const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+
+      setQuotations(response.data.content);
+      setTotalPages(response.data.totalPages);
+      setTotalElements(response.data.totalElements);
+    } catch (err) {
+      console.error('Error fetching quotations:', err);
+      setError('Failed to load quotations. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-
-    const params = {
-      search: textSearch,
-      page: currentPage,
-      size: pageSize,
-      sort: `${sortColumn},${sortDirection}`,
-    };
-
-    if (dateSearch) {
-      params.dateSearch = dateSearch; // include only if date is present
-    }
-
-    const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
-
-    setQuotations(response.data.content);
-    setTotalPages(response.data.totalPages);
-    setTotalElements(response.data.totalElements);
-  } catch (err) {
-    console.error('Error fetching quotations:', err);
-    setError('Failed to load quotations. Please try again later.');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
-// const fetchQuotations = async () => {
-//   try {
-//     setLoading(true);
-//     setError(null);
+  // const fetchQuotations = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
 
-//     const params = {
-//       search: searchTerm,
-//       page: currentPage,
-//       size: pageSize,
-//       sort: `${sortColumn},${sortDirection}`,
-//     };
+  //     const params = {
+  //       search: searchTerm,
+  //       page: currentPage,
+  //       size: pageSize,
+  //       sort: `${sortColumn},${sortDirection}`,
+  //     };
 
-//     // Regex to check if the search term is a date in YYYY-MM-DD format
-//     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-//     if (searchTerm && dateRegex.test(searchTerm)) {
-//       params.dateSearch = "2025-09-24"; // treat as date if format matches
-//       params.search = ''; // optionally clear search if it's just a date
-//     }
+  //     // Regex to check if the search term is a date in YYYY-MM-DD format
+  //     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  //     if (searchTerm && dateRegex.test(searchTerm)) {
+  //       params.dateSearch = "2025-09-24"; // treat as date if format matches
+  //       params.search = ''; // optionally clear search if it's just a date
+  //     }
 
-//     const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
+  //     const response = await axiosInstance.get('/api/amc/quotation/initial/search', { params });
 
-//     setQuotations(response.data.content);
-//     setTotalPages(response.data.totalPages);
-//     setTotalElements(response.data.totalElements);
-//   } catch (err) {
-//     console.error('Error fetching quotations:', err);
-//     setError('Failed to load quotations. Please try again later.');
-//   } finally {
-//     setLoading(false);
-//   }
-// };
+  //     setQuotations(response.data.content);
+  //     setTotalPages(response.data.totalPages);
+  //     setTotalElements(response.data.totalElements);
+  //   } catch (err) {
+  //     console.error('Error fetching quotations:', err);
+  //     setError('Failed to load quotations. Please try again later.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
 
 
-  
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -218,8 +218,8 @@ const fetchQuotations = async () => {
 
   const handleFinalize = async (quotationId) => {
     try {
-     // setLoading(true);
-       setLoadingBtn(`final-${quotationId}`);
+      // setLoading(true);
+      setLoadingBtn(`final-${quotationId}`);
       const res = await axiosInstance.put(`/api/amc/quotation/initial/${quotationId}/finalize`);
       toast.success("Quotation finalized successfully!");
       fetchQuotations(); // ✅ Re-fetch the quotations list
@@ -227,15 +227,15 @@ const fetchQuotations = async () => {
       console.error("Error finalizing quotation:", error);
       toast.error("Failed to finalize quotation");
     } finally {
-     // setLoading(false);
+      // setLoading(false);
     }
   };
 
   const [isWithoutLetterhead, setIsWithoutLetterhead] = useState(false);
   const [isWithLetterHead, setIsWithLetterHead] = useState(false);
-  const [siteName,setSiteName] = useState('');
+  const [siteName, setSiteName] = useState('');
 
-   const [amcQuotationId, setAmcQuotationId] = useState(null);
+  const [amcQuotationId, setAmcQuotationId] = useState(null);
 
 
 
@@ -352,22 +352,21 @@ const fetchQuotations = async () => {
                     <td className="px-2 py-2">{q.amcPeriod || '-'}</td>
                     <td className="px-2 py-2">{q.forecastMonth || '-'}</td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() =>{
+                      <button onClick={() => {
                         setSiteName(q.siteName);
                         setIsWithLetterHead(true);
                         setAmcQuotationId(q.id);
-                         //generatePDF(q.id, true)
+                        //generatePDF(q.id, true)
                       }
                       } className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded">
                         <FileText className="w-4 h-4" />
                       </button>
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() => 
-                       {
-                       // generatePDF(q.id, false);
-                       setSiteName(q.siteName);
-                       setIsWithoutLetterhead(true);
+                      <button onClick={() => {
+                        // generatePDF(q.id, false);
+                        setSiteName(q.siteName);
+                        setIsWithoutLetterhead(true);
                         setAmcQuotationId(q.id);
                       }
 
@@ -377,58 +376,67 @@ const fetchQuotations = async () => {
                     </td>
                     <td className="px-2 py-2 text-center">
                       {!q.isRevised ? (
-                      <button
-  onClick={() => {
-    handleRevise(q.id);
-    setLoadingBtn(`revise-${q.id}`);
-  }}
-  className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded flex items-center justify-center w-6 h-7"
->
-  {loadingBtn === `revise-${q.id}` ? (
-    <Loader2 className="w-4 h-4 animate-spin text-white" />
-  ) : (
-    <RefreshCw className="w-4 h-4" />
-  )}
-</button>
+                        <button
+                          disabled={q.isFinal === 1}
+                          title={q.isFinal === 1 ? "Cannot revise because this is final" : "Revise"}
+                          onClick={() => {
+                            if (q.isFinal === 1) return;
+
+                            handleRevise(q.id);
+                            setLoadingBtn(`revise-${q.id}`);
+                          }}
+                          className={`p-1 rounded flex items-center justify-center w-6 h-7 transition
+    ${q.isFinal === 1
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : "bg-sky-400 hover:bg-sky-500 text-white"}
+  `}
+                        >
+                          {loadingBtn === `revise-${q.id}` ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </button>
+
 
                       ) : (
                         <span className="text-gray-400 text-xs">NA</span>
                       )}
                     </td>
-                 <td className="px-2 py-2 text-center">
-  {q.isRevised ? (
-    <button
-      onClick={() => {
-        handleClickRevision(q.id);
-        setLoadingBtn(`revise-${q.id}`);
-      }}
-      className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded flex items-center justify-center w-6 h-7"
-    >
-      {loadingBtn === `revise-${q.id}` ? (
-        <Loader2 className="w-4 h-4 animate-spin text-white" />
-      ) : (
-        <AlignJustify className="w-4 h-4" />
-      )}
-    </button>
-  ) : (
-    <span className="text-gray-400 text-xs">NA</span>
-  )}
-</td>
- <td className="px-2 py-2 text-center">
-      {q.isFinal ? (
-<ThumbsUp 
-  className="w-4 h-4 text-green-600" 
-  fill="currentColor" 
-  stroke="currentColor" 
-/>
-      ) : loadingBtn ===  `final-${q.id}`? (
-        <Loader2 className="w-4 h-4 animate-spin text-sky-500 " />
-      ) : (
-                  <ThumbsDown onClick={() => handleFinalize(q.id)} className="w-4 h-4 text-gray-400" />
+                    <td className="px-2 py-2 text-center">
+                      {q.isRevised ? (
+                        <button
+                          onClick={() => {
+                            handleClickRevision(q.id);
+                            setLoadingBtn(`revise-${q.id}`);
+                          }}
+                          className="bg-sky-400 hover:bg-sky-500 text-white p-1 rounded flex items-center justify-center w-6 h-7"
+                        >
+                          {loadingBtn === `revise-${q.id}` ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          ) : (
+                            <AlignJustify className="w-4 h-4" />
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-gray-400 text-xs">NA</span>
+                      )}
+                    </td>
+                    <td className="px-2 py-2 text-center">
+                      {q.isFinal ? (
+                        <ThumbsUp
+                          className="w-4 h-4 text-green-600"
+                          fill="currentColor"
+                          stroke="currentColor"
+                        />
+                      ) : loadingBtn === `final-${q.id}` ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-sky-500 " />
+                      ) : (
+                        <ThumbsDown onClick={() => handleFinalize(q.id)} className="w-4 h-4 text-gray-400" />
 
-      )}
-    </td>                   
-     <td className="px-2 py-2 text-center">
+                      )}
+                    </td>
+                    <td className="px-2 py-2 text-center">
                       <button onClick={() => previewMail(q.id)} className="bg-green-400 hover:bg-green-500 text-white p-1 rounded">
                         <Mail className="w-4 h-4" />
                       </button>
@@ -439,23 +447,49 @@ const fetchQuotations = async () => {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
+                          disabled={q.isFinal === 1}
+                          title={q.isFinal === 1 ? "Cannot edit because this is final" : "Edit"}
                           onClick={() => {
+                            if (q.isFinal === 1) return;
+
                             handleEdit(q.id);
                             setLoadingBtn(`edit-${q.id}`);
                           }}
-                          className="text-blue-600 hover:text-blue-900 p-0.5"
+                          className={`p-0.5 transition
+    ${q.isFinal === 1
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-blue-600 hover:text-blue-900"}
+  `}
                         >
-                          {loadingBtn === `edit-${q.id}` ? <Loader2 className="w-4 h-4 animate-spin text-orange-500" /> : <Pencil className="w-4 h-4" />}
+                          {loadingBtn === `edit-${q.id}` ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                          ) : (
+                            <Pencil className="w-4 h-4" />
+                          )}
                         </button>
+
                         <button
+                          disabled={q.isFinal === 1}
+                          title={q.isFinal === 1 ? "Cannot delete because this is final" : "Delete"}
                           onClick={() => {
+                            if (q.isFinal === 1) return;
+
                             confirmDelete(q.id);
                             setLoadingBtn(`delete-${q.id}`);
                           }}
-                          className="text-purple-600 hover:text-purple-900 p-0.5"
+                          className={`p-0.5 transition
+    ${q.isFinal === 1
+                              ? "text-gray-400 cursor-not-allowed"
+                              : "text-purple-600 hover:text-purple-900"}
+  `}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {loadingBtn === `delete-${q.id}` ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </button>
+
                       </div>
                     </td>
                   </tr>
@@ -502,28 +536,28 @@ const fetchQuotations = async () => {
       <ConfirmDeleteModal isOpen={modalOpen} onCancel={handleCancel} onConfirm={handleConfirmDeleteAmcQuotation} />
 
 
-  
-        {/* Action Modal */}
-        <ActionModal
-          isOpen={isWithoutLetterhead || isWithLetterHead}
-          onCancel={()=>{
-            setIsWithoutLetterhead(false);
-            setIsWithLetterHead(false);
-          }}
-          title="Generate AMC Quotation PDF"
-          
-        >
-           <AmcQuotationPdfSettingPreviewAndPrint 
-           amcQuotationId = {amcQuotationId} 
-           siteName={siteName}
-           isWithoutLetterhead={isWithoutLetterhead}
-           isWithLetterHead={isWithLetterHead}
-           />
-  
-        </ActionModal>
-    
-    
-    
+
+      {/* Action Modal */}
+      <ActionModal
+        isOpen={isWithoutLetterhead || isWithLetterHead}
+        onCancel={() => {
+          setIsWithoutLetterhead(false);
+          setIsWithLetterHead(false);
+        }}
+        title="Generate AMC Quotation PDF"
+
+      >
+        <AmcQuotationPdfSettingPreviewAndPrint
+          amcQuotationId={amcQuotationId}
+          siteName={siteName}
+          isWithoutLetterhead={isWithoutLetterhead}
+          isWithLetterHead={isWithLetterHead}
+        />
+
+      </ActionModal>
+
+
+
       {/* Quotation View Modal */}
       {selectedQuotationId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
