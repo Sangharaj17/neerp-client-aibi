@@ -35,4 +35,14 @@ public class WorkPeriodController {
     public WorkPeriod create(@RequestBody WorkPeriod workPeriod) {
         return workPeriodService.createWorkPeriod(workPeriod);
     }
+    @PutMapping("/{id}")
+    public WorkPeriod update(@PathVariable Long id, @RequestBody WorkPeriod workPeriod) {
+        return workPeriodService.updateWorkPeriod(id, workPeriod);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        workPeriodService.deleteWorkPeriod(id);
+        return ResponseEntity.noContent().build();
+    }
 }

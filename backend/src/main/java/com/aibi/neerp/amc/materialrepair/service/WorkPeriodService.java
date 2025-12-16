@@ -29,4 +29,18 @@ public class WorkPeriodService {
     }
     
     // ... other business logic methods
+    public WorkPeriod updateWorkPeriod(Long id, WorkPeriod workPeriod) {
+        WorkPeriod existing = workPeriodRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("WorkPeriod not found with id: " + id));
+        
+        existing.setName(workPeriod.getName());
+        return workPeriodRepository.save(existing);
+    }
+
+    public void deleteWorkPeriod(Long id) {
+        if (!workPeriodRepository.existsById(id)) {
+            throw new IllegalArgumentException("WorkPeriod not found with id: " + id);
+        }
+        workPeriodRepository.deleteById(id);
+    }
 }

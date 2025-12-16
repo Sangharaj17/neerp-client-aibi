@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 // Assuming '@/utils/axiosInstance' exists and is correctly configured
-import axiosInstance from '@/utils/axiosInstance'; 
+import axiosInstance from '@/utils/axiosInstance';
 import { Pencil, Trash2, Settings, FileText, Component, Clock, ListOrdered, DollarSign, Calendar } from 'lucide-react'; // Added 'Calendar' icon for Work Periods
 import toast from 'react-hot-toast';
 
@@ -10,91 +10,91 @@ import toast from 'react-hot-toast';
 
 const setupBoxes = [
     // --- NEW WORK PERIOD CONFIGURATION ADDED HERE ---
-    { 
+    {
         id: 0, // Assigned a unique ID (0)
-        title: 'Work Periods', 
+        title: 'Work Periods',
         api: '/api/amc/workperiods', // Matches your Spring Boot @RequestMapping
-        type: 'workPeriod', 
+        type: 'workPeriod',
         icon: Calendar, // Using Calendar icon
-        crud: { 
-            create: true, read: true, update: true, delete: true, 
+        crud: {
+            create: true, read: true, update: true, delete: true,
             fields: [
                 // Fields match the WorkPeriod entity (name, but called 'period_name' in DB)
-                { key: 'name', label: 'Period Name', type: 'text', required: true } 
-            ] 
-        } 
+                { key: 'name', label: 'Period Name', type: 'text', required: true }
+            ]
+        }
     },
     // --- EXISTING CONFIGURATIONS (ID numbers shifted/reordered) ---
-    { 
-        id: 1, 
-        title: 'Contract Types', 
-        api: '/api/amc/common/contract-types', 
-        type: 'contractType', 
+    {
+        id: 1,
+        title: 'Contract Types',
+        api: '/api/amc/common/contract-types',
+        type: 'contractType',
         icon: FileText,
-        crud: { 
-            create: true, read: true, update: true, delete: true, 
-            fields: [{ key: 'name', label: 'Contract Type Name', type: 'text', required: true }] 
-        } 
+        crud: {
+            create: true, read: true, update: true, delete: true,
+            fields: [{ key: 'name', label: 'Contract Type Name', type: 'text', required: true }]
+        }
     },
-    { 
-        id: 2, 
-        title: 'Elevator Makes', 
-        api: '/api/amc/common/elevator-makes', 
-        type: 'elevatorMake', 
+    {
+        id: 2,
+        title: 'Elevator Makes',
+        api: '/api/amc/common/elevator-makes',
+        type: 'elevatorMake',
         icon: Component,
-        crud: { 
-            create: true, read: true, update: false, delete: false, 
+        crud: {
+            create: true, read: true, update: true, delete: true,
             fields: [{ key: 'name', label: 'Elevator Make Name', type: 'text', required: true }]
-        } 
+        }
     },
-    { 
-        id: 3, 
-        title: 'Job Activity Types', 
-        api: '/api/job-activity-types', 
-        type: 'jobActivityType', 
+    {
+        id: 3,
+        title: 'Job Activity Types',
+        api: '/api/job-activity-types',
+        type: 'jobActivityType',
         icon: Clock,
-        crud: { 
-            create: true, read: true, update: true, delete: true, 
+        crud: {
+            create: true, read: true, update: true, delete: true,
             fields: [
                 { key: 'activityName', label: 'Activity Name', type: 'text', required: true },
                 { key: 'description', label: 'Description', type: 'textarea', required: false },
                 { key: 'isActive', label: 'Is Active', type: 'checkbox', required: true, default: true }
-            ] 
-        } 
+            ]
+        }
     },
-    { 
-        id: 4, 
-        title: 'Number of Services', 
-        api: '/api/amc/common/number-of-services', 
-        type: 'numberOfService', 
+    {
+        id: 4,
+        title: 'Number of Services',
+        api: '/api/amc/common/number-of-services',
+        type: 'numberOfService',
         icon: ListOrdered,
-        crud: { 
-            create: true, read: true, update: false, delete: true, 
-            fields: [{ key: 'value', label: 'Service Count', type: 'number', required: true }] 
-        } 
+        crud: {
+            create: true, read: true, update: false, delete: true,
+            fields: [{ key: 'value', label: 'Service Count', type: 'number', required: true }]
+        }
     },
-    { 
-        id: 5, 
-        title: 'Payment Terms', 
-        api: '/api/amc/common/payment-terms', 
-        type: 'paymentTerm', 
+    {
+        id: 5,
+        title: 'Payment Terms',
+        api: '/api/amc/common/payment-terms',
+        type: 'paymentTerm',
         icon: DollarSign,
-        crud: { 
-            create: true, read: true, update: true, delete: true, 
+        crud: {
+            create: true, read: true, update: true, delete: true,
             fields: [
                 { key: 'termName', label: 'Term Name', type: 'text', required: true },
                 { key: 'description', label: 'Description', type: 'textarea', required: true }
-            ] 
-        } 
+            ]
+        }
     },
 ];
 
 const colorCfg = {
     // Teal/Cyan Scheme
-    button: 'bg-teal-600 hover:bg-teal-700', 
-    header: 'bg-teal-500', 
-    ring: 'focus:ring-teal-400', 
-    activeTab: 'bg-teal-600 text-white shadow-lg', 
+    button: 'bg-teal-600 hover:bg-teal-700',
+    header: 'bg-teal-500',
+    ring: 'focus:ring-teal-400',
+    activeTab: 'bg-teal-600 text-white shadow-lg',
     inactiveTab: 'bg-white text-gray-700 hover:bg-gray-100',
     textAccent: 'text-teal-600'
 };
@@ -104,20 +104,20 @@ const colorCfg = {
 const QuotationSetupComponent = () => {
 
     // IMPORTANT: Set initial selectedBox to the NEW Work Periods (id: 0)
-    const [selectedBox, setSelectedBox] = useState(setupBoxes[0]); 
+    const [selectedBox, setSelectedBox] = useState(setupBoxes[0]);
     const [formData, setFormData] = useState({});
     const [dataList, setDataList] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editId, setEditId] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(1);
-    const recordsPerPage = 8; 
+    const recordsPerPage = 8;
 
     // Find the current CRUD configuration
-    const currentBox = useMemo(() => 
+    const currentBox = useMemo(() =>
         setupBoxes.find(box => box.id === selectedBox?.id)
-    , [selectedBox]);
-    
+        , [selectedBox]);
+
     const currentCrudConfig = currentBox?.crud;
     const isServiceCount = currentBox?.type === 'numberOfService';
 
@@ -126,7 +126,7 @@ const QuotationSetupComponent = () => {
     // However, since the other entities seem to use 'id' (e.g., contract-types) and the code
     // is designed to handle this inconsistency (e.g., using item.id), we must adjust getId
     // or assume the other APIs follow the 'id' convention.
-    const getId = (item) => item?.workPeriodId ?? item?.id ?? ''; 
+    const getId = (item) => item?.workPeriodId ?? item?.id ?? '';
 
     // Initialize formData when switching tabs or when edit mode is cancelled
     useEffect(() => {
@@ -137,12 +137,15 @@ const QuotationSetupComponent = () => {
     }, [selectedBox]);
 
     useEffect(() => {
-        // Reset form data with defaults when starting a new create session
-        const initialData = {};
-        currentCrudConfig?.fields.forEach(field => {
-            initialData[field.key] = field.default !== undefined && editId === null ? field.default : '';
-        });
-        setFormData(initialData);
+        // Reset form data with defaults ONLY when not in edit mode (editId is null)
+        // When entering edit mode, handleEdit sets the data, so we avoid overwriting it here
+        if (editId === null) {
+            const initialData = {};
+            currentCrudConfig?.fields.forEach(field => {
+                initialData[field.key] = field.default !== undefined ? field.default : '';
+            });
+            setFormData(initialData);
+        }
     }, [selectedBox, editId]);
 
 
@@ -152,19 +155,19 @@ const QuotationSetupComponent = () => {
             setDataList([]);
             return;
         }
-        
+
         setLoading(true);
         try {
             // Note: Assuming a successful response from WorkPeriodController.getAll() returns an array directly
             const response = await axiosInstance.get(currentBox.api);
-            let list = response.data?.data || response.data || []; 
+            let list = response.data?.data || response.data || [];
 
             // Sort NumberOfService data for sequential logic
             if (isServiceCount) {
                 list.sort((a, b) => (a.value ?? 0) - (b.value ?? 0));
             }
 
-            setDataList(list); 
+            setDataList(list);
             setCurrentPage(1);
         } catch (error) {
             console.error(`Error fetching data for ${currentBox.title}:`, error);
@@ -182,9 +185,9 @@ const QuotationSetupComponent = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        
+
         const finalValue = type === 'checkbox' ? checked : value;
-        
+
         setFormData(prev => ({ ...prev, [name]: finalValue }));
     };
 
@@ -194,7 +197,7 @@ const QuotationSetupComponent = () => {
         if (isServiceCount) {
             // --- Custom Logic for NumberOfServices ---
             if (editId) return; // Should not happen due to disabled UI
-            
+
             const values = dataList.map(item => typeof item.value === 'number' ? item.value : 0);
             const lastValue = values.length > 0 ? Math.max(...values) : 0;
             const nextValue = lastValue + 1;
@@ -212,7 +215,7 @@ const QuotationSetupComponent = () => {
                 setLoading(false);
                 fetchData();
             }
-            return; 
+            return;
         }
 
         // --- Standard Form Submission Logic for other APIs (including Work Periods) ---
@@ -222,7 +225,7 @@ const QuotationSetupComponent = () => {
         }
 
         const payload = { ...formData };
-        
+
         // Validation and payload cleanup
         for (const field of currentCrudConfig.fields) {
             if (field.required && (!payload[field.key] || (field.type !== 'checkbox' && String(payload[field.key]).trim() === ''))) {
@@ -230,19 +233,19 @@ const QuotationSetupComponent = () => {
                 return;
             }
             if (field.type === 'checkbox') {
-                 payload[field.key] = !!payload[field.key];
+                payload[field.key] = !!payload[field.key];
             }
         }
-        
+
         // Add 'id' or specific key to payload for PUT requests
         if (editId) {
-             // For WorkPeriod, the ID might be 'workPeriodId', but the PUT URL uses the ID path variable.
-             // We ensure to add a key if the backend DTO requires it, like 'elevatorMake' needing 'id'.
-             if (currentBox.type === 'elevatorMake') {
+            // For WorkPeriod, the ID might be 'workPeriodId', but the PUT URL uses the ID path variable.
+            // We ensure to add a key if the backend DTO requires it, like 'elevatorMake' needing 'id'.
+            if (currentBox.type === 'elevatorMake') {
                 payload.id = editId;
-             }
-             // NOTE: If the WorkPeriod update DTO requires 'workPeriodId' in the body, add it here:
-             // if (currentBox.type === 'workPeriod') { payload.workPeriodId = editId; }
+            }
+            // NOTE: If the WorkPeriod update DTO requires 'workPeriodId' in the body, add it here:
+            // if (currentBox.type === 'workPeriod') { payload.workPeriodId = editId; }
         }
 
 
@@ -256,7 +259,7 @@ const QuotationSetupComponent = () => {
                 // Use getId to ensure we use the correct key for the URL (which should be a number/string ID)
                 const entityId = getId(dataList.find(item => getId(item) === editId));
                 if (!entityId) throw new Error('Could not find item ID for update.');
-                
+
                 await axiosInstance.put(`${currentBox.api}/${entityId}`, payload);
                 toast.success(`${currentBox.title} updated successfully!`);
             } else {
@@ -283,15 +286,15 @@ const QuotationSetupComponent = () => {
             toast.error(`Editing is disabled for ${currentBox.title}.`);
             return;
         }
-        
+
         const editData = {};
         currentCrudConfig.fields.forEach(field => {
             editData[field.key] = item[field.key];
         });
-        
+
         setFormData(editData);
         // Use the ID returned by getId for the editId state
-        setEditId(getId(item)); 
+        setEditId(getId(item));
     };
 
     const handleDelete = async (id) => {
@@ -300,7 +303,7 @@ const QuotationSetupComponent = () => {
             return;
         }
         if (!window.confirm(`Are you sure you want to delete ${currentBox.title} ID: ${id}?`)) return;
-        
+
         setLoading(true);
         try {
             // Use the ID passed in (which comes from getId in the render logic)
@@ -322,11 +325,11 @@ const QuotationSetupComponent = () => {
     const totalPages = Math.ceil(dataList.length / recordsPerPage);
 
     const renderPagination = () => {
-         if (totalPages <= 1) return null;
+        if (totalPages <= 1) return null;
         const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
         return (
-             <div className="flex justify-center mt-4 space-x-2">
+            <div className="flex justify-center mt-4 space-x-2">
                 <button onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
                     className={`px-3 py-1 rounded-lg shadow-sm transition-colors bg-white hover:bg-gray-100 text-gray-700 disabled:bg-gray-200 disabled:text-gray-500`}>
@@ -352,38 +355,38 @@ const QuotationSetupComponent = () => {
     /** Content rendering based on API type */
     const renderContent = () => {
         const fields = currentCrudConfig?.fields || [];
-        
+
         if (!currentCrudConfig.read) {
             return (
-                 <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="font-semibold text-yellow-800">API Not Configured</p>
                     <p className="text-sm text-yellow-700">
                         This section ({currentBox.title}) is reserved for a future API setup.
                         <br />
-                        API Endpoint: 
+                        API Endpoint:
                         <code className="bg-yellow-100 p-1 rounded ml-1 text-xs">{currentBox.api}</code>
                     </p>
                 </div>
             );
         }
-        
-        const nextValue = isServiceCount 
-            ? Math.max(...dataList.map(item => typeof item.value === 'number' ? item.value : 0), 0) + 1 
+
+        const nextValue = isServiceCount
+            ? Math.max(...dataList.map(item => typeof item.value === 'number' ? item.value : 0), 0) + 1
             : null;
 
         return (
             // Flex container for the two-column layout
             <div className="flex flex-col md:flex-row gap-8">
-                
+
                 {/* Left Column: Form / Action Button */}
                 <div className="md:w-5/12 lg:w-4/12 flex-shrink-0">
                     <h3 className="text-xl font-semibold mb-3 text-gray-700">
                         {isServiceCount ? 'Add New Service Count' : (editId ? `Edit ${currentBox.title}` : `Create New ${currentBox.title}`)}
                     </h3>
-                    
+
                     {isServiceCount ? (
                         // Custom Action Button for Number of Services
-                         <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-inner">
+                        <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-inner">
                             <p className='text-lg font-semibold text-gray-700'>
                                 Next Value: <span className={`${colorCfg.textAccent} font-bold text-2xl ml-2`}>{nextValue}</span>
                             </p>
@@ -393,13 +396,13 @@ const QuotationSetupComponent = () => {
                         </form>
                     ) : (
                         // Standard Dynamic Form for other APIs
-                         <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-inner">
+                        <form onSubmit={handleSubmit} className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50 shadow-inner">
                             {fields.map(field => {
                                 const isInput = field.type === 'text' || field.type === 'number';
                                 const isCheckbox = field.type === 'checkbox';
                                 const isTextArea = field.type === 'textarea';
                                 const isDisabled = loading || (editId ? !currentCrudConfig.update : !currentCrudConfig.create); // Disable form if loading or CRUD op not allowed
-                                
+
                                 if (isCheckbox) {
                                     return (
                                         <div key={field.key} className="flex items-center">
@@ -431,7 +434,7 @@ const QuotationSetupComponent = () => {
                                                 {field.label} {field.required ? '*' : ''}
                                             </label>
                                             <input id={field.key} type={field.type} name={field.key} value={formData[field.key] || ''} onChange={handleChange}
-                                                className={`w-full border border-gray-300 rounded-lg p-3 text-base focus:ring focus:ring-opacity-50 ${colorCfg.ring}`} 
+                                                className={`w-full border border-gray-300 rounded-lg p-3 text-base focus:ring focus:ring-opacity-50 ${colorCfg.ring}`}
                                                 required={field.required} disabled={isDisabled}
                                             />
                                         </div>
@@ -439,7 +442,7 @@ const QuotationSetupComponent = () => {
                                 }
                                 return null;
                             })}
-                            
+
                             {(currentCrudConfig.create && !editId) || (currentCrudConfig.update && editId) ? (
                                 <button type="submit" className={`${colorCfg.button} text-white px-6 py-2 rounded-lg shadow-md transition-all w-full`} disabled={loading}>
                                     {loading ? 'Processing...' : editId ? 'Update' : 'Create'}
@@ -538,16 +541,16 @@ const QuotationSetupComponent = () => {
                 <h1 className="text-3xl font-bold mb-6 text-gray-800 border-b pb-2">
                     Quotation Setup
                 </h1>
-                
+
                 {/* Top Tab/Pill Navigation */}
                 <div className="flex flex-wrap gap-2 mb-8 border-b pb-4">
                     {setupBoxes.map((box) => {
                         const Icon = box.icon;
                         const isActive = selectedBox?.id === box.id;
                         return (
-                            <button 
-                                key={box.id} 
-                                onClick={() => handleClick(box)} 
+                            <button
+                                key={box.id}
+                                onClick={() => handleClick(box)}
                                 className={`flex items-center px-4 py-2 rounded-full text-sm font-medium transition-colors border ${isActive ? colorCfg.activeTab : colorCfg.inactiveTab} ${isActive ? 'border-teal-600' : 'border-gray-300'}`}
                             >
                                 <Icon size={16} className="mr-2" />
