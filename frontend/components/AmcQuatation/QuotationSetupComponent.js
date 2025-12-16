@@ -25,17 +25,7 @@ const setupBoxes = [
         }
     },
     // --- EXISTING CONFIGURATIONS (ID numbers shifted/reordered) ---
-    {
-        id: 1,
-        title: 'Contract Types',
-        api: '/api/amc/common/contract-types',
-        type: 'contractType',
-        icon: FileText,
-        crud: {
-            create: true, read: true, update: true, delete: true,
-            fields: [{ key: 'name', label: 'Contract Type Name', type: 'text', required: true }]
-        }
-    },
+
     {
         id: 2,
         title: 'Elevator Makes',
@@ -47,21 +37,7 @@ const setupBoxes = [
             fields: [{ key: 'name', label: 'Elevator Make Name', type: 'text', required: true }]
         }
     },
-    {
-        id: 3,
-        title: 'Job Activity Types',
-        api: '/api/job-activity-types',
-        type: 'jobActivityType',
-        icon: Clock,
-        crud: {
-            create: true, read: true, update: true, delete: true,
-            fields: [
-                { key: 'activityName', label: 'Activity Name', type: 'text', required: true },
-                { key: 'description', label: 'Description', type: 'textarea', required: false },
-                { key: 'isActive', label: 'Is Active', type: 'checkbox', required: true, default: true }
-            ]
-        }
-    },
+
     {
         id: 4,
         title: 'Number of Services',
@@ -73,20 +49,7 @@ const setupBoxes = [
             fields: [{ key: 'value', label: 'Service Count', type: 'number', required: true }]
         }
     },
-    {
-        id: 5,
-        title: 'Payment Terms',
-        api: '/api/amc/common/payment-terms',
-        type: 'paymentTerm',
-        icon: DollarSign,
-        crud: {
-            create: true, read: true, update: true, delete: true,
-            fields: [
-                { key: 'termName', label: 'Term Name', type: 'text', required: true },
-                { key: 'description', label: 'Description', type: 'textarea', required: true }
-            ]
-        }
-    },
+
 ];
 
 const colorCfg = {

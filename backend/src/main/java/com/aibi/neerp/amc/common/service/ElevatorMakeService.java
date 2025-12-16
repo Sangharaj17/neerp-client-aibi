@@ -39,4 +39,25 @@ public class ElevatorMakeService {
         em = repository.save(em);
         return new ElevatorMakeDto(em.getId(), em.getName());
     }
+
+    public ElevatorMakeDto update(Long id, ElevatorMakeDto dto) {
+        ElevatorMake em = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ElevatorMake not found with id: " + id));
+        
+        // Check duplication if name changed
+        if (!em.getName().equalsIgnoreCase(dto.getName()) && repository.existsByName(dto.getName())) {
+             throw new RuntimeException("ElevatorMake already exists: " + dto.getName());
+        }
+
+        em.setName(dto.getName());
+        em = repository.save(em);
+        return new ElevatorMakeDto(em.getId(), em.getName());
+    }
+
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("ElevatorMake not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
 }

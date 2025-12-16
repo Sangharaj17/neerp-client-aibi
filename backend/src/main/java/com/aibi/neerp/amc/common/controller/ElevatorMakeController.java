@@ -30,4 +30,15 @@ public class ElevatorMakeController {
     public ElevatorMakeDto create(@RequestBody ElevatorMakeDto dto) {
         return service.create(dto);
     }
+
+    @PutMapping("/{id}")
+    public ElevatorMakeDto update(@PathVariable Long id, @RequestBody ElevatorMakeDto dto) {
+        return service.update(id, dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public org.springframework.http.ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
+        return org.springframework.http.ResponseEntity.noContent().build();
+    }
 }
