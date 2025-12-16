@@ -11,7 +11,7 @@ export default async function LoginPage() {
   // If no tenant detected, show a generic login form
   if (!tenant || tenant === 'login') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="p-6 bg-white rounded-lg shadow-md max-w-sm text-center">
           <h1 className="text-xl font-bold text-gray-800 mb-2">Welcome</h1>
           <p className="text-gray-600 mb-4">Please access this application through your assigned domain.</p>
@@ -37,7 +37,7 @@ export default async function LoginPage() {
         if (lowerError.includes("inactive")) reason = "inactive";
         else if (lowerError.includes("no active subscriptions")) reason = "no_subscription";
         else if (lowerError.includes("expired")) reason = "expired";
-      } catch {}
+      } catch { }
     } else {
       reason = "server_unreachable";
     }

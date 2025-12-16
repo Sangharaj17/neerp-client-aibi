@@ -116,15 +116,15 @@ const addActivity = () => {
 };
 
 const updateStage = () => {
-  openModal("Update Stage", <UpdateLeadStage closeModal={closeModal} leadId={leadId} handleStageUpdated={handleSetLead} />);
+  openModal("Update Stage", <UpdateLeadStage closeModal={closeModal} leadId={leadId} handleStageUpdated={handleSetLead} currentLead={lead} />);
 };
 
 const updateStatus = () => {
-  openModal("Update Status", <UpdateLeadStatus closeModal={closeModal} leadId={leadId} handleStatusUpdated={handleSetLead} />);
+  openModal("Update Status", <UpdateLeadStatus closeModal={closeModal} leadId={leadId} handleStatusUpdated={handleSetLead} currentLead={lead} />);
 };
 
 const updateStageOfProject = () => {
-  openModal("Update Stage Of Project", <UpdateProjectStage closeModal={closeModal} leadId={leadId} handleStageUpdated={handleSetLead} />);
+  openModal("Update Stage Of Project", <UpdateProjectStage closeModal={closeModal} leadId={leadId} handleStageUpdated={handleSetLead} currentLead={lead} />);
 };
 
 
@@ -289,10 +289,6 @@ const updateStageOfProject = () => {
         isOpen={isModalOpen}
         title={modalTitle}
         onCancel={() => setModalOpen(false)}
-        onConfirm={() => {
-          console.log("Confirmed:", modalTitle);
-          setModalOpen(false);
-        }}
       >
         {modalContent}
       </ActionModal>

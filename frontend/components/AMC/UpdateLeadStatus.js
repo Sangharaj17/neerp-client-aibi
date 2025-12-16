@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 
-export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdated }) {
+export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdated, currentLead }) {
   const { tenant } = useParams();
 
   const [statuses, setStatuses] = useState([]);
@@ -18,9 +18,28 @@ export default function UpdateLeadStatus({ closeModal, leadId, handleStatusUpdat
   useEffect(() => {
     axiosInstance
       .get('/api/leadmanagement/lead-status')
-      .then((res) => setStatuses(res.data || []))
+      .then((res) => {
+        const statusList = res.data || [];
+        setStatuses(statusList);
+        // Set default value to current lead status if available
+        if (currentLead) {
+          // Try to find status by status name string (e.g., "Open", "Closed")
+          if (currentLead.status) {
+            const currentStatusObj = statusList.find(s => 
+              s.statusName?.toLowerCase() === currentLead.status?.toLowerCase()
+            );
+            if (currentStatusObj) {
+              setSelectedStatus(String(currentStatusObj.id));
+            }
+          }
+          // Also check leadStatus if it exists
+          else if (currentLead.leadStatus && currentLead.leadStatus.id) {
+            setSelectedStatus(String(currentLead.leadStatus.id));
+          }
+        }
+      })
       .catch((e) => console.error('Failed to fetch statuses', e));
-  }, []);
+  }, [currentLead]);
 
   const handleSubmit = async () => {
     setError('');

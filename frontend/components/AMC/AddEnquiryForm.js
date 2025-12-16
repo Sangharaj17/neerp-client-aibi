@@ -432,8 +432,8 @@ const handleEnquiryTypeChange = (e) => {
 
 
   return (
-    <div className="w-full max-w-7xl bg-white rounded shadow-md">
-      <div className="bg-blue-600 text-white text-center py-2 text-base font-semibold rounded-t-md">Add Lift Requirement</div>
+    <div className="w-full max-w-7xl bg-white rounded-lg shadow-sm border">
+      <div className="bg-blue-600 text-white text-center py-3 text-base font-semibold rounded-t-lg">Add Lift Requirement</div>
      <div className="flex justify-between items-center text-xs text-gray-700 py-1 px-2 gap-3">
 
   {/* Label + Dropdown horizontally aligned */}
@@ -470,7 +470,7 @@ const handleEnquiryTypeChange = (e) => {
 
 
 
-      <form  className="p-6 space-y-4 text-sm">
+      <form className="p-6 space-y-4 text-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <Input label="Enquiry Date *" type="date" name="enquiryDate" value={form.enquiryDate} onChange={handleChange} />
           <Input label="Lead Detail *" name="leadDetail" value={form.leadDetail} readOnly disabled tooltip="This field is auto-filled." />
@@ -527,8 +527,9 @@ const handleEnquiryTypeChange = (e) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
 <Select
   label="Lift Usage Type *"
-  value={String(lift.liftUsageType)} // must hold the selected ID
+  value={String(lift.liftUsageType || '')} // must hold the selected ID
   onChange={(e) => handleLiftChange(index, 'liftUsageType', e.target.value)}
+  isEmpty={liftUsageTypeOptions.length === 0}
 >
   <option value="">Please Select</option>
   {liftUsageTypeOptions.map((opt) => (
@@ -539,8 +540,9 @@ const handleEnquiryTypeChange = (e) => {
 </Select>
 <Select
   label="Lift Mechanism *"
-  value={String(lift.liftMechanism)} // should store the selected lift type ID
+  value={String(lift.liftMechanism || '')} // should store the selected lift type ID
   onChange={(e) => handleLiftChange(index, 'liftMechanism', e.target.value)}
+  isEmpty={liftMechanismOptions.length === 0}
 >
   <option value="">Please Select</option>
   {liftMechanismOptions.map((opt) => (
@@ -551,8 +553,9 @@ const handleEnquiryTypeChange = (e) => {
 </Select>
 <Select
   label="Elevator Type *"
-  value={String(lift.elevatorType)} // should hold the selected ID
+  value={String(lift.elevatorType || '')} // should hold the selected ID
   onChange={(e) => handleLiftChange(index, 'elevatorType', e.target.value)}
+  isEmpty={elevatorTypeOptions.length === 0}
 >
   <option value="">Please Select</option>
   {elevatorTypeOptions.map((opt) => (
@@ -563,8 +566,9 @@ const handleEnquiryTypeChange = (e) => {
 </Select>
 <Select
   label="Machine Room Type *"
-  value={String(lift.machineRoomType)} // selected ID from backend
+  value={String(lift.machineRoomType || '')} // selected ID from backend
   onChange={(e) => handleLiftChange(index, 'machineRoomType', e.target.value)}
+  isEmpty={machineRoomOptions.length === 0}
 >
   <option value="">Please Select</option>
   {machineRoomOptions.map((opt) => (
@@ -575,8 +579,9 @@ const handleEnquiryTypeChange = (e) => {
 </Select>
 <Select
   label="Cabin Type *"
-  value={String(lift.cabinType)} // should store the selected ID
+  value={String(lift.cabinType || '')} // should store the selected ID
   onChange={(e) => handleLiftChange(index, 'cabinType', e.target.value)}
+  isEmpty={cabinTypeOptions.length === 0}
 >
   <option value="">Please Select</option>
   {cabinTypeOptions.map((opt) => (
@@ -612,12 +617,13 @@ const handleEnquiryTypeChange = (e) => {
               {lift.capacityType === 'Persons' ?
 <Select
   label="Select Persons *"
-  value={lift.personCapacityId} // should be the ID you're storing
+  value={lift.personCapacityId || ''} // should be the ID you're storing
   onChange={(e) => {
    // alert(e.target.value);
   handleLiftChange(index, 'personCapacityId', e.target.value);
   }
   }
+  isEmpty={personOptions.length === 0}
 >
   <option value="">Please Select</option>
   {personOptions.map((opt) => (
@@ -629,8 +635,9 @@ const handleEnquiryTypeChange = (e) => {
                : 
 <Select
   label="Enter Kg *"
-  value={String(lift.weightId)} // assuming it stores selected weight `id`
+  value={String(lift.weightId || '')} // assuming it stores selected weight `id`
   onChange={(e) => handleLiftChange(index, 'weightId', e.target.value)}
+  isEmpty={kgOptions.length === 0}
 >
   <option value="">Please Select</option>
   {kgOptions.map((opt) => (
@@ -642,13 +649,14 @@ const handleEnquiryTypeChange = (e) => {
         }
 <Select
   label="No. of Floors *"
-  value={String(lift.noOfFloors)} // lift.noOfFloors should store selected floor `id`
+  value={String(lift.noOfFloors || '')} // lift.noOfFloors should store selected floor `id`
   onChange={(e) => 
   {
       handleLiftChange(index, 'noOfFloors', e.target.value);
       //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
   }
   }
+  isEmpty={floorOption.length === 0}
 >
   <option value="">Please Select</option>
   {floorOption.map((opt) => (
@@ -660,7 +668,26 @@ const handleEnquiryTypeChange = (e) => {
             
               <div>
                 <label className="block text-gray-700 text-sm mb-1">Floor Designation</label>
-                <input type="text" value={lift.noOfFloors ? `G + ${lift.noOfFloors - 1}` : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                <input 
+                  type="text" 
+                  value={(() => {
+                    if (!lift.noOfFloors) return '';
+                    const selectedFloor = floorOption.find(f => String(f.id) === String(lift.noOfFloors));
+                    if (selectedFloor && selectedFloor.name) {
+                      // Extract number from floor name (e.g., "3 Floors" -> 3, or "3" -> 3)
+                      const match = selectedFloor.name.match(/\d+/);
+                      const floorNumber = match ? parseInt(match[0], 10) : parseInt(selectedFloor.id, 10);
+                      // For 3 floors, should show "G + 2" (Ground + 2 upper floors)
+                      return floorNumber > 0 ? `G + ${floorNumber - 1}` : '';
+                    }
+                    // Fallback: use ID as number
+                    const floorId = parseInt(lift.noOfFloors, 10);
+                    return floorId > 0 ? `G + ${floorId - 1}` : '';
+                  })()} 
+                  readOnly 
+                  disabled 
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" 
+                />
                 <div className="flex flex-wrap gap-4 mt-2">
                   {floorOptions.map((floor) => (
                     <label key={floor} className="text-gray-700 text-sm flex items-center gap-1">
@@ -676,13 +703,41 @@ const handleEnquiryTypeChange = (e) => {
               </div>
               <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Stops *</label>
-                <input type="text" value={lift.noOfFloors ? lift.noOfFloors  : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                <input 
+                  type="text" 
+                  value={(() => {
+                    if (!lift.noOfFloors) return '';
+                    const selectedFloor = floorOption.find(f => String(f.id) === String(lift.noOfFloors));
+                    if (selectedFloor && selectedFloor.name) {
+                      const match = selectedFloor.name.match(/\d+/);
+                      return match ? match[0] : String(lift.noOfFloors);
+                    }
+                    return String(lift.noOfFloors);
+                  })()} 
+                  readOnly 
+                  disabled 
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" 
+                />
                
               </div>
              
                <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Openings *</label>
-                <input type="text" value={lift.noOfFloors ? lift.noOfFloors  : ''} readOnly disabled className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" />
+                <input 
+                  type="text" 
+                  value={(() => {
+                    if (!lift.noOfFloors) return '';
+                    const selectedFloor = floorOption.find(f => String(f.id) === String(lift.noOfFloors));
+                    if (selectedFloor && selectedFloor.name) {
+                      const match = selectedFloor.name.match(/\d+/);
+                      return match ? match[0] : String(lift.noOfFloors);
+                    }
+                    return String(lift.noOfFloors);
+                  })()} 
+                  readOnly 
+                  disabled 
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" 
+                />
                
               </div>
               
@@ -694,8 +749,9 @@ const handleEnquiryTypeChange = (e) => {
               <Input label="Pit (mm) *" value={lift.pit} onChange={(e) => handleLiftChange(index, 'pit', e.target.value)} />
              <Select
   label="Stage of Project *"
-  value={lift.stageOfProject}
+  value={lift.stageOfProject || ''}
   onChange={(e) => handleLiftChange(index, 'stageOfProject', e.target.value)}
+  isEmpty={projectStages.length === 0}
 >
   <option value="">Please Select</option>
   {projectStages.map((stage) => (
@@ -705,8 +761,9 @@ const handleEnquiryTypeChange = (e) => {
 
 <Select
   label="Building Type *"
-  value={lift.buildingType}
+  value={lift.buildingType || ''}
   onChange={(e) => handleLiftChange(index, 'buildingType', e.target.value)}
+  isEmpty={buildingTypes.length === 0}
 >
   <option value="">Please Select</option>
   {buildingTypes.map((type) => (
@@ -731,8 +788,18 @@ const handleEnquiryTypeChange = (e) => {
 }
 
 const SectionTitle = ({ title }) => (<div className="bg-gray-100 px-3 py-1 rounded text-gray-800 font-medium text-sm">{title}</div>);
-const Input = ({ label, tooltip, ...props }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><input {...props} title={tooltip} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed" /></div>);
-const Select = ({ label, children, ...props }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><select {...props} className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed">{children}</select></div>);
+const Input = ({ label, tooltip, ...props }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><input {...props} title={tooltip} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed" /></div>);
+const Select = ({ label, children, isEmpty, ...props }) => (
+  <div>
+    <label className="block text-gray-700 text-sm mb-1 font-medium">{label}</label>
+    <select 
+      {...props} 
+      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed"
+    >
+      {isEmpty ? <option value="">Loading options...</option> : children}
+    </select>
+  </div>
+);
 // const RadioGroup = ({ label, name, options, selected, onChange }) => (<div><label className="block text-gray-700 text-sm mb-1">{label}</label><div className="flex gap-4">{options.map((opt) => (<label key={opt} className="text-gray-700 text-sm flex items-center gap-1"><input type="radio" name={name} value={opt} checked={selected === opt} onChange={onChange} className="text-blue-500" />{opt}</label>))}</div></div>);
 const RadioGroup = ({ label, name, options, selected, onChange }) => (
   <div>

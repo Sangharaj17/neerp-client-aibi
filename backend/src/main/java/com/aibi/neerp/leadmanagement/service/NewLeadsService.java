@@ -28,14 +28,22 @@ import java.util.stream.Collectors;
 @Service
 public class NewLeadsService {
 
-    @Autowired private NewLeadsRepository newLeadsRepository;
-    @Autowired private EmployeeRepository employeeRepository;
-    @Autowired private LeadSourceRepository leadSourceRepository;
-    @Autowired private DesignationRepository designationRepository;
-    @Autowired private LeadStageRepository leadStageRepository;
-    @Autowired private ContractRepository contractRepository;
-    @Autowired private AreaRepository areaRepository;
-    @Autowired private ProjectStageRepository projectStageRepository;
+    @Autowired
+    private NewLeadsRepository newLeadsRepository;
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    @Autowired
+    private LeadSourceRepository leadSourceRepository;
+    @Autowired
+    private DesignationRepository designationRepository;
+    @Autowired
+    private LeadStageRepository leadStageRepository;
+    @Autowired
+    private ContractRepository contractRepository;
+    @Autowired
+    private AreaRepository areaRepository;
+    @Autowired
+    private ProjectStageRepository projectStageRepository;
     @Autowired
     private LeadStatusRepository leadStatusRepository;
 
@@ -62,10 +70,8 @@ public class NewLeadsService {
                 leadsPage.getTotalPages(),
                 leadsPage.getTotalElements(),
                 leadsPage.isFirst(),
-                leadsPage.isLast()
-        );
+                leadsPage.isLast());
     }
-
 
     public NewLeadsResponseDto getLeadById(Integer id) {
         NewLeads lead = newLeadsRepository.findById(id)
@@ -74,26 +80,29 @@ public class NewLeadsService {
     }
 
     public NewLeadsResponseDto createLead(NewLeadsRequestDto dto) {
-    	
+        // Sanitize input data
+        sanitizeDto(dto);
+        validateDto(dto);
+
         NewLeads lead = new NewLeads();
 
         lead.setLeadDate(dto.getLeadDate());
-        lead.setLeadType(dto.getLeadType());
-        lead.setLeadCompanyName(dto.getLeadCompanyName());
+        lead.setLeadType(sanitizeText(dto.getLeadType()));
+        lead.setLeadCompanyName(sanitizeText(dto.getLeadCompanyName()));
         lead.setSalutations(dto.getSalutations());
         lead.setSalutations2(dto.getSalutations2());
-        lead.setCustomerName(dto.getCustomerName());
-        lead.setCustomerName2(dto.getCustomerName2());
-        lead.setEmailId(dto.getEmailId());
-        lead.setEmailId2(dto.getEmailId2());
+        lead.setCustomerName(sanitizeText(dto.getCustomerName()));
+        lead.setCustomerName2(sanitizeText(dto.getCustomerName2()));
+        lead.setEmailId(sanitizeEmail(dto.getEmailId()));
+        lead.setEmailId2(sanitizeEmail(dto.getEmailId2()));
         lead.setCountryCode(dto.getCountryCode());
-        lead.setContactNo(dto.getContactNo());
-        lead.setCustomer1Contact(dto.getCustomer1Contact());
-        lead.setCustomer2Contact(dto.getCustomer2Contact());
-        lead.setLandlineNo(dto.getLandlineNo());  
-        lead.setAddress(dto.getAddress());
-        lead.setSiteName(dto.getSiteName());
-        lead.setSiteAddress(dto.getSiteAddress());
+        lead.setContactNo(sanitizeMobile(dto.getContactNo()));
+        lead.setCustomer1Contact(sanitizeMobile(dto.getCustomer1Contact()));
+        lead.setCustomer2Contact(sanitizeMobile(dto.getCustomer2Contact()));
+        lead.setLandlineNo(sanitizeLandline(dto.getLandlineNo()));
+        lead.setAddress(sanitizeAddress(dto.getAddress()));
+        lead.setSiteName(sanitizeText(dto.getSiteName()));
+        lead.setSiteAddress(sanitizeAddress(dto.getSiteAddress()));
         lead.setStatus(dto.getStatus());
         lead.setReason(dto.getReason());
         lead.setIsSendQuotation(dto.getIsSendQuotation());
@@ -111,28 +120,20 @@ public class NewLeadsService {
         lead.setAmountComp(dto.getAmountComp());
         lead.setGstComp(dto.getGstComp());
         lead.setTotalAmountComp(dto.getTotalAmountComp());
-        
-        System.out.println(dto.getActivityById());
 
         lead.setActivityBy(employeeRepository.findById(dto.getActivityById())
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found")));
-        
-        System.out.println("callled success ednd");
 
         lead.setLeadSource(leadSourceRepository.findById(dto.getLeadSourceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lead Source not found")));
         lead.setDesignation(designationRepository.findById(dto.getDesignationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Designation not found")));
-        
-        
+
         LeadStatus leadStatus = leadStatusRepository.findByStatusNameIgnoreCase("Active")
                 .orElseThrow(() -> new IllegalArgumentException("LeadStatus 'Active' not found"));
 
         lead.setLeadStatus(leadStatus);
 
-
-      
-       
         if (dto.getDesignation2Id() != null) {
             lead.setDesignation2(designationRepository.findById(dto.getDesignation2Id())
                     .orElseThrow(() -> new ResourceNotFoundException("Designation2 not found")));
@@ -152,31 +153,102 @@ public class NewLeadsService {
 
         return toDto(newLeadsRepository.save(lead));
     }
-    
+
+    // ============== Sanitization Methods ==============
+
+    private void sanitizeDto(NewLeadsRequestDto dto) {
+        if (dto.getContactNo() != null)
+            dto.setContactNo(sanitizeMobile(dto.getContactNo()));
+        if (dto.getCustomerName() != null)
+            dto.setCustomerName(sanitizeText(dto.getCustomerName()));
+        if (dto.getLeadCompanyName() != null)
+            dto.setLeadCompanyName(sanitizeText(dto.getLeadCompanyName()));
+        if (dto.getAddress() != null)
+            dto.setAddress(sanitizeAddress(dto.getAddress()));
+        if (dto.getEmailId() != null)
+            dto.setEmailId(sanitizeEmail(dto.getEmailId()));
+    }
+
+    private void validateDto(NewLeadsRequestDto dto) {
+        if (dto.getContactNo() != null && !dto.getContactNo().isEmpty()) {
+            if (!dto.getContactNo().matches("^\\d{10}$")) {
+                throw new IllegalArgumentException("Contact number must be exactly 10 digits");
+            }
+        }
+        if (dto.getEmailId() != null && !dto.getEmailId().isEmpty()) {
+            if (!isValidEmail(dto.getEmailId())) {
+                throw new IllegalArgumentException("Invalid email format");
+            }
+        }
+        if (dto.getEmailId2() != null && !dto.getEmailId2().isEmpty()) {
+            if (!isValidEmail(dto.getEmailId2())) {
+                throw new IllegalArgumentException("Invalid secondary email format");
+            }
+        }
+    }
+
+    private String sanitizeText(String input) {
+        if (input == null)
+            return null;
+        return input.replaceAll("\\s+", " ").replaceAll("\\.{2,}", ".").trim();
+    }
+
+    private String sanitizeAddress(String input) {
+        if (input == null)
+            return null;
+        return input.replaceAll("\\s+", " ").replaceAll("\\.{3,}", ".").replaceAll("^\\.*|\\.*$", "").trim();
+    }
+
+    private String sanitizeMobile(String input) {
+        if (input == null)
+            return null;
+        return input.replaceAll("[^0-9]", "");
+    }
+
+    private String sanitizeLandline(String input) {
+        if (input == null)
+            return null;
+        return input.replaceAll("[^0-9-]", "").trim();
+    }
+
+    private String sanitizeEmail(String input) {
+        if (input == null)
+            return null;
+        return input.trim().toLowerCase();
+    }
+
+    private boolean isValidEmail(String email) {
+        if (email == null || email.isEmpty())
+            return true;
+        String regex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.(com|in|net|org|co|io|gov|edu|info|biz|co\\.in|org\\.in|net\\.in|ac\\.in)$";
+        return email.matches(regex);
+    }
+
     public NewLeadsResponseDto updateLead(Integer id, NewLeadsRequestDto dto) {
+        // Sanitize and validate input
+        sanitizeDto(dto);
+        validateDto(dto);
 
         NewLeads lead = newLeadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-        
-        System.out.println(dto.getLandlineNo()+ " landimen no us");
 
         lead.setLeadDate(dto.getLeadDate());
-        lead.setLeadType(dto.getLeadType());
-        lead.setLeadCompanyName(dto.getLeadCompanyName());
+        lead.setLeadType(sanitizeText(dto.getLeadType()));
+        lead.setLeadCompanyName(sanitizeText(dto.getLeadCompanyName()));
         lead.setSalutations(dto.getSalutations());
         lead.setSalutations2(dto.getSalutations2());
-        lead.setCustomerName(dto.getCustomerName());
-        lead.setCustomerName2(dto.getCustomerName2());
-        lead.setEmailId(dto.getEmailId());
-        lead.setEmailId2(dto.getEmailId2());
+        lead.setCustomerName(sanitizeText(dto.getCustomerName()));
+        lead.setCustomerName2(sanitizeText(dto.getCustomerName2()));
+        lead.setEmailId(sanitizeEmail(dto.getEmailId()));
+        lead.setEmailId2(sanitizeEmail(dto.getEmailId2()));
         lead.setCountryCode(dto.getCountryCode());
-        lead.setContactNo(dto.getContactNo());
-        lead.setCustomer1Contact(dto.getCustomer1Contact());
-        lead.setCustomer2Contact(dto.getCustomer2Contact());
-        lead.setLandlineNo(dto.getLandlineNo());
-        lead.setAddress(dto.getAddress());
-        lead.setSiteName(dto.getSiteName());
-        lead.setSiteAddress(dto.getSiteAddress());
+        lead.setContactNo(sanitizeMobile(dto.getContactNo()));
+        lead.setCustomer1Contact(sanitizeMobile(dto.getCustomer1Contact()));
+        lead.setCustomer2Contact(sanitizeMobile(dto.getCustomer2Contact()));
+        lead.setLandlineNo(sanitizeLandline(dto.getLandlineNo()));
+        lead.setAddress(sanitizeAddress(dto.getAddress()));
+        lead.setSiteName(sanitizeText(dto.getSiteName()));
+        lead.setSiteAddress(sanitizeAddress(dto.getSiteAddress()));
         lead.setStatus(dto.getStatus());
         lead.setReason(dto.getReason());
         lead.setIsSendQuotation(dto.getIsSendQuotation());
@@ -228,7 +300,6 @@ public class NewLeadsService {
         return toDto(newLeadsRepository.save(lead));
     }
 
-
     public void deleteLead(Integer id) {
         try {
             newLeadsRepository.deleteById(id);
@@ -277,7 +348,7 @@ public class NewLeadsService {
         dto.setAmountComp(e.getAmountComp());
         dto.setGstComp(e.getGstComp());
         dto.setTotalAmountComp(e.getTotalAmountComp());
-        
+
         dto.setProjectStage(e.getProjectStage());
 
         // Set nested DTOs (with null checks)
@@ -299,9 +370,8 @@ public class NewLeadsService {
 
             if (e.getActivityBy().getRole() != null) {
                 RoleDto roleDto = new RoleDto(
-                    e.getActivityBy().getRole().getRoleId(),
-                    e.getActivityBy().getRole().getRole()
-                );
+                        e.getActivityBy().getRole().getRoleId(),
+                        e.getActivityBy().getRole().getRole());
                 employeeDto.setRole(roleDto);
             }
 
@@ -310,49 +380,43 @@ public class NewLeadsService {
 
         if (e.getLeadSource() != null) {
             dto.setLeadSource(new LeadSourceDto(
-                e.getLeadSource().getLeadSourceId(),
-                e.getLeadSource().getSourceName()
-            ));
+                    e.getLeadSource().getLeadSourceId(),
+                    e.getLeadSource().getSourceName()));
         }
 
         if (e.getDesignation() != null) {
             dto.setDesignation(new DesignationDto(
-                e.getDesignation().getDesignationId(),
-                e.getDesignation().getDesignationName()
-            ));
+                    e.getDesignation().getDesignationId(),
+                    e.getDesignation().getDesignationName()));
         }
 
         if (e.getDesignation2() != null) {
             dto.setDesignation2(new DesignationDto(
-                e.getDesignation2().getDesignationId(),
-                e.getDesignation2().getDesignationName()
-            ));
+                    e.getDesignation2().getDesignationId(),
+                    e.getDesignation2().getDesignationName()));
         }
 
         if (e.getLeadStage() != null) {
             dto.setLeadStage(new LeadStageDto(
-                e.getLeadStage().getStageId(),
-                e.getLeadStage().getStageName()
-            ));
+                    e.getLeadStage().getStageId(),
+                    e.getLeadStage().getStageName()));
         }
 
         if (e.getContract() != null) {
             dto.setContract(new ContractDto(
-                e.getContract().getId(),
-                e.getContract().getName()
-            ));
+                    e.getContract().getId(),
+                    e.getContract().getName()));
         }
 
         if (e.getArea() != null) {
             dto.setArea(new AreaDto(
-                e.getArea().getAreaId(),
-                e.getArea().getAreaName()
-            ));
+                    e.getArea().getAreaId(),
+                    e.getArea().getAreaName()));
         }
 
         return dto;
     }
-    
+
     public NewLeadsResponseDto updateLeadStage(Integer leadId, Integer stageId) {
         NewLeads lead = newLeadsRepository.findById(leadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
@@ -364,7 +428,6 @@ public class NewLeadsService {
 
         return toDto(newLeadsRepository.save(lead));
     }
-
 
     public NewLeadsResponseDto updateLeadProjectStage(Integer leadId, Integer projectStageId) {
         // Fetch the lead
@@ -381,7 +444,7 @@ public class NewLeadsService {
         // Save and return the updated lead as DTO
         return toDto(newLeadsRepository.save(lead));
     }
-    
+
     public NewLeadsResponseDto updateLeadStatus(Integer leadId, Integer statusId) {
         NewLeads lead = newLeadsRepository.findById(leadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
@@ -395,7 +458,6 @@ public class NewLeadsService {
         return toDto(savedLead);
     }
 
-
     public List<NewLeadsResponseDto> getFilteredLeads() {
         List<String> types = Arrays.asList("New Installation", "Modernization");
         List<NewLeads> leads = newLeadsRepository.findByLeadTypeIn(types);
@@ -405,7 +467,6 @@ public class NewLeadsService {
                 .toList();
     }
 
-
     private NewLeadsResponseDto convertToDto(NewLeads lead) {
         NewLeadsResponseDto dto = new NewLeadsResponseDto();
         dto.setLeadId(lead.getLeadId());
@@ -413,7 +474,5 @@ public class NewLeadsService {
         dto.setLeadType(lead.getLeadType());
         return dto;
     }
-    
-    
-   
+
 }

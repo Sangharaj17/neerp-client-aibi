@@ -37,7 +37,7 @@ export default function CompanyLogo() {
           // --- ^- Responsive Fix ^ ---
         />
       ) : (
-        <div className="text-gray-500 text-sm italic">No Logo</div>
+        <div className="text-gray-400 text-xs italic font-medium">No Logo</div>
       )}
     </div>
   );

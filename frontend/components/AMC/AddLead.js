@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import { Trash2 } from 'lucide-react';
 import axios from 'axios';
-import axiosInstance from '@/utils/axiosInstance'; 
+import axiosInstance from '@/utils/axiosInstance';
+import toast from 'react-hot-toast'; 
 
 export default function AddLead({submitted,handleSetLeadId,handleSetCustomer1Name,handleSetSiteName,
     handleSetLeadSumbited , setFormData , formData , handleSetSumbmitted , setActiveStage ,
@@ -118,24 +119,63 @@ const [showCustomer2, setShowCustomer2] = useState(false);
 
   const [showEmail2, setShowEmail2] = useState(false);
 
+  // Helper functions for validation and sanitization
+  const sanitizeEmail = (email) => {
+    if (!email) return '';
+    return email.trim().toLowerCase();
+  };
+
+  const sanitizeAddress = (address) => {
+    if (!address) return '';
+    return address
+      .replace(/\.{2,}/g, '.') // Replace multiple dots with single dot
+      .replace(/\s{2,}/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+
+  const validateEmail = (email) => {
+    if (!email || email.trim() === '') return true; // Optional field
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const validDomains = ['.com', '.in', '.net', '.org', '.co', '.edu', '.gov'];
+    if (!emailRegex.test(email)) return false;
+    return validDomains.some(domain => email.toLowerCase().endsWith(domain));
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let processedValue = value;
 
+    // Apply validations and sanitizations
+    if (name === 'email' || name === 'email2') {
+      processedValue = sanitizeEmail(value);
+    } else if (name === 'contactNo' || name === 'customer1Contact' || name === 'customer2Contact') {
+      // Only allow numbers for mobile numbers
+      if (value && !/^\d*$/.test(value)) {
+        toast.error('Mobile number can only contain digits');
+        return;
+      }
+      processedValue = value;
+    } else if (name === 'companyAddress' || name === 'siteAddress') {
+      processedValue = sanitizeAddress(value);
+    } else {
+      processedValue = value;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
 
     if(name === 'companyAddress'){
-        setFormData((prev) => ({...prev, siteAddress: value }));
+        setFormData((prev) => ({...prev, siteAddress: processedValue }));
     }
     if(name === 'customer1Name') {
-      handleSetCustomer1Name(value);
+      handleSetCustomer1Name(processedValue);
     }
     if(name === 'companyName') {
-      handleSetSiteName(value);
-      setFormData((prev) => ({...prev, siteName: value }));
+      handleSetSiteName(processedValue);
+      setFormData((prev) => ({...prev, siteName: processedValue }));
     }
 
     if(name === 'leadType') {
-      updateEnquiryType(value);
+      updateEnquiryType(processedValue);
     }
   };
 
@@ -263,6 +303,9 @@ const [showCustomer2, setShowCustomer2] = useState(false);
       placeholder="Contact"
       value={formData.customer1Contact}
       onChange={handleChange}
+      maxLength={10}
+      pattern="[0-9]*"
+      inputMode="numeric"
       className="w-32 border px-3 py-2 rounded-md text-sm"
     />
 
@@ -322,6 +365,9 @@ const [showCustomer2, setShowCustomer2] = useState(false);
         placeholder="Contact"
         value={formData.customer2Contact}
         onChange={handleChange}
+        maxLength={10}
+        pattern="[0-9]*"
+        inputMode="numeric"
         className="w-32 border px-3 py-2 rounded-md text-sm"
       />
 
@@ -393,14 +439,27 @@ const [showCustomer2, setShowCustomer2] = useState(false);
 
             {/* Email ID 2 */}
             {showEmail2 && (
-              <InputField
-                icon={<Mail className="w-4 h-4" />}
-                label="Email ID 2"
-                type="email"
-                name="email2"
-                value={formData.email2}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <InputField
+                  icon={<Mail className="w-4 h-4" />}
+                  label="Email ID 2"
+                  type="email"
+                  name="email2"
+                  value={formData.email2}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEmail2(false);
+                    setFormData((prev) => ({ ...prev, email2: '' }));
+                  }}
+                  className="absolute right-2 top-8 text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Hide
+                </button>
+              </div>
             )}
 
             {/* Contact No. */}
@@ -422,7 +481,11 @@ const [showCustomer2, setShowCustomer2] = useState(false);
                   name="contactNo"
                   value={formData.contactNo}
                   onChange={handleChange}
+                  maxLength={10}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   className="flex-1 border px-3 py-2 rounded-md text-sm"
+                  placeholder="Enter 10 digit mobile number"
                 />
               </div>
             </div>

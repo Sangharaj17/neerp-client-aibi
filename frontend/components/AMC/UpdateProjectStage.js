@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 
-export default function UpdateProjectStage({ closeModal, leadId, handleStageUpdated }) {
+export default function UpdateProjectStage({ closeModal, leadId, handleStageUpdated, currentLead }) {
   const { tenant } = useParams();
 
   const [projectStages, setProjectStages] = useState([]);
@@ -18,9 +18,13 @@ export default function UpdateProjectStage({ closeModal, leadId, handleStageUpda
       .get('/api/leadmanagement/project-stages')
       .then((res) => {
         setProjectStages(res.data || []);
+        // Set default value to current project stage if available
+        if (currentLead && currentLead.projectStage && currentLead.projectStage.id) {
+          setSelectedStage(String(currentLead.projectStage.id));
+        }
       })
       .catch((e) => console.error('Failed to fetch project stages', e));
-  }, []);
+  }, [currentLead]);
 
   const handleSubmit = async () => {
     setError('');

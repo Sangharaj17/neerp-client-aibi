@@ -7,6 +7,7 @@ import com.aibi.neerp.config.TenantSchemaInitializer;
 import com.aibi.neerp.client.dto.Client;
 import com.aibi.neerp.employeemanagement.entity.Employee;
 import com.aibi.neerp.login.dto.LoginRequest;
+import com.aibi.neerp.login.service.CaptchaService;
 import com.aibi.neerp.user.service.UserService;
 import com.aibi.neerp.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -38,9 +39,12 @@ public class LoginController {
 
     @Autowired
     private TenantSchemaInitializer tenantSchemaInitializer;
-    
+
     @Autowired
     private com.aibi.neerp.config.InitializationStatusTracker statusTracker;
+
+    @Autowired
+    private CaptchaService captchaService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest,
@@ -48,6 +52,14 @@ public class LoginController {
         System.out.println("Login request received");
         System.out.println("Email: " + request.getEmail());
         System.out.println("Password: " + (request.getPassword() != null ? "***" : "null"));
+
+        // ✅ Step 0: Validate captcha first
+        if (request.getCaptchaSessionId() != null && request.getCaptchaInput() != null) {
+            if (!captchaService.validateCaptcha(request.getCaptchaSessionId(), request.getCaptchaInput())) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "Invalid or expired captcha. Please try again."));
+            }
+        }
 
         // ✅ Step 1: Get tenant from header
         String domainNm = httpRequest.getHeader("X-Tenant");
@@ -107,10 +119,10 @@ public class LoginController {
         System.out.println("[Login] Step 3: Setting tenant context and datasource for: " + domainNm);
         TenantContext.setTenantId(domainNm);
         System.out.println("[Login] Tenant context set to: " + TenantContext.getTenantId());
-        
+
         dataSourceConfig.removeDataSource(domainNm);
         System.out.println("[Login] Removed existing datasource (if any) for: " + domainNm);
-        
+
         dataSourceConfig.addDataSource(domainNm, client);
         System.out.println("[Login] Added datasource for tenant: " + domainNm + " with DB URL: " + client.getDbUrl());
 
@@ -127,11 +139,10 @@ public class LoginController {
         if (existingStatus != null && !existingStatus.isCompleted()) {
             System.out.println("[Login] Initialization already in progress for tenant: " + domainNm);
             return ResponseEntity.accepted().body(Map.of(
-                "requiresInitialization", true,
-                "message", "System is updating. Please wait...",
-                "currentStep", existingStatus.getCurrentStep(),
-                "progress", existingStatus.getProgress()
-            ));
+                    "requiresInitialization", true,
+                    "message", "System is updating. Please wait...",
+                    "currentStep", existingStatus.getCurrentStep(),
+                    "progress", existingStatus.getProgress()));
         }
 
         // If first-time initialization OR if schema updates are needed, run async
@@ -150,14 +161,16 @@ public class LoginController {
                 try {
                     // CRITICAL: Set tenant context in this thread
                     TenantContext.setTenantId(tenantIdForThread);
-                    System.out.println("[Login-Async] TenantContext set in background thread: " + TenantContext.getTenantId());
+                    System.out.println(
+                            "[Login-Async] TenantContext set in background thread: " + TenantContext.getTenantId());
 
                     // Ensure datasource is available in this thread
                     dataSourceConfig.addDataSource(tenantIdForThread, clientForThread);
 
                     // Run full initialization
                     tenantSchemaInitializer.initializeIfRequired(tenantIdForThread);
-                    System.out.println("[Login-Async] ✅ Background initialization completed for tenant: " + tenantIdForThread);
+                    System.out.println(
+                            "[Login-Async] ✅ Background initialization completed for tenant: " + tenantIdForThread);
                 } catch (Exception e) {
                     System.err.println("[Login-Async] ❌ Background initialization failed: " + e.getMessage());
                     e.printStackTrace();
@@ -168,10 +181,9 @@ public class LoginController {
             }).start();
 
             return ResponseEntity.accepted().body(Map.of(
-                "requiresInitialization", true,
-                "message", "Please wait, your system is being set up for the first time...",
-                "isFirstTime", true
-            ));
+                    "requiresInitialization", true,
+                    "message", "Please wait, your system is being set up for the first time...",
+                    "isFirstTime", true));
         } else {
             // For existing tenants: Run schema/data check synchronously but quickly
             // This is fast because it only checks and inserts missing data
@@ -184,7 +196,8 @@ public class LoginController {
                 System.out.println("[Login] ✅ Schema/data check completed for tenant: " + domainNm);
             } catch (Exception e) {
                 // For existing tenants, log warning but allow login to proceed
-                System.err.println("[Login] ⚠️ Warning: Error during data check for tenant " + domainNm + ": " + e.getMessage());
+                System.err.println(
+                        "[Login] ⚠️ Warning: Error during data check for tenant " + domainNm + ": " + e.getMessage());
                 System.err.println("[Login] Login will proceed, but some updates may be missing.");
                 e.printStackTrace();
                 // Continue with login
@@ -195,16 +208,17 @@ public class LoginController {
         System.out.println("[Login] Step 4: Validating user credentials...");
         System.out.println("[Login] Current tenant context: " + TenantContext.getTenantId());
         System.out.println("[Login] Attempting to validate user with email: " + request.getEmail());
-        
+
         Optional<Employee> userOpt = userService.validateUser(request.getEmail(), request.getPassword());
         if (userOpt.isEmpty()) {
-            System.err.println("[Login] ❌ User validation failed - invalid credentials for email: " + request.getEmail());
+            System.err
+                    .println("[Login] ❌ User validation failed - invalid credentials for email: " + request.getEmail());
             TenantContext.clear(); // Cleanup
             return ResponseEntity.status(401).body(Map.of(
                     "error", "Invalid credentials",
                     "status", 401));
         }
-        
+
         System.out.println("[Login] ✅ User validation successful");
 
         // User user = userOpt.get();
@@ -260,35 +274,35 @@ public class LoginController {
         }
         TenantContext.setTenantId(domainNm);
         boolean schemaInitialized = tenantSchemaInitializer.isInitialized();
-        
+
         // Get detailed status if available
         com.aibi.neerp.config.InitializationStatusTracker.StatusInfo status = statusTracker.getStatus(domainNm);
         if (status != null) {
             // If schema is initialized and status shows completed, return initialized=true
-            // Also, if schema is initialized but no status completion yet, assume it's in progress
-            boolean isInitialized = (schemaInitialized && status.isCompleted()) || 
-                                   (schemaInitialized && status.getProgress() == 100);
-            
-            System.out.println("[InitStatus] Tenant: " + domainNm + 
-                             ", SchemaInitialized: " + schemaInitialized + 
-                             ", StatusCompleted: " + (status != null ? status.isCompleted() : "null") +
-                             ", Progress: " + (status != null ? status.getProgress() : "null") +
-                             ", ReturningInitialized: " + isInitialized);
-            
+            // Also, if schema is initialized but no status completion yet, assume it's in
+            // progress
+            boolean isInitialized = (schemaInitialized && status.isCompleted()) ||
+                    (schemaInitialized && status.getProgress() == 100);
+
+            System.out.println("[InitStatus] Tenant: " + domainNm +
+                    ", SchemaInitialized: " + schemaInitialized +
+                    ", StatusCompleted: " + (status != null ? status.isCompleted() : "null") +
+                    ", Progress: " + (status != null ? status.getProgress() : "null") +
+                    ", ReturningInitialized: " + isInitialized);
+
             return ResponseEntity.ok(Map.of(
-                "initialized", isInitialized,
-                "currentStep", status.getCurrentStep(),
-                "progress", status.getProgress(),
-                "message", status.getMessage()
-            ));
+                    "initialized", isInitialized,
+                    "currentStep", status.getCurrentStep(),
+                    "progress", status.getProgress(),
+                    "message", status.getMessage()));
         }
-        
+
         // If no status but schema is initialized, assume it's ready
         boolean isInitialized = schemaInitialized;
-        System.out.println("[InitStatus] Tenant: " + domainNm + 
-                         ", SchemaInitialized: " + schemaInitialized + 
-                         ", NoStatusInfo, ReturningInitialized: " + isInitialized);
-        
+        System.out.println("[InitStatus] Tenant: " + domainNm +
+                ", SchemaInitialized: " + schemaInitialized +
+                ", NoStatusInfo, ReturningInitialized: " + isInitialized);
+
         return ResponseEntity.ok(Map.of("initialized", isInitialized));
     }
 
@@ -364,35 +378,33 @@ public class LoginController {
         if (domainNm == null || domainNm.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Missing X-Tenant header"));
         }
-        
+
         try {
             TenantContext.setTenantId(domainNm);
             System.out.println("[InitData] Manually triggering data initialization for tenant: " + domainNm);
-            
+
             // Get client to ensure DataSource is set up
             Client client = clientService.getClientByDomain(domainNm);
             if (client == null) {
                 return ResponseEntity.status(404).body(Map.of("error", "Tenant not found"));
             }
-            
+
             // Ensure DataSource is set up
             dataSourceConfig.removeDataSource(domainNm);
             dataSourceConfig.addDataSource(domainNm, client);
-            
+
             // Run initialization
             tenantSchemaInitializer.initializeIfRequired(domainNm);
-            
+
             return ResponseEntity.ok(Map.of(
-                "message", "Default data initialization completed successfully",
-                "tenant", domainNm
-            ));
+                    "message", "Default data initialization completed successfully",
+                    "tenant", domainNm));
         } catch (Exception e) {
             System.err.println("[InitData] Error during manual data initialization: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of(
-                "error", "Failed to initialize default data",
-                "details", e.getMessage()
-            ));
+                    "error", "Failed to initialize default data",
+                    "details", e.getMessage()));
         } finally {
             TenantContext.clear();
         }

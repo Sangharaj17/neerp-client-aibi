@@ -55,9 +55,36 @@ export default function DClientLayout({ children }) {
 
         <section className="flex-1 h-full overflow-y-auto">
           {/* ✅ Top-Center Toasts */}
-          <Toaster position="top-center" reverseOrder={false} />
+          <Toaster
+            position="top-center"
+            reverseOrder={false}
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: '#fff',
+                color: '#171717',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                border: '1px solid #e5e5e5',
+              },
+              success: {
+                iconTheme: {
+                  primary: '#10b981',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
 
-          <div className="p-4">
+          <div className="">
             {children}
           </div>
         </section>

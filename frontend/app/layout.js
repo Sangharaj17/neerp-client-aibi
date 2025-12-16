@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
         className={`${poppins.variable} antialiased`}
       >
         <NextTopLoader
-          color="#22c55e"
+          color="#0a76f2"
           initialPosition={0.08}
           crawlSpeed={200}
           height={3}
@@ -30,7 +30,7 @@ export default function RootLayout({ children }) {
           showSpinner={false}
           easing="ease"
           speed={200}
-          shadow="0 0 10px #22c55e,0 0 5px #22c55e"
+          shadow="0 0 10px rgb(10, 242, 169),0 0 5px rgb(34, 102, 197)"
         />
         <BetaBanner />
         <Toaster />

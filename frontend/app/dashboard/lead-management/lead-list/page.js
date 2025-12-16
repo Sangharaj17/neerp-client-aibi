@@ -11,13 +11,17 @@ import {
   FileSearch,
   Search,
   Loader2,
+  ChevronUp,
+  ChevronDown,
+  Plus,
+  Download
 } from 'lucide-react';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 
 import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
 import EditLead from '@/components/AMC/EditLead';
 import axiosInstance from '@/utils/axiosInstance';
+import PageHeader from '@/components/UI/PageHeader';
 
 export default function LeadListPage() {
   const [search, setSearch] = useState('');
@@ -30,38 +34,37 @@ export default function LeadListPage() {
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [originalLeadsDataForExport, setOriginalLeadsDataForExport] = useState([]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-    const [refreshKey, setRefreshKey] = useState(0); // 👈 used to trigger re-fetch
-  
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const confirmDelete = (id) => {
-  setDeleteId(id);
-  setModalOpen(true);
-};
+    setDeleteId(id);
+    setModalOpen(true);
+  };
 
-const handleConfirmDelete = async () => {
-  try {
-    await axiosInstance.delete(`/api/leadmanagement/leads/${deleteId}`);
-    toast.success("Enquiry deleted successfully.");
+  const handleConfirmDelete = async () => {
+    try {
+      await axiosInstance.delete(`/api/leadmanagement/leads/${deleteId}`);
+      toast.success("Lead deleted successfully.");
+      setModalOpen(false);
+      setRefreshKey(prev => prev + 1);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete.");
+      setModalOpen(false);
+    }
+  };
+
+  const handleCancel = () => {
     setModalOpen(false);
-    setRefreshKey(prev => prev + 1); // 👈 trigger re-fetch
-  } catch (err) {
-    // toast.error(err?.response?.data || "Failed to delete.");
-toast.error(err?.response?.data?.message || "Failed to delete.");
+    setDeleteId(null);
+  };
 
-    setModalOpen(false);
-  }
-};
-
-const handleCancel = () => {
-  setModalOpen(false);
-  setDeleteId(null);
-};
-
-  const [originalLeadsData , setOriginalLeadsData] = useState([]);
-
+  const [originalLeadsData, setOriginalLeadsData] = useState([]);
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -71,14 +74,12 @@ const handleCancel = () => {
         });
 
         const { data, totalPages, totalElements } = response.data;
-
-        setOriginalLeadsData(data); // Store original data for future use
-
-        console.log('originalLeadsData Leads:', originalLeadsData);
+        setOriginalLeadsData(data);
 
         const formattedLeads = data.map((entry) => ({
           id: entry.leadId,
           date: new Date(entry.leadDate).toLocaleDateString('en-GB'),
+          dateRaw: entry.leadDate,
           customer: `${entry.salutations ?? ''} ${entry.customerName ?? ''}`.trim(),
           site: entry.siteName ?? '-',
           source: entry.leadSource?.sourceName ?? '-',
@@ -86,9 +87,29 @@ const handleCancel = () => {
           stage: entry.leadStage?.stageName ?? '-',
           number: entry.contactNo ?? '-',
           executive: entry.activityBy?.employeeName ?? '-',
+          status: entry.status ?? 'Open',
         }));
 
-        setLeads(formattedLeads);
+        setOriginalLeadsDataForExport(data);
+
+        let sortedLeads = formattedLeads;
+        if (sortField) {
+          sortedLeads = [...formattedLeads].sort((a, b) => {
+            let aVal = a[sortField];
+            let bVal = b[sortField];
+            if (sortField === 'date') {
+              aVal = a.dateRaw;
+              bVal = b.dateRaw;
+            }
+            if (aVal == null) aVal = '';
+            if (bVal == null) bVal = '';
+            if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+          });
+        }
+
+        setLeads(sortedLeads);
         setTotalPages(totalPages);
         setTotalElements(totalElements);
       } catch (error) {
@@ -97,23 +118,75 @@ const handleCancel = () => {
     };
 
     fetchLeads();
-  }, [search, page, size , refreshKey]); // 
+  }, [search, page, size, refreshKey, sortField, sortDirection]);
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
     setPage(0);
   };
 
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const handleExportToExcel = async () => {
+    try {
+      setLoadingBtn('export-');
+      const response = await axiosInstance.get('/api/leadmanagement/leads', {
+        params: { search: '', page: 0, size: 10000 },
+      });
+
+      const allLeads = response.data.data || [];
+      const headers = ['Lead ID', 'Date', 'Customer', 'Site', 'Source', 'Lead Type', 'Stage', 'Contact Number', 'Executive', 'Status'];
+      const csvRows = [
+        headers.join(','),
+        ...allLeads.map(lead => [
+          lead.leadId || '',
+          new Date(lead.leadDate).toLocaleDateString('en-GB'),
+          `"${(lead.salutations || '')} ${lead.customerName || ''}"`.trim(),
+          `"${lead.siteName || '-'}"`,
+          `"${lead.leadSource?.sourceName || '-'}"`,
+          `"${lead.leadType || '-'}"`,
+          `"${lead.leadStage?.stageName || '-'}"`,
+          lead.contactNo || '-',
+          `"${lead.activityBy?.employeeName || '-'}"`,
+          lead.status || 'Open'
+        ].join(','))
+      ];
+
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Leads exported successfully!');
+      setLoadingBtn(null);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export leads');
+      setLoadingBtn(null);
+    }
+  };
+
   const handleButtonClick = async (type, id = null) => {
     setLoadingBtn(`${type}-${id || ''}`);
     if (type === 'export') {
-      setTimeout(() => setLoadingBtn(null), 1500);
+      handleExportToExcel();
+      return;
     } else if (type === 'add') {
       router.push(`/dashboard/lead-management/lead-list/add-lead`);
-    } else if(type === 'delete') {
-
-    }
-     else if (type === 'view-enquiry') {
+    } else if (type === 'view-enquiry') {
       router.push(
         `/dashboard/lead-management/enquiries/${id}?customer=${encodeURIComponent(
           leads.find((l) => l.id === id).customer
@@ -126,360 +199,289 @@ const handleCancel = () => {
     router.push(`/dashboard/lead-management/lead-list/add-lead-enquiry`);
   };
 
-
-   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
-  const [action , setAction] = useState('Edit'); // Default action is 'Edit'
+  const [action, setAction] = useState('Edit');
 
-  const handleEditLeadClick = ( leadId , action) => {
-     // setLoadingBtn(`edit-${leadId}`);
-      const lead = originalLeadsData.find((l) => l.leadId === leadId); // use the mapped object
-
-      console.log('originalLeadsData lead for edit:', originalLeadsData);
-      console.log('Selected lead for edit:', leadId);
-      setSelectedLead(lead);
-      setEditModalOpen(true);
-      setLoadingBtn('');
-
-      setAction(action || 'Edit'); // Set action based on the button clicked
+  const handleEditLeadClick = (leadId, action) => {
+    const lead = originalLeadsData.find((l) => l.leadId === leadId);
+    setSelectedLead(lead);
+    setEditModalOpen(true);
+    setLoadingBtn('');
+    setAction(action || 'Edit');
   };
-  
 
   const closeEditModal = () => {
     setEditModalOpen(false);
     setSelectedLead(null);
   };
 
-  
-    const [enquiryTypes, setEnquiryTypes] = useState([]);
-    
-       useEffect(() => {
-        axiosInstance.get('/api/enquiry-types')
-          .then((res) => {
-            setEnquiryTypes(res.data);
-          })
-          .catch((err) => console.error('Failed to fetch enquiry types', err));
-      }, []);
+  const [enquiryTypes, setEnquiryTypes] = useState([]);
 
-  const handleAddEnquiry = (id , leadType , customer , site) => {
-    //setAddEnquiryLoading(true);
+  useEffect(() => {
+    axiosInstance.get('/api/enquiry-types')
+      .then((res) => setEnquiryTypes(res.data))
+      .catch((err) => console.error('Failed to fetch enquiry types', err));
+  }, []);
 
+  const handleAddEnquiry = (id, leadType, customer, site) => {
     const selectedCategoryObj = enquiryTypes.find(
       (type) => type.enquiryTypeName === leadType
     );
-  
+
     const basePath = `/dashboard/lead-management/enquiries/${id}/add`;
-  
-    // Extract type info
-    const enquiryTypeName = selectedCategoryObj?.enquiryTypeName; // e.g., "AMC"
+    const enquiryTypeName = selectedCategoryObj?.enquiryTypeName;
     const enquiryTypeId = selectedCategoryObj?.enquiryTypeId;
-  
+
     if (!enquiryTypeName || !enquiryTypeId) {
       toast.error("Please select a valid enquiry category.");
-      setAddEnquiryLoading(false);
       return;
     }
-  
-    // Fetch other query params
-    // const customer = encodeURIComponent(searchParams.get('customer') || '');
-    // const site = encodeURIComponent(searchParams.get('site') || '');
-  
-    // Build query string
+
     const queryParams = [
       `customer=${customer}`,
       `site=${site}`,
       `enquiryTypeId=${enquiryTypeId}`,
       `enquiryTypeName=${encodeURIComponent(enquiryTypeName)}`
     ];
-  
-    // Final path: /.../add/AMC?enquiryTypeId=1&enquiryTypeName=AMC&...
+
     const fullPath = `${basePath}/${encodeURIComponent(enquiryTypeName)}?${queryParams.join('&')}`;
     router.push(fullPath);
   };
 
   return (
     <>
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold mb-6">Lead List</h2>
+      <div className="min-h-screen bg-white">
+        {/* Page Header */}
+        <PageHeader
+          title="Lead List"
+          description={`${totalElements} total leads`}
+        />
 
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleButtonClick('add')}
-            className="bg-blue-100 text-blue-700 px-4 py-2 rounded-md text-sm hover:bg-blue-200 transition flex items-center gap-2"
-          >
-            {loadingBtn === 'add-' && <Loader2 className="w-4 h-4 animate-spin" />}
-            Add New Lead
-          </button>
-
-          <button
-            onClick={() => handleButtonClick('export')}
-            className="bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm hover:bg-green-200 transition flex items-center gap-2"
-          >
-            {loadingBtn === 'export-' && <Loader2 className="w-4 h-4 animate-spin" />}
-            Export to Excel
-          </button>
-
-          <button
-            onClick={()=>{handleRouteToAddLeadAndEnquiry(); setLoadingBtn('add-lead-and-enquiry');}}
-            className="bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm hover:bg-green-200 transition flex items-center gap-2"
-          >
-            {loadingBtn === 'add-lead-and-enquiry' && <Loader2 className="w-4 h-4 animate-spin" />}
-
-            Add Lead & Enquiry
-          </button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={search}
-              onChange={handleSearchChange}
-              className="pl-9 pr-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm w-64 focus:outline-none focus:ring-1 focus:ring-blue-200 transition"
-            />
-          </div>
-<div className="relative w-48">
-  <select
-    value={size}
-    onChange={(e) => {
-      setSize(parseInt(e.target.value));
-      setPage(0);
-    }}
-    className="pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm text-sm w-full appearance-none focus:outline-none focus:ring-1 focus:ring-blue-200 transition bg-white"
-  >
-    {[5, 10, 20, 50].map((s) => (
-      <option key={s} value={s}>
-        Show {s}
-      </option>
-    ))}
-  </select>
-
-  {/* Custom dropdown arrow icon */}
-  <svg
-    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-4 h-4 text-gray-400"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-  </svg>
-</div>
-
-        </div>
-      </div>
-
-      <div className="overflow-auto border border-gray-200 rounded-xl shadow-sm">
-        <table className="min-w-[1200px] w-full text-sm border-separate border-spacing-0">
-          <thead className="bg-gray-100 text-gray-700 sticky top-0 z-10 shadow-sm">
-            <tr>
-              {[
-                'Sr.No.',
-                'Date',
-                'Customer Name',
-                'Site Name',
-                'Source',
-                'Lead Type',
-                'Lead Stage',
-                'Number',
-                'Executive',
-                'View/Edit/Delete',
-                'Enquiry Detail',
-                'View Enquiry',
-              ].map((head, i) => (
-                <th
-                  key={i}
-                  className="text-left px-3 py-3 border-b border-gray-100 whitespace-nowrap font-medium"
-                >
-                  {head}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((lead, index) => (
-              <tr
-                key={lead.id}
-                className="hover:bg-gray-50 transition border border-gray-100"
+        <div className="px-6 py-5">
+          {/* Actions Bar */}
+          <div className="flex justify-between items-center mb-5 flex-wrap gap-3">
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleButtonClick('add')}
+                className="bg-neutral-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-neutral-800 transition flex items-center gap-2"
               >
-                <td className="px-3 py-2 border border-gray-100">
-                  {page * size + index + 1}
-                </td>
-                <td className="px-3 py-2 border border-gray-100">{lead.date}</td>
-                <td className="px-3 py-2 border border-gray-100">{lead.customer}</td>
-                <td className="px-3 py-2 border border-gray-100">{lead.site}</td>
-                <td className="px-3 py-2 border border-gray-100">{lead.source}</td>
-                <td className="px-3 py-2 border border-gray-100">{lead.type}</td>
-                <td className="px-3 py-2 border border-gray-100 text-red-500 font-medium">
-                  {lead.stage}
-                </td>
-                <td className="px-3 py-2 border border-gray-100">{lead.number}</td>
-                <td className="px-3 py-2 border border-gray-100">{lead.executive}</td>
+                {loadingBtn === 'add-' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Add Lead
+              </button>
 
-                <td className="px-3 py-2 border border-gray-100">
-                  <div className="flex justify-center items-center gap-2">
-                    <button
-                 // Button
-                    onClick={() => {
-                      router.push(`/dashboard/lead-management/lead-list/leadDetails/${lead.id}`);
-                      setLoadingBtn(`view-${lead.id}`);
-                    }}
+              <button
+                onClick={() => handleButtonClick('export')}
+                className="bg-white border border-neutral-300 text-neutral-700 px-4 py-2 rounded-lg text-sm hover:bg-neutral-50 transition flex items-center gap-2"
+              >
+                {loadingBtn === 'export-' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Export
+              </button>
 
-                      className="p-1 hover:bg-blue-100 rounded"
+              <button
+                onClick={() => { handleRouteToAddLeadAndEnquiry(); setLoadingBtn('add-lead-and-enquiry'); }}
+                className="bg-white border border-neutral-300 text-neutral-700 px-4 py-2 rounded-lg text-sm hover:bg-neutral-50 transition flex items-center gap-2"
+              >
+                {loadingBtn === 'add-lead-and-enquiry' && <Loader2 className="w-4 h-4 animate-spin" />}
+                Add Lead & Enquiry
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search leads..."
+                  value={search}
+                  onChange={handleSearchChange}
+                  className="pl-9 pr-4 py-2 border border-neutral-300 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition"
+                />
+              </div>
+              <select
+                value={size}
+                onChange={(e) => { setSize(parseInt(e.target.value)); setPage(0); }}
+                className="px-3 py-2 border border-neutral-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-200 transition"
+              >
+                {[5, 10, 20, 50].map((s) => (
+                  <option key={s} value={s}>Show {s}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-auto border border-neutral-200 rounded-lg">
+            <table className="min-w-[1200px] w-full text-sm">
+              <thead className="bg-neutral-50 text-neutral-600">
+                <tr>
+                  {[
+                    { label: '#', sortable: false },
+                    { label: 'Date', sortable: true, field: 'date' },
+                    { label: 'Customer', sortable: true, field: 'customer' },
+                    { label: 'Site', sortable: true, field: 'site' },
+                    { label: 'Source', sortable: true, field: 'source' },
+                    { label: 'Type', sortable: true, field: 'type' },
+                    { label: 'Stage', sortable: true, field: 'stage' },
+                    { label: 'Contact', sortable: true, field: 'number' },
+                    { label: 'Executive', sortable: true, field: 'executive' },
+                    { label: 'Actions', sortable: false },
+                    { label: 'Enquiry', sortable: false },
+                  ].map((head, i) => (
+                    <th
+                      key={i}
+                      className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wide border-b border-neutral-200 ${head.sortable ? 'cursor-pointer hover:bg-neutral-100' : ''}`}
+                      onClick={() => head.sortable && handleSort(head.field)}
                     >
-                      {loadingBtn === `view-${lead.id}` ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                      ) : (
-                        <Eye className="w-4 h-4 text-blue-500" />
-                      )}
-                    </button>
-                    {/* <button
-                      onClick={() => handleButtonClick('edit', lead.id)}
-                      className="p-1 hover:bg-green-100 rounded"
-                    >
-                      {loadingBtn === `edit-${lead.id}` ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-green-500" />
-                      ) : (
-                        <Pencil className="w-4 h-4 text-green-500" />
-                      )}
-                    </button> */}
-                     <button
-                  onClick={() => handleEditLeadClick(lead.id , 'Edit')}
-                  className="p-1 hover:bg-green-100 rounded"
-                >
-                  {loadingBtn === `edit-${lead.leadId}` ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-green-500" />
-                  ) : (
-                    <Pencil className="w-4 h-4 text-green-500" />
-                  )}
-                </button>
-                    <button
-                      // onClick={() => handleButtonClick('delete', lead.id)}
-                        onClick={() => confirmDelete(lead.id)}
+                      <div className="flex items-center gap-1">
+                        <span>{head.label}</span>
+                        {head.sortable && sortField === head.field && (
+                          sortDirection === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-100">
+                {leads.map((lead, index) => {
+                  const isInactive = lead.status && lead.status.toLowerCase() !== 'active';
+                  return (
+                    <tr key={lead.id} className={`hover:bg-neutral-50 transition ${isInactive ? 'bg-red-50 border-l-4 border-l-red-500' : ''}`}>
+                      <td className="px-4 py-3 text-neutral-500">{page * size + index + 1}</td>
+                      <td className={`px-4 py-3 ${isInactive ? 'text-red-600' : 'text-neutral-700'}`}>{lead.date}</td>
+                      <td className={`px-4 py-3 font-medium ${isInactive ? 'text-red-600' : 'text-neutral-900'}`}>{lead.customer}</td>
+                      <td className={`px-4 py-3 ${isInactive ? 'text-red-600' : 'text-neutral-700'}`}>{lead.site}</td>
+                      <td className={`px-4 py-3 ${isInactive ? 'text-red-600' : 'text-neutral-700'}`}>{lead.source}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">{lead.type}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 text-xs rounded-full ${isInactive ? 'bg-red-100 text-red-700' : 'bg-amber-50 text-amber-700'}`}>
+                          {lead.stage}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-3 ${isInactive ? 'text-red-600' : 'text-neutral-700'}`}>{lead.number}</td>
+                      <td className={`px-4 py-3 ${isInactive ? 'text-red-600' : 'text-neutral-700'}`}>{lead.executive}</td>
 
-                      className="p-1 hover:bg-red-100 rounded"
-                    >
-                      {loadingBtn === `delete-${lead.id}` ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-red-500" />
-                      ) : (
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      )}
-                    </button>
-                  </div>
-                </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => { router.push(`/dashboard/lead-management/lead-list/leadDetails/${lead.id}`); setLoadingBtn(`view-${lead.id}`); }}
+                            className="p-1.5 hover:bg-blue-50 rounded-lg transition"
+                            title="View"
+                          >
+                            {loadingBtn === `view-${lead.id}` ? <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> : <Eye className="w-4 h-4 text-blue-500" />}
+                          </button>
+                          <button
+                            onClick={() => handleEditLeadClick(lead.id, 'Edit')}
+                            className="p-1.5 hover:bg-emerald-50 rounded-lg transition"
+                            title="Edit"
+                          >
+                            <Pencil className="w-4 h-4 text-emerald-500" />
+                          </button>
+                          <button
+                            onClick={() => confirmDelete(lead.id)}
+                            className="p-1.5 hover:bg-red-50 rounded-lg transition"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                      </td>
 
-                <td className="px-3 py-2 border border-gray-100 text-center">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => { handleAddEnquiry(lead.id, lead.type, lead.customer, lead.site); setLoadingBtn(`enquiry-detail-${lead.id}`); }}
+                            className="p-1.5 hover:bg-orange-50 rounded-lg transition"
+                            title="Add Enquiry"
+                          >
+                            {loadingBtn === `enquiry-detail-${lead.id}` ? <Loader2 className="w-4 h-4 animate-spin text-orange-500" /> : <FileText className="w-4 h-4 text-orange-500" />}
+                          </button>
+                          <button
+                            onClick={() => { handleButtonClick('view-enquiry', lead.id); setLoadingBtn(`view-enquiry-${lead.id}`); }}
+                            className="p-1.5 hover:bg-purple-50 rounded-lg transition"
+                            title="View Enquiries"
+                          >
+                            {loadingBtn === `view-enquiry-${lead.id}` ? <Loader2 className="w-4 h-4 animate-spin text-purple-500" /> : <FileSearch className="w-4 h-4 text-purple-500" />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="mt-5 flex justify-between items-center">
+            <p className="text-sm text-neutral-500">
+              Showing {page * size + 1} to {Math.min((page + 1) * size, totalElements)} of {totalElements} leads
+            </p>
+            <div className="flex gap-1">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
+                className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm hover:bg-neutral-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const pageNum = page < 3 ? i : page - 2 + i;
+                if (pageNum >= totalPages) return null;
+                return (
                   <button
-                    onClick={() => 
-                      {
-                        handleAddEnquiry(lead.id , lead.type , lead.customer , lead.site)  
-                        setLoadingBtn(`enquiry-detail-${lead.id}`);
-
-                      }}
-
-                       
-                    className="p-1 hover:bg-orange-100 rounded"
+                    key={pageNum}
+                    onClick={() => setPage(pageNum)}
+                    className={`px-3 py-1.5 border rounded-lg text-sm transition ${pageNum === page ? 'bg-neutral-900 text-white border-neutral-900' : 'border-neutral-300 hover:bg-neutral-50'}`}
                   >
-                    {loadingBtn === `enquiry-detail-${lead.id}` ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
-                    ) : (
-                      <FileText className="w-4 h-4 text-orange-500" />
-                    )}
+                    {pageNum + 1}
                   </button>
-                </td>
-
-                <td className="px-3 py-2 border border-gray-100 text-center">
-                  <button
-                    onClick={() => { 
-                      handleButtonClick('view-enquiry', lead.id);
-                      setLoadingBtn(`view-enquiry-${lead.id}`);
-                    }}
-                    className="p-1 hover:bg-purple-100 rounded"
-                  >
-                    {loadingBtn === `view-enquiry-${lead.id}` ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
-                    ) : (
-                      <FileSearch className="w-4 h-4 text-purple-500" />
-                    )}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                );
+              })}
+              <button
+                disabled={page === totalPages - 1}
+                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
+                className="px-3 py-1.5 border border-neutral-300 rounded-lg text-sm hover:bg-neutral-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-6 flex justify-center gap-2 flex-wrap">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-          className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition disabled:opacity-50"
-        >
-          Previous
-        </button>
+      {/* Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={modalOpen}
+        onCancel={handleCancel}
+        onConfirm={handleConfirmDelete}
+      />
 
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => setPage(i)}
-            className={`px-3 py-1 border border-gray-300 rounded-md text-sm ${
-              i === page ? 'bg-gray-200' : 'hover:bg-gray-100'
-            }`}
+      {/* Edit Modal */}
+      {editModalOpen && selectedLead && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={closeEditModal}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl w-full max-w-7xl max-h-[90vh] overflow-y-auto p-6 relative"
+            onClick={(e) => e.stopPropagation()}
           >
-            {i + 1}
-          </button>
-        ))}
-
-        <button
-          disabled={page === totalPages - 1}
-          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages - 1))}
-          className="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-100 transition disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    </div>
-    {/* Modal Component */}
-    <ConfirmDeleteModal
-      isOpen={modalOpen}
-      onCancel={handleCancel}
-      onConfirm={handleConfirmDelete}
-    />
-
-  {editModalOpen && selectedLead && (
-  <div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-    onClick={closeEditModal} // Click outside = close
-  >
-    <div
-      className="bg-white rounded-xl shadow-lg w-full max-w-7xl max-h-[90vh] overflow-y-auto p-6 animate-fadeIn relative"
-      onClick={(e) => e.stopPropagation()} // Prevent close when clicking inside
-    >
-      {/* Close button */}
-      <button
-        onClick={closeEditModal}
-        className="absolute top-3 right-4 text-gray-500 hover:text-black text-xl"
-        aria-label="Close"
-      >
-        &times;
-      </button>
-
-      {/* Optional Modal Title */}
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        {action} Lead
-      </h2>
-
-      {/* Scrollable area for large content */}
-      <div className="space-y-4">
-        <EditLead leadData={selectedLead} closeEditModal={closeEditModal} action={action}/>
-      </div>
-    </div>
-  </div>
-)}
-
-
+            <button
+              onClick={closeEditModal}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700 text-2xl"
+              aria-label="Close"
+            >
+              ×
+            </button>
+            <h2 className="text-lg font-medium text-neutral-800 mb-4">{action} Lead</h2>
+            <EditLead leadData={selectedLead} closeEditModal={closeEditModal} action={action} />
+          </div>
+        </div>
+      )}
     </>
   );
 }

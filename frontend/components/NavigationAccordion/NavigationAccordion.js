@@ -37,14 +37,13 @@ const NavigationAccordion = () => {
   const { tenant: tenantFromParams } = useParams();
   const tenant = tenantFromParams || getTenant();
   const [searchQuery, setSearchQuery] = useState('');
+  const [clientname, setClientname] = useState('');
 
   // Profile State
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [userEmail, setUserEmail] = useState('');
-  const [logoutLoading, setLogoutLoading] = useState(false);
-
 
   useEffect(() => {
     if (!tenant) return;
@@ -54,10 +53,15 @@ const NavigationAccordion = () => {
     setUserEmail(localStorage.getItem(userEmailKey) || 'user@example.com');
   }, [tenant]);
 
+  useEffect(() => {
+    if (!tenant) return;
+    const clientNameKey = `${tenant}_clientName`;
+    const storedClientName = localStorage.getItem(clientNameKey);
+    setClientname(storedClientName || 'Client Portal');
+  }, [tenant]);
+
   const handleLogout = async () => {
     try {
-      setLogoutLoading(true);
-
       const tokenKey = `${tenant}_token`;
       const storedToken = localStorage.getItem(tokenKey);
 
@@ -83,23 +87,17 @@ const NavigationAccordion = () => {
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Logout failed");
-      setLogoutLoading(false);
     }
-    // finally {
-    //   setLogoutLoading(false); // 👉 Always remove spinner
-    // }
   };
 
   useEffect(() => {
     const newOpenSections = {};
     menuSections.forEach(section => {
-      // Check if any submenu item is active
-      const isSubmenuActive = section.hasSubmenu && section.submenu && section.submenu.some(item => pathname === item.href);
-      // Check if the section itself is active (for sections with both href and submenu)
-      const isParentActive = section.href && pathname === section.href;
-
-      if (isSubmenuActive || isParentActive) {
-        newOpenSections[section.id] = true;
+      if (section.hasSubmenu && section.submenu) {
+        const isActive = section.submenu.some(item => pathname === item.href);
+        if (isActive) {
+          newOpenSections[section.id] = true;
+        }
       }
     });
     setOpenSections(newOpenSections);
@@ -192,7 +190,6 @@ const NavigationAccordion = () => {
       title: 'Components & Pricing',
       icon: Package,
       hasSubmenu: true,
-      href: '/dashboard/components-pricing',
       submenu: componentsPricingSubmenu,
     },
     {
@@ -203,9 +200,7 @@ const NavigationAccordion = () => {
       submenu: [
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
-        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` },
-        { title: 'Inspection Report', href: `/dashboard/lead-management/inspection-report` }
-
+        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` }
       ]
     },
     {
@@ -249,7 +244,6 @@ const NavigationAccordion = () => {
         { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
         { title: 'Invoices', href: `/dashboard/jobs/amc-invoices` },
         { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments` },
-        { title: 'NI Jobs List', href: `/dashboard/jobs/ni_job_list` },
       ]
     },
     {
@@ -260,15 +254,6 @@ const NavigationAccordion = () => {
       submenu: [
         { title: 'Company Setting', href: '/dashboard/settings' },
         { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
-      ]
-    },
-    {
-      id: 'sitre-expenses',
-      title: 'Site Expenses',
-      icon: Settings,
-      hasSubmenu: true,
-      submenu: [
-        { title: 'Site Expences', href: '/dashboard/site-expences' },
       ]
     }
   ];
@@ -288,158 +273,170 @@ const NavigationAccordion = () => {
   }, [normalizedQuery]);
 
   return (
-    <div className="w-64 sticky top-0 z-20 bg-white h-screen flex flex-col font-sans text-sm border-r border-slate-200">
-      {/* Header with Company Logo */}
-      <div className="h-14 flex-shrink-0 flex items-center justify-left px-4 border-b border-slate-200">
-        <CompanyLogo />
-      </div>
-
-      {/* Search Bar */}
-      <div className="p-3 flex-shrink-0">
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white text-slate-900 text-sm rounded-md pl-9 pr-3 py-2 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-transparent placeholder:text-slate-400 transition-all"
-          />
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .apple-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .apple-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .apple-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 4px;
+        }
+        .apple-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 0, 0, 0.3);
+        }
+        .apple-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+      `}} />
+      <div className="w-64 sticky top-0 z-20 bg-white h-screen flex flex-col font-sans text-sm border-r border-gray-200 shadow-sm">
+        {/* Header with Company Logo and Client Name */}
+        <div className="h-14 flex-shrink-0 flex items-center gap-3 px-5 border-b border-gray-200">
+          <div className="flex-shrink-0 h-8 w-20 flex items-center">
+            <CompanyLogo />
+          </div>
+          {/* <h2 className="text-base font-medium text-black truncate flex-1">{clientname}</h2> */}
         </div>
-      </div>
 
-      {/* Navigation Items */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-3 space-y-0.5 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-        {(normalizedQuery ? filteredSections : menuSections).map((section) => {
-          const isActive = isSectionActive(section);
-          const isOpen = normalizedQuery ? true : openSections[section.id];
-          const Icon = section.icon;
+        {/* Search Bar */}
+        <div className="p-4 flex-shrink-0">
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-gray-50 text-black text-sm font-medium rounded-lg pl-9 pr-3 py-2.5 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 transition-all"
+            />
+          </div>
+        </div>
 
-          return (
-            <div key={section.id}>
-              {section.hasSubmenu ? (
-                <div className="space-y-0.5">
-                  <div
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors cursor-pointer ${isActive
-                      ? "text-slate-900 bg-slate-100"
-                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
-                      }`}
-                    onClick={() => {
-                      toggleSection(section.id);
-                      if (section.href) {
-                        router.push(section.href);
-                      }
-                    }}
+        {/* Navigation Items */}
+        <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 apple-scrollbar">
+          {(normalizedQuery ? filteredSections : menuSections).map((section) => {
+            const isActive = isSectionActive(section);
+            const isOpen = normalizedQuery ? true : openSections[section.id];
+            const Icon = section.icon;
+
+            return (
+              <div key={section.id}>
+                {section.hasSubmenu ? (
+                  <div className="space-y-0.5">
+                    <button
+                      onClick={() => toggleSection(section.id)}
+                      title={section.title}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
+                        ? 'text-black bg-blue-50'
+                        : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-600'}`} />
+                        <span className="font-medium">{section.title}</span>
+                      </div>
+                      <ChevronRight
+                        className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+                      />
+                    </button>
+
+                    {isOpen && (
+                      <div className="pl-8 pr-2 py-1 space-y-0.5">
+                        {section.submenu.map((item, index) => {
+                          const isItemActive = isLinkActive(item.href);
+                          return (
+                            <Link
+                              key={index}
+                              href={item.href}
+                              onClick={() => handleNavigation(item.href)}
+                              title={item.title}
+                              className={`block px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative ${isItemActive
+                                ? 'text-black bg-blue-50'
+                                : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                                }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="truncate font-medium">{item.title}</span>
+                                {loadingHref === item.href && (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-600" />
+                                )}
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href={section.href}
+                    onClick={() => handleNavigation(section.href)}
                     title={section.title}
+                    className={`flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative ${isActive
+                      ? 'text-black bg-blue-50'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                      }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon
-                        className={`w-4 h-4 ${isActive ? "text-slate-900" : "text-slate-500"
-                          }`}
-                      />
-                      <span>{section.title}</span>
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-600'}`} />
+                      <span className="font-medium">{section.title}</span>
                     </div>
-                    <ChevronRight
-                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-90" : ""
-                        }`}
-                    />
-                  </div>
+                    {loadingHref === section.href && (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-600" />
+                    )}
+                  </Link>
+                )}
+              </div>
+            );
+          })}
+        </nav>
 
-                  {isOpen && (
-                    <div className="pl-9 pr-2 py-1 space-y-0.5 animate-in slide-in-from-top-1 duration-200">
-                      {section.submenu.map((item, index) => {
-                        const isItemActive = isLinkActive(item.href);
-                        return (
-                          <Link
-                            key={index}
-                            href={item.href}
-                            onClick={() => handleNavigation(item.href)}
-                            title={item.title}
-                            className={`block px-3 py-1.5 text-sm rounded-md transition-colors ${isItemActive
-                              ? 'text-slate-900 font-medium bg-slate-100'
-                              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                              }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="truncate">{item.title}</span>
-                              {loadingHref === item.href && (
-                                <Loader2 className="w-3 h-3 animate-spin text-slate-500" />
-                              )}
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  href={section.href}
-                  onClick={() => handleNavigation(section.href)}
-                  title={section.title}
-                  className={`flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                    ? 'text-slate-900 bg-slate-100'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-slate-500'}`} />
-                    <span>{section.title}</span>
-                  </div>
-                  {loadingHref === section.href && (
-                    <Loader2 className="w-3 h-3 animate-spin text-slate-500" />
-                  )}
-                </Link>
-              )}
+        {/* User Profile Section */}
+        <div className="p-4 border-t border-gray-200 bg-white">
+          {isProfileOpen && (
+            <div className="absolute bottom-20 left-4 right-4 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
+              <div className="px-4 py-2.5 border-b border-gray-200 mb-1">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">My Account</p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/settings')}
+                className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors rounded-lg mx-1"
+              >
+                <Settings className="w-4 h-4 mr-3 text-gray-600" />
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors rounded-lg mx-1"
+              >
+                <LogOut className="w-4 h-4 mr-3" />
+                Logout
+              </button>
             </div>
-          );
-        })}
-      </nav>
+          )}
 
-      {/* User Profile Section */}
-      <div className="p-3 border-t border-slate-200 bg-white">
-        {isProfileOpen && (
-          <div className="absolute bottom-16 left-3 right-3 bg-white rounded-md shadow-lg border border-slate-200 py-1 z-50 animate-in slide-in-from-bottom-2 duration-200">
-            <div className="px-3 py-2 border-b border-slate-100 mb-1">
-              <p className="text-xs font-semibold text-slate-500">My Account</p>
+          <button
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className={`flex items-center w-full gap-3 p-3 rounded-xl transition-all duration-200 ${isProfileOpen ? 'bg-blue-50' : 'hover:bg-gray-50'
+              }`}
+          >
+            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
+              <User className="w-5 h-5 text-black" />
             </div>
-            <button
-              onClick={() => router.push('/dashboard/settings')}
-              className="flex items-center w-full px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 transition-colors"
-            >
-              <Settings className="w-4 h-4 mr-2 text-slate-500" />
-              Settings
-            </button>
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              {logoutLoading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <LogOut className="w-4 h-4 mr-2" />
-              )}
-              Logout
-            </button>
-          </div>
-        )}
-
-        <button
-          onClick={() => setIsProfileOpen(!isProfileOpen)}
-          className={`flex items-center w-full gap-3 p-2 rounded-md transition-colors border border-transparent ${isProfileOpen ? 'bg-slate-100' : 'hover:bg-slate-100'
-            }`}
-        >
-          <div className="w-8 h-8 bg-slate-100 rounded-md flex items-center justify-center border border-slate-200 text-slate-600">
-            <User className="w-4 h-4" />
-          </div>
-          <div className="flex-1 text-left overflow-hidden">
-            <p className="text-sm font-medium text-slate-900 truncate">{username}</p>
-            <p className="text-xs text-slate-500 truncate">{userEmail}</p>
-          </div>
-          <ChevronUp className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
-        </button>
+            <div className="flex-1 text-left overflow-hidden">
+              <p className="text-sm font-medium text-black truncate">{username}</p>
+              <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+            </div>
+            <ChevronUp className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

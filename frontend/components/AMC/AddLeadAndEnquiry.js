@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import axiosInstance from '@/utils/axiosInstance'; // Custom
 import StageTwoButton from './StageTwoButton';
+import toast from 'react-hot-toast';
 
 export default function AddLeadAndEnquiry() {
       const router = useRouter();
@@ -36,8 +37,44 @@ export default function AddLeadAndEnquiry() {
         const[enquiryTypeName, setEnquiryTypeName] = useState('');
 
 
+  // Helper function to get current date in YYYY-MM-DD format
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper functions for validation and sanitization
+  const sanitizeEmail = (email) => {
+    if (!email) return '';
+    return email.trim().toLowerCase();
+  };
+
+  const sanitizeAddress = (address) => {
+    if (!address) return '';
+    return address
+      .replace(/\.{2,}/g, '.') // Replace multiple dots with single dot
+      .replace(/\s{2,}/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+
+  const validateEmail = (email) => {
+    if (!email || email.trim() === '') return true; // Optional field
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const validDomains = ['.com', '.in', '.net', '.org', '.co', '.edu', '.gov'];
+    if (!emailRegex.test(email)) return false;
+    return validDomains.some(domain => email.toLowerCase().endsWith(domain));
+  };
+
+  const validateMobileNumber = (value) => {
+    if (!value) return true; // Optional field
+    return /^\d+$/.test(value);
+  };
+
   const [formData, setFormData] = useState({
-      leadDate: '',
+      leadDate: getCurrentDate(), // Set current date as default
       executive: '',
       leadSource: '',
       leadType: '',
@@ -155,16 +192,57 @@ export default function AddLeadAndEnquiry() {
          // Validate only required fields
         for (let field of requiredFields) {
             if (!formData[field] || formData[field].toString().trim() === "") {
-                if( field === 'customer1Name') {
-                  alert(`Please fill the customer name field`);
-                }else{
-                  alert(`Please fill the ${field} field`);
-                }
+                const fieldName = field === 'customer1Name' ? 'customer name' : 
+                                 field === 'customer1Contact' ? 'customer contact' :
+                                 field === 'customer1Designation' ? 'customer designation' :
+                                 field === 'companyAddress' ? 'company address' :
+                                 field === 'contactNo' ? 'contact number' :
+                                 field === 'leadDate' ? 'lead date' :
+                                 field === 'executive' ? 'executive' :
+                                 field === 'leadType' ? 'lead type' :
+                                 field === 'companyName' ? 'company name' :
+                                 field === 'area' ? 'area' :
+                                 field === 'leadStage' ? 'lead stage' : field;
+                toast.error(`Please fill the ${fieldName} field`);
              setSubmitted(false);
                      setIsFinalSubmitLoading(false);
 
             return;
             }
+        }
+
+        // Validate email formats
+        if (formData.email && !validateEmail(formData.email)) {
+          toast.error('Email ID must be a valid email address ending with .com, .in, .net, etc.');
+          setSubmitted(false);
+          setIsFinalSubmitLoading(false);
+          return;
+        }
+        if (formData.email2 && !validateEmail(formData.email2)) {
+          toast.error('Email ID 2 must be a valid email address ending with .com, .in, .net, etc.');
+          setSubmitted(false);
+          setIsFinalSubmitLoading(false);
+          return;
+        }
+
+        // Validate mobile numbers
+        if (formData.contactNo && !validateMobileNumber(formData.contactNo)) {
+          toast.error('Contact number can only contain digits');
+          setSubmitted(false);
+          setIsFinalSubmitLoading(false);
+          return;
+        }
+        if (formData.customer1Contact && !validateMobileNumber(formData.customer1Contact)) {
+          toast.error('Customer contact can only contain digits');
+          setSubmitted(false);
+          setIsFinalSubmitLoading(false);
+          return;
+        }
+        if (formData.customer2Contact && !validateMobileNumber(formData.customer2Contact)) {
+          toast.error('Customer 2 contact can only contain digits');
+          setSubmitted(false);
+          setIsFinalSubmitLoading(false);
+          return;
         }
    
      const payload = {
@@ -183,12 +261,12 @@ export default function AddLeadAndEnquiry() {
        customer2Contact: formData.customer2Contact,
        leadCompanyName: formData.companyName,
        siteName: formData.siteName,
-       emailId: formData.email,
-       emailId2: formData.email2,
+       emailId: sanitizeEmail(formData.email),
+       emailId2: sanitizeEmail(formData.email2),
        countryCode: formData.contactCountry.split('(')[1]?.replace(')', ''), // "+91"
        contactNo: formData.contactNo,
-       address: formData.companyAddress,
-       siteAddress: formData.siteAddress,
+       address: sanitizeAddress(formData.companyAddress),
+       siteAddress: sanitizeAddress(formData.siteAddress),
        areaId: parseInt(formData.area),
        leadStageId: parseInt(formData.leadStage),
    
@@ -395,7 +473,7 @@ useEffect(()=>{
 
   return (
     <div className="w-full h-full flex flex-col bg-gray-50 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">Add Lead and Enquiry</h1>
+      <h1 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Add Lead and Enquiry</h1>
 
       {/* Tabs */}
       <div className="flex justify-center gap-4 mb-6">
@@ -418,7 +496,7 @@ useEffect(()=>{
       {/* Content */}
       <div className="flex-1 w-full">
         {activeStage === 1 && (
-          <div className="p-4 rounded shadow bg-white w-full h-full">
+          <div className="p-4 rounded-lg shadow-sm bg-white w-full h-full border">
             <AddLead
               handleSetSumbmitted={handleSetSumbmitted}
               handleSetCustomer1Name={handleSetCustomer1Name}
@@ -433,7 +511,7 @@ useEffect(()=>{
         )}
 
         {activeStage === 2 && (
-          <div className="p-4 rounded shadow bg-white w-full h-full">
+          <div className="p-4 rounded-lg shadow-sm bg-white w-full h-full border">
             <AddEnquiryForm
               leadSubmitted={leadSubmitted}
               customer={customer1Name}
@@ -464,7 +542,7 @@ useEffect(()=>{
                  setIsFinalSubmitLoading(true);
              }
             }
-          className="bg-purple-600 text-white px-6 py-3 rounded hover:bg-purple-700 transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-sm font-medium transition flex items-center gap-2 mx-auto"
         >
         {isFinalSubmitLoading === true ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
 

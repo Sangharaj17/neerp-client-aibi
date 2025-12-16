@@ -14,7 +14,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 
-export default function EditLead({leadData , action}) {
+export default function EditLead({leadData , action, closeEditModal}) {
 
   const [executives, setExecutives] = useState([]);
 
@@ -102,8 +102,32 @@ useEffect(() => {
 }, []);
 
 
+  // Helper function to get current date in YYYY-MM-DD format
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to sanitize email
+  const sanitizeEmail = (email) => {
+    if (!email) return '';
+    return email.trim().toLowerCase();
+  };
+
+  // Helper function to sanitize address
+  const sanitizeAddress = (address) => {
+    if (!address) return '';
+    return address
+      .replace(/\.{2,}/g, '.') // Replace multiple dots with single dot
+      .replace(/\s{2,}/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+
   const [formData, setFormData] = useState({
-    leadDate: '',
+    leadDate: getCurrentDate(), // Set current date as default
     executive: '',
     leadSource: '',
     leadType: '',
@@ -140,10 +164,27 @@ useEffect(() => {
         setLeadId(leadData.leadId);
 
         console.log('Setting form data from leadData:', leadData);
+      
+      // Fix date issue - handle timezone properly
+      let leadDateValue = '';
+      if (leadData.leadDate) {
+        const date = new Date(leadData.leadDate);
+        // Get local date string to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        leadDateValue = `${year}-${month}-${day}`;
+      } else {
+        // Set current date as default
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        leadDateValue = `${year}-${month}-${day}`;
+      }
+
       setFormData({
-    leadDate: leadData.leadDate
-  ? new Date(leadData.leadDate).toISOString().split('T')[0]
-  : '',
+    leadDate: leadDateValue,
         executive: leadData.activityBy?.employeeId || '',
         leadSource: leadData.leadSource?.leadSourceId || '',
         leadType: leadData.leadType || '',
@@ -162,15 +203,15 @@ useEffect(() => {
         companyName: leadData.leadCompanyName || '',
         siteSame: 'Yes', // Assuming this is not saved in backend
         siteName: leadData.siteName || '',
-        email: leadData.emailId || '',
-        email2: leadData.emailId2 || '',
+        email: leadData.emailId ? sanitizeEmail(leadData.emailId) : '',
+        email2: leadData.emailId2 ? sanitizeEmail(leadData.emailId2) : '',
 
         contactCountry: leadData.countryCode || 'India (+91)',
         //contactNo: leadData.contactNo || '',
 
-        companyAddress: leadData.address || '',
+        companyAddress: leadData.address ? sanitizeAddress(leadData.address) : '',
         siteSameAddress: 'Yes', // Assuming same as company
-        siteAddress: leadData.siteAddress || '',
+        siteAddress: leadData.siteAddress ? sanitizeAddress(leadData.siteAddress) : '',
 
         area: leadData.area?.areaId || '',
         leadStage: leadData.leadStage?.stageId || '',
@@ -183,17 +224,146 @@ const [showCustomer2, setShowCustomer2] = useState(false);
 
   const [showEmail2, setShowEmail2] = useState(false);
 
+  // Initialize showEmail2 based on leadData
+  useEffect(() => {
+    if (leadData && leadData.emailId2) {
+      setShowEmail2(true);
+    }
+  }, [leadData]);
+
+  // Validation functions
+  const validateEmail = (email) => {
+    if (!email || email.trim() === '') return true; // Optional field
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const validDomains = ['.com', '.in', '.net', '.org', '.co', '.edu', '.gov'];
+    if (!emailRegex.test(email)) return false;
+    return validDomains.some(domain => email.toLowerCase().endsWith(domain));
+  };
+
+  const validateMobileNumber = (value) => {
+    if (!value) return true; // Optional field
+    return /^\d+$/.test(value);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let processedValue = value;
+
+    // Apply validations and sanitizations
+    if (name === 'email' || name === 'email2') {
+      processedValue = sanitizeEmail(value);
+    } else if (name === 'contactNo' || name === 'customer1Contact' || name === 'customer2Contact') {
+      // Only allow numbers for mobile numbers
+      if (value && !/^\d*$/.test(value)) {
+        toast.error('Mobile number can only contain digits');
+        return;
+      }
+      processedValue = value;
+    } else if (name === 'companyAddress' || name === 'siteAddress') {
+      processedValue = sanitizeAddress(value);
+    } else {
+      processedValue = value;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: processedValue }));
   };
 
 
+  // Required fields validation
+  const requiredFields = [
+    "leadDate",
+    "executive",
+    "leadType",
+    "customer1Name",
+    "customer1Designation",
+    "customer1Contact",
+    "companyName",
+    "contactNo",
+    "companyAddress",
+    "area",
+    "leadStage"
+  ];
+
+  // Conditional required fields
+  const getConditionalRequiredFields = () => {
+    const fields = [];
+    if (formData.siteSame === 'No' && !formData.siteName) {
+      fields.push('siteName');
+    }
+    if (formData.siteSameAddress === 'No' && !formData.siteAddress) {
+      fields.push('siteAddress');
+    }
+    if (showCustomer2) {
+      if (!formData.customer2Name) fields.push('customer2Name');
+      if (!formData.customer2Designation) fields.push('customer2Designation');
+      if (!formData.customer2Contact) fields.push('customer2Contact');
+    }
+    return fields;
+  };
+
   const handleSubmit = async (e) => {
-     //   e.preventDefault(); // prevent page reload
-   //  console.log('Form submitted landlineNo is this:', formData.landlineNo);
-   //  alert('Form submitted landlineNo is this:', formData.landlineNo);
-  const payload = {
+    e.preventDefault(); // prevent page reload
+    
+    // Validate required fields
+    for (let field of requiredFields) {
+      if (!formData[field] || formData[field].toString().trim() === "") {
+        const fieldName = field === 'customer1Name' ? 'customer name' : 
+                         field === 'customer1Contact' ? 'customer contact' :
+                         field === 'customer1Designation' ? 'customer designation' :
+                         field === 'companyAddress' ? 'company address' :
+                         field === 'contactNo' ? 'contact number' :
+                         field === 'leadDate' ? 'lead date' :
+                         field === 'executive' ? 'executive' :
+                         field === 'leadType' ? 'lead type' :
+                         field === 'companyName' ? 'company name' :
+                         field === 'area' ? 'area' :
+                         field === 'leadStage' ? 'lead stage' : field;
+        toast.error(`Please fill the ${fieldName} field`);
+        return;
+      }
+    }
+
+    // Validate conditional required fields
+    const conditionalFields = getConditionalRequiredFields();
+    for (let field of conditionalFields) {
+      const fieldName = field === 'siteName' ? 'site name' :
+                       field === 'siteAddress' ? 'site address' :
+                       field === 'customer2Name' ? 'customer 2 name' :
+                       field === 'customer2Designation' ? 'customer 2 designation' :
+                       field === 'customer2Contact' ? 'customer 2 contact' : field;
+      toast.error(`Please fill the ${fieldName} field`);
+      return;
+    }
+
+    // Validate email formats
+    if (formData.email && !validateEmail(formData.email)) {
+      toast.error('Email ID must be a valid email address ending with .com, .in, .net, etc.');
+      return;
+    }
+    if (formData.email2 && !validateEmail(formData.email2)) {
+      toast.error('Email ID 2 must be a valid email address ending with .com, .in, .net, etc.');
+      return;
+    }
+
+    // Validate mobile numbers
+    if (formData.contactNo && !validateMobileNumber(formData.contactNo)) {
+      toast.error('Contact number can only contain digits');
+      return;
+    }
+    if (formData.customer1Contact && !validateMobileNumber(formData.customer1Contact)) {
+      toast.error('Customer contact can only contain digits');
+      return;
+    }
+    if (formData.customer2Contact && !validateMobileNumber(formData.customer2Contact)) {
+      toast.error('Customer 2 contact can only contain digits');
+      return;
+    }
+
+    // Sanitize addresses before submission
+    const sanitizedCompanyAddress = sanitizeAddress(formData.companyAddress);
+    const sanitizedSiteAddress = sanitizeAddress(formData.siteAddress);
+
+    const payload = {
     leadDate: new Date(formData.leadDate).toISOString(), // backend expects ISO format
     activityById: parseInt(formData.executive),
     leadSourceId: parseInt(formData.leadSource),
@@ -210,11 +380,11 @@ const [showCustomer2, setShowCustomer2] = useState(false);
     designation2Id: parseInt(formData.customer2Designation),
     leadCompanyName: formData.companyName,
     siteName: formData.siteName,
-    emailId: formData.email,
-    emailId2: formData.email2,
+    emailId: sanitizeEmail(formData.email),
+    emailId2: sanitizeEmail(formData.email2),
     countryCode: formData.contactCountry.split('(')[1]?.replace(')', ''), // "+91"
-    address: formData.companyAddress,
-    siteAddress: formData.siteAddress,
+    address: sanitizedCompanyAddress,
+    siteAddress: sanitizedSiteAddress,
     areaId: parseInt(formData.area),
     leadStageId: parseInt(formData.leadStage),
 
@@ -250,11 +420,16 @@ const [showCustomer2, setShowCustomer2] = useState(false);
         },
       }
     );
-    // closeEditModal();
+    if (closeEditModal) {
+      closeEditModal();
+    }
     toast.success('Lead updated successfully!');
     console.log('Lead Updated:', response.data);
+    // Refresh the page or trigger a refresh
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
   } catch (error) {
-   // closeEditModal();
     console.error('Error:', error.response?.data || error.message);
     toast.error(
       error.response?.data?.message || 'Failed to update lead. Please try again.'
@@ -374,6 +549,9 @@ const [showCustomer2, setShowCustomer2] = useState(false);
       placeholder="Contact"
       value={formData.customer1Contact}
       onChange={handleChange}
+      maxLength={10}
+      pattern="[0-9]*"
+      inputMode="numeric"
       className="w-32 border px-3 py-2 rounded-md text-sm"
     />
 
@@ -433,6 +611,9 @@ const [showCustomer2, setShowCustomer2] = useState(false);
         placeholder="Contact"
         value={formData.customer2Contact}
         onChange={handleChange}
+        maxLength={10}
+        pattern="[0-9]*"
+        inputMode="numeric"
         className="w-32 border px-3 py-2 rounded-md text-sm"
       />
 
@@ -504,14 +685,27 @@ const [showCustomer2, setShowCustomer2] = useState(false);
 
             {/* Email ID 2 */}
             {showEmail2 && (
-              <InputField
-                icon={<Mail className="w-4 h-4" />}
-                label="Email ID 2"
-                type="email"
-                name="email2"
-                value={formData.email2}
-                onChange={handleChange}
-              />
+              <div className="relative">
+                <InputField
+                  icon={<Mail className="w-4 h-4" />}
+                  label="Email ID 2"
+                  type="email"
+                  name="email2"
+                  value={formData.email2}
+                  onChange={handleChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEmail2(false);
+                    setFormData((prev) => ({ ...prev, email2: '' }));
+                  }}
+                  className="absolute right-2 top-8 text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Hide
+                </button>
+              </div>
             )}
 
             {/* Contact No. */}
@@ -533,7 +727,11 @@ const [showCustomer2, setShowCustomer2] = useState(false);
                   name="contactNo"
                   value={formData.contactNo}
                   onChange={handleChange}
+                  maxLength={10}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
                   className="flex-1 border px-3 py-2 rounded-md text-sm"
+                  placeholder="Enter 10 digit mobile number"
                 />
               </div>
             </div>
@@ -616,6 +814,11 @@ const [showCustomer2, setShowCustomer2] = useState(false);
 
             <button
               type="button"
+              onClick={() => {
+                if (closeEditModal) {
+                  closeEditModal();
+                }
+              }}
               className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-5 py-2 rounded-md text-sm"
             >
               Cancel
