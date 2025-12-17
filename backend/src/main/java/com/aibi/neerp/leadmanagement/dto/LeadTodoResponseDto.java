@@ -12,6 +12,7 @@ public class LeadTodoResponseDto {
     private Integer leadId;
     private String leadCompanyName;
     private String customerName;
+    private Integer activityByEmpId;
     private String activityByEmpName;
     private String purpose;
     private LocalDate todoDate;

@@ -10,7 +10,9 @@ import com.aibi.neerp.employeemanagement.entity.Employee;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
-	boolean existsByUsername(String string);
+    boolean existsByUsername(String string);
+
+    boolean existsByEmployeeCode(String employeeCode);
 
     Optional<Employee> findByEmployeeCode(String employeeCode);
 
@@ -18,4 +20,3 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
     Optional<Employee> findByEmailId(String emailId);
 }
-
