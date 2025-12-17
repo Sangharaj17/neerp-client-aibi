@@ -16,6 +16,7 @@ import AMCInvoicePrint from "./AMCInvoicePrint";
 import ActionModal from "../AMC/ActionModal";
 import OncallInvoicePrint from "../Oncall/OncallInvoicePrint";
 import ModernizationInvoicePrint from "../Modernization/ModernizationInvoicePrint";
+import MaterialQuotationPrint from "./MaterialQuotationPrint";
 
 const getSortIcon = (column, sortBy, direction) => {
   if (sortBy === column) {
