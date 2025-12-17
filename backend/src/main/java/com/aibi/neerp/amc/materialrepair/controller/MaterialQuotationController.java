@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/amc/material-quotation")
@@ -89,7 +91,27 @@ public class MaterialQuotationController {
         }
     }
     
+    @PutMapping("/update/{id}")
+    public ResponseEntity<MaterialQuotationResponseDto> updateQuotation(
+            @PathVariable Integer id,
+            @RequestBody MaterialQuotationUpdateRequestDto updateDto) {
+        
+        log.info("Updating Material Quotation ID: {}", id);
+        MaterialQuotationResponseDto updatedQuotation = materialQuotationService.updateMaterialQuotation(id, updateDto);
+        return ResponseEntity.ok(updatedQuotation);
+    }
     
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Map<String, String>> deleteQuotation(@PathVariable Integer id) {
+        log.info("Request to delete Material Quotation ID: {}", id);
+        materialQuotationService.deleteQuotation(id);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Quotation deleted successfully");
+        return ResponseEntity.ok(response);
+    }
+    
+   
     
     
 }

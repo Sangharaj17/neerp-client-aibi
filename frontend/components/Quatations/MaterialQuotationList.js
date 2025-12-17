@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '@/utils/axiosInstance';
 import {
   FaEye,
@@ -12,18 +12,51 @@ import {
   FaSort,
   FaSortUp,
   FaSortDown,
-  FaThumbsUp, // Import the Thumbs Up icon
+  FaThumbsUp,
 } from 'react-icons/fa';
 import { FiChevronLeft, FiChevronRight, FiSearch } from 'react-icons/fi';
 import ActionModal from '../AMC/ActionModal';
 import MaterialQuotationPrint from '../Jobs/MaterialQuotationPrint';
+import MaterialQuotationDetails from './MaterialQuotationDetails';
+import MaterialQuotationEditForm from './MaterialQuotationEditForm';
 
-// Helper function to render the correct sort icon
+import toast from 'react-hot-toast';
+
+// Utility to format numbers as currency (simple example)
+const formatCurrency = (amount) => {
+    if (typeof amount !== 'number') return '-';
+    // Using toLocaleString for basic currency formatting (e.g., adds commas)
+    return amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Utility to get the sort icon
 const getSortIcon = (field, currentSortBy, currentDirection) => {
-  if (currentSortBy !== field) return <FaSort className="w-3 h-3 text-gray-400 ml-1" />;
-  if (currentDirection === 'asc') return <FaSortUp className="w-3 h-3 text-blue-500 ml-1" />;
+  if (currentSortBy !== field)
+    return <FaSort className="w-3 h-3 text-gray-400 ml-1" />;
+  if (currentDirection === 'asc')
+    return <FaSortUp className="w-3 h-3 text-blue-500 ml-1" />;
   return <FaSortDown className="w-3 h-3 text-blue-500 ml-1" />;
 };
+
+// Define table headers with new financial columns
+const TABLE_HEADERS = [
+  { label: 'Quotation No', field: 'quatationNo', sortable: true, className: 'text-left' },
+  { label: 'Date', field: 'quatationDate', sortable: true, className: 'text-left' },
+  { label: 'Customer', field: 'customerName', sortable: false, className: 'text-left' },
+  { label: 'Site', field: 'siteName', sortable: false, className: 'text-left' },
+  { label: 'GST %', field: 'gst', sortable: false, className: 'text-center' },
+  { label: 'Work Period', field: 'workPeriod', sortable: false, className: 'text-left' },
+  
+  // --- NEW FINANCIAL COLUMNS ---
+  { label: 'Sub Total', field: 'subTotal', sortable: true, className: 'text-right' },
+  { label: 'GST Amount', field: 'gstAmount', sortable: true, className: 'text-right' },
+  { label: 'Grand Total', field: 'grandTotal', sortable: true, className: 'text-right' },
+  // -----------------------------
+  
+  { label: 'Final', field: 'isFinal', sortable: false, className: 'text-center' },
+  { label: 'Final Date', field: 'quotFinalDate', sortable: false, className: 'text-center' },
+  { label: 'Actions', field: 'actions', sortable: false, className: 'text-center' },
+];
 
 const MaterialQuotationList = () => {
   const [quotations, setQuotations] = useState([]);
@@ -31,29 +64,41 @@ const MaterialQuotationList = () => {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0); 
   const [sortBy, setSortBy] = useState('modQuotId');
   const [direction, setDirection] = useState('desc');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchQuotations();
-  }, [page, size, sortBy, direction, search]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedQuotationId, setSelectedQuotationId] = useState(null);
+  const [selectedQuotationData, setSelectedQuotationData] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalMode, setModalMode] = useState('view');
+  
+  // Calculate the total number of columns for colSpan
+  const TOTAL_COLUMNS = TABLE_HEADERS.length + 1; // +1 for the leading '#' column
 
-  const fetchQuotations = async () => {
+
+  const fetchQuotations = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get('/api/amc/material-quotation/getAll', {
-        params: { search, page, size, sortBy, direction },
-      });
+      const res = await axiosInstance.get(
+        '/api/amc/material-quotation/getAll',
+        { params: { search, page, size, sortBy, direction } }
+      );
       setQuotations(res.data.content || []);
       setTotalPages(res.data.totalPages || 0);
-    } catch (error) {
-      console.error('Error fetching Material Quotations:', error);
-      // Optional: Add a toast notification or user-friendly error message here
+      setTotalElements(res.data.totalElements || 0);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, size, sortBy, direction, search]);
+
+  useEffect(() => {
+    fetchQuotations();
+  }, [fetchQuotations]);
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -64,230 +109,298 @@ const MaterialQuotationList = () => {
     }
   };
 
-  const handleSearchChange = (e) => {
-    setSearch(e.target.value);
-    setPage(0); // Reset to first page on new search
-  };
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 0 && newPage < totalPages) {
-      setPage(newPage);
+  const handleView = (id) => {
+    // 1. Find the quotation from our current state list
+    const quotation = quotations.find((q) => q.modQuotId === id);
+    
+    if (quotation) {
+      setModalMode('view');
+      setSelectedQuotationId(id);
+      setSelectedQuotationData(quotation); // Pass the existing data directly
+      setIsModalOpen(true);
     }
   };
 
-  const handleSizeChange = (e) => {
-    setSize(parseInt(e.target.value));
-    setPage(0); // Reset to first page on size change
-  };
-
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
-
-
-    const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedInvoiceId(null);
-    };
-
-  const handleGeneratePdf = (quotationId) => {
-    setSelectedInvoiceId(quotationId);
+  const handleEdit = (id) => {
+  // Find the quotation object from the list we already fetched
+  const quotation = quotations.find((q) => q.modQuotId === id);
+  
+  if (quotation) {
+    setModalMode('edit');
+    setSelectedQuotationId(id);
+    setSelectedQuotationData(quotation); // This contains details and workPeriods
     setIsModalOpen(true);
-    };
+  }
+};
 
-  // Function to toggle isFinal status (placeholder for actual API call)
-  const toggleIsFinal = async (quotationId, currentIsFinal) => {
-    // In a real application, you would make an API call here to update the backend
-    console.log(`Toggling isFinal for quotation ${quotationId} from ${currentIsFinal} to ${1 - currentIsFinal}`);
-    // Example:
-    // try {
-    //   await axiosInstance.put(`/api/amc/material-quotation/toggleIsFinal/${quotationId}`, { isFinal: 1 - currentIsFinal });
-    //   fetchQuotations(); // Refresh the list after update
-    // } catch (error) {
-    //   console.error('Error toggling isFinal:', error);
-    // }
-
-    // For demonstration, we'll just update the local state for a visual effect
-    setQuotations(prevQuotations =>
-      prevQuotations.map(q =>
-        q.modQuotId === quotationId ? { ...q, isFinal: 1 - currentIsFinal } : q
-      )
-    );
+  const handleGenerateInvoice = async (id) => {
+    try {
+      setModalLoading(true);
+      setIsModalOpen(true);
+      setModalMode('print');
+      setSelectedQuotationId(id);
+      const res = await axiosInstance.get(`/api/amc/material-quotation/getMaterialRepairQuatationPdfData/${id}`);
+      setSelectedQuotationData(res.data);
+    } catch (error) {
+        console.error("Error fetching quotation data for PDF:", error);
+    } finally {
+      setModalLoading(false);
+    }
   };
 
+  const handleGeneratePdf = async (id) => {
+    try {
+     
+    } catch (error) {
+        console.error("Error fetching quotation data for PDF:", error);
+    } finally {
+      setModalLoading(false);
+    }
+  };
 
-  const currentEntriesStart = page * size + 1;
-  const currentEntriesEnd = Math.min((page + 1) * size, page * size + quotations.length);
-  // Assuming totalElements is available from the API response for accurate count
-  const totalItems = totalPages * size; 
+  const toggleIsFinal = async (id, isFinal) => {
+  try {
+    alert("Marking as Final is irreversible. Proceed?"+isFinal);
+    await axiosInstance.patch(
+      `/api/amc/material-quotation/updateIsFinal/${id}`,
+      null, // no request body
+      {
+        params: {
+          isFinal: isFinal, // toggle boolean
+        },
+      }
+    );
+
+    fetchQuotations();
+  } catch (error) {
+    console.error("Error toggling final status:", error);
+  }
+};
+
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedQuotationData(null);
+    setSelectedQuotationId(null);
+    setModalMode('view');
+  };
+
+  // Calculate entries range
+  const currentEntriesStart = totalElements > 0 ? page * size + 1 : 0;
+  const currentEntriesEnd = Math.min(
+    (page + 1) * size,
+    page * size + quotations.length
+  );
+  
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(0); // Reset to first page on search
+  };
+
+  const handleDelete = async (id) => {
+  // // Simple confirmation before deleting
+  // if (!confirm("Are you sure you want to delete this quotation? This action cannot be undone.")) {
+  //   return;
+  // }
+
+  try {
+    await axiosInstance.delete(`/api/amc/material-quotation/delete/${id}`);
+    
+    // Show success toast
+    toast.success("Quotation deleted successfully");
+    
+    // Refresh the list to reflect changes
+    fetchQuotations(); 
+  } catch (error) {
+    console.error("Delete error:", error);
+    toast.error("Failed to delete quotation. It might be linked to other records.");
+  }
+};
+
 
   return (
-    <div className="p-4 sm:p-8 bg-white shadow-xl rounded-2xl border border-gray-100 max-w-full mx-auto">
-      {/* Header & Search */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Material Quotations 📄
-          </h2>
-          <p className="text-gray-500 mt-1">Manage and track all material quotations easily.</p>
-        </div>
+    <div className="p-4 pt-10 bg-white shadow-xl rounded-xl border border-gray-100 max-w-full mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
+        <h2 className="text-xl font-bold text-gray-800">
+          📋 Material Quotations
+        </h2>
 
-        <div className="relative w-full md:w-80">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        <div className="relative w-full md:w-64">
+          <FiSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
-            type="text"
-            placeholder="Search by customer or site..."
             value={search}
             onChange={handleSearchChange}
-            className="pl-10 pr-4 py-2.5 w-full border border-gray-300 rounded-xl text-sm 
-                        focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200"
+            placeholder="Search Quotation No, Customer, Site..."
+            className="pl-8 pr-3 py-1.5 w-full border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
           />
         </div>
       </div>
 
-      {/* Table Container */}
-      <div className="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-lg">
-        <table className="min-w-full text-sm text-gray-700 divide-y divide-gray-200">
+      {/* Table */}
+      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+        <table className="min-w-full text-xs text-gray-700 divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="p-4 text-center font-bold text-gray-600 uppercase tracking-wider">#</th>
-              {/* Sortable Headers */}
-              {[
-                { label: 'Quotation No', field: 'quatationNo' },
-                { label: 'Date', field: 'quatationDate' },
-              ].map(({ label, field }) => (
+              <th className="px-2 py-2 text-center font-semibold">#</th>
+              {TABLE_HEADERS.map(({ label, field, sortable, className }) => (
                 <th
                   key={field}
-                  className="p-4 text-left font-bold text-gray-600 uppercase tracking-wider cursor-pointer select-none whitespace-nowrap"
-                  onClick={() => handleSort(field)}
+                  onClick={sortable ? () => handleSort(field) : undefined}
+                  className={`px-2 py-2 font-semibold whitespace-nowrap ${className} ${sortable ? 'cursor-pointer hover:bg-gray-100 transition' : ''}`}
                 >
-                  <div className="flex items-center">
+                  <div className={`flex items-center ${className === 'text-right' ? 'justify-end' : 'justify-start'}`}>
                     {label}
-                    {getSortIcon(field, sortBy, direction)}
+                    {sortable && getSortIcon(field, sortBy, direction)}
                   </div>
-                </th>
-              ))}
-              {/* Non-Sortable Headers */}
-              {[
-                'Customer',
-                'Site',
-                'GST',
-                'Work Period',
-                'HSN/SAC',
-                'Final Status', // Changed from 'Is Final'
-                'Final Date',
-                'Actions',
-              ].map((header) => (
-                <th
-                  key={header}
-                  className={`p-4 font-bold text-gray-600 uppercase tracking-wider ${
-                    header === 'Actions' || header === 'GST' || header === 'Final Status'
-                      ? 'text-center'
-                      : 'text-left'
-                  }`}
-                >
-                  {header}
                 </th>
               ))}
             </tr>
           </thead>
+
           <tbody className="divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan="11" className="text-center py-10 text-lg text-blue-500 font-medium">
-                  <div className="flex justify-center items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <td colSpan={TOTAL_COLUMNS} className="text-center py-8 text-blue-500">
+                  <div className="flex items-center justify-center space-x-2">
+                     <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Loading Quotations...
+                    <span>Loading Quotations...</span>
                   </div>
                 </td>
               </tr>
             ) : quotations.length > 0 ? (
-              quotations.map((q, index) => (
-                <tr
-                  key={q.modQuotId}
-                  className="hover:bg-blue-50 transition-colors duration-150 group"
-                >
-                  <td className="p-4 text-center font-medium text-gray-600">
-                    {page * size + index + 1}
+              quotations.map((q, i) => (
+                <tr key={q.modQuotId} className="odd:bg-white even:bg-gray-50 hover:bg-blue-50 transition-colors">
+                  <td className="px-2 py-2 text-center">{page * size + i + 1}</td>
+                  <td className="px-2 py-2 font-medium whitespace-nowrap text-left">{q.quatationNo}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-left">{q.quatationDate || '-'}</td>
+                  <td className="px-2 py-2 text-left">{q.customerName}</td>
+                  <td className="px-2 py-2 text-left">{q.siteName}</td>
+                  <td className="px-2 py-2 text-center">{q.gst ? `${q.gst}%` : '-'}</td>
+                  <td className="px-2 py-2 text-left">{q.workPeriod || '-'}</td>
+                  
+                  {/* --- NEW FINANCIAL DATA --- */}
+                  <td className="px-2 py-2 text-right font-medium whitespace-nowrap">
+                    {formatCurrency(q.subTotal)}
                   </td>
-                  <td className="p-4 font-semibold text-gray-900 whitespace-nowrap">
-                    {q.quatationNo}
+                  <td className="px-2 py-2 text-right whitespace-nowrap">
+                    {formatCurrency(q.gstAmount)}
                   </td>
-                  <td className="p-4 text-gray-500 whitespace-nowrap">
-                    {q.quatationDate || 'N/A'}
+                  <td className="px-2 py-2 text-right font-bold text-gray-900 whitespace-nowrap">
+                    {formatCurrency(q.grandTotal)}
                   </td>
-                  <td className="p-4 font-medium text-gray-700">{q.customerName || 'N/A'}</td>
-                  <td className="p-4 text-gray-600">{q.siteName || 'N/A'}</td>
-                  <td className="p-4 text-center font-mono">{q.gst}%</td>
-                  <td className="p-4 text-gray-600 whitespace-nowrap">{q.workPeriod || 'N/A'}</td>
-                  <td className="p-4 font-mono text-gray-600">{q.hsnCode || 'N/A'}</td>
-                  {/* Final Status with ThumbsUp button */}
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => toggleIsFinal(q.modQuotId, q.isFinal)}
-                      className={`
-                        p-2 rounded-full text-lg 
-                        ${q.isFinal === 1 
-                            ? 'bg-green-100 text-green-600 hover:bg-green-200' 
-                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
-                        }
-                        transition duration-200 ease-in-out transform hover:scale-110
-                        focus:outline-none focus:ring-2 focus:ring-offset-2 
-                        ${q.isFinal === 1 ? 'focus:ring-green-500' : 'focus:ring-gray-400'}
-                      `}
-                      title={q.isFinal === 1 ? 'Quotation is Final' : 'Mark as Final'}
-                    >
-                      <FaThumbsUp />
-                    </button>
+                  {/* ---------------------------- */}
+
+                  {/* Final Status Toggle */}
+                  <td className="px-2 py-2 text-center">
+                  <button
+  onClick={() => {
+    if (q.isFinal === 0) {
+      toggleIsFinal(q.modQuotId, true);
+    }
+  }}
+  title={q.isFinal === 0 ? 'Mark as Final' : 'Already Final'}
+  disabled={q.isFinal === 1}
+  className={`p-1 rounded-full text-sm transition-colors duration-200 ${
+    q.isFinal === 1
+      ? 'bg-green-100 text-green-600 cursor-not-allowed'
+      : 'bg-gray-100 text-gray-400 hover:bg-gray-200 cursor-pointer'
+  }`}
+>
+  <FaThumbsUp className="w-3 h-3" />
+</button>
+
                   </td>
-                  <td className="p-4 text-center text-gray-500 whitespace-nowrap">
-                    {q.quotFinalDate || '-'}
-                  </td>
-                  <td className="p-4 text-center whitespace-nowrap">
-                    <div className="flex justify-center space-x-3 text-lg">
+
+                  <td className="px-2 py-2 text-center whitespace-nowrap">{q.quotFinalDate || '-'}</td>
+
+                  {/* Actions */}
+                  <td className="px-2 py-2 text-center">
+                    <div className="flex justify-center gap-1.5 text-base">
+                      {/* View */}
                       <button
-                        className="p-1 rounded-full text-blue-500 hover:bg-blue-100 transition duration-150"
                         title="View Details"
-                        // onClick={() => handleView(q.modQuotId)}
+                        onClick={() => handleView(q.modQuotId)}
+                        className="p-1 rounded hover:bg-blue-100 transition-colors"
                       >
-                        <FaEye />
+                        <FaEye className="text-blue-500 w-4 h-4" />
                       </button>
+                      {/* Generate PDF */}
                       <button
-                        className="p-1 rounded-full text-green-500 hover:bg-green-100 transition duration-150"
-                        title="Edit Quotation"
-                        // onClick={() => handleEdit(q.modQuotId)}
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        className="p-1 rounded-full text-red-500 hover:bg-red-100 transition duration-150"
-                        title="Delete Quotation"
-                        // onClick={() => handleDelete(q.modQuotId)}
-                      >
-                        <FaTrash />
-                      </button>
-                      <button
-                        className="p-1 rounded-full text-orange-500 hover:bg-orange-100 transition duration-150"
                         title="Generate PDF"
-                         onClick={() => handleGeneratePdf(q.modQuotId)}
+                        onClick={() => handleGeneratePdf(q.modQuotId)}
+                        className="p-1 rounded hover:bg-orange-100 transition-colors"
                       >
-                        <FaFilePdf />
+                        <FaFilePdf className="text-orange-500 w-4 h-4" />
                       </button>
+                     {/* Edit */}
+<button
+  onClick={() => {
+    if (q.isFinal === 0) {
+      handleEdit(q.modQuotId);
+    }
+  }}
+  title={
+    q.isFinal === 1
+      ? 'This quotation is finalized and cannot be edited.'
+      : 'Edit Quotation'
+  }
+  disabled={q.isFinal === 1}
+  className={`p-1 rounded transition-colors ${
+    q.isFinal === 1
+      ? 'cursor-not-allowed bg-gray-100'
+      : 'hover:bg-green-100'
+  }`}
+>
+  <FaEdit
+    className={`w-4 h-4 ${
+      q.isFinal === 1 ? 'text-gray-400' : 'text-green-500'
+    }`}
+  />
+</button>
+
+{/* Delete */}
+<button
+  onClick={() => {
+    if (q.isFinal === 0) {
+      handleDelete(q.modQuotId);
+    }
+  }}
+  title={
+    q.isFinal === 1
+      ? 'This quotation is finalized and cannot be deleted.'
+      : 'Delete Quotation'
+  }
+  disabled={q.isFinal === 1}
+  className={`p-1 rounded transition-colors ${
+    q.isFinal === 1
+      ? 'cursor-not-allowed bg-gray-100'
+      : 'hover:bg-red-100'
+  }`}
+>
+  <FaTrash
+    className={`w-4 h-4 ${
+      q.isFinal === 1 ? 'text-gray-400' : 'text-red-500'
+    }`}
+  />
+</button>
+
+                      {/* Invoice/Email - Placeholder actions */}
                       <button
-                        className="p-1 rounded-full text-indigo-500 hover:bg-indigo-100 transition duration-150"
                         title="Generate Invoice"
-                        // onClick={() => handleGenerateInvoice(q.modQuotId)}
+                        className="p-1 rounded hover:bg-indigo-100 transition-colors"
+                         onClick={() => handleGenerateInvoice(q.modQuotId)}
                       >
-                        <FaFileInvoice />
+                        <FaFileInvoice className="text-indigo-500 w-4 h-4" />
                       </button>
                       <button
-                        className="p-1 rounded-full text-purple-500 hover:bg-purple-100 transition duration-150"
                         title="Email Quotation"
-                        // onClick={() => handleEmail(q.modQuotId)}
+                        className="p-1 rounded hover:bg-purple-100 transition-colors"
                       >
-                        <FaEnvelope />
+                        <FaEnvelope className="text-purple-500 w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -295,11 +408,8 @@ const MaterialQuotationList = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="11" className="text-center py-10 text-gray-500 text-lg">
-                  <div className="flex flex-col items-center">
-                    <FaFileInvoice className="w-8 h-8 mb-2 text-gray-400" />
-                    No quotations found for your criteria.
-                  </div>
+                <td colSpan={TOTAL_COLUMNS} className="text-center py-6 text-gray-500">
+                  No material quotations found.
                 </td>
               </tr>
             )}
@@ -307,71 +417,94 @@ const MaterialQuotationList = () => {
         </table>
       </div>
 
-      {/* Pagination & Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200 gap-3 text-sm text-gray-700">
-        {/* Page Info */}
-        <div className="font-medium">
-          Showing{' '}
-          <b className="text-gray-900">{currentEntriesStart}</b> -{' '}
-          <b className="text-gray-900">{currentEntriesEnd}</b> of{' '}
-          <b className="text-gray-900">{totalItems || 'many'}</b> entries
-        </div>
+      {/* Pagination */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mt-4 text-xs space-y-2 sm:space-y-0">
+        <span className="text-gray-600">
+          Showing **{currentEntriesStart} - {currentEntriesEnd}** of **{totalElements}** results
+        </span>
 
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center gap-4">
           {/* Size Selector */}
-          <select
-            value={size}
-            onChange={handleSizeChange}
-            className="border border-gray-300 bg-white px-3 py-1.5 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition cursor-pointer"
-          >
-            {[5, 10, 20, 50].map((s) => (
-              <option key={s} value={s}>
-                {s} / page
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+             <label htmlFor="pageSize" className="text-gray-600">Per page:</label>
+             <select
+               id="pageSize"
+               value={size}
+               onChange={(e) => {
+                 setSize(+e.target.value);
+                 setPage(0);
+               }}
+               className="border border-gray-300 rounded px-2 py-1 text-xs focus:ring-blue-500 focus:border-blue-500"
+             >
+               {[5, 10, 20, 50].map((s) => (
+                 <option key={s} value={s}>{s}</option>
+               ))}
+             </select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+             {/* Previous Button */}
+             <button
+               disabled={page === 0}
+               onClick={() => setPage(page - 1)}
+               title="Previous Page"
+               className="p-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+             >
+               <FiChevronLeft className="w-4 h-4" />
+             </button>
 
-          {/* Pagination Buttons */}
-          <div className="flex items-center space-x-1">
-            <button
-              disabled={page === 0}
-              onClick={() => handlePageChange(page - 1)}
-              className="p-2 border border-gray-300 rounded-lg bg-white hover:bg-blue-50 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-            >
-              <FiChevronLeft className="w-5 h-5" />
-            </button>
-            <span className="px-3 py-1.5 font-semibold text-gray-800">
-              {page + 1} / {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages - 1 || totalPages === 0}
-              onClick={() => handlePageChange(page + 1)}
-              className="p-2 border border-gray-300 rounded-lg bg-white hover:bg-blue-50 text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
-            >
-              <FiChevronRight className="w-5 h-5" />
-            </button>
+             <span className="font-semibold text-gray-800">
+               {totalPages > 0 ? `${page + 1} / ${totalPages}` : '0 / 0'}
+             </span>
+
+             {/* Next Button */}
+             <button
+               disabled={page + 1 >= totalPages || totalPages === 0}
+               onClick={() => setPage(page + 1)}
+               title="Next Page"
+               className="p-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+             >
+               <FiChevronRight className="w-4 h-4" />
+             </button>
           </div>
         </div>
       </div>
-       <ActionModal 
-              isOpen={isModalOpen} 
-              onCancel={closeModal} // Closes the modal when clicking outside
-            >
-              {/* Pass the AMCInvoicePrint component as children */}
-              {selectedInvoiceId !== null && (
-                <MaterialQuotationPrint quotationId={selectedInvoiceId}  onCancel={closeModal}/>
-              )}
-              
-              {/* Add a close button inside the modal content for better UX (optional) */}
-              {/* <div className="flex justify-end pt-4 print:hidden">
-                  <button
-                      onClick={closeModal}
-                      className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                      Close Preview
-                  </button>
-              </div> */}
-            </ActionModal>
+
+      <ActionModal
+  isOpen={isModalOpen}
+  onCancel={closeModal}
+  // Dynamically set title based on the current mode
+  title={
+    modalMode === 'view' ? '🔍 Quotation Details' : 
+    modalMode === 'edit' ? '✏️ Edit Material Quotation' : 
+    '🖨️ Preview Quotation'
+  }
+>
+  {/* VIEW MODE: Simple display of data */}
+  {modalMode === 'view' && selectedQuotationData && (
+    <MaterialQuotationDetails quotation={selectedQuotationData} />
+  )}
+
+  {/* EDIT MODE: Form with inputs to change data */}
+  {modalMode === 'edit' && selectedQuotationData && (
+    <MaterialQuotationEditForm 
+      quotationData={selectedQuotationData} 
+      onClose={closeModal} 
+      onRefresh={fetchQuotations} // Passing refresh function to update list after save
+    />
+  )}
+
+  {/* PRINT MODE: PDF Preview */}
+  {modalMode === 'print' && selectedQuotationData && (
+    <MaterialQuotationPrint
+      quotationId={selectedQuotationId}
+      onCancel={closeModal}
+      quotationData={selectedQuotationData}
+    />
+  )}
+</ActionModal>
+
+
     </div>
   );
 };

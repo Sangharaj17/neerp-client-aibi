@@ -8,9 +8,12 @@ import com.aibi.neerp.amc.quatation.initial.entity.AmcQuotation;
 import com.aibi.neerp.amc.quatation.initial.entity.RevisedAmcQuotation;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
+import com.aibi.neerp.leadmanagement.repository.EnquiryTypeRepository;
 import com.aibi.neerp.modernization.entity.Modernization;
+import com.aibi.neerp.oncall.entity.OnCallQuotation;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.repository.CompanySettingRepository;
 import com.aibi.neerp.settings.service.CompanySettingService;
@@ -58,6 +61,7 @@ public class MaterialQuotationService {
     
     private final AmcInvoiceRepository invoiceRepository;
     private final AmcInvoiceService amcInvoiceService;
+    private final EnquiryTypeRepository enquiryTypeRepository;
 
     // 🔹 GET ALL with Pagination, Sorting & Search
     public Page<MaterialQuotationResponseDto> getAllMaterialQuotations(
@@ -105,7 +109,7 @@ public class MaterialQuotationService {
         }
         
         quotation.setWorkPeriodEntity(workPeriod);
-        quotation.setIsFinal(0);
+        quotation.setIsFinal(dto.getIsFinal() ? 1 : 0);
         quotation.setQuotFinalDate(dto.getQuotFinalDate());
 
         // 2️⃣ Set relationships
@@ -139,7 +143,11 @@ public class MaterialQuotationService {
         // 6️⃣ Update quotation number
         saved.setQuatationNo(formattedNo);
         MaterialQuotation updated = materialQuotationRepository.save(saved);
-
+        
+        if(dto.getIsFinal()==true) {
+        	createMaterialInvoice(updated.getModQuotId());
+        	
+        }
         // 7️⃣ Return DTO
         return convertToResponseDto(updated);
     }
@@ -164,7 +172,23 @@ public class MaterialQuotationService {
         dto.setWorkPeriod(entity.getWorkPeriodEntity().getName());
         dto.setIsFinal(entity.getIsFinal());
         dto.setQuotFinalDate(entity.getQuotFinalDate());
+        
+        dto.setSubTotal(entity.getSubTotal());
+        dto.setGstPercentage(entity.getGst());
+        dto.setGstAmount(entity.getGstAmt());   
+        dto.setGrandTotal(entity.getGrandTotal());      
+        
+        dto.setWorkPeriods(workPeriodService.getAllWorkPeriods());       
+        
+        // NOTE: This assumes companySettingRepository.findAll() returns at least one element.
+        CompanySetting companySetting =	companySettingRepository.findAll().get(0);
 
+        double gst = companySetting.getGstRateAmcTotalPercentage();
+
+        String hsnCode = companySetting.getSacCodeMaterialRepairLabor();
+        
+        dto.setStaticHsnCode(hsnCode);
+        ;
         dto.setJobNo(entity.getAmcJob() != null ? entity.getAmcJob().getJobNo() : null);
         dto.setCustomerName(entity.getAmcJob() != null ? entity.getAmcJob().getCustomer().getCustomerName(): null);
         dto.setSiteName(entity.getAmcJob() != null ? entity.getAmcJob().getSite().getSiteName(): null);
@@ -483,10 +507,13 @@ public class MaterialQuotationService {
         Optional<MaterialQuotation> optional = materialQuotationRepository.findById(id);
         if (optional.isPresent()) {
         	MaterialQuotation materialQuotation = optional.get();
+        	LocalDate now = LocalDate.now();
+        	
         	materialQuotation.setIsFinal(1);
+        	materialQuotation.setQuotFinalDate(now);
         	materialQuotationRepository.save(materialQuotation);
             
-            createMaterialRepairInvoice(id);
+        	createMaterialInvoice(id);
             
             return true;
         }
@@ -560,6 +587,108 @@ public class MaterialQuotationService {
 		 }).collect(Collectors.toList());	
 		 
 		 return dropdownForAddPayments;
+
+      }
+
+      @Transactional
+      public MaterialQuotationResponseDto updateMaterialQuotation(Integer id, MaterialQuotationUpdateRequestDto dto) {
+          // 1. Fetch existing entity
+          MaterialQuotation existingQuot = materialQuotationRepository.findById(id)
+                  .orElseThrow(() -> new ResourceNotFoundException("Quotation not found with id: " + id));
+
+          // 2. Update basic fields
+          existingQuot.setQuatationDate(dto.getQuatationDate());
+          existingQuot.setNote(dto.getNote());
+          existingQuot.setGst(dto.getGst());
+          existingQuot.setIsFinal(dto.getIsFinal());
+          existingQuot.setQuotFinalDate(dto.getIsFinal() == 1 ? dto.getQuotFinalDate() : null);
+          existingQuot.setSubTotal(dto.getSubTotal());
+          existingQuot.setGstAmt(dto.getGstAmt());
+          existingQuot.setGrandTotal(dto.getGrandTotal());
+
+          // 3. Update Work Period Relationship
+          WorkPeriod wp = workPeriodRepository.findById(dto.getWorkPeriodId()).get();          
+          
+          existingQuot.setWorkPeriodEntity(wp);
+
+          // 4. Update Details (Orphan Removal will handle the deletion of old records)
+          existingQuot.getDetails().clear(); // Clear existing list
+          
+          List<QuotationDetail> newDetails = dto.getDetails().stream().map(d -> {
+              QuotationDetail detail = new QuotationDetail();
+              detail.setMaterialName(d.getMaterialName());
+              detail.setHsn(d.getHsn());
+              detail.setQuantity(d.getQuantity());
+              detail.setRate(d.getRate());
+              detail.setAmount(d.getAmount());
+              detail.setGuarantee(d.getGuarantee());
+              detail.setMaterialQuotation(existingQuot); // Maintain Back-reference
+              return detail;
+          }).collect(Collectors.toList());
+
+          existingQuot.getDetails().addAll(newDetails);
+
+          // 5. Save and Return Map to DTO
+          MaterialQuotation saved = materialQuotationRepository.save(existingQuot);
+          
+          if(dto.getIsFinal() == 1 ) {
+          	createMaterialInvoice(saved.getModQuotId());
+          	
+          }
+          
+          return convertToResponseDto(saved); 
+      }
+
+      @Transactional
+      public void deleteQuotation(Integer id) {
+          // 1. Check if it exists
+          MaterialQuotation quotation = materialQuotationRepository.findById(id)
+                  .orElseThrow(() -> new ResourceNotFoundException("Quotation not found with id: " + id));
+
+          // 2. Perform deletion
+          // Due to CascadeType.ALL on details, this will clean up the child table automatically
+          materialQuotationRepository.delete(quotation);
+          
+          log.info("Successfully deleted Quotation ID: {}", id);
+      }
+      
+      
+      public void createMaterialInvoice(Integer materialQuotationId) {
+      	
+      	AmcInvoiceRequestDto amcInvoiceRequestDto = buildInvoiceDtoForMaterialQuotation(materialQuotationId);
+          
+      	amcInvoiceService.saveInvoice(amcInvoiceRequestDto);
+      }
+      
+      public AmcInvoiceRequestDto buildInvoiceDtoForMaterialQuotation(Integer materialQuotationId) {
+      	
+      	AmcInvoiceRequestDto amcInvoiceRequestDto = 
+      			new AmcInvoiceRequestDto();
+      	
+      	MaterialQuotation materialQuotation = materialQuotationRepository.findById(materialQuotationId).get();
+      	
+      	EnquiryType enquiryType =
+      	        enquiryTypeRepository.findByEnquiryTypeName("AMC");
+      	
+      	amcInvoiceRequestDto.setTotalAmt(
+      	        BigDecimal.valueOf(materialQuotation.getGrandTotal())
+      	);
+      	amcInvoiceRequestDto.setEnquiryType(enquiryType);
+      	amcInvoiceRequestDto.setMaterialQuotation(materialQuotation);
+      	amcInvoiceRequestDto.setIsCleared(0);
+      	
+      	LocalDate invoiceDate = LocalDate.now();
+      	
+      	amcInvoiceRequestDto.setInvoiceDate(invoiceDate);
+      	
+      	Integer nextInvoiceId = invoiceRepository.findMaxInvoiceId() + 1;
+          String currentYear = String.valueOf(Year.now().getValue());
+          String formattedInvoiceNo = String.format("INV-%s-%04d", currentYear, nextInvoiceId);
+
+         
+          amcInvoiceRequestDto.setInvoiceNo(formattedInvoiceNo);
+          
+          return amcInvoiceRequestDto;
 
       }
 	

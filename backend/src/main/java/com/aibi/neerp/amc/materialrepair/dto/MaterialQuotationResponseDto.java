@@ -1,8 +1,10 @@
 package com.aibi.neerp.amc.materialrepair.dto;
 
-
 import java.time.LocalDate;
 import java.util.List;
+
+import com.aibi.neerp.amc.materialrepair.entity.WorkPeriod;
+
 import lombok.Data;
 
 @Data
@@ -23,6 +25,14 @@ public class MaterialQuotationResponseDto {
     
     private String siteName;
     private String customerName;
+    
+    private Double subTotal;
+    private Integer gstPercentage;
+    private Double gstAmount;
+    private Double grandTotal;
+    
+    private List<WorkPeriod> workPeriods;
+    private String staticHsnCode;
 
     private List<QuotationDetailResponseDto> details;
 }

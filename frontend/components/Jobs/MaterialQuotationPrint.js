@@ -73,9 +73,14 @@ const MaterialQuotationPrint = ({ quotationId = 1  , onCancel}) => { // Changed 
         {/* Header (Print Controls) */}
         <div className="mb-6 border-b border-gray-200 pb-3 print:hidden flex justify-between items-center">
           <div className="text-xl font-light text-gray-500">
-            <a href="#" className="text-blue-600 hover:underline">
-              <span className="font-semibold">Back To List</span> &gt;&gt;
-            </a>
+           <button
+  type="button"
+  onClick={onCancel}
+  className="text-blue-600 hover:underline font-semibold"
+>
+  Back To List &gt;&gt;
+</button>
+
           </div>
           <button 
             onClick={() => window.print()}
