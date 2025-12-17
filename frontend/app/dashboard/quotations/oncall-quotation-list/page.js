@@ -373,7 +373,7 @@ export default function OncallList() {
         </div>
 
         {/* 🔸 Table Content */}
-        <div className="">
+        <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
