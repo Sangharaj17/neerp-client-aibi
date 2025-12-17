@@ -324,8 +324,8 @@ export default function AMCQuotationList() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-2 py-2 text-left font-medium text-gray-600">S.No</th>
-                  <th className="px-2 py-2 cursor-pointer" onClick={() => handleSort('quatationDate')}>
-                    Date{renderSortIcon('quatationDate')}
+                  <th className="px-2 py-2 cursor-pointer" onClick={() => handleSort('quotationDate')}>
+                    Date{renderSortIcon('quotationDate')}
                   </th>
                   <th className="px-2 py-2 cursor-pointer" onClick={() => handleSort('customerName')}>
                     Customer{renderSortIcon('customerName')}
