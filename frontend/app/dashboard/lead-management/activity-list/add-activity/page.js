@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { Save, X } from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import toast from "react-hot-toast";
 import PageHeader from "@/components/UI/PageHeader";
 
-export default function AddActivityPage() {
+function AddActivityContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const params = useParams();
@@ -283,5 +283,17 @@ export default function AddActivityPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function AddActivityPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <div className="text-neutral-600">Loading...</div>
+            </div>
+        }>
+            <AddActivityContent />
+        </Suspense>
     );
 }
