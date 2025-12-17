@@ -16,8 +16,32 @@ import org.springframework.stereotype.Repository;
 public interface AmcRenewalQuotationRepository extends JpaRepository<AmcRenewalQuotation, Integer> {
     // Basic CRUD methods are provided by JpaRepository
 	
+//	@Query("""
+//		    SELECT DISTINCT q
+//		    FROM AmcRenewalQuotation q
+//		    LEFT JOIN q.customer c
+//		    LEFT JOIN q.site s
+//		    LEFT JOIN q.createdBy e
+//		    LEFT JOIN q.lead l
+//		    LEFT JOIN l.area a
+//		    LEFT JOIN q.makeOfElevator m
+//		    WHERE (:search IS NULL OR :search = '' OR (
+//		        LOWER(l.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(s.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(e.employeeName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(a.areaName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//		        LOWER(m.name) LIKE LOWER(CONCAT('%', :search, '%'))
+//		    ))
+//		    AND (:dateSearch IS NULL OR :dateSearch = '' OR q.quatationDate = CAST(:dateSearch AS date))
+//		""")
+//		Page<AmcRenewalQuotation> searchAll(
+//		    @Param("search") String search, 
+//		    @Param("dateSearch") String dateSearch, 
+//		    Pageable pageable
+//		);
+	
 	@Query("""
-		    SELECT DISTINCT q
+		    SELECT q
 		    FROM AmcRenewalQuotation q
 		    LEFT JOIN q.customer c
 		    LEFT JOIN q.site s
@@ -32,13 +56,15 @@ public interface AmcRenewalQuotationRepository extends JpaRepository<AmcRenewalQ
 		        LOWER(a.areaName) LIKE LOWER(CONCAT('%', :search, '%')) OR
 		        LOWER(m.name) LIKE LOWER(CONCAT('%', :search, '%'))
 		    ))
-		    AND (:dateSearch IS NULL OR :dateSearch = '' OR q.quatationDate = CAST(:dateSearch AS date))
+		    AND (:dateSearch IS NULL OR :dateSearch = '' 
+		         OR q.quatationDate = CAST(:dateSearch AS date))
 		""")
 		Page<AmcRenewalQuotation> searchAll(
-		    @Param("search") String search, 
-		    @Param("dateSearch") String dateSearch, 
+		    @Param("search") String search,
+		    @Param("dateSearch") String dateSearch,
 		    Pageable pageable
 		);
+
 
 	
 	  @Query("SELECT a FROM AmcRenewalQuotation a " +
