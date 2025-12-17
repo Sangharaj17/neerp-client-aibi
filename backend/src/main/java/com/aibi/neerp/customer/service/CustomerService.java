@@ -1,12 +1,15 @@
 package com.aibi.neerp.customer.service;
 
 import com.aibi.neerp.customer.dto.CustomerDto;
+import com.aibi.neerp.customer.dto.CustomerUpdateDTO;
 import com.aibi.neerp.customer.dto.SiteDto;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.customer.repository.CustomerRepository;
 import com.aibi.neerp.customer.repository.SiteRepository;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
+import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +30,7 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final SiteRepository siteRepository;
+    private final NewLeadsRepository leadsRepository;
 
     // ✅ Create or Update Customer
     public CustomerDto saveCustomer(CustomerDto dto) {
@@ -133,5 +137,34 @@ public class CustomerService {
                 .siteAddress(dto.getAddress())
                 .customer(customer)
                 .build();
+    }
+
+    @Transactional
+    public void updateCustomerAndLead(Integer customerId, CustomerUpdateDTO dto) {
+        // 1. Fetch
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new RuntimeException("Customer not found with id: " + customerId));
+
+        // 2. Update Customer Entity
+        customer.setCustomerName(dto.getCustomerName());
+        customer.setEmailId(dto.getEmailId());
+        customer.setContactNumber(dto.getContactNumber());
+        customer.setGstNo(dto.getGstNo());
+        customer.setAddress(dto.getAddress());
+
+        // 3. Update Lead Entity if linked
+        if (customer.getLead() != null) {
+            NewLeads lead = customer.getLead();
+            lead.setCustomerName(dto.getCustomerName());
+            lead.setEmailId(dto.getEmailId());
+            lead.setContactNo(dto.getContactNumber()); 
+            lead.setAddress(dto.getAddress());
+            
+            
+            leadsRepository.save(lead);
+        }
+
+        // 4. Save Customer
+        customerRepository.save(customer);
     }
 }

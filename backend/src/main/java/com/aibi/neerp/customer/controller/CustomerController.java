@@ -1,11 +1,14 @@
 package com.aibi.neerp.customer.controller;
 
 import com.aibi.neerp.customer.dto.CustomerDto;
+import com.aibi.neerp.customer.dto.CustomerUpdateDTO;
+import com.aibi.neerp.customer.dto.MessageResponse;
 import com.aibi.neerp.customer.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,5 +51,16 @@ public class CustomerController {
     public ResponseEntity<Void> deleteCustomer(@PathVariable Integer id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @PutMapping("/updateCustomer/{id}")
+    public ResponseEntity<MessageResponse> updateCustomer(@PathVariable Integer id, @RequestBody CustomerUpdateDTO dto) {
+        try {
+            customerService.updateCustomerAndLead(id, dto);
+            return ResponseEntity.ok(new MessageResponse("Customer and Lead updated successfully", true));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResponse(e.getMessage(), false));
+        }
     }
 }
