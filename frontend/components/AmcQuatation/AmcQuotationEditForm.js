@@ -762,29 +762,31 @@ export default function AmcQuotationEditForm({ quotationId, qid, revise, revisio
   // };
 
   
+
 const handleAmcFromDateChange = (e) => {
-  const startDateValue = e.target.value; // This is "YYYY-MM-DD"
-  
+  const startDateValue = e.target.value; // YYYY-MM-DD
   if (!startDateValue) return;
 
-  // 1. Parse the start date
-  const startDate = new Date(startDateValue);
+  // Parse as local date safely
+  const [year, month, day] = startDateValue.split('-').map(Number);
+  const startDate = new Date(year, month - 1, day);
 
-  // 2. Add exactly 365 days
-  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+  // Inclusive 365 days → add 364 days
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + 364);
 
-  // 3. Format back to "YYYY-MM-DD"
+  // Format YYYY-MM-DD
   const y = endDate.getFullYear();
   const m = String(endDate.getMonth() + 1).padStart(2, '0');
   const d = String(endDate.getDate()).padStart(2, '0');
-  const formattedEndDate = `${y}-${m}-${d}`;
 
   setFormData((prev) => ({
     ...prev,
     fromDate: startDateValue,
-    toDate: formattedEndDate,
+    toDate: `${y}-${m}-${d}`,
   }));
 };
+
 
   // Function to handle AMC To Date
   const handleAmcToDateChange = (e) => {
