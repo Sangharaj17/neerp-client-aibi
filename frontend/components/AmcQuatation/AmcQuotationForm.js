@@ -465,23 +465,45 @@ useEffect(() => {
 
   // Function to handle AMC From Date
   // Function to handle AMC From Date
+// const handleAmcFromDateChange = (e) => {
+//   const value = e.target.value; // YYYY-MM-DD
+
+//   const startDate = new Date(value);
+
+//   // ✅ Add exactly 365 days
+//   const endDate = new Date(startDate);
+//   endDate.setDate(endDate.getDate() + 365);
+
+//   const formattedEndDate = endDate.toISOString().split("T")[0];
+
+//   setFormData((prev) => ({
+//     ...prev,
+//     fromDate: value,
+//     toDate: formattedEndDate,
+//   }));
+// };
+
 const handleAmcFromDateChange = (e) => {
-  const value = e.target.value; // "YYYY-MM-DD"
+  const startDateValue = e.target.value; // This is "YYYY-MM-DD"
+  
+  if (!startDateValue) return;
 
-  // Convert to Date object
-  const startDate = new Date(value);
+  // 1. Parse the start date
+  const startDate = new Date(startDateValue);
 
-  // Add 1 year
-  const endDate = new Date(startDate);
-  endDate.setFullYear(endDate.getFullYear() + 1);
+  // 2. Add exactly 365 days
+  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
 
-  // Format back to YYYY-MM-DD
-  const formattedEndDate = endDate.toISOString().split("T")[0];
+  // 3. Format back to "YYYY-MM-DD"
+  const y = endDate.getFullYear();
+  const m = String(endDate.getMonth() + 1).padStart(2, '0');
+  const d = String(endDate.getDate()).padStart(2, '0');
+  const formattedEndDate = `${y}-${m}-${d}`;
 
   setFormData((prev) => ({
     ...prev,
-    fromDate: value,
-    toDate: formattedEndDate, // auto-fill AMC To Date
+    fromDate: startDateValue,
+    toDate: formattedEndDate,
   }));
 };
 
@@ -760,7 +782,7 @@ const handleAmcFromDateChange = (e) => {
 
               <div className="md:col-span-3">
                 <label className="block text-sm font-semibold mb-1">Status Of Quotation</label>
-                <input required name="status" onChange={(e) => handleSetStatus(e)} className="border p-2 w-full rounded" placeholder="Enter Status" />
+                <input  name="status" onChange={(e) => handleSetStatus(e)} className="border p-2 w-full rounded" placeholder="Enter Status" />
               </div>
             </div>
           </div>

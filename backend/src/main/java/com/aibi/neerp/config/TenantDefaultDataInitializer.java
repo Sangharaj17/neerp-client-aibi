@@ -283,7 +283,7 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultPaymentTerms() {
         try {
-            String[] paymentTerms = {"Quarterly", "Half Yearly", "Yearly"};
+            String[] paymentTerms = {"Monthly","Quarterly", "Half Yearly", "Yearly"};
             for (String name : paymentTerms) {
                 if (!paymentTermRepository.existsByTermName(name)) {
                     PaymentTerm paymentTerm = new PaymentTerm();

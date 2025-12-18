@@ -753,13 +753,38 @@ export default function AmcQuotationEditForm({ quotationId, qid, revise, revisio
 
 
   // Function to handle AMC From Date
-  const handleAmcFromDateChange = (e) => {
-    const value = e.target.value; // "YYYY-MM-DD" from input[type="date"]
-    setFormData((prev) => ({
-      ...prev,
-      fromDate: value,
-    }));
-  };
+  // const handleAmcFromDateChange = (e) => {
+  //   const value = e.target.value; // "YYYY-MM-DD" from input[type="date"]
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     fromDate: value,
+  //   }));
+  // };
+
+  
+const handleAmcFromDateChange = (e) => {
+  const startDateValue = e.target.value; // This is "YYYY-MM-DD"
+  
+  if (!startDateValue) return;
+
+  // 1. Parse the start date
+  const startDate = new Date(startDateValue);
+
+  // 2. Add exactly 365 days
+  const endDate = new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+
+  // 3. Format back to "YYYY-MM-DD"
+  const y = endDate.getFullYear();
+  const m = String(endDate.getMonth() + 1).padStart(2, '0');
+  const d = String(endDate.getDate()).padStart(2, '0');
+  const formattedEndDate = `${y}-${m}-${d}`;
+
+  setFormData((prev) => ({
+    ...prev,
+    fromDate: startDateValue,
+    toDate: formattedEndDate,
+  }));
+};
 
   // Function to handle AMC To Date
   const handleAmcToDateChange = (e) => {
@@ -1088,7 +1113,7 @@ export default function AmcQuotationEditForm({ quotationId, qid, revise, revisio
 
               <div className="md:col-span-3">
                 <label className="block text-sm font-semibold mb-1">Status Of Quotation</label>
-                <input required name="status" value={formData.status} onChange={(e) => handleSetStatus(e)} className="border p-2 w-full rounded" placeholder="Enter Status" />
+                <input  name="status" value={formData.status} onChange={(e) => handleSetStatus(e)} className="border p-2 w-full rounded" placeholder="Enter Status" />
               </div>
             </div>
           </div>
