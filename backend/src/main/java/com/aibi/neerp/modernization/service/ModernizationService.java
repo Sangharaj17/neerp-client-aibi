@@ -449,8 +449,9 @@ public class ModernizationService {
         BigDecimal roundOffValue = roundData.get("roundOffValue");
 
         // --- Amount in Words ---
-        String amountInWords = convertAmountToWords(roundedGrandTotal);
+        String amountInWords = amountToWordsService.convertAmountToWords(roundedGrandTotal);
 
+        
         // --- Build DTO ---
         return ModernizationQuotationInvoiceData.builder()
                 .companyName(companySetting.getCompanyName())

@@ -42,6 +42,13 @@ export default function ModernizationList() {
   // ✅ Fetch List API (Unchanged)
   const fetchModernizations = useCallback(async () => {
     try {
+
+      let sortByParam = sortBy;
+
+      if(sortByParam === "quotationNo"){
+        sortByParam = "id";
+      }
+
       setLoading(true);
       const res = await axiosInstance.get('/api/modernization/getAll', {
         params: {
@@ -49,7 +56,7 @@ export default function ModernizationList() {
           dateSearch: dateSearch || null,
           page,
           size,
-          sortBy,
+          sortBy: sortByParam,
           direction,
         },
       });
