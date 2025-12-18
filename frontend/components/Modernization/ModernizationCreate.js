@@ -13,10 +13,16 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
 
   const [workPeriods, setWorkPeriods] = useState([]);
   const [liftDatas, setLiftDatas] = useState([]);
+
+  const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0]; // YYYY-MM-DD
+};
+
   
   const [form, setForm] = useState({
     quotationNo: '',
-    quotationDate: '',
+    quotationDate: getTodayDate(),
     enquiryId: '',
     workPeriodId: '',
     jobId: '',

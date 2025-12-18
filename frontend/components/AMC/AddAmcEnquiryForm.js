@@ -970,7 +970,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
               {/* No. of Stops */}
               <Select
-                disabled
+                //disabled
                 label="No. of Stops *"
                 value={String(lift.noOfStops || "")}
                 onChange={(e) => handleLiftChange(index, "noOfStops", Number(e.target.value))}
@@ -985,7 +985,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
               {/* No. of Openings */}
               <Select
-                disabled
+                //disabled
                 label="No. of Openings *"
                 value={String(lift.noOfOpenings || "")}
                 onChange={(e) => handleLiftChange(index, "noOfOpenings", Number(e.target.value))}

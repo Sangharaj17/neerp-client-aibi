@@ -171,11 +171,11 @@ public class ModernizationService {
         // **Safety Check for maxId**: Ensure maxId is not null before concatenation
         if (maxId != null) {
         	maxId++;
-            modernizationRequestDtoPreData.setQuotationNo("QUO" + maxId);
-            modernizationRequestDtoPreData.setJobId("JOB" + maxId);
+            modernizationRequestDtoPreData.setQuotationNo("MOD-" + maxId);
+            modernizationRequestDtoPreData.setJobId("JOB-" + maxId);
         } else {
             // Handle case where maxId might be null (e.g., first record)
-            modernizationRequestDtoPreData.setQuotationNo("QUO-1");
+            modernizationRequestDtoPreData.setQuotationNo("MOD-1");
             modernizationRequestDtoPreData.setJobId("JOB-1");
         }
         
