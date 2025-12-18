@@ -450,31 +450,6 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
                         step="1"
                     />
                 </div>
-                
-                {/* Is Final Checkbox */}
-                <div className="flex items-center space-x-2 p-2 col-span-1 h-full">
-                    <input
-                        type="checkbox"
-                        id="isFinal"
-                        name="isFinal"
-                        checked={form.isFinal}
-                        onChange={handleChange}
-                        className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="isFinal" className="text-sm font-medium text-gray-700">Mark as Final</label>
-                    
-                    {form.isFinal && (
-                        <input
-                            type="date"
-                            name="quotationFinalDate"
-                            placeholder="Final Date"
-                            value={form.quotationFinalDate}
-                            onChange={handleChange}
-                            className={inputStyle}
-                            required={form.isFinal}
-                        />
-                    )}
-                </div>
             </div>
         </section>
 

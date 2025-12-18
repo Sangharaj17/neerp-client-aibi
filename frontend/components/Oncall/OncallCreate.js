@@ -450,36 +450,6 @@ const OncallCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
                 step="1"
               />
             </div>
-
-            {/* Is Final Checkbox and Date */}
-            <div className="col-span-1">
-                <label className="text-xs text-gray-500 block mb-1">Final Status</label>
-                <div className='flex items-center space-x-3'>
-                    <div className="flex items-center space-x-1">
-                        <input
-                            type="checkbox"
-                            id="isFinal"
-                            name="isFinal"
-                            checked={form.isFinal}
-                            onChange={handleChange}
-                            className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        <label htmlFor="isFinal" className="text-sm font-medium text-gray-700">Final</label>
-                    </div>
-
-                    {form.isFinal && (
-                        <input
-                            type="date"
-                            name="quotationFinalDate"
-                            placeholder="Final Date"
-                            value={form.quotationFinalDate}
-                            onChange={handleChange}
-                            className={inputStyle}
-                            required={form.isFinal}
-                        />
-                    )}
-                </div>
-            </div>
           </div>
         </section>
 
