@@ -182,6 +182,87 @@ const ModernizationEdit = ({ id, onSave }) => {
       return;
     }
 
+    // ===== VALIDATION LOGIC =====
+    // 1. Check if at least one material detail row exists
+    if (!details || details.length === 0) {
+      toast.error('At least one material/item must be added');
+      return;
+    }
+
+    // 2. Validate each detail row
+    for (let i = 0; i < details.length; i++) {
+      const d = details[i];
+
+      // Check materialName
+      if (!d.materialName || d.materialName.trim() === '') {
+        toast.error(`Row ${i + 1}: Material Name is required`);
+        return;
+      }
+
+      // Check quantity
+      if (d.quantity === '' || d.quantity === null || isNaN(parseFloat(d.quantity))) {
+        toast.error(`Row ${i + 1}: Quantity is required and must be a valid number`);
+        return;
+      }
+      const qty = parseFloat(d.quantity);
+      if (qty <= 0) {
+        toast.error(`Row ${i + 1}: Quantity must be greater than 0`);
+        return;
+      }
+
+      // Check UOM
+      if (!d.uom || d.uom.trim() === '') {
+        toast.error(`Row ${i + 1}: UOM (Unit of Measure) is required`);
+        return;
+      }
+
+      // Check rate
+      if (d.rate === '' || d.rate === null || isNaN(parseFloat(d.rate))) {
+        toast.error(`Row ${i + 1}: Rate is required and must be a valid number`);
+        return;
+      }
+      const rate = parseFloat(d.rate);
+      if (rate <= 0) {
+        toast.error(`Row ${i + 1}: Rate must be greater than 0`);
+        return;
+      }
+
+      // Check amount
+      const amount = parseFloat(d.amount || 0);
+      if (amount < 0) {
+        toast.error(`Row ${i + 1}: Amount cannot be negative`);
+        return;
+      }
+
+      // Check guarantee
+      if (d.guarantee === '' || d.guarantee === null || isNaN(parseInt(d.guarantee))) {
+        toast.error(`Row ${i + 1}: Guarantee is required and must be a valid integer`);
+        return;
+      }
+      const guarantee = parseInt(d.guarantee);
+      if (guarantee <= 0) {
+        toast.error(`Row ${i + 1}: Guarantee must be greater than 0`);
+        return;
+      }
+    }
+
+    // 3. Validate form-level required fields
+    if (!form.hsnSacCode || form.hsnSacCode.trim() === '') {
+      toast.error('Global HSN/SAC Code is required');
+      return;
+    }
+
+    if (!form.workPeriodId) {
+      toast.error('Work Period is required');
+      return;
+    }
+
+    if (!form.quotationDate || form.quotationDate.trim() === '') {
+      toast.error('Quotation Date is required');
+      return;
+    }
+    // ===== END VALIDATION =====
+
     const payload = {
       modernization: {
         ...form,
@@ -338,13 +419,16 @@ const ModernizationEdit = ({ id, onSave }) => {
 
           {/* Warranty Input */}
           <div className="col-span-1">
-            <label className="text-xs text-gray-500 block mb-1">Warranty Period</label>
+            <label className="text-xs text-gray-500 block mb-1">Warranty Period (months)</label>
             <input
+              type="number"
               name="warranty"
               placeholder="Warranty Period"
               value={form.warranty}
               onChange={handleChange}
               className={inputStyle}
+              min="1"
+              step="1"
             />
           </div>
 
@@ -375,7 +459,7 @@ const ModernizationEdit = ({ id, onSave }) => {
                   <th className="py-3 px-2 text-left">UOM</th>
                   <th className="py-3 px-2 text-left">Rate</th>
                   <th className="py-3 px-2 text-left">Amount</th>
-                  <th className="py-3 px-2 text-left">Warranty</th>
+                  <th className="py-3 px-2 text-left">Guarantee(months)</th>
                   <th className="py-3 px-2 text-left"></th>
                 </tr>
               </thead>
@@ -428,10 +512,13 @@ const ModernizationEdit = ({ id, onSave }) => {
                     </td>
                     <td className="p-2">
                       <input
+                        type="number"
                         name="guarantee"
                         value={d.guarantee}
                         onChange={(e) => handleDetailChange(i, e)}
                         className={inputStyle}
+                        min="1"
+                        step="1"
                       />
                     </td>
                     <td className="p-2 text-center">

@@ -166,6 +166,94 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // ===== VALIDATION LOGIC =====
+    
+    // 1. Check if at least one material detail row exists
+    if (!details || details.length === 0) {
+      toast.error('At least one material/item must be added');
+      return;
+    }
+
+    // 2. Validate each detail row
+    for (let i = 0; i < details.length; i++) {
+      const d = details[i];
+      
+      // Check materialName
+      if (!d.materialName || d.materialName.trim() === '') {
+        toast.error(`Row ${i + 1}: Material Name is required`);
+        return;
+      }
+      
+      // Check quantity
+      if (d.quantity === '' || d.quantity === null || isNaN(parseFloat(d.quantity))) {
+        toast.error(`Row ${i + 1}: Quantity is required and must be a valid number`);
+        return;
+      }
+      const qty = parseFloat(d.quantity);
+      if (qty <= 0) {
+        toast.error(`Row ${i + 1}: Quantity must be greater than 0`);
+        return;
+      }
+      
+      // Check UOM
+      if (!d.uom || d.uom.trim() === '') {
+        toast.error(`Row ${i + 1}: UOM (Unit of Measure) is required`);
+        return;
+      }
+      
+      // Check rate
+      if (d.rate === '' || d.rate === null || isNaN(parseFloat(d.rate))) {
+        toast.error(`Row ${i + 1}: Rate is required and must be a valid number`);
+        return;
+      }
+      const rate = parseFloat(d.rate);
+      if (rate <= 0) {
+        toast.error(`Row ${i + 1}: Rate must be greater than 0`);
+        return;
+      }
+      
+      // Check amount (should be auto-calculated, but validate anyway)
+      const amount = parseFloat(d.amount || 0);
+      if (amount < 0) {
+        toast.error(`Row ${i + 1}: Amount cannot be negative`);
+        return;
+      }
+      
+      // Check guarantee
+      if (d.guarantee === '' || d.guarantee === null || isNaN(parseInt(d.guarantee))) {
+        toast.error(`Row ${i + 1}: Guarantee is required and must be a valid integer`);
+        return;
+      }
+      const guarantee = parseInt(d.guarantee);
+      if (guarantee <= 0) {
+        toast.error(`Row ${i + 1}: Guarantee must be greater than 0`);
+        return;
+      }
+    }
+
+    // 3. Validate form-level required fields
+    if (!form.hsnSacCode || form.hsnSacCode.trim() === '') {
+      toast.error('Global HSN/SAC Code is required');
+      return;
+    }
+
+    if (!form.workPeriodId || form.workPeriodId.trim() === '') {
+      toast.error('Work Period is required');
+      return;
+    }
+
+    if (!form.quotationDate || form.quotationDate.trim() === '') {
+      toast.error('Quotation Date is required');
+      return;
+    }
+
+    if (form.isFinal && (!form.quotationFinalDate || form.quotationFinalDate.trim() === '')) {
+      toast.error('Final Date is required when marking as Final');
+      return;
+    }
+
+    // ===== END VALIDATION =====
+
     const payload = {
       modernization: {
         ...form,
@@ -339,13 +427,16 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
 
                 {/* Warranty Input */}
                 <div className="col-span-1">
-                    <label className="text-xs text-gray-500 block mb-1">Warranty Period</label>
+                    <label className="text-xs text-gray-500 block mb-1">Warranty Period (months)</label>
                     <input
+                        type="number"
                         name="warranty"
                         placeholder="Warranty Period"
                         value={form.warranty}
                         onChange={handleChange}
                         className={inputStyle}
+                        min="1"
+                        step="1"
                     />
                 </div>
                 
@@ -398,7 +489,7 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
                   <th className="py-3 px-3 text-left text-xs font-semibold text-gray-600 uppercase w-1/12">UOM</th>
                   <th className="py-3 px-3 text-left text-xs font-semibold text-gray-600 uppercase w-1/12">Rate</th>
                   <th className="py-3 px-3 text-left text-xs font-semibold text-gray-600 uppercase w-2/12">Amount</th>
-                  <th className="py-3 px-3 text-left text-xs font-semibold text-gray-600 uppercase w-2/12">Guarantee</th>
+                  <th className="py-3 px-3 text-left text-xs font-semibold text-gray-600 uppercase w-2/12">Guarantee(months)</th>
                   <th className="py-3 px-3 text-left text-xs font-semibold text-gray-600 uppercase w-1/12"></th>
                 </tr>
               </thead>
@@ -421,7 +512,7 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
                       <input name="amount" value={d.amount} readOnly className={`${readOnlyStyle} text-right font-medium`} placeholder="0.00" />
                     </td>
                     <td className="py-2 px-3">
-                      <input name="guarantee" value={d.guarantee} onChange={(e) => handleDetailChange(i, e)} className={inputStyle} placeholder="Warranty" />
+                      <input type="number" name="guarantee" value={d.guarantee} onChange={(e) => handleDetailChange(i, e)} className={inputStyle} placeholder="Warranty" min="1" step="1" />
                     </td>
                      <td className="py-2 px-3 text-center">
                         <button 

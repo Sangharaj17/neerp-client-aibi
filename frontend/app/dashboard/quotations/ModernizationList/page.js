@@ -251,7 +251,7 @@ export default function ModernizationList() {
           <InfoGridItem label="GST %" value={m.gstPercentage ? `${m.gstPercentage}%` : '-'} colorClass="text-gray-700" />
 
           <InfoGridItem label="Job ID" value={m.jobId} />
-          <InfoGridItem label="Warranty" value={m.warranty ? `${m.warranty} Years` : '-'} />
+          <InfoGridItem label="Warranty" value={m.warranty ? `${m.warranty} Months` : '-'} />
           <InfoGridItem label="GST Applicable" value={m.gstApplicable} />
           <div className="p-3 bg-white border border-gray-100 rounded-lg shadow-sm flex items-center justify-center">
             <BooleanDisplay label="Status" value={m.isFinal} />
