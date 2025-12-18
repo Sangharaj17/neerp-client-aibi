@@ -240,8 +240,8 @@ const ModernizationEdit = ({ id, onSave }) => {
         return;
       }
       const guarantee = parseInt(d.guarantee);
-      if (guarantee <= 0) {
-        toast.error(`Row ${i + 1}: Guarantee must be greater than 0`);
+      if (guarantee < 0) {
+        toast.error(`Row ${i + 1}: Guarantee cannot be negative`);
         return;
       }
     }
@@ -259,6 +259,17 @@ const ModernizationEdit = ({ id, onSave }) => {
 
     if (!form.quotationDate || form.quotationDate.trim() === '') {
       toast.error('Quotation Date is required');
+      return;
+    }
+
+    // Check warranty
+    if (form.warranty === '' || form.warranty === null || isNaN(parseInt(form.warranty))) {
+      toast.error('Warranty Period (months) is required and must be a valid integer');
+      return;
+    }
+    const warranty = parseInt(form.warranty);
+    if (warranty < 0) {
+      toast.error('Warranty Period (months) cannot be negative');
       return;
     }
     // ===== END VALIDATION =====
@@ -427,7 +438,7 @@ const ModernizationEdit = ({ id, onSave }) => {
               value={form.warranty}
               onChange={handleChange}
               className={inputStyle}
-              min="1"
+              min="0"
               step="1"
             />
           </div>
@@ -517,7 +528,7 @@ const ModernizationEdit = ({ id, onSave }) => {
                         value={d.guarantee}
                         onChange={(e) => handleDetailChange(i, e)}
                         className={inputStyle}
-                        min="1"
+                        min="0"
                         step="1"
                       />
                     </td>

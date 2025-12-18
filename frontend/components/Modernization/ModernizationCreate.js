@@ -225,8 +225,8 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
         return;
       }
       const guarantee = parseInt(d.guarantee);
-      if (guarantee <= 0) {
-        toast.error(`Row ${i + 1}: Guarantee must be greater than 0`);
+      if (guarantee < 0) {
+        toast.error(`Row ${i + 1}: Guarantee cannot be negative`);
         return;
       }
     }
@@ -249,6 +249,17 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
 
     if (form.isFinal && (!form.quotationFinalDate || form.quotationFinalDate.trim() === '')) {
       toast.error('Final Date is required when marking as Final');
+      return;
+    }
+
+    // Check warranty
+    if (form.warranty === '' || form.warranty === null || isNaN(parseInt(form.warranty))) {
+      toast.error('Warranty Period (months) is required and must be a valid integer');
+      return;
+    }
+    const warranty = parseInt(form.warranty);
+    if (warranty < 0) {
+      toast.error('Warranty Period (months) cannot be negative');
       return;
     }
 
@@ -435,7 +446,7 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
                         value={form.warranty}
                         onChange={handleChange}
                         className={inputStyle}
-                        min="1"
+                        min="0"
                         step="1"
                     />
                 </div>
@@ -512,7 +523,7 @@ const ModernizationCreate = ({ leadId, combinedEnquiryId, customer, site }) => {
                       <input name="amount" value={d.amount} readOnly className={`${readOnlyStyle} text-right font-medium`} placeholder="0.00" />
                     </td>
                     <td className="py-2 px-3">
-                      <input type="number" name="guarantee" value={d.guarantee} onChange={(e) => handleDetailChange(i, e)} className={inputStyle} placeholder="Warranty" min="1" step="1" />
+                      <input type="number" name="guarantee" value={d.guarantee} onChange={(e) => handleDetailChange(i, e)} className={inputStyle} placeholder="Warranty" min="0" step="1" />
                     </td>
                      <td className="py-2 px-3 text-center">
                         <button 
