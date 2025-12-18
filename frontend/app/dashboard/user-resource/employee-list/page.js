@@ -27,6 +27,81 @@ function EmployeeListPage() {
     roleId: null,
     active: true,
   });
+  const [formErrors, setFormErrors] = useState({});
+
+  // Sanitization helper - removes HTML tags and trims whitespace
+  const sanitizeInput = (value) => {
+    if (typeof value !== 'string') return value;
+    return value
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/[<>]/g, '') // Remove angle brackets
+      .trim();
+  };
+
+  // Validation helpers
+  const isValidEmail = (email) => {
+    if (!email || email === '-') return true; // Optional field
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const isValidMobile = (mobile) => {
+    if (!mobile || mobile === '-') return true; // Optional field
+    const cleanedMobile = mobile.replace(/[\s-]/g, '');
+    // Accept 10 or 12 digit mobile numbers
+    const mobileRegex = /^[0-9]{10}$|^[0-9]{12}$/;
+    return mobileRegex.test(cleanedMobile);
+  };
+
+  const isValidUsername = (username) => {
+    if (!username) return false;
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    return usernameRegex.test(username) && username.length >= 3;
+  };
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Required field validations
+    if (!form.employeeName.trim()) {
+      errors.employeeName = 'Employee name is required';
+    } else if (form.employeeName.trim().length < 2) {
+      errors.employeeName = 'Name must be at least 2 characters';
+    }
+
+    if (!form.username.trim()) {
+      errors.username = 'Username is required';
+    } else if (!isValidUsername(form.username.trim())) {
+      errors.username = 'Username must be at least 3 characters (letters, numbers, underscore only)';
+    }
+
+    // Password validation (required only for new employees)
+    if (!editingEmployee && !form.password) {
+      errors.password = 'Password is required';
+    } else if (form.password && form.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters';
+    }
+
+    // Optional field validations
+    if (form.emailId && form.emailId !== '-' && !isValidEmail(form.emailId)) {
+      errors.emailId = 'Please enter a valid email address';
+    }
+
+    if (form.contactNumber && form.contactNumber !== '-' && !isValidMobile(form.contactNumber)) {
+      errors.contactNumber = 'Mobile number must be 10 or 12 digits';
+    }
+
+    if (!form.employeeCode.trim()) {
+      errors.employeeCode = 'Employee code is required';
+    }
+
+    if (!form.roleId) {
+      errors.roleId = 'Please select a role';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,25 +162,46 @@ function EmployeeListPage() {
   };
 
   const handleSave = async () => {
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+
     setSaving(true);
     try {
       const selectedRole = roles.find(r => r.roleId === form.roleId);
+
+      // Sanitize all inputs before sending to backend
+      const sanitizedForm = {
+        employeeName: sanitizeInput(form.employeeName),
+        contactNumber: sanitizeInput(form.contactNumber) || '-',
+        emailId: sanitizeInput(form.emailId) || '-',
+        address: sanitizeInput(form.address) || '-',
+        username: sanitizeInput(form.username),
+        password: form.password, // Don't sanitize password
+        employeeCode: sanitizeInput(form.employeeCode),
+        roleId: form.roleId,
+        active: form.active,
+      };
+
       const payload = {
-        ...form,
-        address: form.address || '-',
-        emailId: form.emailId || '-',
-        contactNumber: form.contactNumber || '-',
+        ...sanitizedForm,
         empPhoto: 'N/A',
         dob: '2000-01-01',
         joiningDate: '2000-01-01',
         role: selectedRole || null,
       };
-      
+
+      // Remove password if editing and password is empty (keep existing)
+      if (editingEmployee && !payload.password) {
+        delete payload.password;
+      }
+
       let res;
       if (editingEmployee) {
         // Update existing employee
         res = await axiosInstance.put(`/api/employees/${editingEmployee.employeeId}`, payload);
-        setEmployees(prev => prev.map(emp => 
+        setEmployees(prev => prev.map(emp =>
           emp.employeeId === editingEmployee.employeeId ? res.data : emp
         ));
         setEditingEmployee(null);
@@ -114,7 +210,7 @@ function EmployeeListPage() {
         res = await axiosInstance.post('/api/employees', payload);
         setEmployees(prev => [res.data, ...prev]);
       }
-      
+
       setShowAdd(false);
       resetForm();
     } catch (e) {
@@ -127,6 +223,7 @@ function EmployeeListPage() {
 
   const handleEdit = (employee) => {
     setEditingEmployee(employee);
+    setFormErrors({}); // Clear any previous errors
     setForm({
       employeeName: employee.employeeName || '',
       contactNumber: employee.contactNumber || '',
@@ -145,7 +242,7 @@ function EmployeeListPage() {
     if (!confirm('Are you sure you want to delete this employee?')) {
       return;
     }
-    
+
     setDeleting(employeeId);
     try {
       await axiosInstance.delete(`/api/employees/${employeeId}`);
@@ -170,6 +267,7 @@ function EmployeeListPage() {
       roleId: null,
       active: true,
     });
+    setFormErrors({}); // Clear form errors
     setEditingEmployee(null);
   };
 
@@ -181,7 +279,7 @@ function EmployeeListPage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-[1400px] mx-auto p-8">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -189,14 +287,14 @@ function EmployeeListPage() {
             <p className="text-sm text-neutral-500 mt-1">{filtered.length} total</p>
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={exportToExcel} 
+            <button
+              onClick={exportToExcel}
               className="h-9 px-4 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
             >
               Export
             </button>
-            <button 
-              onClick={() => setShowAdd(true)} 
+            <button
+              onClick={() => setShowAdd(true)}
               className="h-9 px-4 rounded-lg bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 transition-colors"
             >
               Add Employee
@@ -223,7 +321,7 @@ function EmployeeListPage() {
               {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
-          
+
           <input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
@@ -275,25 +373,26 @@ function EmployeeListPage() {
                     <td className="px-4 py-3 text-neutral-600 max-w-xs truncate" title={e.address}>{e.address}</td>
                     <td className="px-4 py-3 text-neutral-600">{e.username}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        e.active 
-                          ? 'bg-green-50 text-green-700' 
-                          : 'bg-neutral-100 text-neutral-600'
-                      }`}>
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${e.active
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-neutral-100 text-neutral-600'
+                        }`}>
                         {e.active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-neutral-600">{e.employeeCode}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button 
+                        <button
+                          type="button"
                           onClick={() => handleEdit(e)}
                           className="text-xs text-neutral-600 hover:text-neutral-900 transition-colors"
                         >
                           Edit
                         </button>
                         <span className="text-neutral-300">·</span>
-                        <button 
+                        <button
+                          type="button"
                           onClick={() => handleDelete(e.employeeId)}
                           disabled={deleting === e.employeeId}
                           className="text-xs text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
@@ -307,16 +406,16 @@ function EmployeeListPage() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination */}
           <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 bg-neutral-50">
             <div className="text-sm text-neutral-600">
               {pageRows.length === 0 ? 'No entries' : `${start + 1}–${start + pageRows.length} of ${filtered.length}`}
             </div>
             <div className="flex items-center gap-2">
-              <button 
-                disabled={currentPage === 1} 
-                onClick={() => setPage(p => Math.max(1, p - 1))} 
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
                 className="h-8 px-3 rounded-lg border border-neutral-200 bg-white text-sm text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50 transition-colors"
               >
                 Previous
@@ -324,9 +423,9 @@ function EmployeeListPage() {
               <div className="px-3 text-sm text-neutral-600">
                 {currentPage} of {totalPages}
               </div>
-              <button 
-                disabled={currentPage === totalPages} 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))} 
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 className="h-8 px-3 rounded-lg border border-neutral-200 bg-white text-sm text-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-50 transition-colors"
               >
                 Next
@@ -341,14 +440,14 @@ function EmployeeListPage() {
       {showAdd && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl">
-            
+
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200">
               <h2 className="text-lg font-semibold text-neutral-900">
                 {editingEmployee ? 'Edit Employee' : 'Add Employee'}
               </h2>
-              <button 
-                onClick={handleCloseModal} 
+              <button
+                onClick={handleCloseModal}
                 className="h-8 w-8 rounded-lg hover:bg-neutral-100 transition-colors flex items-center justify-center text-neutral-500 hover:text-neutral-700"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -360,21 +459,54 @@ function EmployeeListPage() {
             {/* Modal Body */}
             <div className="px-6 py-6">
               <div className="grid grid-cols-2 gap-4">
-                <TextField label="Name" value={form.employeeName} onChange={v => setForm(f => ({ ...f, employeeName: v }))} />
-                <TextField label="Employee Code" value={form.employeeCode} onChange={v => setForm(f => ({ ...f, employeeCode: v }))} />
-                <TextField label="Mobile" value={form.contactNumber} onChange={v => setForm(f => ({ ...f, contactNumber: v }))} />
-                <TextField label="Email" value={form.emailId} onChange={v => setForm(f => ({ ...f, emailId: v }))} />
-                <TextField label="Username" value={form.username} onChange={v => setForm(f => ({ ...f, username: v }))} />
-                <TextField 
-                  label={editingEmployee ? "Password (leave blank to keep current)" : "Password"} 
-                  type="password" 
-                  value={form.password} 
-                  onChange={v => setForm(f => ({ ...f, password: v }))} 
+                <TextField
+                  label="Name"
+                  value={form.employeeName}
+                  onChange={v => setForm(f => ({ ...f, employeeName: v }))}
+                  error={formErrors.employeeName}
+                  required
+                />
+                <TextField
+                  label="Employee Code"
+                  value={form.employeeCode}
+                  onChange={v => setForm(f => ({ ...f, employeeCode: v }))}
+                  error={formErrors.employeeCode}
+                  required
+                />
+                <TextField
+                  label="Mobile (10 or 12 digits)"
+                  value={form.contactNumber}
+                  onChange={v => setForm(f => ({ ...f, contactNumber: v }))}
+                  error={formErrors.contactNumber}
+                />
+                <TextField
+                  label="Email"
+                  value={form.emailId}
+                  onChange={v => setForm(f => ({ ...f, emailId: v }))}
+                  error={formErrors.emailId}
+                />
+                <TextField
+                  label="Username"
+                  value={form.username}
+                  onChange={v => setForm(f => ({ ...f, username: v }))}
+                  error={formErrors.username}
+                  required
+                />
+                <TextField
+                  label={editingEmployee ? "Password (leave blank to keep current)" : "Password"}
+                  type="password"
+                  value={form.password}
+                  onChange={v => setForm(f => ({ ...f, password: v }))}
+                  error={formErrors.password}
+                  required={!editingEmployee}
                 />
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">Role</label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    Role<span className="text-red-500 ml-1">*</span>
+                  </label>
                   <select
-                    className="w-full h-9 rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+                    className={`w-full h-9 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors ${formErrors.roleId ? 'border-red-400 bg-red-50' : 'border-neutral-200'
+                      }`}
                     value={form.roleId || ''}
                     onChange={(e) => setForm(f => ({ ...f, roleId: e.target.value ? Number(e.target.value) : null }))}
                   >
@@ -385,21 +517,24 @@ function EmployeeListPage() {
                       </option>
                     ))}
                   </select>
+                  {formErrors.roleId && (
+                    <p className="mt-1 text-xs text-red-600">{formErrors.roleId}</p>
+                  )}
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-neutral-700 mb-2">Address</label>
-                  <textarea 
-                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-none" 
-                    rows="3" 
-                    value={form.address} 
-                    onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))} 
+                  <textarea
+                    className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-none"
+                    rows="3"
+                    value={form.address}
+                    onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))}
                   />
                 </div>
                 <div className="col-span-2 flex items-center gap-2">
-                  <input 
-                    id="active" 
-                    type="checkbox" 
-                    checked={form.active} 
+                  <input
+                    id="active"
+                    type="checkbox"
+                    checked={form.active}
                     onChange={(e) => setForm(f => ({ ...f, active: e.target.checked }))}
                     className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                   />
@@ -412,15 +547,15 @@ function EmployeeListPage() {
 
             {/* Modal Footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-neutral-200 bg-neutral-50">
-              <button 
-                onClick={handleCloseModal} 
+              <button
+                onClick={handleCloseModal}
                 className="h-9 px-4 rounded-lg border border-neutral-200 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
               >
                 Cancel
               </button>
-              <button 
-                disabled={saving} 
-                onClick={handleSave} 
+              <button
+                disabled={saving}
+                onClick={handleSave}
                 className="h-9 px-4 rounded-lg bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? 'Saving...' : editingEmployee ? 'Update Employee' : 'Save Employee'}
@@ -434,18 +569,22 @@ function EmployeeListPage() {
   );
 }
 
-function TextField({ label, type = 'text', value, onChange }) {
+function TextField({ label, type = 'text', value, onChange, error, required }) {
   return (
     <div>
       <label className="block text-sm font-medium text-neutral-700 mb-2">
-        {label}
+        {label}{required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <input
         type={type}
-        className="w-full h-9 rounded-lg border border-neutral-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent"
+        className={`w-full h-9 rounded-lg border px-3 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-transparent transition-colors ${error ? 'border-red-400 bg-red-50' : 'border-neutral-200'
+          }`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+      {error && (
+        <p className="mt-1 text-xs text-red-600">{error}</p>
+      )}
     </div>
   );
 }

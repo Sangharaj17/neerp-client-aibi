@@ -6,12 +6,12 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import axiosInstance from '@/utils/axiosInstance';
 
-export default function AddEnquiryForm({leadSubmitted , customer , site , 
-  leadId ,form, setForm ,repeatSettings , setRepeatSettings , enquiryTypeName , 
-  enquiryTypeId , setEnquiryTypeName,setEnquiryTypeId , handleSetLeadSumbited}) {
+export default function AddEnquiryForm({ leadSubmitted, customer, site,
+  leadId, form, setForm, repeatSettings, setRepeatSettings, enquiryTypeName,
+  enquiryTypeId, setEnquiryTypeName, setEnquiryTypeId, handleSetLeadSumbited }) {
 
- 
-   console.log("Selected enquiryTypeId:", enquiryTypeId);
+
+  console.log("Selected enquiryTypeId:", enquiryTypeId);
   const { id, tenant } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,13 +20,13 @@ export default function AddEnquiryForm({leadSubmitted , customer , site ,
 
   const floorOptions = ['T', 'G', 'P', 'B1', 'B2'];
   const floorLabels = { T: 'Terrace', G: 'Ground', P: 'Parking', B1: 'Basement 1', B2: 'Basement 2' };
- // const personOptions = ['01 Person/240Kg', '02 Persons/360Kg', '04 Persons/480Kg', '06 Persons/720Kg', '08 Persons/960Kg', '10 Persons/1200Kg', '13 Persons/1560Kg', '15 Persons/1800Kg'];
+  // const personOptions = ['01 Person/240Kg', '02 Persons/360Kg', '04 Persons/480Kg', '06 Persons/720Kg', '08 Persons/960Kg', '10 Persons/1200Kg', '13 Persons/1560Kg', '15 Persons/1800Kg'];
   //const kgOptions = ['100Kg', '150Kg', '200Kg', '250Kg', '300Kg', '400Kg'];
 
   // const customer = searchParams.get('customer') || 'Customer';
   // const site = searchParams.get('site') || 'Site';
 
-   function getEmptyLift() {
+  function getEmptyLift() {
     return {
       leadId: leadId,
       liftUsageType: '',
@@ -35,15 +35,15 @@ export default function AddEnquiryForm({leadSubmitted , customer , site ,
       machineRoomType: '',
       cabinType: '',
       capacityType: '',
-      capacityTermId : '',
+      capacityTermId: '',
       personCapacityId: '',
-      weightId:'',
+      weightId: '',
       noOfFloors: '',
-      floorsDesignation : '',
+      floorsDesignation: '',
       noOfStops: '',
       noOfOpenings: '',
       floorSelections: [],
-     
+
       shaftWidth: '',
       shaftDepth: '',
       pit: '',
@@ -51,217 +51,225 @@ export default function AddEnquiryForm({leadSubmitted , customer , site ,
       buildingType: '',
     };
   }
- 
 
-   const [enquiryTypes, setEnquiryTypes] = useState([]);
 
-   useEffect(() => {
+  const [enquiryTypes, setEnquiryTypes] = useState([]);
+
+  useEffect(() => {
     axiosInstance.get('/api/enquiry-types')
       .then((res) => {
         setEnquiryTypes(res.data);
 
         // Set the first item as default
         if (res.data.length > 0 && enquiryTypeName === '') {
-            setEnquiryTypeName(res.data[0].enquiryTypeName);
-            setEnquiryTypeId(res.data[0].enquiryTypeId);
-         
+          setEnquiryTypeName(res.data[0].enquiryTypeName);
+          setEnquiryTypeId(res.data[0].enquiryTypeId);
+
         }
       })
       .catch((err) => console.error('Failed to fetch enquiry types', err));
   }, []);
 
 
-const [personOptions, setPersonOptions] = useState([]);
+  const [personOptions, setPersonOptions] = useState([]);
 
 
 
-useEffect(() => {
-  axiosInstance.get('/api/personCapacity')
-    .then((response) => {
-      const formatted = response.data.map((p) => ({
-        id: p.id,
-        convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
-      }));
-      console.log('Formatted person capacities:', formatted);
-      setPersonOptions(formatted); // Directly set formatted array
-    })
-    .catch((error) => {
-      console.error('Error fetching person capacities:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/personCapacity')
+      .then((response) => {
+        const formatted = response.data.map((p) => ({
+          id: p.id,
+          convertedString: `${String(p.personCount).padStart(2, '0')} Person${p.personCount > 1 ? 's' : ''}/${p.weight}Kg`
+        }));
+        console.log('Formatted person capacities:', formatted);
+        setPersonOptions(formatted); // Directly set formatted array
+      })
+      .catch((error) => {
+        console.error('Error fetching person capacities:', error);
+        toast.error('Failed to load person capacity options');
+      });
+  }, []);
 
-const [kgOptions, setKgOptions] = useState([]);
+  const [kgOptions, setKgOptions] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/weight')
-    .then((response) => {
-      const formatted = response.data.map((w) => ({
-        id: w.id,
-        display: `${w.weightValue} ${w.unit || 'Kg'}`
-      }));
-      console.log('Formatted weights:', formatted);
-      setKgOptions(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching weights:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/weight')
+      .then((response) => {
+        const formatted = response.data.map((w) => ({
+          id: w.id,
+          display: `${w.weightValue} ${w.unit || 'Kg'}`
+        }));
+        console.log('Formatted weights:', formatted);
+        setKgOptions(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching weights:', error);
+        toast.error('Failed to load weight options');
+      });
+  }, []);
 
-const [machineRoomOptions, setMachineRoomOptions] = useState([]);
+  const [machineRoomOptions, setMachineRoomOptions] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/machineRoom')
-    .then((response) => {
-      const formatted = response.data.map((room) => ({
-        id: room.id,
-        name: room.machineRoomName
-      }));
-      console.log('Formatted machine room types:', formatted);
-      setMachineRoomOptions(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching machine room types:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/machineRoom')
+      .then((response) => {
+        const formatted = response.data.map((room) => ({
+          id: room.id,
+          name: room.machineRoomName
+        }));
+        console.log('Formatted machine room types:', formatted);
+        setMachineRoomOptions(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching machine room types:', error);
+        toast.error('Failed to load machine room options');
+      });
+  }, []);
 
-const [cabinTypeOptions, setCabinTypeOptions] = useState([]);
+  const [cabinTypeOptions, setCabinTypeOptions] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/cabinType')
-    .then((response) => {
-      const formatted = response.data.map((type) => ({
-        id: type.id,
-        name: type.cabinType
-      }));
-      console.log('Formatted cabin types:', formatted);
-      setCabinTypeOptions(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching cabin types:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/cabinType')
+      .then((response) => {
+        const formatted = response.data.map((type) => ({
+          id: type.id,
+          name: type.cabinType
+        }));
+        console.log('Formatted cabin types:', formatted);
+        setCabinTypeOptions(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching cabin types:', error);
+        toast.error('Failed to load cabin type options');
+      });
+  }, []);
 
-const [floorOption, setFloorOption] = useState([]);
+  const [floorOption, setFloorOption] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/floor')
-    .then((response) => {
-      const formatted = response.data.map((floor) => ({
-        id: floor.id,
-        name: floor.name
-      }));
-      console.log('Formatted floor options:', formatted);
-      setFloorOption(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching floor options:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/floor')
+      .then((response) => {
+        const formatted = response.data.map((floor) => ({
+          id: floor.id,
+          name: floor.name
+        }));
+        console.log('Formatted floor options:', formatted);
+        setFloorOption(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching floor options:', error);
+        toast.error('Failed to load floor options');
+      });
+  }, []);
 
-const [elevatorTypeOptions, setElevatorTypeOptions] = useState([]);
+  const [elevatorTypeOptions, setElevatorTypeOptions] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/elevatorOperation') // <-- Adjust endpoint as per your API
-    .then((response) => {
-      const formatted = response.data.map((item) => ({
-        id: item.id,
-        name: item.name
-      }));
-      console.log('Formatted elevator types:', formatted);
-      setElevatorTypeOptions(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching elevator types:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/elevatorOperation') // <-- Adjust endpoint as per your API
+      .then((response) => {
+        const formatted = response.data.map((item) => ({
+          id: item.id,
+          name: item.name
+        }));
+        console.log('Formatted elevator types:', formatted);
+        setElevatorTypeOptions(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching elevator types:', error);
+        toast.error('Failed to load elevator type options');
+      });
+  }, []);
 
-const [liftMechanismOptions, setLiftMechanismOptions] = useState([]);
+  const [liftMechanismOptions, setLiftMechanismOptions] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/typeOfLift') // Adjust endpoint accordingly
-    .then((response) => {
-      const formatted = response.data.map((item) => ({
-        id: item.id,
-        name: item.liftTypeName
-      }));
-      console.log('Formatted lift mechanisms:', formatted);
-      setLiftMechanismOptions(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching lift mechanisms:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/typeOfLift') // Adjust endpoint accordingly
+      .then((response) => {
+        const formatted = response.data.map((item) => ({
+          id: item.id,
+          name: item.liftTypeName
+        }));
+        console.log('Formatted lift mechanisms:', formatted);
+        setLiftMechanismOptions(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching lift mechanisms:', error);
+        toast.error('Failed to load lift mechanism options');
+      });
+  }, []);
 
-const [liftUsageTypeOptions, setLiftUsageTypeOptions] = useState([]);
+  const [liftUsageTypeOptions, setLiftUsageTypeOptions] = useState([]);
 
-useEffect(() => {
-  axiosInstance.get('/api/leadmanagement/build-types') // Adjust to your actual endpoint
-    .then((response) => {
-      const formatted = response.data.map((item) => ({
-        id: item.id,
-        name: item.name
-      }));
-      console.log('Formatted lift usage types:', formatted);
-      setLiftUsageTypeOptions(formatted);
-    })
-    .catch((error) => {
-      console.error('Error fetching lift usage types:', error);
-    });
-}, []);
+  useEffect(() => {
+    axiosInstance.get('/api/leadmanagement/build-types') // Adjust to your actual endpoint
+      .then((response) => {
+        const formatted = response.data.map((item) => ({
+          id: item.id,
+          name: item.name
+        }));
+        console.log('Formatted lift usage types:', formatted);
+        setLiftUsageTypeOptions(formatted);
+      })
+      .catch((error) => {
+        console.error('Error fetching lift usage types:', error);
+        toast.error('Failed to load lift usage type options');
+      });
+  }, []);
 
-const [capacityTypeOptions, setCapacityTypeOptions] = useState([]);
+  const [capacityTypeOptions, setCapacityTypeOptions] = useState([]);
 
-useEffect(() => {
-  const fetchCapacityTypes = async () => {
-    try {
-      const response = await axiosInstance.get("/api/capacityType");
-  const data = response.data; // Axios automatically parses JSON
+  useEffect(() => {
+    const fetchCapacityTypes = async () => {
+      try {
+        const response = await axiosInstance.get("/api/capacityType");
+        const data = response.data; // Axios automatically parses JSON
 
-      // Convert to display-friendly format
-      const options = data.map(item => ({
-        id: item.id,
-        label: item.capacityType,
-        value: item.capacityType
-      }));
-      console.log('Formatted capacity types:', options);
+        // Convert to display-friendly format
+        const options = data.map(item => ({
+          id: item.id,
+          label: item.capacityType,
+          value: item.capacityType
+        }));
+        console.log('Formatted capacity types:', options);
 
-      setCapacityTypeOptions(options);
-    } catch (error) {
-      console.error("Error fetching capacity types:", error);
-    }
-  };
+        setCapacityTypeOptions(options);
+      } catch (error) {
+        console.error("Error fetching capacity types:", error);
+      }
+    };
 
-  fetchCapacityTypes();
-}, []);
+    fetchCapacityTypes();
+  }, []);
 
-const [projectStages, setProjectStages] = useState([]);
-const [buildingTypes, setBuildingTypes] = useState([]);
+  const [projectStages, setProjectStages] = useState([]);
+  const [buildingTypes, setBuildingTypes] = useState([]);
 
-useEffect(() => {
-  const fetchProjectStages = async () => {
-    try {
-      const response = await axiosInstance.get('/api/leadmanagement/project-stages');
-      setProjectStages(response.data);
-    } catch (error) {
-      console.error('Error fetching project stages:', error);
-    }
-  };
+  useEffect(() => {
+    const fetchProjectStages = async () => {
+      try {
+        const response = await axiosInstance.get('/api/leadmanagement/project-stages');
+        setProjectStages(response.data);
+      } catch (error) {
+        console.error('Error fetching project stages:', error);
+      }
+    };
 
-  fetchProjectStages();
-}, []);
+    fetchProjectStages();
+  }, []);
 
-useEffect(() => {
-  const fetchBuildingTypes = async () => {
-    try {
-      const response = await axiosInstance.get('/api/leadmanagement/building-types');
-      setBuildingTypes(response.data);
-    } catch (error) {
-      console.error('Error fetching building types:', error);
-    }
-  };
+  useEffect(() => {
+    const fetchBuildingTypes = async () => {
+      try {
+        const response = await axiosInstance.get('/api/leadmanagement/building-types');
+        setBuildingTypes(response.data);
+      } catch (error) {
+        console.error('Error fetching building types:', error);
+      }
+    };
 
-  fetchBuildingTypes();
-}, []);
+    fetchBuildingTypes();
+  }, []);
 
 
 
@@ -270,7 +278,7 @@ useEffect(() => {
     setForm((prev) => ({ ...prev, leadDetail: `${customer} For ${site}` }));
   }, [customer, site]);
 
-  
+
 
 
 
@@ -377,50 +385,50 @@ useEffect(() => {
   };
 
   const handleUpdateFloorDesignationAndStopsAndOpenings = (index, noOfFloorsValue) => {
-  const updatedLifts = [...form.lifts];
-  const parsedFloors = parseInt(noOfFloorsValue);
+    const updatedLifts = [...form.lifts];
+    const parsedFloors = parseInt(noOfFloorsValue);
 
-  if (!isNaN(parsedFloors) && parsedFloors > 0) {
-    updatedLifts[index] = {
-      ...updatedLifts[index],
-      noOfFloors: parsedFloors,
-      floorsDesignation: `G + ${parsedFloors - 1}`,
-      noOfStops: parsedFloors,
-      noOfOpenings: parsedFloors,
-    };
-  } else {
-    updatedLifts[index] = {
-      ...updatedLifts[index],
-      noOfFloors: '',
-      floorsDesignation: '',
-      noOfStops: '',
-      noOfOpenings: '',
-    };
-  }
-
-  setForm(prev => ({
-    ...prev,
-    lifts: updatedLifts
-  }));
-};
-
-const [liftQuantities, setLiftQuantities] = useState([]);
-
-useEffect(() => {
-  const fetchLiftQuantities = async () => {
-    try {
-       const response = await axiosInstance.get("/api/leadmanagement/lift-quantities");
-  const data = response.data; // Axios auto-parses JSON
-      setLiftQuantities(data);
-    } catch (error) {
-      console.error("Failed to fetch lift quantities:", error);
+    if (!isNaN(parsedFloors) && parsedFloors > 0) {
+      updatedLifts[index] = {
+        ...updatedLifts[index],
+        noOfFloors: parsedFloors,
+        floorsDesignation: `G + ${parsedFloors - 1}`,
+        noOfStops: parsedFloors,
+        noOfOpenings: parsedFloors,
+      };
+    } else {
+      updatedLifts[index] = {
+        ...updatedLifts[index],
+        noOfFloors: '',
+        floorsDesignation: '',
+        noOfStops: '',
+        noOfOpenings: '',
+      };
     }
+
+    setForm(prev => ({
+      ...prev,
+      lifts: updatedLifts
+    }));
   };
 
-  fetchLiftQuantities();
-}, []);
+  const [liftQuantities, setLiftQuantities] = useState([]);
 
-const handleEnquiryTypeChange = (e) => {
+  useEffect(() => {
+    const fetchLiftQuantities = async () => {
+      try {
+        const response = await axiosInstance.get("/api/leadmanagement/lift-quantities");
+        const data = response.data; // Axios auto-parses JSON
+        setLiftQuantities(data);
+      } catch (error) {
+        console.error("Failed to fetch lift quantities:", error);
+      }
+    };
+
+    fetchLiftQuantities();
+  }, []);
+
+  const handleEnquiryTypeChange = (e) => {
     const selectedId = parseInt(e.target.value);
     const selectedType = enquiryTypes.find(et => et.enquiryTypeId === selectedId);
 
@@ -434,38 +442,38 @@ const handleEnquiryTypeChange = (e) => {
   return (
     <div className="w-full max-w-7xl bg-white rounded-lg shadow-sm border">
       <div className="bg-blue-600 text-white text-center py-3 text-base font-semibold rounded-t-lg">Add Lift Requirement</div>
-     <div className="flex justify-between items-center text-xs text-gray-700 py-1 px-2 gap-3">
+      <div className="flex justify-between items-center text-xs text-gray-700 py-1 px-2 gap-3">
 
-  {/* Label + Dropdown horizontally aligned */}
-  <div className="flex items-center gap-2">
-    <label htmlFor="enquiryTypeId" className="text-gray-600 text-xs font-medium whitespace-nowrap">
-      Select Enquiry Type
-    </label>
-    <select
-      id="enquiryTypeId"
-      name="enquiryTypeId"
-      className="border text-sm rounded px-2 py-1"
-      value={enquiryTypeId || ''}
-      onChange={handleEnquiryTypeChange}
-    >
-      <option value="" disabled>Select</option>
-      {enquiryTypes.map((type) => (
-        <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
-          {type.enquiryTypeName}
-        </option>
-      ))}
-    </select>
-  </div>
+        {/* Label + Dropdown horizontally aligned */}
+        <div className="flex items-center gap-2">
+          <label htmlFor="enquiryTypeId" className="text-gray-600 text-xs font-medium whitespace-nowrap">
+            Select Enquiry Type
+          </label>
+          <select
+            id="enquiryTypeId"
+            name="enquiryTypeId"
+            className="border text-sm rounded px-2 py-1"
+            value={enquiryTypeId || ''}
+            onChange={handleEnquiryTypeChange}
+          >
+            <option value="" disabled>Select</option>
+            {enquiryTypes.map((type) => (
+              <option key={type.enquiryTypeId} value={type.enquiryTypeId}>
+                {type.enquiryTypeName}
+              </option>
+            ))}
+          </select>
+        </div>
 
-  {/* Floor info labels */}
-  <div className="flex gap-2 text-xs text-gray-500 flex-wrap justify-end">
-    {floorOptions.map((floor) => (
-      <span key={floor}>
-        {floor} = {floorLabels[floor]}
-      </span>
-    ))}
-  </div>
-</div>
+        {/* Floor info labels */}
+        <div className="flex gap-2 text-xs text-gray-500 flex-wrap justify-end">
+          {floorOptions.map((floor) => (
+            <span key={floor}>
+              {floor} = {floorLabels[floor]}
+            </span>
+          ))}
+        </div>
+      </div>
 
 
 
@@ -477,18 +485,18 @@ const handleEnquiryTypeChange = (e) => {
           {/* <Select label="No. of Lifts *" name="noOfLifts" value={form.noOfLifts} onChange={handleNoOfLiftsChange}>
             {[1, 2, 3].map((num) => <option key={num} value={num}>{num}</option>)}
           </Select> */}
-           <Select
-  label="No. of Lifts *"
-  name="noOfLifts"
-  value={form.noOfLifts}
-  onChange={handleNoOfLiftsChange}
->
-  {liftQuantities.map((item) => (
-    <option key={item.id} value={item.quantity}>
-      {item.quantity}
-    </option>
-  ))}
-</Select>
+          <Select
+            label="No. of Lifts *"
+            name="noOfLifts"
+            value={form.noOfLifts}
+            onChange={handleNoOfLiftsChange}
+          >
+            {liftQuantities.map((item) => (
+              <option key={item.id} value={item.quantity}>
+                {item.quantity}
+              </option>
+            ))}
+          </Select>
         </div>
         {form.lifts.map((lift, index) => (
           <div key={index} className="border p-3 rounded my-3 bg-gray-50">
@@ -525,151 +533,150 @@ const handleEnquiryTypeChange = (e) => {
 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-<Select
-  label="Lift Usage Type *"
-  value={String(lift.liftUsageType || '')} // must hold the selected ID
-  onChange={(e) => handleLiftChange(index, 'liftUsageType', e.target.value)}
-  isEmpty={liftUsageTypeOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {liftUsageTypeOptions.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.name}
-    </option>
-  ))}
-</Select>
-<Select
-  label="Lift Mechanism *"
-  value={String(lift.liftMechanism || '')} // should store the selected lift type ID
-  onChange={(e) => handleLiftChange(index, 'liftMechanism', e.target.value)}
-  isEmpty={liftMechanismOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {liftMechanismOptions.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.name}
-    </option>
-  ))}
-</Select>
-<Select
-  label="Elevator Type *"
-  value={String(lift.elevatorType || '')} // should hold the selected ID
-  onChange={(e) => handleLiftChange(index, 'elevatorType', e.target.value)}
-  isEmpty={elevatorTypeOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {elevatorTypeOptions.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.name}
-    </option>
-  ))}
-</Select>
-<Select
-  label="Machine Room Type *"
-  value={String(lift.machineRoomType || '')} // selected ID from backend
-  onChange={(e) => handleLiftChange(index, 'machineRoomType', e.target.value)}
-  isEmpty={machineRoomOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {machineRoomOptions.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.name}
-    </option>
-  ))}
-</Select>
-<Select
-  label="Cabin Type *"
-  value={String(lift.cabinType || '')} // should store the selected ID
-  onChange={(e) => handleLiftChange(index, 'cabinType', e.target.value)}
-  isEmpty={cabinTypeOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {cabinTypeOptions.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.name}
-    </option>
-  ))}
-</Select>
-             
+              <Select
+                label="Lift Usage Type *"
+                value={String(lift.liftUsageType || '')} // must hold the selected ID
+                onChange={(e) => handleLiftChange(index, 'liftUsageType', e.target.value)}
+                isEmpty={liftUsageTypeOptions.length === 0}
+              >
+                <option value="">Please Select</option>
+                {liftUsageTypeOptions.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>
+                    {opt.name}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Lift Mechanism *"
+                value={String(lift.liftMechanism || '')} // should store the selected lift type ID
+                onChange={(e) => handleLiftChange(index, 'liftMechanism', e.target.value)}
+                isEmpty={liftMechanismOptions.length === 0}
+              >
+                <option value="">Please Select</option>
+                {liftMechanismOptions.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>
+                    {opt.name}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Elevator Type *"
+                value={String(lift.elevatorType || '')} // should hold the selected ID
+                onChange={(e) => handleLiftChange(index, 'elevatorType', e.target.value)}
+                isEmpty={elevatorTypeOptions.length === 0}
+              >
+                <option value="">Please Select</option>
+                {elevatorTypeOptions.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>
+                    {opt.name}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Machine Room Type *"
+                value={String(lift.machineRoomType || '')} // selected ID from backend
+                onChange={(e) => handleLiftChange(index, 'machineRoomType', e.target.value)}
+                isEmpty={machineRoomOptions.length === 0}
+              >
+                <option value="">Please Select</option>
+                {machineRoomOptions.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>
+                    {opt.name}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                label="Cabin Type *"
+                value={String(lift.cabinType || '')} // should store the selected ID
+                onChange={(e) => handleLiftChange(index, 'cabinType', e.target.value)}
+                isEmpty={cabinTypeOptions.length === 0}
+              >
+                <option value="">Please Select</option>
+                {cabinTypeOptions.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>
+                    {opt.name}
+                  </option>
+                ))}
+              </Select>
+
               {/* <RadioGroup label="Capacity Type *" name={`capacityType-${index}`} options={['Persons', 'Kg']} selected={lift.capacityType} onChange={(e) => handleLiftChange(index, 'capacityType', e.target.value)} /> */}
-            <RadioGroup
-  label="Capacity Type *"
-  name={`capacityType-${index}`}
-  options={capacityTypeOptions}
-  selected={capacityTypeOptions.find(opt => opt.label === lift.capacityType)?.value || ''}
-  onChange={(e) => {
+              <RadioGroup
+                label="Capacity Type *"
+                name={`capacityType-${index}`}
+                options={capacityTypeOptions}
+                selected={capacityTypeOptions.find(opt => opt.label === lift.capacityType)?.value || ''}
+                onChange={(e) => {
 
-   // alert(e.target.value);
-    const selectedId = e.target.value;
-    const selectedOption = capacityTypeOptions.find(opt => String(opt.value) === selectedId);
+                  // alert(e.target.value);
+                  const selectedId = e.target.value;
+                  const selectedOption = capacityTypeOptions.find(opt => String(opt.value) === selectedId);
 
-   // alert("Selected Option: " + JSON.stringify(selectedOption));
+                  // alert("Selected Option: " + JSON.stringify(selectedOption));
 
-    if (selectedOption) {
-      handleLiftChange(index, 'capacityType', selectedOption.label);      // e.g., "Persons"
-     // alert(selectedOption.id);
-      handleLiftChange(index, 'capacityTermId', selectedOption.id);    // e.g., 1
-    }
-  }}
-/>
+                  if (selectedOption) {
+                    handleLiftChange(index, 'capacityType', selectedOption.label);      // e.g., "Persons"
+                    // alert(selectedOption.id);
+                    handleLiftChange(index, 'capacityTermId', selectedOption.id);    // e.g., 1
+                  }
+                }}
+              />
 
 
               {lift.capacityType === 'Persons' ?
-<Select
-  label="Select Persons *"
-  value={lift.personCapacityId || ''} // should be the ID you're storing
-  onChange={(e) => {
-   // alert(e.target.value);
-  handleLiftChange(index, 'personCapacityId', e.target.value);
-  }
-  }
-  isEmpty={personOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {personOptions.map((opt) => (
-    <option key={opt.id} value={opt.id}>
-      {opt.convertedString}
-    </option>
-  ))}
-</Select>
-               : 
-<Select
-  label="Enter Kg *"
-  value={String(lift.weightId || '')} // assuming it stores selected weight `id`
-  onChange={(e) => handleLiftChange(index, 'weightId', e.target.value)}
-  isEmpty={kgOptions.length === 0}
->
-  <option value="">Please Select</option>
-  {kgOptions.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.display}
-    </option>
-  ))}
-</Select>
-        }
-<Select
-  label="No. of Floors *"
-  value={String(lift.noOfFloors || '')} // lift.noOfFloors should store selected floor `id`
-  onChange={(e) => 
-  {
-      handleLiftChange(index, 'noOfFloors', e.target.value);
-      //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
-  }
-  }
-  isEmpty={floorOption.length === 0}
->
-  <option value="">Please Select</option>
-  {floorOption.map((opt) => (
-    <option key={opt.id} value={String(opt.id)}>
-      {opt.name}
-    </option>
-  ))}
-</Select>
-            
+                <Select
+                  label="Select Persons *"
+                  value={lift.personCapacityId || ''} // should be the ID you're storing
+                  onChange={(e) => {
+                    // alert(e.target.value);
+                    handleLiftChange(index, 'personCapacityId', e.target.value);
+                  }
+                  }
+                  isEmpty={personOptions.length === 0}
+                >
+                  <option value="">Please Select</option>
+                  {personOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.convertedString}
+                    </option>
+                  ))}
+                </Select>
+                :
+                <Select
+                  label="Enter Kg *"
+                  value={String(lift.weightId || '')} // assuming it stores selected weight `id`
+                  onChange={(e) => handleLiftChange(index, 'weightId', e.target.value)}
+                  isEmpty={kgOptions.length === 0}
+                >
+                  <option value="">Please Select</option>
+                  {kgOptions.map((opt) => (
+                    <option key={opt.id} value={String(opt.id)}>
+                      {opt.display}
+                    </option>
+                  ))}
+                </Select>
+              }
+              <Select
+                label="No. of Floors *"
+                value={String(lift.noOfFloors || '')} // lift.noOfFloors should store selected floor `id`
+                onChange={(e) => {
+                  handleLiftChange(index, 'noOfFloors', e.target.value);
+                  //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
+                }
+                }
+                isEmpty={floorOption.length === 0}
+              >
+                <option value="">Please Select</option>
+                {floorOption.map((opt) => (
+                  <option key={opt.id} value={String(opt.id)}>
+                    {opt.name}
+                  </option>
+                ))}
+              </Select>
+
               <div>
                 <label className="block text-gray-700 text-sm mb-1">Floor Designation</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={(() => {
                     if (!lift.noOfFloors) return '';
                     const selectedFloor = floorOption.find(f => String(f.id) === String(lift.noOfFloors));
@@ -683,10 +690,10 @@ const handleEnquiryTypeChange = (e) => {
                     // Fallback: use ID as number
                     const floorId = parseInt(lift.noOfFloors, 10);
                     return floorId > 0 ? `G + ${floorId - 1}` : '';
-                  })()} 
-                  readOnly 
-                  disabled 
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" 
+                  })()}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
                 />
                 <div className="flex flex-wrap gap-4 mt-2">
                   {floorOptions.map((floor) => (
@@ -703,8 +710,8 @@ const handleEnquiryTypeChange = (e) => {
               </div>
               <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Stops *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={(() => {
                     if (!lift.noOfFloors) return '';
                     const selectedFloor = floorOption.find(f => String(f.id) === String(lift.noOfFloors));
@@ -713,18 +720,18 @@ const handleEnquiryTypeChange = (e) => {
                       return match ? match[0] : String(lift.noOfFloors);
                     }
                     return String(lift.noOfFloors);
-                  })()} 
-                  readOnly 
-                  disabled 
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" 
+                  })()}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
                 />
-               
+
               </div>
-             
-               <div>
+
+              <div>
                 <label className="block text-gray-700 text-sm mb-1">No. of Openings *</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={(() => {
                     if (!lift.noOfFloors) return '';
                     const selectedFloor = floorOption.find(f => String(f.id) === String(lift.noOfFloors));
@@ -733,45 +740,45 @@ const handleEnquiryTypeChange = (e) => {
                       return match ? match[0] : String(lift.noOfFloors);
                     }
                     return String(lift.noOfFloors);
-                  })()} 
-                  readOnly 
-                  disabled 
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed" 
+                  })()}
+                  readOnly
+                  disabled
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
                 />
-               
+
               </div>
-              
 
-               {enquiryTypeName === 'New Installation' && (
-                <>              
-              <Input label="Shaft Width (mm) *" value={lift.shaftWidth} onChange={(e) => handleLiftChange(index, 'shaftWidth', e.target.value)} />
-              <Input label="Shaft Depth (mm) *" value={lift.shaftDepth} onChange={(e) => handleLiftChange(index, 'shaftDepth', e.target.value)} />
-              <Input label="Pit (mm) *" value={lift.pit} onChange={(e) => handleLiftChange(index, 'pit', e.target.value)} />
-             <Select
-  label="Stage of Project *"
-  value={lift.stageOfProject || ''}
-  onChange={(e) => handleLiftChange(index, 'stageOfProject', e.target.value)}
-  isEmpty={projectStages.length === 0}
->
-  <option value="">Please Select</option>
-  {projectStages.map((stage) => (
-    <option key={stage.id} value={stage.id}>{stage.stageName}</option>
-  ))}
-</Select>
 
-<Select
-  label="Building Type *"
-  value={lift.buildingType || ''}
-  onChange={(e) => handleLiftChange(index, 'buildingType', e.target.value)}
-  isEmpty={buildingTypes.length === 0}
->
-  <option value="">Please Select</option>
-  {buildingTypes.map((type) => (
-    <option key={type.buildingTypeId} value={type.buildingTypeId}>{type.buildingType}</option>
-  ))}
-</Select>
-   </>
-               )}
+              {enquiryTypeName === 'New Installation' && (
+                <>
+                  <Input label="Shaft Width (mm) *" value={lift.shaftWidth} onChange={(e) => handleLiftChange(index, 'shaftWidth', e.target.value)} />
+                  <Input label="Shaft Depth (mm) *" value={lift.shaftDepth} onChange={(e) => handleLiftChange(index, 'shaftDepth', e.target.value)} />
+                  <Input label="Pit (mm) *" value={lift.pit} onChange={(e) => handleLiftChange(index, 'pit', e.target.value)} />
+                  <Select
+                    label="Stage of Project *"
+                    value={lift.stageOfProject || ''}
+                    onChange={(e) => handleLiftChange(index, 'stageOfProject', e.target.value)}
+                    isEmpty={projectStages.length === 0}
+                  >
+                    <option value="">Please Select</option>
+                    {projectStages.map((stage) => (
+                      <option key={stage.id} value={stage.id}>{stage.stageName}</option>
+                    ))}
+                  </Select>
+
+                  <Select
+                    label="Building Type *"
+                    value={lift.buildingType || ''}
+                    onChange={(e) => handleLiftChange(index, 'buildingType', e.target.value)}
+                    isEmpty={buildingTypes.length === 0}
+                  >
+                    <option value="">Please Select</option>
+                    {buildingTypes.map((type) => (
+                      <option key={type.buildingTypeId} value={type.buildingTypeId}>{type.buildingType}</option>
+                    ))}
+                  </Select>
+                </>
+              )}
 
             </div>
 
@@ -792,8 +799,8 @@ const Input = ({ label, tooltip, ...props }) => (<div><label className="block te
 const Select = ({ label, children, isEmpty, ...props }) => (
   <div>
     <label className="block text-gray-700 text-sm mb-1 font-medium">{label}</label>
-    <select 
-      {...props} 
+    <select
+      {...props}
       className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-200 disabled:cursor-not-allowed"
     >
       {isEmpty ? <option value="">Loading options...</option> : children}

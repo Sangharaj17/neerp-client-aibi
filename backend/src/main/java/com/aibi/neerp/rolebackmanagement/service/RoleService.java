@@ -14,15 +14,22 @@ public class RoleService {
     private RoleRepository roleRepository;
 
     public Role createRole(Role role) {
+        // Check for duplicate role name (case-insensitive)
+        if (role.getRole() != null && roleRepository.existsByRole(role.getRole().trim())) {
+            throw new IllegalArgumentException("Role with name '" + role.getRole() + "' already exists");
+        }
         return roleRepository.save(role);
     }
+
     public List<Role> getAllRoles() {
         return roleRepository.findAll();
     }
+
     public Role getRoleById(Integer id) {
         Optional<Role> r = roleRepository.findById(id);
         return r.orElse(null);
     }
+
     public Role updateRole(Integer id, Role updated) {
         return roleRepository.findById(id)
                 .map(existing -> {
@@ -31,6 +38,7 @@ public class RoleService {
                 })
                 .orElse(null);
     }
+
     public void deleteRole(Integer id) {
         roleRepository.deleteById(id);
     }

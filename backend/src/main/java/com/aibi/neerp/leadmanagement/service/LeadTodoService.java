@@ -41,40 +41,38 @@ public class LeadTodoService {
         return toDto(leadTodoRepository.save(todo));
     }
 
-//    public List<LeadTodoResponseDto> getAll() {
-//        return leadTodoRepository.findAll()
-//                .stream()
-//                .map(this::toDto)
-//                .collect(Collectors.toList());
-//    }
-    
-	    public PaginatedResponse<LeadTodoResponseDto> getAll(String search, int page, int size) {
-	        Pageable pageable = PageRequest.of(page, size);
-	        Page<LeadTodo> todoPage;
-	
-	        if (search != null && !search.trim().isEmpty()) {
-	            todoPage = leadTodoRepository.searchByKeyword(search.toLowerCase(), pageable);
-	        } else {
-	            todoPage = leadTodoRepository.findAll(pageable);
-	        }
-	
-	        List<LeadTodoResponseDto> data = todoPage.getContent().stream()
-	                .map(this::toDto)
-	                .toList();
-	
-	        return new PaginatedResponse<>(
-	                data,
-	                page,
-	                size,
-	                todoPage.getTotalPages(),
-	                todoPage.getTotalElements(),
-	                todoPage.isFirst(),
-	                todoPage.isLast()
-	        );
-	    }
-	
-	    // toDto(...) and create(...) methods go here
-	
+    // public List<LeadTodoResponseDto> getAll() {
+    // return leadTodoRepository.findAll()
+    // .stream()
+    // .map(this::toDto)
+    // .collect(Collectors.toList());
+    // }
+
+    public PaginatedResponse<LeadTodoResponseDto> getAll(String search, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<LeadTodo> todoPage;
+
+        if (search != null && !search.trim().isEmpty()) {
+            todoPage = leadTodoRepository.searchByKeyword(search.toLowerCase(), pageable);
+        } else {
+            todoPage = leadTodoRepository.findAll(pageable);
+        }
+
+        List<LeadTodoResponseDto> data = todoPage.getContent().stream()
+                .map(this::toDto)
+                .toList();
+
+        return new PaginatedResponse<>(
+                data,
+                page,
+                size,
+                todoPage.getTotalPages(),
+                todoPage.getTotalElements(),
+                todoPage.isFirst(),
+                todoPage.isLast());
+    }
+
+    // toDto(...) and create(...) methods go here
 
     public LeadTodoResponseDto getById(Integer id) {
         LeadTodo todo = leadTodoRepository.findById(id)
@@ -114,7 +112,6 @@ public class LeadTodoService {
         }
     }
 
-
     private LeadTodo toEntity(LeadTodoRequestDto dto) {
         NewLeads lead = newLeadsRepository.findById(dto.getLeadId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found"));
@@ -139,6 +136,7 @@ public class LeadTodoService {
         dto.setLeadId(todo.getLead().getLeadId());
         dto.setLeadCompanyName(todo.getLead().getLeadCompanyName());
         dto.setCustomerName(todo.getLead().getCustomerName());
+        dto.setActivityByEmpId(todo.getActivityBy().getEmployeeId());
         dto.setActivityByEmpName(todo.getActivityBy().getEmployeeName());
         dto.setPurpose(todo.getPurpose());
         dto.setTodoDate(todo.getTodoDate());
@@ -154,6 +152,5 @@ public class LeadTodoService {
                 .map(this::toDto)
                 .toList();
     }
-
 
 }

@@ -12,12 +12,17 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class TaxTypeService {
-    
+
     @Autowired
     private TaxTypeRepository taxTypeRepository;
 
     public TaxType createTaxType(TaxType taxType) {
         try {
+            // Check for duplicate tax name (case-insensitive)
+            if (taxType.getTaxName() != null &&
+                    taxTypeRepository.existsByTaxName(taxType.getTaxName().trim())) {
+                throw new IllegalArgumentException("Tax type with name '" + taxType.getTaxName() + "' already exists");
+            }
             TaxType saved = taxTypeRepository.save(taxType);
             log.info("Tax type created successfully with ID: {}", saved.getTaxTypeId());
             return saved;
@@ -54,4 +59,3 @@ public class TaxTypeService {
         taxTypeRepository.deleteById(id);
     }
 }
-

@@ -17,6 +17,7 @@ import {
   Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
 import EditLead from '@/components/AMC/EditLead';
@@ -142,33 +143,43 @@ export default function LeadListPage() {
       });
 
       const allLeads = response.data.data || [];
-      const headers = ['Lead ID', 'Date', 'Customer', 'Site', 'Source', 'Lead Type', 'Stage', 'Contact Number', 'Executive', 'Status'];
-      const csvRows = [
-        headers.join(','),
-        ...allLeads.map(lead => [
-          lead.leadId || '',
-          new Date(lead.leadDate).toLocaleDateString('en-GB'),
-          `"${(lead.salutations || '')} ${lead.customerName || ''}"`.trim(),
-          `"${lead.siteName || '-'}"`,
-          `"${lead.leadSource?.sourceName || '-'}"`,
-          `"${lead.leadType || '-'}"`,
-          `"${lead.leadStage?.stageName || '-'}"`,
-          lead.contactNo || '-',
-          `"${lead.activityBy?.employeeName || '-'}"`,
-          lead.status || 'Open'
-        ].join(','))
+
+      // Format data for Excel
+      const data = allLeads.map((lead, index) => ({
+        'Sr. No.': index + 1,
+        'Lead ID': lead.leadId || '',
+        'Date': new Date(lead.leadDate).toLocaleDateString('en-GB'),
+        'Customer': `${lead.salutations || ''} ${lead.customerName || ''}`.trim(),
+        'Site': lead.siteName || '-',
+        'Source': lead.leadSource?.sourceName || '-',
+        'Lead Type': lead.leadType || '-',
+        'Stage': lead.leadStage?.stageName || '-',
+        'Contact Number': lead.contactNo || '-',
+        'Executive': lead.activityBy?.employeeName || '-',
+        'Status': lead.status || 'Open'
+      }));
+
+      // Create worksheet and workbook
+      const ws = XLSX.utils.json_to_sheet(data);
+
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 8 },   // Sr. No.
+        { wch: 10 },  // Lead ID
+        { wch: 12 },  // Date
+        { wch: 25 },  // Customer
+        { wch: 20 },  // Site
+        { wch: 15 },  // Source
+        { wch: 15 },  // Lead Type
+        { wch: 15 },  // Stage
+        { wch: 15 },  // Contact Number
+        { wch: 18 },  // Executive
+        { wch: 10 },  // Status
       ];
 
-      const csvContent = csvRows.join('\n');
-      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+      XLSX.writeFile(wb, `Leads_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
 
       toast.success('Leads exported successfully!');
       setLoadingBtn(null);
@@ -330,13 +341,16 @@ export default function LeadListPage() {
                   ].map((head, i) => (
                     <th
                       key={i}
-                      className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wide border-b border-neutral-200 ${head.sortable ? 'cursor-pointer hover:bg-neutral-100' : ''}`}
+                      className={`text-left px-4 py-3 text-xs font-medium uppercase tracking-wide border-b border-neutral-200 ${head.sortable ? 'cursor-pointer hover:bg-neutral-100 select-none' : ''}`}
                       onClick={() => head.sortable && handleSort(head.field)}
                     >
                       <div className="flex items-center gap-1">
                         <span>{head.label}</span>
-                        {head.sortable && sortField === head.field && (
-                          sortDirection === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />
+                        {head.sortable && (
+                          <div className="flex flex-col -space-y-1">
+                            <ChevronUp className={`w-3 h-3 ${sortField === head.field && sortDirection === 'asc' ? 'text-neutral-900' : 'text-neutral-300'}`} />
+                            <ChevronDown className={`w-3 h-3 ${sortField === head.field && sortDirection === 'desc' ? 'text-neutral-900' : 'text-neutral-300'}`} />
+                          </div>
                         )}
                       </div>
                     </th>

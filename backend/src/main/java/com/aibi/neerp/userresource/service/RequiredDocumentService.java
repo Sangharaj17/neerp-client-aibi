@@ -12,12 +12,18 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class RequiredDocumentService {
-    
+
     @Autowired
     private RequiredDocumentRepository requiredDocumentRepository;
 
     public RequiredDocument createRequiredDocument(RequiredDocument requiredDocument) {
         try {
+            // Check for duplicate document name (case-insensitive)
+            if (requiredDocument.getDocumentName() != null &&
+                    requiredDocumentRepository.existsByDocumentName(requiredDocument.getDocumentName().trim())) {
+                throw new IllegalArgumentException(
+                        "Document with name '" + requiredDocument.getDocumentName() + "' already exists");
+            }
             RequiredDocument saved = requiredDocumentRepository.save(requiredDocument);
             log.info("Required document created successfully with ID: {}", saved.getDocumentId());
             return saved;
@@ -51,4 +57,3 @@ public class RequiredDocumentService {
         requiredDocumentRepository.deleteById(id);
     }
 }
-

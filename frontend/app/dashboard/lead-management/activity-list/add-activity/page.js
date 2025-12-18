@@ -1,271 +1,299 @@
-// "use client";
+"use client";
 
-// import { useState, useEffect } from "react";
-// import { useSearchParams, useRouter, useParams } from "next/navigation";
-// import { Save, X } from "lucide-react";
-// import axios from "axios";
-// import toast from "react-hot-toast";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter, useParams } from "next/navigation";
+import { Save, X } from "lucide-react";
+import axiosInstance from "@/utils/axiosInstance";
+import toast from "react-hot-toast";
+import PageHeader from "@/components/UI/PageHeader";
 
-// export default function AddActivityPage() {
-//   const searchParams = useSearchParams();
-//   const router = useRouter();
-//   const params = useParams();
-//   const tenant = params?.tenant;
+function AddActivityContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const params = useParams();
 
-//   const [leadId, setLeadId] = useState("");
-//   const [todoId, setTodoId] = useState("");
-//   const [leadName, setLeadName] = useState("");
-//   const [salesEnggName, setSalesEnggName] = useState("");
-//   const [leadCompanyName, setLeadCompanyName] = useState("");
-//   const [siteName, setSiteName] = useState("");
-//   const [siteAddress, setSiteAddress] = useState("");
-//   const [contactNo, setContactNo] = useState("");
-//   const [emailId, setEmailId] = useState("");
-//   const [leadStage, setLeadStage] = useState("");
-//   const [leadType, setLeadType] = useState("");
-//   const [todoName, setTodoName] = useState("");
-//   const [venue, setVenue] = useState("");
-//   const [feedback, setFeedback] = useState("");
+    const [leadId, setLeadId] = useState("");
+    const [todoId, setTodoId] = useState("");
+    const [leadName, setLeadName] = useState("");
+    const [salesEnggName, setSalesEnggName] = useState("");
+    const [leadCompanyName, setLeadCompanyName] = useState("");
+    const [siteName, setSiteName] = useState("");
+    const [siteAddress, setSiteAddress] = useState("");
+    const [contactNo, setContactNo] = useState("");
+    const [emailId, setEmailId] = useState("");
+    const [leadStage, setLeadStage] = useState("");
+    const [leadType, setLeadType] = useState("");
+    const [todoName, setTodoName] = useState("");
+    const [venue, setVenue] = useState("");
+    const [feedback, setFeedback] = useState("");
 
-//   const [todoOptions, setTodoOptions] = useState([]);
-//   const [loading, setLoading] = useState(false);
+    const [todoOptions, setTodoOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-//   const [isButtonMode, setIsButtonMode] = useState(false);
+    const [isButtonMode, setIsButtonMode] = useState(false);
 
-//   useEffect(() => {
-//     const qLeadId = searchParams?.get("leadId");
-//     const qTodoId = searchParams?.get("todoId");
+    useEffect(() => {
+        const qLeadId = searchParams?.get("leadId");
+        const qTodoId = searchParams?.get("todoId");
 
-//     if (qLeadId && qTodoId) {
-//       setIsButtonMode(true);
-//       fetchPrefill(qLeadId, qTodoId);
-//     } else {
-//       fetchTodoOptions();
-//     }
-//   }, []);
+        if (qLeadId && qTodoId) {
+            setIsButtonMode(true);
+            fetchPrefill(qLeadId, qTodoId);
+        } else {
+            fetchTodoOptions();
+        }
+    }, []);
 
-//   const fetchPrefill = async (lId, tId) => {
-//     try {
-//       setLoading(true);
-//       const res = await axios.get(
-//         "https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-activity/addLeadActivityGetData",
-//         { params: { leadId: Number(lId), todoId: Number(tId) } }
-//       );
-//       const d = res.data || {};
+    const fetchPrefill = async (lId, tId) => {
+        try {
+            setLoading(true);
+            const res = await axiosInstance.get(
+                "/api/leadmanagement/lead-activity/addLeadActivityGetData",
+                { params: { leadId: Number(lId), todoId: Number(tId) } }
+            );
+            const d = res.data || {};
 
-//       // Always set IDs explicitly so backend accepts
-//       setLeadId(Number(d.leadId ?? d.lead?.leadId ?? lId));
-//       setTodoId(Number(d.todoId ?? d.todo?.todoId ?? tId));
+            setLeadId(Number(d.leadId ?? d.lead?.leadId ?? lId));
+            setTodoId(Number(d.todoId ?? d.todo?.todoId ?? tId));
 
-//       // Lead name fallback: prefer company name if not set
-//       const fetchedLeadName =
-//         d.customerName ??
-//         d.leadName ??
-//         d.lead?.customerName ??
-//         d.leadCompanyName ??
-//         d.lead?.companyName ??
-//         "";
-//       setLeadName(fetchedLeadName);
-//       setLeadCompanyName(d.leadCompanyName ?? d.lead?.companyName ?? "");
-//       setSalesEnggName(d.activityByEmpName ?? d.assignedTo ?? "");
-//       setSiteName(d.siteName ?? d.lead?.siteName ?? "");
-//       setSiteAddress(d.siteAddress ?? d.lead?.siteAddress ?? "");
-//       setContactNo(d.contactNo ?? d.lead?.contactNo ?? "");
-//       setEmailId(d.email ?? d.lead?.email ?? "");
-//       setLeadStage(d.leadStage ?? d.lead?.leadStage ?? "");
-//       setLeadType(d.leadType ?? d.lead?.leadType ?? "");
-//       setTodoName(d.todoName ?? d.purpose ?? d.todo?.purpose ?? "");
-//       setVenue(d.venue ?? d.todo?.venue ?? "");
-//       setFeedback("");
-//     } catch (err) {
-//       toast.error("Failed to load lead/todo data");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+            const fetchedLeadName =
+                d.customerName ??
+                d.leadName ??
+                d.lead?.customerName ??
+                d.leadCompanyName ??
+                d.lead?.companyName ??
+                "";
+            setLeadName(fetchedLeadName);
+            setLeadCompanyName(d.leadCompanyName ?? d.lead?.companyName ?? "");
+            setSalesEnggName(d.activityByEmpName ?? d.assignedTo ?? "");
+            setSiteName(d.siteName ?? d.lead?.siteName ?? "");
+            setSiteAddress(d.siteAddress ?? d.lead?.siteAddress ?? "");
+            setContactNo(d.contactNo ?? d.lead?.contactNo ?? "");
+            setEmailId(d.email ?? d.lead?.email ?? "");
+            setLeadStage(d.leadStage ?? d.lead?.leadStage ?? "");
+            setLeadType(d.leadType ?? d.lead?.leadType ?? "");
+            setTodoName(d.todoName ?? d.purpose ?? d.todo?.purpose ?? "");
+            setVenue(d.venue ?? d.todo?.venue ?? "");
+            setFeedback("");
+        } catch (err) {
+            toast.error("Failed to load lead/todo data");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-//   const fetchTodoOptions = async () => {
-//     try {
-//       const res = await axios.get("https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-todos", {
-//         params: { search: "", page: 0, size: 1000 },
-//       });
-//       setTodoOptions(res.data?.data || []);
-//     } catch (err) {
-//       console.error("Failed to fetch todo options", err);
-//     }
-//   };
+    const fetchTodoOptions = async () => {
+        try {
+            const res = await axiosInstance.get("/api/leadmanagement/lead-todos", {
+                params: { search: "", page: 0, size: 1000 },
+            });
+            setTodoOptions(res.data?.data || []);
+        } catch (err) {
+            console.error("Failed to fetch todo options", err);
+        }
+    };
 
-//   const handleTodoSelect = async (e) => {
-//     const selectedTodoId = e.target.value;
-//     setTodoId(selectedTodoId || "");
-//     setFeedback("");
-//     if (!selectedTodoId) {
-//       setLeadId("");
-//       setLeadName("");
-//       setLeadCompanyName("");
-//       setSalesEnggName("");
-//       setSiteName("");
-//       setSiteAddress("");
-//       setContactNo("");
-//       setEmailId("");
-//       setLeadStage("");
-//       setLeadType("");
-//       setTodoName("");
-//       setVenue("");
-//       return;
-//     }
+    const handleTodoSelect = async (e) => {
+        const selectedTodoId = e.target.value;
+        setTodoId(selectedTodoId || "");
+        setFeedback("");
+        if (!selectedTodoId) {
+            setLeadId("");
+            setLeadName("");
+            setLeadCompanyName("");
+            setSalesEnggName("");
+            setSiteName("");
+            setSiteAddress("");
+            setContactNo("");
+            setEmailId("");
+            setLeadStage("");
+            setLeadType("");
+            setTodoName("");
+            setVenue("");
+            return;
+        }
 
-//     const selected = todoOptions.find((t) => String(t.todoId) === String(selectedTodoId));
-//     const selLeadId = selected?.leadId ?? selected?.lead?.leadId;
+        const selected = todoOptions.find((t) => String(t.todoId) === String(selectedTodoId));
+        const selLeadId = selected?.leadId ?? selected?.lead?.leadId;
 
-//     if (selLeadId) {
-//       await fetchPrefill(selLeadId, selectedTodoId);
-//     } else {
-//       await fetchPrefill("", selectedTodoId);
-//     }
-//   };
+        if (selLeadId) {
+            await fetchPrefill(selLeadId, selectedTodoId);
+        } else {
+            await fetchPrefill("", selectedTodoId);
+        }
+    };
 
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
+    const handleSubmit = async (e) => {
+        e.preventDefault();
 
-//     // ✅ Changed here: send null instead of undefined to avoid backend issues
-//     const payload = {
-//       leadId: leadId ? Number(leadId) : null,
-//       todoId: todoId ? Number(todoId) : null,
-//       todoName: todoName?.trim() || "",
-//       feedback: feedback?.trim() || "",
-//     };
+        const payload = {
+            leadId: leadId ? Number(leadId) : null,
+            todoId: todoId ? Number(todoId) : null,
+            todoName: todoName?.trim() || "",
+            feedback: feedback?.trim() || "",
+        };
 
-//     try {
-//       setLoading(true);
-//       await axios.post("https://neerp-client-aibi-backend.scrollconnect.com/api/leadmanagement/lead-activity", payload);
-//       toast.success("Activity created successfully.");
-//       router.push(`/dashboard/lead-management/activity-list`);
-//     } catch (err) {
-//       toast.error(err?.response?.data?.message || "Failed to create activity.");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+        try {
+            setLoading(true);
+            await axiosInstance.post("/api/leadmanagement/lead-activity", payload);
+            toast.success("Activity created successfully.");
+            router.push(`/dashboard/lead-management/activity-list`);
+        } catch (err) {
+            toast.error(err?.response?.data?.message || "Failed to create activity.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-//   return (
-//     <div className="p-4">
-//       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-//         <span className="text-blue-600">📝</span> Create Activity
-//       </h2>
+    return (
+        <div className="min-h-screen bg-white">
+            <PageHeader title="Add Activity" description="Create a new lead activity" />
 
-//       <div className="border rounded shadow-sm bg-white overflow-hidden mb-4">
-//         <table className="w-full border-collapse border border-gray-300 text-sm">
-//           <tbody>
-//             <tr>
-//               <td className="border p-2 font-semibold w-1/6">Lead Type</td>
-//               <td className="border p-2 w-1/3">{leadType || "-"}</td>
-//               <td className="border p-2 font-semibold w-1/6">Contact No</td>
-//               <td className="border p-2 w-1/3">{contactNo || "-"}</td>
-//             </tr>
-//             <tr>
-//               <td className="border p-2">Sales Engg. Name</td>
-//               <td className="border p-2">{salesEnggName || "-"}</td>
-//               <td className="border p-2">Site Name</td>
-//               <td className="border p-2">{siteName || "-"}</td>
-//             </tr>
-//             <tr>
-//               <td className="border p-2">Lead Company Name</td>
-//               <td className="border p-2">{leadCompanyName || "-"}</td>
-//               <td className="border p-2">Site Address</td>
-//               <td className="border p-2">{siteAddress || "-"}</td>
-//             </tr>
-//             <tr>
-//               <td className="border p-2">Lead Name</td>
-//               <td className="border p-2">{leadName || "-"}</td>
-//               <td className="border p-2">Lead Stage</td>
-//               <td className="border p-2">{leadStage || "-"}</td>
-//             </tr>
-//             <tr>
-//               <td className="border p-2">Email Id</td>
-//               <td className="border p-2">{emailId || "-"}</td>
-//               <td className="border p-2">Venue</td>
-//               <td className="border p-2">{venue || "-"}</td>
-//             </tr>
-//           </tbody>
-//         </table>
-//       </div>
+            <div className="px-6 py-5">
+                {/* Lead Info Card */}
+                <div className="border border-neutral-200 rounded-lg overflow-hidden mb-6">
+                    <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
+                        <h3 className="text-sm font-medium text-neutral-700">Lead Information</h3>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 text-sm">
+                        <div className="p-3 border-b border-r border-neutral-200">
+                            <span className="text-neutral-500">Lead Type</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{leadType || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-r border-neutral-200">
+                            <span className="text-neutral-500">Contact No</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{contactNo || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-r border-neutral-200">
+                            <span className="text-neutral-500">Sales Engineer</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{salesEnggName || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-neutral-200">
+                            <span className="text-neutral-500">Site Name</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{siteName || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-r border-neutral-200">
+                            <span className="text-neutral-500">Company</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{leadCompanyName || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-r border-neutral-200">
+                            <span className="text-neutral-500">Site Address</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{siteAddress || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-r border-neutral-200">
+                            <span className="text-neutral-500">Lead Name</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{leadName || "-"}</p>
+                        </div>
+                        <div className="p-3 border-b border-neutral-200">
+                            <span className="text-neutral-500">Lead Stage</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{leadStage || "-"}</p>
+                        </div>
+                        <div className="p-3 border-r border-neutral-200">
+                            <span className="text-neutral-500">Email</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{emailId || "-"}</p>
+                        </div>
+                        <div className="p-3">
+                            <span className="text-neutral-500">Venue</span>
+                            <p className="font-medium text-neutral-900 mt-0.5">{venue || "-"}</p>
+                        </div>
+                    </div>
+                </div>
 
-//       <form onSubmit={handleSubmit} className="p-4 border rounded bg-white">
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-//           <div>
-//             <label className="font-semibold">Lead Name</label>
-//             <input
-//               type="text"
-//               value={leadName}
-//               disabled
-//               className="w-full border rounded p-2 mt-1 bg-gray-100"
-//             />
-//           </div>
+                {/* Activity Form */}
+                <form onSubmit={handleSubmit} className="border border-neutral-200 rounded-lg overflow-hidden">
+                    <div className="bg-neutral-50 px-4 py-3 border-b border-neutral-200">
+                        <h3 className="text-sm font-medium text-neutral-700">Activity Details</h3>
+                    </div>
 
-//           <div>
-//             <label className="font-semibold">Todo Name</label>
-//             {isButtonMode ? (
-//               <input
-//                 type="text"
-//                 value={todoName}
-//                 disabled
-//                 className="w-full border rounded p-2 mt-1 bg-gray-100"
-//               />
-//             ) : (
-//               <select
-//                 value={todoId}
-//                 onChange={handleTodoSelect}
-//                 className="w-full border rounded p-2 mt-1"
-//               >
-//                 <option value="">Please Select</option>
-//                 {todoOptions.map((t) => (
-//                   <option key={t.todoId} value={t.todoId}>
-//                     {t.purpose || `Todo ${t.todoId}`} — {t.customerName ?? ""}
-//                   </option>
-//                 ))}
-//               </select>
-//             )}
-//           </div>
+                    <div className="p-5 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Lead Name</label>
+                                <input
+                                    type="text"
+                                    value={leadName}
+                                    disabled
+                                    className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-neutral-100 text-neutral-600"
+                                />
+                            </div>
 
-//           <div className="md:col-span-2">
-//             <label className="font-semibold">
-//               Feedback<span className="text-red-500">*</span>
-//             </label>
-//             <input
-//               type="text"
-//               value={feedback}
-//               onChange={(e) => setFeedback(e.target.value)}
-//               className="w-full border rounded p-2 mt-1"
-//               required
-//             />
-//           </div>
-//         </div>
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Todo Name</label>
+                                {isButtonMode ? (
+                                    <input
+                                        type="text"
+                                        value={todoName}
+                                        disabled
+                                        className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm bg-neutral-100 text-neutral-600"
+                                    />
+                                ) : (
+                                    <select
+                                        value={todoId}
+                                        onChange={handleTodoSelect}
+                                        className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                    >
+                                        <option value="">Please Select</option>
+                                        {todoOptions.map((t) => (
+                                            <option key={t.todoId} value={t.todoId}>
+                                                {t.purpose || `Todo ${t.todoId}`} — {t.customerName ?? ""}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        </div>
 
-//         <div className="flex justify-between items-center px-4 pb-4 mt-4">
-//           <p className="text-sm text-red-500">
-//             <span className="font-semibold">Note:</span> Fields marked with{" "}
-//             <span className="text-red-500">*</span> are Mandatory
-//           </p>
-//           <div className="flex gap-2">
-//             <button
-//               type="submit"
-//               className="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-1"
-//               disabled={loading}
-//             >
-//               <Save size={16} /> {loading ? "Saving..." : "Submit"}
-//             </button>
-//             <button
-//               type="button"
-//               onClick={() => router.push(`/dashboard/lead-management/activity-list`)}
-//               className="bg-red-500 text-white px-4 py-2 rounded flex items-center gap-1"
-//               disabled={loading}
-//             >
-//               <X size={16} /> Cancel
-//             </button>
-//           </div>
-//         </div>
-//       </form>
-//     </div>
-//   );
-// }
+                        <div>
+                            <label className="block text-sm font-medium text-neutral-700 mb-1">
+                                Feedback <span className="text-red-500">*</span>
+                            </label>
+                            <textarea
+                                value={feedback}
+                                onChange={(e) => setFeedback(e.target.value)}
+                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                rows={3}
+                                required
+                                placeholder="Enter your feedback..."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between px-5 py-4 border-t border-neutral-200 bg-neutral-50">
+                        <p className="text-xs text-neutral-500">
+                            Fields marked with <span className="text-red-500">*</span> are mandatory
+                        </p>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/dashboard/lead-management/activity-list`)}
+                                className="px-4 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition flex items-center gap-1"
+                                disabled={loading}
+                            >
+                                <X size={16} /> Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 text-sm font-medium text-white bg-neutral-900 rounded-lg hover:bg-neutral-800 transition flex items-center gap-1 disabled:opacity-50"
+                                disabled={loading}
+                            >
+                                <Save size={16} /> {loading ? "Saving..." : "Submit"}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+export default function AddActivityPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <div className="text-neutral-600">Loading...</div>
+            </div>
+        }>
+            <AddActivityContent />
+        </Suspense>
+    );
+}

@@ -325,6 +325,28 @@ export default function AddLeadPage() {
         {/* Form Card */}
         <div className="bg-white border border-neutral-200 rounded-lg p-6">
 
+          {/* Error Summary Banner */}
+          {Object.keys(errors).length > 0 && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">!</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Please complete the following required fields:</p>
+                  <ul className="mt-2 space-y-1">
+                    {Object.entries(errors).map(([field, message]) => (
+                      <li key={field} className="text-sm text-amber-700 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        {message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ═══════════════════════════════════════════════════════════ */}
           {/* STEP 1: Lead Info */}
           {/* ═══════════════════════════════════════════════════════════ */}
@@ -553,10 +575,10 @@ const inputClass = (error) =>
 function Field({ label, required, error, children }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-xs font-medium text-neutral-700">
+      <label className={`block text-xs font-medium ${error ? 'text-red-600' : 'text-neutral-700'}`}>
         {label} {required && <span className="text-red-500">*</span>}
+        {error && <span className="ml-2 text-xs font-normal text-red-500">({error})</span>}
       </label>
-      {error && <p className="text-xs text-red-500">{error}</p>}
       {children}
     </div>
   );

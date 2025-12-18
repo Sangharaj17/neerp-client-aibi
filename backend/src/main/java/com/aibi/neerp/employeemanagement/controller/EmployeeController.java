@@ -41,8 +41,8 @@ public class EmployeeController {
     private String internalResetSecret;
 
     public EmployeeController(EmployeeRepository employeeRepository,
-                              PasswordEncoder passwordEncoder,
-                              PasswordResetService passwordResetService) {
+            PasswordEncoder passwordEncoder,
+            PasswordResetService passwordResetService) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
         this.passwordResetService = passwordResetService;
@@ -62,6 +62,12 @@ public class EmployeeController {
 
     @PostMapping
     public ResponseEntity<Employee> createEmployee(@RequestBody Employee employee) {
+        // Check for duplicate employee code
+        if (employee.getEmployeeCode() != null &&
+                employeeRepository.existsByEmployeeCode(employee.getEmployeeCode().trim())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null);
+        }
         employee.setPassword(encodeIfNecessary(employee.getPassword()));
         Employee saved = employeeRepository.save(employee);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
@@ -71,6 +77,12 @@ public class EmployeeController {
     public ResponseEntity<Employee> updateEmployee(@PathVariable Integer id, @RequestBody Employee updated) {
         return employeeRepository.findById(id)
                 .map(existing -> {
+                    // Check for duplicate employee code if it's being changed
+                    if (updated.getEmployeeCode() != null &&
+                            !updated.getEmployeeCode().trim().equals(existing.getEmployeeCode()) &&
+                            employeeRepository.existsByEmployeeCode(updated.getEmployeeCode().trim())) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).<Employee>body(null);
+                    }
                     updated.setEmployeeId(existing.getEmployeeId());
                     if (!StringUtils.hasText(updated.getPassword())) {
                         updated.setPassword(existing.getPassword());
@@ -121,10 +133,10 @@ public class EmployeeController {
             HttpServletRequest httpRequest) {
         System.out.println("[PasswordReset] ===== Password reset request received =====");
         System.out.println("[PasswordReset] Email: " + request.getEmail());
-        
+
         String tenantId = httpRequest.getHeader("X-Tenant");
         System.out.println("[PasswordReset] Tenant from header: " + tenantId);
-        
+
         if (!StringUtils.hasText(request.getEmail())) {
             System.out.println("[PasswordReset] ❌ Email is empty");
             return ResponseEntity.badRequest().body("Email is required.");
@@ -139,7 +151,7 @@ public class EmployeeController {
         try {
             System.out.println("[PasswordReset] Getting client for tenant: " + tenantId);
             com.aibi.neerp.client.dto.Client client = clientService.getClientByDomain(tenantId);
-            
+
             if (client == null) {
                 System.out.println("[PasswordReset] ❌ Tenant not found: " + tenantId);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Tenant not found.");
@@ -154,7 +166,8 @@ public class EmployeeController {
             TenantContext.setTenantId(tenantId);
             dataSourceConfig.removeDataSource(tenantId);
             dataSourceConfig.addDataSource(tenantId, client);
-            System.out.println("[PasswordReset] Tenant datasource set up. Current TenantContext: " + TenantContext.getTenantId());
+            System.out.println(
+                    "[PasswordReset] Tenant datasource set up. Current TenantContext: " + TenantContext.getTenantId());
         } catch (Exception e) {
             System.err.println("[PasswordReset] ❌ Error setting up tenant datasource: " + e.getMessage());
             e.printStackTrace();
@@ -164,9 +177,9 @@ public class EmployeeController {
 
         System.out.println("[PasswordReset] Calling passwordResetService.requestReset()...");
         PasswordResetService.ResetStatus status = passwordResetService.requestReset(request.getEmail());
-        
+
         System.out.println("[PasswordReset] ResetStatus: " + status);
-        
+
         if (status == PasswordResetService.ResetStatus.NOT_FOUND) {
             System.out.println("[PasswordReset] ❌ Employee not found for email: " + request.getEmail());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Employee not found.");
@@ -205,8 +218,7 @@ public class EmployeeController {
 
         return ResponseEntity.ok(Map.of(
                 "otp", otpOpt.get(),
-                "expiresInMinutes", 10
-        ));
+                "expiresInMinutes", 10));
     }
 
     @PostMapping("/password-reset/confirm")
@@ -220,8 +232,7 @@ public class EmployeeController {
         boolean success = passwordResetService.resetPasswordWithOtp(
                 request.getEmail(),
                 request.getOtp(),
-                request.getNewPassword()
-        );
+                request.getNewPassword());
         if (!success) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired OTP.");
         }
