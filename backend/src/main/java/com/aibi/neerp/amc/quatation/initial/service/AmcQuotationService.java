@@ -556,7 +556,7 @@ public class AmcQuotationService {
             // ✅ 4A. Create New Customer
             customer = Customer.builder()
                     .customerName(lead.getCustomerName())
-                    .contactNumber(lead.getCustomer1Contact())
+                    .contactNumber(lead.getContactNo())
                     .emailId(lead.getEmailId())
                     .address(lead.getSiteName()) // or actual lead address field
                     .isVerified(false)
