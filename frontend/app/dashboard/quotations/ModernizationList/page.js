@@ -580,16 +580,29 @@ export default function ModernizationList() {
                         >
                           <FaReceipt size={16} />
                         </button>
-                        <Trash2
-                          size={18}
-                          className="text-red-600 cursor-pointer hover:text-red-800"
-                          title="Delete quotation"
-                          onClick={() => {
-                            setIsDeleteModalOpen(true);
-                            setDeleteId(item.modernization.id);
-                            
-                            }}
-                        />
+                       <span
+  title={
+    item.modernization.isFinal
+      ? 'Cannot delete because this record is final'
+      : 'Delete quotation'
+  }
+  className="inline-block"
+>
+  <Trash2
+    size={18}
+    className={`transition ${
+      item.modernization.isFinal
+        ? 'text-gray-400 cursor-not-allowed'
+        : 'text-red-600 cursor-pointer hover:text-red-800'
+    }`}
+    onClick={() => {
+      if (item.modernization.isFinal) return;
+
+      setIsDeleteModalOpen(true);
+      setDeleteId(item.modernization.id);
+    }}
+  />
+</span>
 
                       </div>
                     </td>
