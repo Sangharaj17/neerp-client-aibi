@@ -219,7 +219,7 @@ const OncallPricingTablePdf = ({ pricingData }) => {
           <View style={[{ width: "8%" }, styles.tableCell]}>
             <Text style={styles.tdCenter}>Sr. No.</Text>
           </View>
-          <View style={[{ width: "32%" }, styles.tableCell]}>
+          <View style={[{ width: "22%" }, styles.tableCell]}>
             <Text style={styles.tdLeft}>Particulars</Text>
           </View>
           <View style={[{ width: "15%" }, styles.tableCell]}>
@@ -248,7 +248,7 @@ const OncallPricingTablePdf = ({ pricingData }) => {
             <View style={[{ width: "8%" }, styles.tableCell]}>
               <Text style={styles.tdCenter}>{i + 1}</Text>
             </View>
-            <View style={[{ width: "32%" }, styles.tableCell]}>
+            <View style={[{ width: "22%" }, styles.tableCell]}>
               <Text style={styles.tdLeft}>{material.particulars}</Text>
             </View>
             <View style={[{ width: "15%" }, styles.tableCell]}>
