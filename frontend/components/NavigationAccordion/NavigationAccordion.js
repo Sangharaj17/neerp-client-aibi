@@ -23,14 +23,15 @@ import {
   FileSpreadsheet,
   LogOut,
   ChevronUp,
-  User
+  User,
+  Menu
 } from 'lucide-react';
 import Input from '@/components/UI/Input';
 import { toast } from 'react-hot-toast';
 import axiosInstance from '@/utils/axiosInstance';
 import CompanyLogo from './CompanyLogo';
 
-const NavigationAccordion = () => {
+const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
   const [openSections, setOpenSections] = useState({});
   const [loadingHref, setLoadingHref] = useState('');
   const pathname = usePathname();
@@ -200,6 +201,7 @@ const NavigationAccordion = () => {
       submenu: [
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
+        { title: 'Activity List', href: `/dashboard/lead-management/activity-list` },
         { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` }
       ]
     },
@@ -294,44 +296,152 @@ const NavigationAccordion = () => {
           scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
         }
       `}} />
-      <div className="w-64 sticky top-0 z-20 bg-white h-screen flex flex-col font-sans text-sm border-r border-gray-200 shadow-sm">
-        {/* Header with Company Logo and Client Name */}
-        <div className="h-14 flex-shrink-0 flex items-center gap-3 px-5 border-b border-gray-200">
-          <div className="flex-shrink-0 h-8 w-20 flex items-center">
-            <CompanyLogo />
-          </div>
+      <div className={`w-full sticky top-0 z-20 bg-white h-screen flex flex-col font-sans text-sm border-r border-gray-200 shadow-sm`}>
+        {/* Header with Collapse Button and Company Logo */}
+        <div className={`h-14 flex-shrink-0 flex items-center border-b border-gray-200 ${isCollapsed ? 'justify-center px-1.5' : 'gap-3 px-3'}`}>
+          <button
+            type="button"
+            onClick={() => onToggleCollapse?.()}
+            className="hidden md:inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
+          {!isCollapsed && (
+            <div className="flex-shrink-0 flex items-center h-8 w-20">
+              <CompanyLogo />
+            </div>
+          )}
           {/* <h2 className="text-base font-medium text-black truncate flex-1">{clientname}</h2> */}
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 flex-shrink-0">
-          <div className="relative">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-gray-50 text-black text-sm font-medium rounded-lg pl-9 pr-3 py-2.5 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 transition-all"
-            />
+        {!isCollapsed && (
+          <div className="p-4 flex-shrink-0">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-gray-50 text-black text-sm font-medium rounded-lg pl-9 pr-3 py-2.5 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-400 transition-all"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 apple-scrollbar">
-          {(normalizedQuery ? filteredSections : menuSections).map((section) => {
-            const isActive = isSectionActive(section);
-            const isOpen = normalizedQuery ? true : openSections[section.id];
-            const Icon = section.icon;
+        <nav className={`flex-1 overflow-y-auto pb-4 apple-scrollbar ${isCollapsed ? 'px-1 pt-3' : 'px-3 space-y-1'}`}>
+          {isCollapsed ? (
+            <div className="flex flex-col items-center gap-3">
+              {(normalizedQuery ? filteredSections : menuSections).map((section) => {
+                const isActive = isSectionActive(section);
+                const Icon = section.icon;
 
-            return (
-              <div key={section.id}>
-                {section.hasSubmenu ? (
-                  <div className="space-y-0.5">
+                // For sections with submenu: expand sidebar and open accordion
+                if (section.hasSubmenu) {
+                  return (
                     <button
-                      onClick={() => toggleSection(section.id)}
+                      key={section.id}
+                      type="button"
+                      onClick={() => {
+                        // Expand the sidebar
+                        onToggleCollapse?.();
+                        // Open this section's accordion
+                        setOpenSections(prev => ({ ...prev, [section.id]: true }));
+                      }}
                       title={section.title}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
+                      className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${isActive
+                        ? 'bg-blue-50 text-black'
+                        : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                        }`}
+                    >
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-gray-600'}`} />
+                    </button>
+                  );
+                }
+
+                // For sections without submenu: navigate directly
+                if (!section.href) return null;
+
+                return (
+                  <Link
+                    key={section.id}
+                    href={section.href}
+                    onClick={() => handleNavigation(section.href)}
+                    title={section.title}
+                    className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${isActive
+                      ? 'bg-blue-50 text-black'
+                      : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                      }`}
+                  >
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-gray-600'}`} />
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            (normalizedQuery ? filteredSections : menuSections).map((section) => {
+              const isActive = isSectionActive(section);
+              const isOpen = normalizedQuery ? true : openSections[section.id];
+              const Icon = section.icon;
+
+              return (
+                <div key={section.id}>
+                  {section.hasSubmenu ? (
+                    <div className="space-y-0.5">
+                      <button
+                        onClick={() => toggleSection(section.id)}
+                        title={section.title}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isActive
+                          ? 'text-black bg-blue-50'
+                          : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                          }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-600'}`} />
+                          <span className="font-medium">{section.title}</span>
+                        </div>
+                        <ChevronRight
+                          className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
+                        />
+                      </button>
+
+                      {isOpen && (
+                        <div className="pl-8 pr-2 py-1 space-y-0.5">
+                          {section.submenu.map((item, index) => {
+                            const isItemActive = isLinkActive(item.href);
+                            return (
+                              <Link
+                                key={index}
+                                href={item.href}
+                                onClick={() => handleNavigation(item.href)}
+                                title={item.title}
+                                className={`block px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative ${isItemActive
+                                  ? 'text-black bg-blue-50'
+                                  : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                                  }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="truncate font-medium">{item.title}</span>
+                                  {loadingHref === item.href && (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-600" />
+                                  )}
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Link
+                      href={section.href}
+                      onClick={() => handleNavigation(section.href)}
+                      title={section.title}
+                      className={`flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative ${isActive
                         ? 'text-black bg-blue-50'
                         : 'text-gray-700 hover:text-black hover:bg-gray-50'
                         }`}
@@ -340,101 +450,58 @@ const NavigationAccordion = () => {
                         <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-600'}`} />
                         <span className="font-medium">{section.title}</span>
                       </div>
-                      <ChevronRight
-                        className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`}
-                      />
-                    </button>
-
-                    {isOpen && (
-                      <div className="pl-8 pr-2 py-1 space-y-0.5">
-                        {section.submenu.map((item, index) => {
-                          const isItemActive = isLinkActive(item.href);
-                          return (
-                            <Link
-                              key={index}
-                              href={item.href}
-                              onClick={() => handleNavigation(item.href)}
-                              title={item.title}
-                              className={`block px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative ${isItemActive
-                                ? 'text-black bg-blue-50'
-                                : 'text-gray-700 hover:text-black hover:bg-gray-50'
-                                }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="truncate font-medium">{item.title}</span>
-                                {loadingHref === item.href && (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-600" />
-                                )}
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link
-                    href={section.href}
-                    onClick={() => handleNavigation(section.href)}
-                    title={section.title}
-                    className={`flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 relative ${isActive
-                      ? 'text-black bg-blue-50'
-                      : 'text-gray-700 hover:text-black hover:bg-gray-50'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-600'}`} />
-                      <span className="font-medium">{section.title}</span>
-                    </div>
-                    {loadingHref === section.href && (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-600" />
-                    )}
-                  </Link>
-                )}
-              </div>
-            );
-          })}
+                      {loadingHref === section.href && (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-600" />
+                      )}
+                    </Link>
+                  )}
+                </div>
+              );
+            })
+          )}
         </nav>
 
         {/* User Profile Section */}
-        <div className="p-4 border-t border-gray-200 bg-white">
-          {isProfileOpen && (
-            <div className="absolute bottom-20 left-4 right-4 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
-              <div className="px-4 py-2.5 border-b border-gray-200 mb-1">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">My Account</p>
+        {!isCollapsed && (
+          <div className="px-3 py-2 border-t border-gray-200 bg-white">
+            {isProfileOpen && (
+              <div className="absolute bottom-20 left-4 right-4 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                <div className="px-4 py-2.5 border-b border-gray-200 mb-1">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">My Account</p>
+                </div>
+                <button
+                  onClick={() => router.push('/dashboard/settings')}
+                  className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors rounded-lg mx-1"
+                >
+                  <Settings className="w-4 h-4 mr-3 text-gray-600" />
+                  Settings
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors rounded-lg mx-1"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Logout
+                </button>
               </div>
-              <button
-                onClick={() => router.push('/dashboard/settings')}
-                className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-black hover:bg-gray-50 transition-colors rounded-lg mx-1"
-              >
-                <Settings className="w-4 h-4 mr-3 text-gray-600" />
-                Settings
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors rounded-lg mx-1"
-              >
-                <LogOut className="w-4 h-4 mr-3" />
-                Logout
-              </button>
-            </div>
-          )}
+            )}
 
-          <button
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className={`flex items-center w-full gap-3 p-3 rounded-xl transition-all duration-200 ${isProfileOpen ? 'bg-blue-50' : 'hover:bg-gray-50'
-              }`}
-          >
-            <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-200">
-              <User className="w-5 h-5 text-black" />
-            </div>
-            <div className="flex-1 text-left overflow-hidden">
-              <p className="text-sm font-medium text-black truncate">{username}</p>
-              <p className="text-xs text-gray-500 truncate">{userEmail}</p>
-            </div>
-            <ChevronUp className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className={`flex items-center w-full gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-200 ${isProfileOpen ? 'bg-blue-50' : 'hover:bg-gray-50'
+                }`}
+            >
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                <User className="w-4 h-4 text-black" />
+              </div>
+              <div className="flex-1 text-left overflow-hidden">
+                <p className="text-xs font-medium text-black truncate">{username}</p>
+                <p className="text-[11px] text-gray-500 truncate">{userEmail}</p>
+              </div>
+              <ChevronUp className={`w-3.5 h-3.5 text-gray-600 transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

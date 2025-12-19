@@ -1,10 +1,11 @@
- "use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Input from "@/components/UI/Input";
 import ActionModal from "@/components/AMC/ActionModal";
 import axiosInstance from "@/utils/axiosInstance";
 import { Loader2, Pencil, Plus, ShieldCheck, Trash2, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 const API_ROLES = "/api/roles";
 
@@ -43,18 +44,33 @@ export default function AddUserRolePage() {
 
   const handleCreateRole = async (event) => {
     event.preventDefault();
-    if (!roleName.trim()) return;
+    const trimmedName = roleName.trim();
+
+    if (!trimmedName) {
+      toast.error("Please enter a role name.");
+      return;
+    }
+
+    // Check for duplicate role name (case-insensitive)
+    const isDuplicate = roles.some(r =>
+      r.role?.toLowerCase().trim() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("Role name already exists.");
+      return;
+    }
+
     setSaving(true);
     setAlert("");
     try {
-      const res = await axiosInstance.post(API_ROLES, { role: roleName.trim() });
+      const res = await axiosInstance.post(API_ROLES, { role: trimmedName });
       const created = res.data;
       setRoles((prev) => [created, ...prev]);
       setRoleName("");
-      setAlert("Role created successfully.");
+      toast.success("Role created successfully.");
     } catch (error) {
       console.error("Failed to create role", error);
-      setAlert("Creating role failed.");
+      toast.error("Failed to create role.");
     } finally {
       setSaving(false);
     }
@@ -68,26 +84,41 @@ export default function AddUserRolePage() {
   };
 
   const handleUpdateRole = async () => {
-    if (!editingRole || !editingName.trim()) return;
+    const trimmedName = editingName.trim();
+    if (!editingRole || !trimmedName) {
+      toast.error("Please enter a role name.");
+      return;
+    }
+
+    // Check for duplicate role name (case-insensitive), excluding current role
+    const isDuplicate = roles.some(r =>
+      r.role?.toLowerCase().trim() === trimmedName.toLowerCase() &&
+      r.roleId !== editingRole.roleId
+    );
+    if (isDuplicate) {
+      toast.error("Role name already exists.");
+      return;
+    }
+
     setSaving(true);
     try {
       await axiosInstance.put(`${API_ROLES}/${editingRole.roleId}`, {
-        role: editingName.trim(),
+        role: trimmedName,
       });
       setRoles((prev) =>
         prev.map((role) =>
           role.roleId === editingRole.roleId
-            ? { ...role, role: editingName.trim() }
+            ? { ...role, role: trimmedName }
             : role
         )
       );
-      setAlert("Role updated.");
+      toast.success("Role updated successfully.");
       setEditModalOpen(false);
       setEditingRole(null);
       setEditingName("");
     } catch (error) {
       console.error("Failed to update role", error);
-      setAlert("Updating role failed.");
+      toast.error("Failed to update role.");
     } finally {
       setSaving(false);
     }
@@ -165,7 +196,7 @@ export default function AddUserRolePage() {
         </div>
       )}
 
-  <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <section className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <h2 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">
             Existing Roles

@@ -18,7 +18,6 @@ import com.aibi.neerp.leadmanagement.repository.LeadTodoActivityRepository;
 import com.aibi.neerp.leadmanagement.repository.LeadTodoRepository;
 import com.aibi.neerp.leadmanagement.repository.NewLeadsRepository;
 
-
 import com.aibi.neerp.exception.ResourceNotFoundException;
 
 import java.util.ArrayList;
@@ -35,23 +34,20 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
-
 @Service
 public class LeadTodoActivityService {
-	
 
     @Autowired
     private NewLeadsRepository newLeadsRepository;
 
     @Autowired
     private LeadTodoRepository leadTodoRepository;
-    
+
     @Autowired
     private LeadTodoActivityRepository leadTodoActivityRepository;
-    
+
     @Autowired
     private EmployeeRepository employeeRepository;
-    
 
     public AddLeadActivityGetData getLeadActivityData(Integer leadId, Integer todoId) {
 
@@ -77,11 +73,13 @@ public class LeadTodoActivityService {
         dto.setSiteName(lead.getSiteName());
         dto.setSiteAddress(lead.getSiteAddress());
         dto.setLeadStage((lead.getLeadStage() != null) ? lead.getLeadStage().getStageName() : null);
+        dto.setTodoName(todo.getPurpose());
+        dto.setVenue(todo.getVenue());
+        dto.setCustomerName(lead.getCustomerName());
 
         return dto;
 
     }
-    
 
     // ✅ 1. Create Activity
     public LeadTodoActivityResponseDto create(LeadTodoActivityRequestDto dto) {
@@ -92,10 +90,10 @@ public class LeadTodoActivityService {
                 .orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
 
         Employee emp = null;
-        if(dto.getActivityByEmpId()==null)
-        emp = todo.getActivityBy();
+        if (dto.getActivityByEmpId() == null)
+            emp = todo.getActivityBy();
         else {
-        	emp = employeeRepository.findById(dto.getActivityByEmpId()).get();
+            emp = employeeRepository.findById(dto.getActivityByEmpId()).get();
         }
 
         LeadTodoActivity activity = new LeadTodoActivity();
@@ -121,8 +119,7 @@ public class LeadTodoActivityService {
 
         return res;
     }
-    
-    
+
     public PaginatedResponse<LeadTodoAndActivityData> getActivityListData(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("todoDate").descending());
         Page<LeadTodo> todoPage = leadTodoRepository.getActivityListsearchByKeyword(keyword.toLowerCase(), pageable);
@@ -149,7 +146,7 @@ public class LeadTodoActivityService {
             LeadTodoWithActivityDto todoWithActivity = new LeadTodoWithActivityDto();
             todoWithActivity.setLeadTodo(LeadTodoMapper.toDto(leadTodo));
 
-            if (leadTodo.getActivity() != null) {
+            if (leadTodo.getActivity() != null && !leadTodo.getActivity().isEmpty()) {
                 todoWithActivity.setLeadTodoActivity(LeadTodoActivityMapper.toDto(leadTodo.getActivity()));
             }
 
@@ -165,10 +162,8 @@ public class LeadTodoActivityService {
                 todoPage.getTotalPages(),
                 todoPage.getTotalElements(),
                 todoPage.isFirst(),
-                todoPage.isLast()
-        );
+                todoPage.isLast());
     }
-
 
     public List<LeadTodoActivityResponseDto> getAllActivityListData(Integer leadId) {
         // Fetch all LeadTodoActivity entities for the given lead ID
@@ -189,9 +184,4 @@ public class LeadTodoActivityService {
         }).collect(Collectors.toList());
     }
 
-
-
-
-
-    
 }

@@ -8,9 +8,13 @@ import com.aibi.neerp.leadmanagement.entity.LeadTodoActivity;
 public class LeadTodoActivityMapper {
 
     public static LeadTodoActivityResponseDto toDto(List<LeadTodoActivity> activitys) {
-    	
-    	LeadTodoActivity activity = activitys.get(0);
-        if (activity == null) return null;
+
+        if (activitys == null || activitys.isEmpty())
+            return null;
+
+        LeadTodoActivity activity = activitys.get(0);
+        if (activity == null)
+            return null;
 
         LeadTodoActivityResponseDto res = new LeadTodoActivityResponseDto();
         res.setActivityId(activity.getActivityId());

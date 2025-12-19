@@ -14,56 +14,49 @@ import com.aibi.neerp.leadmanagement.entity.LeadTodo;
 @Repository
 public interface LeadTodoRepository extends JpaRepository<LeadTodo, Integer> {
 
-
 	@Query("SELECT t FROM LeadTodo t " +
-		       "JOIN t.lead l " +
-		       "JOIN t.activityBy a " +
-		       "WHERE LOWER(l.leadCompanyName) LIKE %:keyword% " +
-		       "   OR LOWER(l.customerName) LIKE %:keyword% " +
-		       "   OR LOWER(t.purpose) LIKE %:keyword% " +
-		       "   OR LOWER(t.venue) LIKE %:keyword% " +
-		       "   OR LOWER(t.time) LIKE %:keyword% " +
-		       "   OR LOWER(FUNCTION('TO_CHAR', t.todoDate, 'YYYY-MM-DD')) LIKE %:keyword% " +
-		       "   OR LOWER(a.employeeName) LIKE %:keyword%")
-		Page<LeadTodo> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
+			"JOIN t.lead l " +
+			"JOIN t.activityBy a " +
+			"WHERE LOWER(l.leadCompanyName) LIKE %:keyword% " +
+			"   OR LOWER(l.customerName) LIKE %:keyword% " +
+			"   OR LOWER(t.purpose) LIKE %:keyword% " +
+			"   OR LOWER(t.venue) LIKE %:keyword% " +
+			"   OR LOWER(t.time) LIKE %:keyword% " +
+			"   OR LOWER(FUNCTION('TO_CHAR', t.todoDate, 'YYYY-MM-DD')) LIKE %:keyword% " +
+			"   OR LOWER(a.employeeName) LIKE %:keyword%")
+	Page<LeadTodo> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-
-	@Query("SELECT t FROM LeadTodo t " +
-		       "JOIN t.lead l " +
-		       "LEFT JOIN t.activity a " +
-		       "WHERE LOWER(l.leadCompanyName) LIKE %:keyword% " +
-		       "   OR LOWER(t.purpose) LIKE %:keyword% " +
-		       "   OR LOWER(t.venue) LIKE %:keyword% " +
-		       "   OR LOWER(a.activityTitle) LIKE %:keyword% " +
-		       "   OR LOWER(a.feedback) LIKE %:keyword%")
-		Page<LeadTodo> getActivityListsearchByKeyword(@Param("keyword") String keyword, Pageable pageable);
-
+	@Query("SELECT DISTINCT t FROM LeadTodo t " +
+			"JOIN t.lead l " +
+			"LEFT JOIN t.activity a " +
+			"WHERE LOWER(l.leadCompanyName) LIKE %:keyword% " +
+			"   OR LOWER(t.purpose) LIKE %:keyword% " +
+			"   OR LOWER(t.venue) LIKE %:keyword% " +
+			"   OR LOWER(a.activityTitle) LIKE %:keyword% " +
+			"   OR LOWER(a.feedback) LIKE %:keyword%")
+	Page<LeadTodo> getActivityListsearchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
 	List<LeadTodo> findByLead_LeadId(Integer leadId);
-	
-	
-	 @Query("""
-		        SELECT t FROM LeadTodo t
-		        WHERE (:search IS NULL OR :search = '' OR 
-		              LOWER(t.purpose) LIKE LOWER(CONCAT('%', :search, '%')) OR
-		              LOWER(t.venue) LIKE LOWER(CONCAT('%', :search, '%')) OR
-		              LOWER(t.lead.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
-		          AND t.todoDate >= CURRENT_DATE
-		        """)
-		    Page<LeadTodo> searchTodos(String search, Pageable pageable);
-	 
-	 @Query("""
-			    SELECT t FROM LeadTodo t
-			    WHERE (:search IS NULL OR :search = '' OR 
-			          LOWER(t.purpose) LIKE LOWER(CONCAT('%', :search, '%')) OR
-			          LOWER(t.venue) LIKE LOWER(CONCAT('%', :search, '%')) OR
-			          LOWER(t.lead.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
-			      AND t.todoDate < CURRENT_DATE
-			      AND t.activity IS EMPTY
-			    """)
-			Page<LeadTodo> searchMissedTodosWithoutActivity(String search, Pageable pageable);
 
+	@Query("""
+			SELECT t FROM LeadTodo t
+			WHERE (:search IS NULL OR :search = '' OR
+			      LOWER(t.purpose) LIKE LOWER(CONCAT('%', :search, '%')) OR
+			      LOWER(t.venue) LIKE LOWER(CONCAT('%', :search, '%')) OR
+			      LOWER(t.lead.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
+			  AND t.todoDate >= CURRENT_DATE
+			""")
+	Page<LeadTodo> searchTodos(String search, Pageable pageable);
 
+	@Query("""
+			SELECT t FROM LeadTodo t
+			WHERE (:search IS NULL OR :search = '' OR
+			      LOWER(t.purpose) LIKE LOWER(CONCAT('%', :search, '%')) OR
+			      LOWER(t.venue) LIKE LOWER(CONCAT('%', :search, '%')) OR
+			      LOWER(t.lead.customerName) LIKE LOWER(CONCAT('%', :search, '%')))
+			  AND t.todoDate < CURRENT_DATE
+			  AND t.activity IS EMPTY
+			""")
+	Page<LeadTodo> searchMissedTodosWithoutActivity(String search, Pageable pageable);
 
 }
-

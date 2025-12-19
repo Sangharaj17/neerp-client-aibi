@@ -82,11 +82,14 @@ function EmployeeListPage() {
       errors.password = 'Password must be at least 6 characters';
     }
 
-    // Optional field validations
-    if (form.emailId && form.emailId !== '-' && !isValidEmail(form.emailId)) {
+    // Email is required
+    if (!form.emailId || form.emailId === '-' || !form.emailId.trim()) {
+      errors.emailId = 'Email is required';
+    } else if (!isValidEmail(form.emailId)) {
       errors.emailId = 'Please enter a valid email address';
     }
 
+    // Mobile number validation (optional but if provided must be valid)
     if (form.contactNumber && form.contactNumber !== '-' && !isValidMobile(form.contactNumber)) {
       errors.contactNumber = 'Mobile number must be 10 or 12 digits';
     }
@@ -164,6 +167,16 @@ function EmployeeListPage() {
   const handleSave = async () => {
     // Validate form before submission
     if (!validateForm()) {
+      return;
+    }
+
+    // Check for duplicate employee code
+    const isDuplicateCode = employees.some(emp =>
+      emp.employeeCode?.toLowerCase().trim() === form.employeeCode.trim().toLowerCase() &&
+      emp.employeeId !== editingEmployee?.employeeId
+    );
+    if (isDuplicateCode) {
+      setFormErrors(prev => ({ ...prev, employeeCode: 'This employee code already exists' }));
       return;
     }
 
@@ -484,6 +497,7 @@ function EmployeeListPage() {
                   value={form.emailId}
                   onChange={v => setForm(f => ({ ...f, emailId: v }))}
                   error={formErrors.emailId}
+                  required
                 />
                 <TextField
                   label="Username"
