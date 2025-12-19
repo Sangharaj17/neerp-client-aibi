@@ -7,9 +7,12 @@ import {
   FaSort, FaSortUp, FaSortDown, FaSearch, FaChevronLeft, FaChevronRight,
   FaEye, FaEdit, FaFilePdf, FaEnvelope, FaReceipt, FaThumbsUp, FaThumbsDown, FaCheckCircle, FaTimesCircle
 } from 'react-icons/fa';
+import { Trash2 } from "lucide-react";
 
 // Assuming you have saved ActionModal.js in a relevant path
 import ActionModal from '@/components/AMC/ActionModal';
+
+import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
 
 import ModernizationEdit from '@/components/Modernization/ModernizationEdit';
 import ModernizationInvoicePrint from '@/components/Modernization/ModernizationInvoicePrint';
@@ -31,6 +34,8 @@ export default function ModernizationList() {
 
   // State for View Modal (Unchanged)
   const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [viewData, setViewData] = useState(null);
@@ -38,6 +43,9 @@ export default function ModernizationList() {
 
   const [selectedIdForInvoice, setSelectedIdForInvoice] = useState(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+
+    const [deleteId, setDeleteId] = useState(null);
+
 
   // ✅ Fetch List API (Unchanged)
   const fetchModernizations = useCallback(async () => {
@@ -75,6 +83,62 @@ export default function ModernizationList() {
   useEffect(() => {
     fetchModernizations();
   }, [page, size, sortBy, direction, fetchModernizations]);
+
+  const handleConfirmDelete = async () => {
+  try {
+    await axiosInstance.delete(`/api/modernization/${deleteId}`);
+
+    // Success notification
+    toast.success(`Quotation (ID: ${deleteId}) deleted successfully`);
+
+    setIsDeleteModalOpen(false);
+
+    // Refresh the list to reflect changes
+    fetchModernizations();
+    
+    // Optional: Close your delete confirmation modal here
+    // setOpenDeleteModal(false);
+
+  } catch (error) {
+   // console.error("Delete Error:", error);
+
+    if (error.response) {
+      /**
+       * If backend sends: ResponseEntity.status(409).body("Custom Message")
+       * Then error.response.data IS the string.
+       */
+      const errorMessage = typeof error.response.data === 'string' 
+        ? error.response.data 
+        : error.response.data.message || "Failed to delete the quotation.";
+
+      toast.error(errorMessage);
+    } else if (error.request) {
+      // The request was made but no response was received
+      toast.error("No response from server. Please check your connection.");
+    } else {
+      // Something happened in setting up the request
+      toast.error("An error occurred: " + error.message);
+    }
+  }
+};
+
+ const handleCancel = () => {
+    setIsDeleteModalOpen(false);
+    setDeleteId(null);
+  };
+
+//  const handleConfirmDelete = async () => {
+//     try {
+//       await axiosInstance.delete(`/api/leadmanagement/leads/${deleteId}`);
+//       toast.success("Lead deleted successfully.");
+//       setModalOpen(false);
+//       setRefreshKey(prev => prev + 1);
+//     } catch (err) {
+//       toast.error(err?.response?.data?.message || "Failed to delete.");
+//       setModalOpen(false);
+//     }
+//   };
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -230,6 +294,7 @@ export default function ModernizationList() {
       </div>
     );
 
+   
 
 
     return (
@@ -515,6 +580,17 @@ export default function ModernizationList() {
                         >
                           <FaReceipt size={16} />
                         </button>
+                        <Trash2
+                          size={18}
+                          className="text-red-600 cursor-pointer hover:text-red-800"
+                          title="Delete quotation"
+                          onClick={() => {
+                            setIsDeleteModalOpen(true);
+                            setDeleteId(item.modernization.id);
+                            
+                            }}
+                        />
+
                       </div>
                     </td>
 
@@ -631,6 +707,14 @@ export default function ModernizationList() {
 
       </ActionModal>
 
+
+
+ {/* Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onCancel={handleCancel}
+        onConfirm={handleConfirmDelete}
+      />
 
 
     </div>

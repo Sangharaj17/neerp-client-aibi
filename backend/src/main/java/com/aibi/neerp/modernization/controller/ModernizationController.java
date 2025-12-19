@@ -2,10 +2,12 @@ package com.aibi.neerp.modernization.controller;
 
 import java.time.LocalDate;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -163,6 +165,26 @@ public class ModernizationController {
         return ResponseEntity.ok(modernizatationQuotationPdfData);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteModernization(@PathVariable Integer id) {
+        try {
+            modernizationService.deleteModernization(id);
+            return ResponseEntity.ok("Modernization quotation deleted successfully");
+        } 
+        catch (EntityNotFoundException e) {
+            // Returns 404 Not Found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } 
+        catch (DataIntegrityViolationException e) {
+            // Returns 409 Conflict (standard for FK violations)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } 
+        catch (Exception e) {
+            // Returns 500 Internal Server Error for everything else
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body("An unexpected error occurred: " + e.getMessage());
+        }
+    }
     
     
 }

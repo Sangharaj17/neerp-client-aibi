@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -44,6 +45,7 @@ import com.aibi.neerp.amc.quatation.pdf.dto.AmcQuotationPdfHeadingsContentsDto;
 import com.aibi.neerp.amc.quatation.pdf.entity.AmcQuotationPdfHeadings;
 import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsContentsRepository;
 import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsRepository;
+import com.aibi.neerp.exception.ResourceInUseException;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
@@ -679,6 +681,28 @@ public class ModernizationService {
         dto.setModernizationQuotationPdfHeadingWithContentsDtos(headingDtos);
 
         return dto;
+    }
+
+
+    @Transactional
+    public void deleteModernization(Integer modernizationId) throws EntityNotFoundException, DataIntegrityViolationException {
+
+        // 1. Check if it exists
+        if (!modernizationRepository.existsById(modernizationId)) {
+            throw new EntityNotFoundException("Modernization quotation with ID " + modernizationId + " not found.");
+        }
+
+        try {
+            modernizationRepository.deleteById(modernizationId);
+            // Flush ensures the DB constraint is checked inside the try-catch block
+            modernizationRepository.flush(); 
+        } 
+        catch (DataIntegrityViolationException ex) {
+            // 2. Custom message for Foreign Key constraints
+            throw new DataIntegrityViolationException(
+                "Cannot delete: This quotation is linked to an existing Invoice, Job, or AMC record."
+            );
+        }
     }
 
 
