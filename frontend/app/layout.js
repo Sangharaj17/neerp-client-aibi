@@ -1,6 +1,5 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import { Toaster } from 'react-hot-toast';
 import BetaBanner from '@/components/BetaBanner';
 import NextTopLoader from 'nextjs-toploader';
 
@@ -33,7 +32,6 @@ export default function RootLayout({ children }) {
           shadow="0 0 10px rgb(10, 242, 169),0 0 5px rgb(34, 102, 197)"
         />
         <BetaBanner />
-        <Toaster />
         {children}
       </body>
     </html>

@@ -10,12 +10,15 @@ export default function CompanyLogo() {
     const fetchLogo = async () => {
       try {
         const response = await axiosInstance.get('/api/v1/settings/COMPANY_SETTINGS_1/logo');
-        
+
         if (response.data?.logo) {
           setLogoUrl(response.data.logo);
         }
       } catch (err) {
-        console.error('Failed to load logo:', err);
+        // 404 is expected when company settings are not configured yet - silently ignore
+        if (err?.response?.status !== 404) {
+          console.error('Failed to load logo:', err);
+        }
       }
     };
 
@@ -34,7 +37,7 @@ export default function CompanyLogo() {
           // 3. w-auto and h-auto: Keeps dimensions flexible.
           // 4. object-contain: Ensures the whole logo is visible without cropping.
           className="max-h-full max-w-full w-auto h-auto object-contain"
-          // --- ^- Responsive Fix ^ ---
+        // --- ^- Responsive Fix ^ ---
         />
       ) : (
         <div className="text-gray-400 text-xs italic font-medium">No Logo</div>

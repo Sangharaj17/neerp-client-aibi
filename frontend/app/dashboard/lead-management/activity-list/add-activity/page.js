@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
-import { Save, X } from "lucide-react";
+import { Save, X, List } from "lucide-react";
 import axiosInstance from "@/utils/axiosInstance";
 import toast from "react-hot-toast";
 import PageHeader from "@/components/UI/PageHeader";
@@ -53,27 +53,21 @@ function AddActivityContent() {
             );
             const d = res.data || {};
 
-            setLeadId(Number(d.leadId ?? d.lead?.leadId ?? lId));
-            setTodoId(Number(d.todoId ?? d.todo?.todoId ?? tId));
+            setLeadId(Number(d.leadId ?? lId));
+            setTodoId(Number(d.todoId ?? tId));
 
-            const fetchedLeadName =
-                d.customerName ??
-                d.leadName ??
-                d.lead?.customerName ??
-                d.leadCompanyName ??
-                d.lead?.companyName ??
-                "";
-            setLeadName(fetchedLeadName);
-            setLeadCompanyName(d.leadCompanyName ?? d.lead?.companyName ?? "");
-            setSalesEnggName(d.activityByEmpName ?? d.assignedTo ?? "");
-            setSiteName(d.siteName ?? d.lead?.siteName ?? "");
-            setSiteAddress(d.siteAddress ?? d.lead?.siteAddress ?? "");
-            setContactNo(d.contactNo ?? d.lead?.contactNo ?? "");
-            setEmailId(d.email ?? d.lead?.email ?? "");
-            setLeadStage(d.leadStage ?? d.lead?.leadStage ?? "");
-            setLeadType(d.leadType ?? d.lead?.leadType ?? "");
-            setTodoName(d.todoName ?? d.purpose ?? d.todo?.purpose ?? "");
-            setVenue(d.venue ?? d.todo?.venue ?? "");
+            // Map backend field names correctly
+            setLeadName(d.customerName ?? d.contactName ?? "");
+            setLeadCompanyName(d.leadCompName ?? "");
+            setSalesEnggName(d.salesEnggName ?? "");
+            setSiteName(d.siteName ?? "");
+            setSiteAddress(d.siteAddress ?? "");
+            setContactNo(d.contactNo ?? "");
+            setEmailId(d.emailid ?? "");
+            setLeadStage(d.leadStage ?? "");
+            setLeadType(d.leadType ?? "");
+            setTodoName(d.todoName ?? "");
+            setVenue(d.venue ?? "");
             setFeedback("");
         } catch (err) {
             toast.error("Failed to load lead/todo data");
@@ -126,11 +120,17 @@ function AddActivityContent() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Get current date and time for the activity
+        const now = new Date();
+        const activityDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const activityTime = now.toTimeString().split(' ')[0].substring(0, 5); // HH:MM
+
         const payload = {
             leadId: leadId ? Number(leadId) : null,
             todoId: todoId ? Number(todoId) : null,
-            todoName: todoName?.trim() || "",
             feedback: feedback?.trim() || "",
+            activityDate: activityDate,
+            activityTime: activityTime,
         };
 
         try {
@@ -265,11 +265,18 @@ function AddActivityContent() {
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                onClick={() => router.push(`/dashboard/lead-management/activity-list`)}
+                                onClick={() => router.push(`/dashboard/lead-management/to-do-list`)}
                                 className="px-4 py-2 text-sm font-medium text-neutral-600 bg-white border border-neutral-300 rounded-lg hover:bg-neutral-50 transition flex items-center gap-1"
                                 disabled={loading}
                             >
                                 <X size={16} /> Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/dashboard/lead-management/activity-list`)}
+                                className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition flex items-center gap-1"
+                            >
+                                <List size={16} /> View Activity List
                             </button>
                             <button
                                 type="submit"

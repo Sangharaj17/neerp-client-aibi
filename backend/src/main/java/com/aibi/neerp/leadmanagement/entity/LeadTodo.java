@@ -40,9 +40,9 @@ public class LeadTodo {
     @Column(name = "venue", length = 255)
     private String venue;
 
-//    @Column(name = "activity_id")
-//    private Integer activityId;
+    // @Column(name = "activity_id")
+    // private Integer activityId;
 
-    @OneToMany(mappedBy = "todo")
+    @OneToMany(mappedBy = "todo", fetch = FetchType.EAGER)
     private List<LeadTodoActivity> activity;
 }

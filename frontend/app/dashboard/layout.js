@@ -9,6 +9,7 @@ import { getTenant } from '@/utils/tenant';
 
 export default function DClientLayout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [clientName, setClientName] = useState('');
   const { tenant: tenantFromParams } = useParams();
   const tenant = tenantFromParams || getTenant();
@@ -35,7 +36,7 @@ export default function DClientLayout({ children }) {
         </button>
       </div>
 
-      <main className="w-full flex h-[calc(100vh-3.5rem)] md:h-screen">
+      <main className="relative w-full flex h-[calc(100vh-3.5rem)] md:h-screen">
         {/* Mobile Overlay */}
         {isMobileMenuOpen && (
           <div
@@ -44,41 +45,60 @@ export default function DClientLayout({ children }) {
           />
         )}
 
-        {/* Sidebar */}
-        <aside className={`
-          fixed md:sticky top-0 left-0 z-50 h-screen w-64 bg-white border-r border-slate-200
+        {/* Mobile Sidebar */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 md:hidden
           transition-transform duration-200 ease-in-out
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        `}>
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        >
           <NavigationAccordion />
+        </aside>
+
+        {/* Desktop Sidebar */}
+        <aside
+          className={`hidden md:flex md:flex-col h-screen bg-white border-r border-slate-200
+          transition-all duration-200 ease-in-out
+          ${isSidebarCollapsed ? 'md:w-16' : 'md:w-64'}`}
+        >
+          <NavigationAccordion
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
+          />
         </aside>
 
         <section className="flex-1 h-full overflow-y-auto">
           {/* ✅ Top-Center Toasts */}
           <Toaster
-            position="top-center"
+            position="bottom-center"
             reverseOrder={false}
+            gutter={8}
             toastOptions={{
-              duration: 3000,
+              duration: 2500,
               style: {
-                background: '#fff',
-                color: '#171717',
-                padding: '12px 16px',
+                background: '#18181b',
+                color: '#fafafa',
+                padding: '10px 14px',
                 borderRadius: '8px',
-                fontSize: '14px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                border: '1px solid #e5e5e5',
+                fontSize: '13px',
+                maxWidth: '360px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
               },
               success: {
+                style: {
+                  background: '#18181b',
+                },
                 iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#fff',
+                  primary: '#22c55e',
+                  secondary: '#fafafa',
                 },
               },
               error: {
+                style: {
+                  background: '#18181b',
+                },
                 iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#fff',
+                  primary: '#f87171',
+                  secondary: '#fafafa',
                 },
               },
             }}
