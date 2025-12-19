@@ -203,6 +203,9 @@ const OncallPricingTablePdf = ({ pricingData }) => {
           <View style={[{ width: "10%" }, styles.tableCell]}>
             <Text style={styles.tdCenter}>Qty</Text>
           </View>
+           <View style={[{ width: "10%" }, styles.tableCell]}>
+            <Text style={styles.tdCenter}>Guarantee(Months)</Text>
+          </View>
           <View style={[{ width: "15%" }, styles.tableCell]}>
             <Text style={styles.tdRight}>Rate (Rs.)</Text>
           </View>
@@ -228,6 +231,9 @@ const OncallPricingTablePdf = ({ pricingData }) => {
             </View>
             <View style={[{ width: "10%" }, styles.tableCell]}>
               <Text style={styles.tdCenter}>{material.quantity ?? "-"}</Text>
+            </View>
+             <View style={[{ width: "10%" }, styles.tableCell]}>
+              <Text style={styles.tdCenter}>{material.guarantee ?? "-"}</Text>
             </View>
             <View style={[{ width: "15%" }, styles.tableCell]}>
               <Text style={styles.tdRight}>{currencyINR(material.rate)}</Text>
@@ -412,6 +418,36 @@ const OncallDocument = ({ apiData, isWithLetterHead }) => {
             <Text style={{ fontSize: 12, fontWeight: 700 }}>
               Subject: {apiData?.subject || "Quotation for OnCall Service"}
             </Text>
+          </View>
+
+          {/* Additional Details */}
+          <View style={{ marginBottom: 10, padding: 8, backgroundColor: "#F9FAFB", borderWidth: 1, borderColor: "#E5E7EB" }}>
+            <View style={{ flexDirection: "row", marginBottom: 4 }}>
+              <View style={{ width: "30%" }}>
+                <Text style={{ fontWeight: 700, fontSize: 10 }}>Warranty (Months):</Text>
+              </View>
+              <View style={{ width: "70%" }}>
+                <Text style={{ fontSize: 10 }}>{apiData?.warranty || "-"}</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", marginBottom: 4 }}>
+              <View style={{ width: "30%" }}>
+                <Text style={{ fontWeight: 700, fontSize: 10 }}>Work Period (Months):</Text>
+              </View>
+              <View style={{ width: "70%" }}>
+                <Text style={{ fontSize: 10 }}>{apiData?.workperiod || "-"}</Text>
+              </View>
+            </View>
+            {apiData?.note && (
+              <View style={{ flexDirection: "row" }}>
+                <View style={{ width: "30%" }}>
+                  <Text style={{ fontWeight: 700, fontSize: 10 }}>Note:</Text>
+                </View>
+                <View style={{ width: "70%" }}>
+                  <Text style={{ fontSize: 10 }}>{apiData.note}</Text>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Intro Content */}

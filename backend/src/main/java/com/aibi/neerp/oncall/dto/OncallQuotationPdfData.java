@@ -33,6 +33,10 @@ public class OncallQuotationPdfData {
 	
 	private String companyName;
 	
+	private String note;
+	private String warranty;
+	private String workperiod;
+	
 	private OncallQuotationPdfPrizingData oncallQuotationPdfPrizingData;
 	
 	private List<AmcQuotationPdfHeadingWithContentsDto> oncallQuotationPdfHeadingWithContentsDtos;

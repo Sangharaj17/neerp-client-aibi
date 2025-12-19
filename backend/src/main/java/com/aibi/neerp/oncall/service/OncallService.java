@@ -376,7 +376,10 @@ public class OncallService {
         BigDecimal roundedGrandTotal = roundData.get("roundedTotal");
         BigDecimal roundOffValue = roundData.get("roundOffValue");
 
-        String amountInWords = convertAmountToWords(roundedGrandTotal);
+        //String amountInWords = convertAmountToWords(roundedGrandTotal);
+        
+        String amountInWords = amountToWordsService.convertAmountToWords(roundedGrandTotal);
+
 
         return OncallQuotationInvoiceData.builder()
                 .companyName(companySetting.getCompanyName())
@@ -501,7 +504,11 @@ public class OncallService {
         dto.setCustomerName(lead.getCustomerName());
         dto.setCustomerNumber(lead.getContactNo());
         dto.setCustomerAddress(lead.getAddress());
-
+        
+        dto.setWorkperiod(oncall.getWorkPeriodEntity().getName());
+        dto.setNote(oncall.getNote());
+        dto.setWarranty(oncall.getWarranty()+"");
+        
         dto.setKindAttention("Mr. " + lead.getCustomerName() + " (" + lead.getContactNo() + ")");
         dto.setSubject("Quotation for Lift Oncall Service.");
 
@@ -529,6 +536,7 @@ public class OncallService {
                         .particulars(d.getMaterialName())
                         .hsnSac(d.getHsn())
                         .quantity(d.getQuantity())
+                        .guarantee(d.getGuarantee())
                         .rate(d.getRate())
                         .per(d.getUom())
                         .amount(d.getAmount())

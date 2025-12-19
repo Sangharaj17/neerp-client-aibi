@@ -51,52 +51,43 @@ const ModernizationInvoicePrint = ({ invoiceId = 2, onBackToList }) => {
 
   return (
     <>
-      {/* PRINT STYLES */}
+      {/* AGGRESSIVE PRINT STYLES TO REMOVE MARGINS AND BROWSER HEADERS/FOOTERS */}
       <style jsx global>{`
         @media print {
           @page {
             size: A4;
-            margin: 8mm;
+            margin: 0 !important; 
+            padding: 0 !important;
           }
-          body {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-          table {
-            page-break-inside: avoid;
+          body, html {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden; 
           }
         }
       `}</style>
 
-      <div className="w-full max-w-[210mm] mx-auto p-4 bg-white shadow-xl font-sans text-gray-800 print:shadow-none print:p-0">
+      <div className="w-full mx-auto p-4 bg-white shadow-2xl font-sans text-gray-800 print:p-0 print:shadow-none print:bg-transparent">
         {/* Header (Print Controls) */}
-        <div className="mb-4 border-b border-gray-300 pb-3 print:hidden flex justify-between items-center">
-          <button
-            type="button"
-            onClick={onBackToList}
-            className="text-blue-600 hover:underline text-sm font-semibold"
-          >
-            Back To List &gt;&gt;
-          </button>
-
-          <button
+        <div className="mb-6 border-b border-gray-200 pb-3 print:hidden flex justify-between items-center">
+          <div className="text-xl font-light text-gray-500">
+            <a onClick={onBackToList} className="text-blue-600 hover:underline cursor-pointer">
+              <span className="font-semibold">Back To List</span> &gt;&gt;
+            </a>
+          </div>
+          <button 
             onClick={() => window.print()}
-            className="py-1.5 px-4 border border-blue-500 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition text-sm font-medium"
+            className="py-1 px-4 border border-blue-500 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition duration-150 text-sm font-medium"
           >
             Print Invoice
           </button>
         </div>
-
+        
         {/* Main Title */}
-        <h1 className="text-2xl font-extrabold text-center text-gray-900 mb-3 tracking-wide">
-          MODERNIZATION INVOICE
-        </h1>
+        <h1 className="text-3xl font-extrabold text-center text-gray-900 mb-4">MODERNIZATION INVOICE</h1>
 
-        {/* Invoice Table */}
-        <table className="w-full border border-gray-400 border-collapse text-[13px]">
+        {/* --- INVOICE TABLE --- */}
+        <table className="w-full border-collapse border border-gray-400 text-sm">
           <thead>
             <tr>
               <th colSpan="3" className="border border-gray-400 bg-gray-50 p-2"></th>

@@ -50,13 +50,21 @@ export default function OncallList() {
   const fetchOncalls = useCallback(async () => {
     try {
       setLoading(true);
+
+       let sortByParam = sortBy;
+
+      if(sortByParam === "quotationNo"){
+        sortByParam = "id";
+      }
+
+
       const res = await axiosInstance.get(API_BASE_PATH, {
         params: {
           search: search.trim(),
           dateSearch: dateSearch || null,
           page,
           size,
-          sortBy,
+          sortBy:sortByParam,
           direction,
         },
       });

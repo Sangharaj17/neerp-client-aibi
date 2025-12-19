@@ -15,6 +15,7 @@ public  class MaterialDetails {
     private String particulars;
     private String hsnSac;
     private Integer quantity;
+    private String guarantee;
     private BigDecimal rate;
     private String per;
     private BigDecimal amount;

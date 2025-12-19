@@ -62,22 +62,21 @@ const OncallInvoicePrint = ({ invoiceId = 2, onBackToList }) => { // invoiceId s
 
   return (
     <>
-      {/* PRINT STYLES (No change needed) */}
+      {/* PRINT STYLES */}
       <style jsx global>{`
         @media print {
           @page {
             size: A4;
-            margin: 8mm;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          body {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden;
           }
           .print\\:hidden {
             display: none !important;
-          }
-          table {
-            page-break-inside: avoid;
           }
         }
       `}</style>
@@ -106,8 +105,8 @@ const OncallInvoicePrint = ({ invoiceId = 2, onBackToList }) => { // invoiceId s
           ONCALL INVOICE {/* Text updated */}
         </h1>
 
-        {/* Invoice Table (The rest of the rendering logic remains the same) */}
-        <table className="w-full border border-gray-400 border-collapse text-[13px]">
+        {/* Invoice Table */}
+        <table className="w-full border border-gray-400 border-collapse text-sm">
           <thead>
             <tr>
               <th colSpan="3" className="border border-gray-400 bg-gray-50 p-2"></th>
