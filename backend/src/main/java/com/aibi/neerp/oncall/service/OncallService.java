@@ -7,6 +7,7 @@ import java.time.Year;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -589,6 +590,27 @@ public class OncallService {
         dto.setOncallQuotationPdfHeadingWithContentsDtos(headingDtos);
 
         return dto;
+    }
+
+    @Transactional
+    public void deleteOncall(Integer oncallId) throws EntityNotFoundException, DataIntegrityViolationException {
+
+        // 1. Check if it exists
+        if (!onCallQuotationRepository.existsById(oncallId)) {
+            throw new EntityNotFoundException("Oncall quotation with ID " + oncallId + " not found.");
+        }
+
+        try {
+        	onCallQuotationRepository.deleteById(oncallId);
+            // Flush ensures the DB constraint is checked inside the try-catch block
+        	onCallQuotationRepository.flush(); 
+        } 
+        catch (DataIntegrityViolationException ex) {
+            // 2. Custom message for Foreign Key constraints
+            throw new DataIntegrityViolationException(
+                "Cannot delete: This quotation is linked to an existing Invoice, Job, or AMC record."
+            );
+        }
     }
 
     

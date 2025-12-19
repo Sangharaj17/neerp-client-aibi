@@ -13,6 +13,9 @@ import OncallEdit from '@/components/Oncall/OncallEdit';
 import OncallInvoicePrint from '@/components/Oncall/OncallInvoicePrint';
 
 import OncallQuotationPdfPreview from '@/components/Oncall/OncallQuotationPdfPreview';
+import ConfirmDeleteModal from '@/components/AMC/ConfirmDeleteModal';
+
+import { Trash2 } from "lucide-react";
 
 
 export default function OncallList() {
@@ -42,6 +45,53 @@ export default function OncallList() {
 
   const [selectedOncallId, setSelectedOnCallId] = useState(null);
 
+      const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const [deleteId, setDeleteId] = useState(null);
+
+
+  const handleConfirmDelete = async () => {
+  try {
+    await axiosInstance.delete(`/api/oncall/${deleteId}`);
+
+    // Success notification
+    toast.success(`Quotation (ID: ${deleteId}) deleted successfully`);
+
+    setIsDeleteModalOpen(false);
+
+    // Refresh the list to reflect changes
+    fetchOncalls();
+    
+    // Optional: Close your delete confirmation modal here
+    // setOpenDeleteModal(false);
+
+  } catch (error) {
+   // console.error("Delete Error:", error);
+
+    if (error.response) {
+      /**
+       * If backend sends: ResponseEntity.status(409).body("Custom Message")
+       * Then error.response.data IS the string.
+       */
+      const errorMessage = typeof error.response.data === 'string' 
+        ? error.response.data 
+        : error.response.data.message || "Failed to delete the quotation.";
+
+      toast.error(errorMessage);
+    } else if (error.request) {
+      // The request was made but no response was received
+      toast.error("No response from server. Please check your connection.");
+    } else {
+      // Something happened in setting up the request
+      toast.error("An error occurred: " + error.message);
+    }
+  }
+};
+
+const handleCancel = () => {
+    setIsDeleteModalOpen(false);
+    setDeleteId(null);
+  };
 
   // Base API Path for Oncall
   const API_BASE_PATH = '/api/oncall';
@@ -527,6 +577,26 @@ export default function OncallList() {
                           <FaReceipt size={16} />
                         </button>
 
+                       <span 
+  title={item.oncallDto.isFinal ? 'Cannot delete because this record is final' : 'Delete quotation'}
+  className="inline-block"
+>
+  <Trash2
+    size={18}
+    className={`transition ${
+      item.oncallDto.isFinal
+        ? 'text-gray-400 cursor-not-allowed'
+        : 'text-red-600 cursor-pointer hover:text-red-800'
+    }`}
+    onClick={() => {
+      if (item.oncallDto.isFinal) return;
+      setIsDeleteModalOpen(true);
+      setDeleteId(item.oncallDto.id);
+    }}
+  />
+</span>
+
+
                       </div>
                     </td>
 
@@ -648,6 +718,12 @@ export default function OncallList() {
 
       </ActionModal>
 
+{/* Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onCancel={handleCancel}
+        onConfirm={handleConfirmDelete}
+      />
 
 
 

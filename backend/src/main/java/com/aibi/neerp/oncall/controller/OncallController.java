@@ -8,9 +8,13 @@ import com.aibi.neerp.oncall.dto.OncallRequestDtoPreData;
 import com.aibi.neerp.oncall.dto.OncallResponseDto;
 import com.aibi.neerp.oncall.service.OncallService;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -100,6 +104,27 @@ public class OncallController {
         		oncallService.getOncallQuotationPdfData(id);
 
         return ResponseEntity.ok(oncallQuotationPdfData);
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteOncall(@PathVariable Integer id) {
+        try {
+        	oncallService.deleteOncall(id);
+            return ResponseEntity.ok("Oncall quotation deleted successfully");
+        } 
+        catch (EntityNotFoundException e) {
+            // Returns 404 Not Found
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } 
+        catch (DataIntegrityViolationException e) {
+            // Returns 409 Conflict (standard for FK violations)
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } 
+        catch (Exception e) {
+            // Returns 500 Internal Server Error for everything else
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                 .body("An unexpected error occurred: " + e.getMessage());
+        }
     }
     
     
