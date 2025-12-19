@@ -33,6 +33,10 @@ public class ModernizatationQuotationPdfData {
 	
 	private String companyName;
 	
+	private String note;
+	private String warranty;
+	private String workperiod;
+	
 	private ModernizationQuotationPdfPrizingData modernizationQuotationPdfPrizingData;
 	
 	private List<AmcQuotationPdfHeadingWithContentsDto> modernizationQuotationPdfHeadingWithContentsDtos;

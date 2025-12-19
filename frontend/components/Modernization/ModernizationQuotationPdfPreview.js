@@ -160,14 +160,39 @@ const formatContentText = (content) => {
 };
 
 const currencyINR = (value) => {
-  if (value == null) return "-";
+  if (value == null || value === undefined) return "-";
   try {
-    return value.toLocaleString("en-IN", { 
-      style: "currency", 
-      currency: "INR", 
-      minimumFractionDigits: 2 
-    });
-  } catch {
+    // Simple formatting without special characters
+    const num = parseFloat(value);
+    if (isNaN(num)) return String(value);
+    
+    const parts = num.toFixed(2).split('.');
+    const intPart = parts[0];
+    const decimalPart = parts[1];
+    
+    // Add commas every 2 digits from right for Indian format
+    const reversed = intPart.split('').reverse().join('');
+    let formatted = '';
+    for (let i = 0; i < reversed.length; i++) {
+      if (i > 0 && i % 3 === 0) {
+        formatted = ',' + formatted;
+      }
+      if (i === 3) {
+        formatted = ',' + formatted;
+        break;
+      }
+      formatted = reversed[i] + formatted;
+    }
+    
+    if (intPart.length > 3) {
+      formatted = reversed.substring(3).split('').reverse().join('');
+      formatted = formatted.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+      formatted = formatted + ',' + intPart.slice(-3);
+    }
+    
+    return `${formatted}.${decimalPart}`;
+  } catch (error) {
+    console.log('Currency format error:', error);
     return String(value);
   }
 };
@@ -194,7 +219,7 @@ const ModernizationPricingTablePdf = ({ pricingData }) => {
           <View style={[{ width: "8%" }, styles.tableCell]}>
             <Text style={styles.tdCenter}>Sr. No.</Text>
           </View>
-          <View style={[{ width: "32%" }, styles.tableCell]}>
+          <View style={[{ width: "22%" }, styles.tableCell]}>
             <Text style={styles.tdLeft}>Particulars</Text>
           </View>
           <View style={[{ width: "15%" }, styles.tableCell]}>
@@ -202,6 +227,9 @@ const ModernizationPricingTablePdf = ({ pricingData }) => {
           </View>
           <View style={[{ width: "10%" }, styles.tableCell]}>
             <Text style={styles.tdCenter}>Qty</Text>
+          </View>
+          <View style={[{ width: "10%" }, styles.tableCell]}>
+            <Text style={styles.tdCenter}>Guarantee(Months)</Text>
           </View>
           <View style={[{ width: "15%" }, styles.tableCell]}>
             <Text style={styles.tdRight}>Rate (Rs.)</Text>
@@ -220,7 +248,7 @@ const ModernizationPricingTablePdf = ({ pricingData }) => {
             <View style={[{ width: "8%" }, styles.tableCell]}>
               <Text style={styles.tdCenter}>{i + 1}</Text>
             </View>
-            <View style={[{ width: "32%" }, styles.tableCell]}>
+            <View style={[{ width: "22%" }, styles.tableCell]}>
               <Text style={styles.tdLeft}>{material.particulars}</Text>
             </View>
             <View style={[{ width: "15%" }, styles.tableCell]}>
@@ -228,6 +256,9 @@ const ModernizationPricingTablePdf = ({ pricingData }) => {
             </View>
             <View style={[{ width: "10%" }, styles.tableCell]}>
               <Text style={styles.tdCenter}>{material.quantity ?? "-"}</Text>
+            </View>
+            <View style={[{ width: "10%" }, styles.tableCell]}>
+              <Text style={styles.tdCenter}>{material.guarantee ?? "-"}</Text>
             </View>
             <View style={[{ width: "15%" }, styles.tableCell]}>
               <Text style={styles.tdRight}>{currencyINR(material.rate)}</Text>
@@ -412,6 +443,36 @@ const ModernizationDocument = ({ apiData, isWithLetterHead }) => {
             <Text style={{ fontSize: 12, fontWeight: 700 }}>
               Subject: {apiData?.subject || "Quotation for Lift Modernization"}
             </Text>
+          </View>
+
+          {/* Additional Details */}
+          <View style={{ marginBottom: 10, padding: 8, backgroundColor: "#F9FAFB", borderWidth: 1, borderColor: "#E5E7EB" }}>
+            <View style={{ flexDirection: "row", marginBottom: 4 }}>
+              <View style={{ width: "30%" }}>
+                <Text style={{ fontWeight: 700, fontSize: 10 }}>Warranty (Months):</Text>
+              </View>
+              <View style={{ width: "70%" }}>
+                <Text style={{ fontSize: 10 }}>{apiData?.warranty || "-"}</Text>
+              </View>
+            </View>
+            <View style={{ flexDirection: "row", marginBottom: 4 }}>
+              <View style={{ width: "30%" }}>
+                <Text style={{ fontWeight: 700, fontSize: 10 }}>Work Period (Months):</Text>
+              </View>
+              <View style={{ width: "70%" }}>
+                <Text style={{ fontSize: 10 }}>{apiData?.workperiod || "-"}</Text>
+              </View>
+            </View>
+            {apiData?.note && (
+              <View style={{ flexDirection: "row" }}>
+                <View style={{ width: "30%" }}>
+                  <Text style={{ fontWeight: 700, fontSize: 10 }}>Note:</Text>
+                </View>
+                <View style={{ width: "70%" }}>
+                  <Text style={{ fontSize: 10 }}>{apiData.note}</Text>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Intro Content */}

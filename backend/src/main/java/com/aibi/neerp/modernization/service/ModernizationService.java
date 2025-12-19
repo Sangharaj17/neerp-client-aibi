@@ -596,6 +596,10 @@ public class ModernizationService {
 
         dto.setKindAttention("Mr. " + lead.getCustomerName() + " (" + lead.getContactNo() + ")");
         dto.setSubject("Quotation for Lift Modernization.");
+        
+        dto.setWorkperiod(modernization.getWorkPeriodEntity().getName());
+        dto.setNote(modernization.getNote());
+        dto.setWarranty(modernization.getWarranty()+"");
 
         // ==============================
         // COMPANY
@@ -622,6 +626,7 @@ public class ModernizationService {
                         .particulars(d.getMaterialName())  // FIXED
                         .hsnSac(d.getHsn())                // FIXED
                         .quantity(d.getQuantity())
+                        .guarantee(d.getGuarantee())
                         .rate(d.getRate())
                         .per(d.getUom())                   // FIXED
                         .amount(d.getAmount())
