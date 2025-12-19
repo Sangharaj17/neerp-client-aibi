@@ -160,14 +160,39 @@ const formatContentText = (content) => {
 };
 
 const currencyINR = (value) => {
-  if (value == null) return "-";
+  if (value == null || value === undefined) return "-";
   try {
-    return value.toLocaleString("en-IN", { 
-      style: "currency", 
-      currency: "INR", 
-      minimumFractionDigits: 2 
-    });
-  } catch {
+    // Simple formatting without special characters
+    const num = parseFloat(value);
+    if (isNaN(num)) return String(value);
+    
+    const parts = num.toFixed(2).split('.');
+    const intPart = parts[0];
+    const decimalPart = parts[1];
+    
+    // Add commas every 2 digits from right for Indian format
+    const reversed = intPart.split('').reverse().join('');
+    let formatted = '';
+    for (let i = 0; i < reversed.length; i++) {
+      if (i > 0 && i % 3 === 0) {
+        formatted = ',' + formatted;
+      }
+      if (i === 3) {
+        formatted = ',' + formatted;
+        break;
+      }
+      formatted = reversed[i] + formatted;
+    }
+    
+    if (intPart.length > 3) {
+      formatted = reversed.substring(3).split('').reverse().join('');
+      formatted = formatted.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+      formatted = formatted + ',' + intPart.slice(-3);
+    }
+    
+    return `${formatted}.${decimalPart}`;
+  } catch (error) {
+    console.log('Currency format error:', error);
     return String(value);
   }
 };
