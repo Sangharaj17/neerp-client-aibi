@@ -65,15 +65,26 @@ export default function AddRequiredDocumentPage() {
 
   const handleCreateDocument = async (event) => {
     event.preventDefault();
-    if (!documentName.trim()) {
+    const trimmedName = documentName.trim();
+
+    if (!trimmedName) {
       toast.error("Please enter a document name.");
+      return;
+    }
+
+    // Check for duplicate document name (case-insensitive)
+    const isDuplicate = documents.some(d =>
+      d.documentName?.toLowerCase().trim() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("Document type already exists.");
       return;
     }
 
     setSaving(true);
     try {
       const res = await axiosInstance.post(API_REQUIRED_DOCUMENTS, {
-        documentName: documentName.trim(),
+        documentName: trimmedName,
       });
       const created = res.data;
       setDocuments((prev) => [created, ...prev]);
@@ -93,7 +104,7 @@ export default function AddRequiredDocumentPage() {
         const status = error.response.status;
         const data = error.response.data;
         let message = "Failed to create required document.";
-        
+
         // Try to extract error message from different response formats
         if (typeof data === 'string') {
           message = data;
@@ -106,7 +117,7 @@ export default function AddRequiredDocumentPage() {
           const errorMessages = Object.values(data.errors).join(', ');
           message = `Validation errors: ${errorMessages}`;
         }
-        
+
         if (status === 400) {
           toast.error(`Validation error: ${message}`);
         } else if (status === 409) {
@@ -133,20 +144,31 @@ export default function AddRequiredDocumentPage() {
   };
 
   const handleUpdateDocument = async () => {
-    if (!editingDocument || !editingName.trim()) {
+    const trimmedName = editingName.trim();
+    if (!editingDocument || !trimmedName) {
       toast.error("Please enter a document name.");
+      return;
+    }
+
+    // Check for duplicate document name (case-insensitive), excluding current document
+    const isDuplicate = documents.some(d =>
+      d.documentName?.toLowerCase().trim() === trimmedName.toLowerCase() &&
+      d.documentId !== editingDocument.documentId
+    );
+    if (isDuplicate) {
+      toast.error("Document type already exists.");
       return;
     }
 
     setSaving(true);
     try {
       await axiosInstance.put(`${API_REQUIRED_DOCUMENTS}/${editingDocument.documentId}`, {
-        documentName: editingName.trim(),
+        documentName: trimmedName,
       });
       setDocuments((prev) =>
         prev.map((doc) =>
           doc.documentId === editingDocument.documentId
-            ? { ...doc, documentName: editingName.trim() }
+            ? { ...doc, documentName: trimmedName }
             : doc
         )
       );

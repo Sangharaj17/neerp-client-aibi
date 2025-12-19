@@ -67,7 +67,9 @@ export default function AddTaxTypePage() {
 
   const handleCreateTaxType = async (event) => {
     event.preventDefault();
-    if (!taxName.trim() || !taxPercentage.trim()) {
+    const trimmedName = taxName.trim();
+
+    if (!trimmedName || !taxPercentage.trim()) {
       toast.error("Please fill in all required fields.");
       return;
     }
@@ -78,10 +80,19 @@ export default function AddTaxTypePage() {
       return;
     }
 
+    // Check for duplicate tax name (case-insensitive)
+    const isDuplicate = taxTypes.some(t =>
+      t.taxName?.toLowerCase().trim() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      toast.error("Tax type already exists.");
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await axiosInstance.post(API_TAX_TYPES, {
-        taxName: taxName.trim(),
+        taxName: trimmedName,
         taxPercentage: percentage,
       });
       const created = res.data;
@@ -103,7 +114,7 @@ export default function AddTaxTypePage() {
         const status = error.response.status;
         const data = error.response.data;
         let message = "Failed to create tax type.";
-        
+
         // Try to extract error message from different response formats
         if (typeof data === 'string') {
           message = data;
@@ -116,7 +127,7 @@ export default function AddTaxTypePage() {
           const errorMessages = Object.values(data.errors).join(', ');
           message = `Validation errors: ${errorMessages}`;
         }
-        
+
         if (status === 400) {
           toast.error(`Validation error: ${message}`);
         } else if (status === 409) {
@@ -149,7 +160,8 @@ export default function AddTaxTypePage() {
   };
 
   const handleUpdateTaxType = async () => {
-    if (!editingTaxType || !editingName.trim() || !editingPercentage.trim()) {
+    const trimmedName = editingName.trim();
+    if (!editingTaxType || !trimmedName || !editingPercentage.trim()) {
       toast.error("Please fill in all required fields.");
       return;
     }
@@ -160,16 +172,26 @@ export default function AddTaxTypePage() {
       return;
     }
 
+    // Check for duplicate tax name (case-insensitive), excluding current tax type
+    const isDuplicate = taxTypes.some(t =>
+      t.taxName?.toLowerCase().trim() === trimmedName.toLowerCase() &&
+      t.taxTypeId !== editingTaxType.taxTypeId
+    );
+    if (isDuplicate) {
+      toast.error("Tax type already exists.");
+      return;
+    }
+
     setSaving(true);
     try {
       await axiosInstance.put(`${API_TAX_TYPES}/${editingTaxType.taxTypeId}`, {
-        taxName: editingName.trim(),
+        taxName: trimmedName,
         taxPercentage: percentage,
       });
       setTaxTypes((prev) =>
         prev.map((taxType) =>
           taxType.taxTypeId === editingTaxType.taxTypeId
-            ? { ...taxType, taxName: editingName.trim(), taxPercentage: percentage }
+            ? { ...taxType, taxName: trimmedName, taxPercentage: percentage }
             : taxType
         )
       );
