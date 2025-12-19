@@ -339,17 +339,38 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
               {(normalizedQuery ? filteredSections : menuSections).map((section) => {
                 const isActive = isSectionActive(section);
                 const Icon = section.icon;
-                const targetHref = section.hasSubmenu && section.submenu?.length
-                  ? section.submenu[0].href
-                  : section.href;
 
-                if (!targetHref) return null;
+                // For sections with submenu: expand sidebar and open accordion
+                if (section.hasSubmenu) {
+                  return (
+                    <button
+                      key={section.id}
+                      type="button"
+                      onClick={() => {
+                        // Expand the sidebar
+                        onToggleCollapse?.();
+                        // Open this section's accordion
+                        setOpenSections(prev => ({ ...prev, [section.id]: true }));
+                      }}
+                      title={section.title}
+                      className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${isActive
+                        ? 'bg-blue-50 text-black'
+                        : 'text-gray-700 hover:text-black hover:bg-gray-50'
+                        }`}
+                    >
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-gray-600'}`} />
+                    </button>
+                  );
+                }
+
+                // For sections without submenu: navigate directly
+                if (!section.href) return null;
 
                 return (
                   <Link
                     key={section.id}
-                    href={targetHref}
-                    onClick={() => handleNavigation(targetHref)}
+                    href={section.href}
+                    onClick={() => handleNavigation(section.href)}
                     title={section.title}
                     className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ${isActive
                       ? 'bg-blue-50 text-black'
