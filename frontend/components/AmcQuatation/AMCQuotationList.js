@@ -242,7 +242,7 @@ export default function AMCQuotationList() {
 
   const sortFieldMap = {
     customerName: 'lead.customerName',
-    siteName: 'site.siteName',
+    siteName: 'combinedEnquiry.siteName',
     employeeName: 'createdBy.employeeName',
     areaName: 'lead.area.areaName',
     quotationDate: 'quatationDate',

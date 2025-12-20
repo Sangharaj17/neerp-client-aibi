@@ -42,7 +42,7 @@ public interface AmcQuotationRepository extends JpaRepository<AmcQuotation, Inte
 		    SELECT q
 		    FROM AmcQuotation q
 		    LEFT JOIN q.customer c
-		    LEFT JOIN q.site s
+		    LEFT JOIN q.combinedEnquiry s
 		    LEFT JOIN q.createdBy e
 		    LEFT JOIN q.lead l
 		    LEFT JOIN l.area a
