@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 import {
   FileText,
   RotateCcw,
@@ -106,15 +107,43 @@ export default function QuotationList() {
   };
 
   // 🔍 Search Filter
+  // const filteredData = useMemo(() => {
+  //   const lowerCaseQuery = searchQuery.toLowerCase();
+  //   return quotations.filter((item) =>
+  //     Object.values(item).some(
+  //       (value) =>
+  //         (typeof value === "string" || typeof value === "number") &&
+  //         String(value).toLowerCase().includes(lowerCaseQuery)
+  //     )
+  //   );
+  // }, [quotations, searchQuery]);
+
   const filteredData = useMemo(() => {
+    if (!Array.isArray(quotations)) return [];
+    if (!searchQuery.trim()) return quotations;
+
     const lowerCaseQuery = searchQuery.toLowerCase();
-    return quotations.filter((item) =>
-      Object.values(item).some(
-        (value) =>
-          (typeof value === "string" || typeof value === "number") &&
-          String(value).toLowerCase().includes(lowerCaseQuery)
-      )
-    );
+
+    return quotations.filter((item) => {
+      // Check all searchable fields
+      const searchableFields = [
+        item.id,
+        item.quotationNo,
+        item.customerName,
+        item.siteName,
+        item.createdByEmployeeName,
+        item.quotationDate,
+        item.totalAmount,
+        item.status,
+        formatDate(item.quotationDate),
+        formatCurrency(item.totalAmount)
+      ];
+
+      return searchableFields.some(value => {
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(lowerCaseQuery);
+      });
+    });
   }, [quotations, searchQuery]);
 
   // --- PDF generation handlers ---
@@ -216,6 +245,31 @@ export default function QuotationList() {
     setSortConfig({ key, direction });
   };
 
+  const handleExportExcel = () => {
+    if (!filteredData || filteredData.length === 0) {
+      alert("No data available to export");
+      return;
+    }
+
+    const exportData = filteredData.map(item => ({
+      "Quotation No": item.quotationNo,
+      "Customer Name": item.customerName,
+      "Site Name": item.siteName,
+      "Created By": item.createdByEmployeeName,
+      "Quotation Date": formatDate(item.quotationDate),
+      "Total Amount": formatCurrency(item.totalAmount),
+      "Status": item.status
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Quotations");
+
+    XLSX.writeFile(workbook, "Quotation_List.xlsx");
+  };
+
+
   // --- Components ---
 
   const TableHeader = ({ keys }) => (
@@ -272,10 +326,10 @@ export default function QuotationList() {
 
         {/* Header & Search Bar */}
         <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-          <h2 className="text-3xl font-bold text-blue-700 tracking-wide">
+          <h2 className="text-2xl font-bold text-blue-700 tracking-wide">
             Quotation List ({quotations.length} total)
           </h2>
-          <input
+          {/* <input
             type="text"
             placeholder="🔍 Search in all columns..."
             className="border border-gray-300 px-4 py-2 rounded-xl w-full md:w-96 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-inner"
@@ -284,7 +338,31 @@ export default function QuotationList() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-          />
+          /> */}
+
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto items-stretch md:items-center">
+
+            {/* Export Button */}
+            <button
+              onClick={handleExportExcel}
+              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl shadow-md transition w-full md:w-48 whitespace-nowrap"
+            >
+              📥 Export to Excel
+            </button>
+
+            {/* Search Box */}
+            <input
+              type="text"
+              placeholder="🔍 Search in all columns..."
+              className="border border-gray-300 px-4 py-2 rounded-xl w-full md:w-96 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-inner"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+
         </div>
 
         {/* Table Container */}
@@ -312,8 +390,11 @@ export default function QuotationList() {
                     </div>
                   </td>
                 </tr>
-              ) : quotations.length > 0 ? (
-                quotations.map((row) => (
+                // ) : quotations.length > 0 ? (
+                //   quotations.map((row) => (
+
+              ) : filteredData.length > 0 ? (
+                filteredData.map((row) => (
                   <tr
                     key={row.sr}
                     className="hover:bg-indigo-50 transition duration-150 text-gray-800"

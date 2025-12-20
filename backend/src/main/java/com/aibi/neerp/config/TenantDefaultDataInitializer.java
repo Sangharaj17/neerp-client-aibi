@@ -31,12 +31,10 @@ public class TenantDefaultDataInitializer {
     // 🔹 Define once at the top of your class
     private static final Map<Long, String> OPERATOR_TYPES = Map.of(
             1L, "Manual",
-            2L, "Automatic"
-    );
+            2L, "Automatic");
 
     private static final List<String> PROTECTED_NAMES = List.of(
-            "CommonPrice", "ManualPrice", "Machines", "Others"
-    );
+            "CommonPrice", "ManualPrice", "Machines", "Others");
 
     private final UnitRepository unitRepository;
     private final CapacityTypeRepository capacityTypeRepository;
@@ -62,24 +60,24 @@ public class TenantDefaultDataInitializer {
     private EntityManager entityManager;
 
     public TenantDefaultDataInitializer(UnitRepository unitRepository,
-                                        CapacityTypeRepository capacityTypeRepository,
-                                        ContractTypeRepository contractTypeRepository,
-                                        EnquiryTypeRepository enquiryTypeRepository,
-                                        PaymentTermRepository paymentTermRepository,
-                                        ElevatorMakeRepository elevatorMakeRepository,
-                                        NumberOfServiceRepository numberOfServiceRepository,
-                                        FloorRepository floorRepository,
-                                        InstallationRuleRepository installationRuleRepository,
-                                        OperatorElevatorRepository operatorElevatorRepository,
-                                        OtherMaterialMainRepository otherMaterialMainRepository,
-                                        OtherMaterialRepository otherMaterialRepository,
-                                        TypeOfLiftRepository typeOfLiftRepository,
-                                        ComponentRepository componentRepository,
-                                        AdditionalFloorsRepository additionalFloorsRepository,
-                                        AirTypeRepository airTypeRepository,
-                                        FloorService floorService,
-                                        JobActivityTypeRepository jobActivityTypeRepository
-            /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
+            CapacityTypeRepository capacityTypeRepository,
+            ContractTypeRepository contractTypeRepository,
+            EnquiryTypeRepository enquiryTypeRepository,
+            PaymentTermRepository paymentTermRepository,
+            ElevatorMakeRepository elevatorMakeRepository,
+            NumberOfServiceRepository numberOfServiceRepository,
+            FloorRepository floorRepository,
+            InstallationRuleRepository installationRuleRepository,
+            OperatorElevatorRepository operatorElevatorRepository,
+            OtherMaterialMainRepository otherMaterialMainRepository,
+            OtherMaterialRepository otherMaterialRepository,
+            TypeOfLiftRepository typeOfLiftRepository,
+            ComponentRepository componentRepository,
+            AdditionalFloorsRepository additionalFloorsRepository,
+            AirTypeRepository airTypeRepository,
+            FloorService floorService,
+            JobActivityTypeRepository jobActivityTypeRepository
+    /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
         this.unitRepository = unitRepository;
         this.capacityTypeRepository = capacityTypeRepository;
         this.contractTypeRepository = contractTypeRepository;
@@ -104,7 +102,8 @@ public class TenantDefaultDataInitializer {
     @Transactional
     public void initializeDefaults() {
         long startTime = System.currentTimeMillis();
-        System.out.println("[DataInit] ===== Starting default data initialization at " + new java.util.Date() + " =====");
+        System.out
+                .println("[DataInit] ===== Starting default data initialization at " + new java.util.Date() + " =====");
         try {
             // Removed: Step 0: Validate and fix column naming issues globally
             // Removed: Entire block for columnNamingFixer.validateAndFixColumnNames();
@@ -173,7 +172,7 @@ public class TenantDefaultDataInitializer {
             System.out.println("[DataInit] Step 16/16: Inserting AirTypes...");
             insertDefaultAirTypes();
             System.out.println("[DataInit] Step 16/16: ✅ Completed");
-             
+
             System.out.println("[DataInit] Step 17/17: Inserting JobActivityTypes...");
             insertDefaultJobActivityTypes();
             System.out.println("[DataInit] Step 17/17: ✅ Completed");
@@ -185,7 +184,8 @@ public class TenantDefaultDataInitializer {
             }
 
             long duration = System.currentTimeMillis() - startTime;
-            System.out.println("[DataInit] ===== Default data initialization completed successfully in " + duration + "ms =====");
+            System.out.println(
+                    "[DataInit] ===== Default data initialization completed successfully in " + duration + "ms =====");
 
             // Verify data was inserted
             verifyDataInserted();
@@ -249,7 +249,7 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultContractTypes() {
         try {
-            String[] contractTypes = {"Non-Comprehensive", "Semi-Comprehensive", "Comprehensive"};
+            String[] contractTypes = { "Non-Comprehensive", "Semi-Comprehensive", "Comprehensive" };
             for (String typeName : contractTypes) {
                 if (!contractTypeRepository.existsByName(typeName)) {
                     ContractType ct = new ContractType();
@@ -266,7 +266,7 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultEnquiryTypes() {
         try {
-            String[] enquiryTypes = {"AMC", "New Installation", "Moderization", "On Call"};
+            String[] enquiryTypes = { "AMC", "New Installation", "Moderization", "On Call" };
             for (String name : enquiryTypes) {
                 if (!enquiryTypeRepository.existsByEnquiryTypeName(name)) {
                     EnquiryType enquiryType = new EnquiryType();
@@ -283,7 +283,7 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultPaymentTerms() {
         try {
-            String[] paymentTerms = {"Monthly","Quarterly", "Half Yearly", "Yearly"};
+            String[] paymentTerms = { "Monthly", "Quarterly", "Half Yearly", "Yearly" };
             for (String name : paymentTerms) {
                 if (!paymentTermRepository.existsByTermName(name)) {
                     PaymentTerm paymentTerm = new PaymentTerm();
@@ -406,7 +406,6 @@ public class TenantDefaultDataInitializer {
         }
     }
 
-
     private void insertDefaultInstallationRules() {
         try {
             // Check if specific rules exist by liftType and baseAmount combination
@@ -415,7 +414,7 @@ public class TenantDefaultDataInitializer {
             boolean hasRule2 = installationRuleRepository.existsByLiftTypeAndBaseAmount(2, 37500.0);
             boolean hasRule3 = installationRuleRepository.existsByLiftTypeAndBaseAmount(1, 35000.0);
             boolean hasRule4 = installationRuleRepository.existsByLiftTypeAndBaseAmount(2, 37500.0) &&
-                               installationRuleRepository.existsByLiftTypeAndExtraAmount(2, 7500.0);
+                    installationRuleRepository.existsByLiftTypeAndExtraAmount(2, 7500.0);
 
             if (hasRule1 && hasRule2 && hasRule3 && hasRule4) {
                 System.out.println("[DataInit] All default InstallationRules already exist, skipping");
@@ -505,7 +504,8 @@ public class TenantDefaultDataInitializer {
                     System.out.println("[DataInit] ✅ Inserted OperatorElevator: " + upperName);
                 }
             }
-            System.out.println("[DataInit] OperatorElevators check complete, count: " + operatorElevatorRepository.count());
+            System.out.println(
+                    "[DataInit] OperatorElevators check complete, count: " + operatorElevatorRepository.count());
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting OperatorElevators: " + e.getMessage());
             throw e;
@@ -515,8 +515,9 @@ public class TenantDefaultDataInitializer {
     private void insertDefaultTypeOfLift() {
         try {
             // Insert default lift types: GEARED, GEAREDLESS, HYDRAULIC
-            // These are needed for InstallationRules (which use IDs 1 and 2) and OtherMaterials
-            String[] liftTypeNames = {"GEARED", "GEAREDLESS", "HYDRAULIC"};
+            // These are needed for InstallationRules (which use IDs 1 and 2) and
+            // OtherMaterials
+            String[] liftTypeNames = { "GEARED", "GEAREDLESS", "HYDRAULIC" };
 
             for (String liftTypeName : liftTypeNames) {
                 if (!typeOfLiftRepository.existsByLiftTypeNameIgnoreCase(liftTypeName)) {
@@ -562,6 +563,7 @@ public class TenantDefaultDataInitializer {
             if (!exists) {
                 OtherMaterial truffing = OtherMaterial.builder()
                         .otherMaterialMain(truffingMain)
+                        .otherMaterialDisplayName("TRUFFING MATERIAL")
                         .otherMaterialName("Truffing")
                         .quantity("1")
                         .price(100) // default price
@@ -589,39 +591,49 @@ public class TenantDefaultDataInitializer {
             }
 
             // Define materials
-            Object[][] materials = new Object[][]{
+            Object[][] materials = new Object[][] {
                     // common prices
-                    {PROTECTED_NAMES.get(0), "Lock Material", 250, "4", "Set", null, "PENCIL READ"},
-                    {PROTECTED_NAMES.get(0), "Pit Box Material", 188, "2", "Set", null, "PIT SWITCH BOX"},
-                    {PROTECTED_NAMES.get(0), "Pata Material", 188, "6", "Set", null, "TARMINAL PATA WITH G. CLIP BIG AND HARDWARE"},
-                    {PROTECTED_NAMES.get(0), "Switch Material", 375, "6", "Set", null, "TARMINAL SWITCH O/S TYPE"},
-                    {PROTECTED_NAMES.get(0), "Wire Tie Material", 125, "1", "Set", null, "WIRE TIE"},
-                    {PROTECTED_NAMES.get(0), "Power Wire Material", 875, "1", "Set", null, "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)"},
-                    {PROTECTED_NAMES.get(0), "Grease Oil Material", 938, "1", "Liter", null, "GEAR OIL 90 NO"},
-                    {PROTECTED_NAMES.get(0), "Grease Material", 125, "1", "Packet", null, "GREACE"},
-                    {PROTECTED_NAMES.get(0), "Cotton Material", 125, "1", "Kg", null, "COTTON WEASTE 1 KG"},
-                    {PROTECTED_NAMES.get(0), "Guide Clip Material", 188, "1", "Set", null, "CWT GUIDE CLIP SMALL WITH HARDWARE"},
-                    {PROTECTED_NAMES.get(0), "Earth Wire Material", 125, "1", "Set", null, "EARTH - WIRE.BIG 3 KG GALVENSIE"},
-                    {PROTECTED_NAMES.get(0), "Earth Small Material", 406, "1", "Set", null, "EARTH - WIRE SMALL Â 0.5 MM"},
-                    {PROTECTED_NAMES.get(0), "Earth Bkt Material", 125, "1", "Set", null, "EARTHING BRACKET"},
-                    {PROTECTED_NAMES.get(0), "FLB Pipe Material", 344, "1", "Set", null, "FLEXIBLE PIPE 3/4\""},
-                    {PROTECTED_NAMES.get(0), "Rubber Material", 350, "1", "Set", null, "MACHINE RUBBER"},
-                    {PROTECTED_NAMES.get(0), "Saddle Material", 125, "1", "Set", null, "SADDLE BOX 3/4\""},
-                    {PROTECTED_NAMES.get(0), "Final Limit Material", 1250, "1", "Set", null, "FINAL LIMIT CAMP 10FT"},
-                    {PROTECTED_NAMES.get(0), "Cable Hanger Material", 188, "1", "Set", null, "CABLE HENGER YELLOW"},
-                    {PROTECTED_NAMES.get(0), "Junction Box Material", 3750, "1", "Set", null, "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX"},
-                    {PROTECTED_NAMES.get(0), "Magnet SQR Material", 31, "1", "Set", null, "MAGNET SQR SET"},
+                    { PROTECTED_NAMES.get(0), "Lock Material", 250, "4", "Set", null, "PENCIL READ" },
+                    { PROTECTED_NAMES.get(0), "Pit Box Material", 188, "2", "Set", null, "PIT SWITCH BOX" },
+                    { PROTECTED_NAMES.get(0), "Pata Material", 188, "6", "Set", null,
+                            "TARMINAL PATA WITH G. CLIP BIG AND HARDWARE" },
+                    { PROTECTED_NAMES.get(0), "Switch Material", 375, "6", "Set", null, "TARMINAL SWITCH O/S TYPE" },
+                    { PROTECTED_NAMES.get(0), "Wire Tie Material", 125, "1", "Set", null, "WIRE TIE" },
+                    { PROTECTED_NAMES.get(0), "Power Wire Material", 875, "1", "Set", null,
+                            "POWER WIRE FOR MOTOR 2.5 SQMM 4 CORE (6 MTR)" },
+                    { PROTECTED_NAMES.get(0), "Grease Oil Material", 938, "1", "Liter", null, "GEAR OIL 90 NO" },
+                    { PROTECTED_NAMES.get(0), "Grease Material", 125, "1", "Packet", null, "GREACE" },
+                    { PROTECTED_NAMES.get(0), "Cotton Material", 125, "1", "Kg", null, "COTTON WEASTE 1 KG" },
+                    { PROTECTED_NAMES.get(0), "Guide Clip Material", 188, "1", "Set", null,
+                            "CWT GUIDE CLIP SMALL WITH HARDWARE" },
+                    { PROTECTED_NAMES.get(0), "Earth Wire Material", 125, "1", "Set", null,
+                            "EARTH - WIRE.BIG 3 KG GALVENSIE" },
+                    { PROTECTED_NAMES.get(0), "Earth Small Material", 406, "1", "Set", null,
+                            "EARTH - WIRE SMALL Â 0.5 MM" },
+                    { PROTECTED_NAMES.get(0), "Earth Bkt Material", 125, "1", "Set", null, "EARTHING BRACKET" },
+                    { PROTECTED_NAMES.get(0), "FLB Pipe Material", 344, "1", "Set", null, "FLEXIBLE PIPE 3/4\"" },
+                    { PROTECTED_NAMES.get(0), "Rubber Material", 350, "1", "Set", null, "MACHINE RUBBER" },
+                    { PROTECTED_NAMES.get(0), "Saddle Material", 125, "1", "Set", null, "SADDLE BOX 3/4\"" },
+                    { PROTECTED_NAMES.get(0), "Final Limit Material", 1250, "1", "Set", null, "FINAL LIMIT CAMP 10FT" },
+                    { PROTECTED_NAMES.get(0), "Cable Hanger Material", 188, "1", "Set", null, "CABLE HENGER YELLOW" },
+                    { PROTECTED_NAMES.get(0), "Junction Box Material", 3750, "1", "Set", null,
+                            "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX" },
+                    { PROTECTED_NAMES.get(0), "Magnet SQR Material", 31, "1", "Set", null, "MAGNET SQR SET" },
 
                     // manual prices for 1(manual)
-                    {PROTECTED_NAMES.get(1), "Lock Material", 1063, "1", "Set", 1L, "LANDING LOCK SET WITH HARDWARE ONLY FOR MANUAL LIFT"},
-                    {PROTECTED_NAMES.get(1), "Camp Material", 5000, "1", "Set", 1L, "RCR CAMP SET OLYMPUS TYPE ONLY FOR MANUAL LIFT"},
-                    {PROTECTED_NAMES.get(1), "Safety", 375, "1", "Set", 1L, "CAR GEAT SAFETY SWITCH ONLY FOR MANUAL LIFT"},
-                    {PROTECTED_NAMES.get(1), "Cart", 375, "1", "Set", 1L, "CARGET ANGLE ONLY FOR MANUAL LIFT"},
-                    {PROTECTED_NAMES.get(1), "Carts", 375, "1", "Set", 1L, "CARGET T ONLY FOR MANUAL LIFT"},
-                    {PROTECTED_NAMES.get(1), "Door Bell", 325, "1", "Set", 1L, "DOOR OPEN BELL FOR MANUAL LIFT"},
+                    { PROTECTED_NAMES.get(1), "Lock Material", 1063, "1", "Set", 1L,
+                            "LANDING LOCK SET WITH HARDWARE ONLY FOR MANUAL LIFT" },
+                    { PROTECTED_NAMES.get(1), "Camp Material", 5000, "1", "Set", 1L,
+                            "RCR CAMP SET OLYMPUS TYPE ONLY FOR MANUAL LIFT" },
+                    { PROTECTED_NAMES.get(1), "Safety", 375, "1", "Set", 1L,
+                            "CAR GEAT SAFETY SWITCH ONLY FOR MANUAL LIFT" },
+                    { PROTECTED_NAMES.get(1), "Cart", 375, "1", "Set", 1L, "CARGET ANGLE ONLY FOR MANUAL LIFT" },
+                    { PROTECTED_NAMES.get(1), "Carts", 375, "1", "Set", 1L, "CARGET T ONLY FOR MANUAL LIFT" },
+                    { PROTECTED_NAMES.get(1), "Door Bell", 325, "1", "Set", 1L, "DOOR OPEN BELL FOR MANUAL LIFT" },
 
                     // manual prices for 2(automatic)
-                    {PROTECTED_NAMES.get(1), "Auto Lock Material", 7500, "1", "Set", 2L, "DOOR SAFETUY SENSOR ONLY FOR AUTOMATIC LIFT"},
+                    { PROTECTED_NAMES.get(1), "Auto Lock Material", 7500, "1", "Set", 2L,
+                            "DOOR SAFETUY SENSOR ONLY FOR AUTOMATIC LIFT" },
             };
 
             // Insert logic
@@ -639,14 +651,17 @@ public class TenantDefaultDataInitializer {
 
                 if (mainType.equalsIgnoreCase(PROTECTED_NAMES.get(0))) {
                     // Insert without any operator
-                    insertMaterial(main, materialTypeMain, price, quantity, quantitySuffix, null, null, displayName, otherMaterialRepository);
+                    insertMaterial(main, materialTypeMain, price, quantity, quantitySuffix, null, null, displayName,
+                            otherMaterialRepository);
                     continue;
                 } else {
                     // For operator-specific materials
                     String operatorName = OPERATOR_TYPES.get(operatorTypeId);
-                    System.out.println("[DataInit] Mapping operatorTypeId=" + operatorTypeId + " to operatorName=" + operatorName);
+                    System.out.println(
+                            "[DataInit] Mapping operatorTypeId=" + operatorTypeId + " to operatorName=" + operatorName);
                     if (operatorName == null) {
-                        log.warn("[DataInit] ⚠️ Skipping material {} due to unknown operatorTypeId={}", materialTypeMain, operatorTypeId);
+                        log.warn("[DataInit] ⚠️ Skipping material {} due to unknown operatorTypeId={}",
+                                materialTypeMain, operatorTypeId);
                         continue;
                     }
 
@@ -661,7 +676,8 @@ public class TenantDefaultDataInitializer {
 
                     // Insert material for matching operator(s)
                     for (OperatorElevator operator : targetOperators) {
-                        insertMaterial(main, materialTypeMain, price, quantity, quantitySuffix, operator, null, displayName, otherMaterialRepository);
+                        insertMaterial(main, materialTypeMain, price, quantity, quantitySuffix, operator, null,
+                                displayName, otherMaterialRepository);
                     }
                 }
             }
@@ -670,7 +686,8 @@ public class TenantDefaultDataInitializer {
             getOrCreateMain(PROTECTED_NAMES.get(3), otherMaterialMainRepository);
             getOrCreateMain(PROTECTED_NAMES.get(2), otherMaterialMainRepository);
 
-            log.info("[DataInit] ✅ All OtherMaterials successfully initialized with operator mapping and materialTypeMain.");
+            log.info(
+                    "[DataInit] ✅ All OtherMaterials successfully initialized with operator mapping and materialTypeMain.");
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting OtherMaterials: " + e.getMessage());
             throw e;
@@ -703,10 +720,9 @@ public class TenantDefaultDataInitializer {
             String quantity,
             String quantitySuffix,
             OperatorElevator operator,
-            TypeOfLift lift,  // may be null
+            TypeOfLift lift, // may be null
             String displayName,
-            OtherMaterialRepository repo
-    ) {
+            OtherMaterialRepository repo) {
         boolean exists = repo.existsByOtherMaterialMainAndOtherMaterialNameIgnoreCase(main, materialName);
         if (!exists) {
             repo.save(
@@ -719,8 +735,7 @@ public class TenantDefaultDataInitializer {
                             .quantityUnit(quantitySuffix)
                             .operatorType(operator)
                             .machineRoom(lift) // will save null safely
-                            .build()
-            );
+                            .build());
 
             log.info("[DataInit] ✅ Inserted Material: {} under {} for Operator={} & Lift={}",
                     materialName, main.getMaterialMainType(),
@@ -729,8 +744,7 @@ public class TenantDefaultDataInitializer {
                     "[DataInit] ✅ Inserted Material: " + materialName +
                             " | MainType: " + main.getMaterialMainType() +
                             " | Operator: " + (operator != null ? operator.getName() : "N/A") +
-                            " | Lift: " + (lift != null ? lift.getLiftTypeName() : "N/A")
-            );
+                            " | Lift: " + (lift != null ? lift.getLiftTypeName() : "N/A"));
         }
     }
 
@@ -749,10 +763,10 @@ public class TenantDefaultDataInitializer {
 
             for (String name : componentNames) {
                 if (!componentRepository.existsByName(name)) {
-                    com.aibi.neerp.componentpricing.entity.Component component =
-                            com.aibi.neerp.componentpricing.entity.Component.builder()
-                                    .name(name)
-                                    .build();
+                    com.aibi.neerp.componentpricing.entity.Component component = com.aibi.neerp.componentpricing.entity.Component
+                            .builder()
+                            .name(name)
+                            .build();
                     componentRepository.save(component);
                     System.out.println("[DataInit] ✅ Default Component inserted: " + name);
                 }
@@ -766,11 +780,11 @@ public class TenantDefaultDataInitializer {
     private void insertDefaultAdditionalFloors() {
         try {
             Object[][] floors = {
-                    {1, "T", "Terrace"},
-                    {2, "B1", "Basement 1"},
-                    {3, "B2", "Basement 2"},
-                    {4, "B3", "Basement 3"},
-                    {5, "B4", "Basement 4"}
+                    { 1, "T", "Terrace" },
+                    { 2, "B1", "Basement 1" },
+                    { 3, "B2", "Basement 2" },
+                    { 4, "B3", "Basement 3" },
+                    { 5, "B4", "Basement 4" }
             };
 
             for (Object[] floorData : floors) {
@@ -792,7 +806,7 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultAirTypes() {
         try {
-            String[] airTypes = {"FAN", "BLOWER"};
+            String[] airTypes = { "FAN", "BLOWER" };
 
             for (String name : airTypes) {
                 if (!airTypeRepository.existsByNameIgnoreCase(name)) {
@@ -808,7 +822,7 @@ public class TenantDefaultDataInitializer {
             throw e;
         }
     }
-    
+
     private void insertDefaultJobActivityTypes() {
         insertJobActivityTypeIfNotExists("service", "Regular service activity");
         insertJobActivityTypeIfNotExists("breakdown", "Breakdown repair activity");
@@ -835,8 +849,5 @@ public class TenantDefaultDataInitializer {
             throw e;
         }
     }
-
-
-    
 
 }
