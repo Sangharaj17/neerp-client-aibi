@@ -52,6 +52,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -262,20 +265,67 @@ public class AmcQuotationService {
         }
     }
 
+//    public Page<AmcQuotationResponseDto> searchAmcQuotations(String search, LocalDate dateSearch, Pageable pageable) {
+//        log.info("Searching AMC Quotations with search='{}', date='{}', pageable={}", search, dateSearch, pageable);
+//
+//        // Convert LocalDate to String for the query parameter
+//        String dateSearchStr = dateSearch != null ? dateSearch.toString() : null;
+//        
+//        Page<AmcQuotation> results = repository.searchAll(search, dateSearchStr, pageable);
+//
+//        return results.map(q -> AmcQuotationResponseDto.builder()
+//                .id(q.getAmcQuatationId())
+//                .customerName(q.getLead() != null ? q.getLead().getCustomerName() : null)
+//                .siteName(q.getCombinedEnquiry() != null ? q.getCombinedEnquiry().getSiteName() : null) // Fixed: use q.getSite() instead of q.getLead().getSiteName()
+//                .employeeName(q.getCreatedBy() != null ? q.getCreatedBy().getEmployeeName() : null)
+//                .place(q.getLead() != null && q.getLead().getArea() != null ? q.getLead().getArea().getAreaName() : null) // Added null check
+//                .makeOfElevator(q.getMakeOfElevator() != null ? q.getMakeOfElevator().getName() : null)
+//                .quatationDate(q.getQuatationDate())
+//                .forecastMonth(q.getForecastMonth())
+//                .amcPeriod(joinAmcStartAndEndDate(q.getFromDate(), q.getToDate()))
+//                .isFinal(q.getIsFinal())
+//                .isRevised(q.getIsRevise())
+//                .build()
+//        );
+//    }
+    
     public Page<AmcQuotationResponseDto> searchAmcQuotations(String search, LocalDate dateSearch, Pageable pageable) {
         log.info("Searching AMC Quotations with search='{}', date='{}', pageable={}", search, dateSearch, pageable);
+
+        // 1. Intercept and Modify Sorting Logic
+        Sort modifiedSort = Sort.by(pageable.getSort().stream()
+            .map(order -> {
+                // IF the field is the date, return it as is (Dates don't have 'lowercase')
+                if ("quatationDate".equals(order.getProperty())) {
+                    return order;
+                }
+                
+                // FOR ALL OTHER FIELDS (String types), apply ignoreCase()
+                // This forces Hibernate to generate SQL like: ORDER BY LOWER(column_name)
+                return order.ignoreCase();
+            })
+            .collect(Collectors.toList())
+        );
+
+        // 2. Create a new Pageable with the modified Sort
+        Pageable caseInsensitivePageable = PageRequest.of(
+            pageable.getPageNumber(),
+            pageable.getPageSize(),
+            modifiedSort
+        );
 
         // Convert LocalDate to String for the query parameter
         String dateSearchStr = dateSearch != null ? dateSearch.toString() : null;
         
-        Page<AmcQuotation> results = repository.searchAll(search, dateSearchStr, pageable);
+        // 3. Pass the NEW caseInsensitivePageable to the repository
+        Page<AmcQuotation> results = repository.searchAll(search, dateSearchStr, caseInsensitivePageable);
 
         return results.map(q -> AmcQuotationResponseDto.builder()
                 .id(q.getAmcQuatationId())
                 .customerName(q.getLead() != null ? q.getLead().getCustomerName() : null)
-                .siteName(q.getCombinedEnquiry() != null ? q.getCombinedEnquiry().getSiteName() : null) // Fixed: use q.getSite() instead of q.getLead().getSiteName()
+                .siteName(q.getCombinedEnquiry() != null ? q.getCombinedEnquiry().getSiteName() : null)
                 .employeeName(q.getCreatedBy() != null ? q.getCreatedBy().getEmployeeName() : null)
-                .place(q.getLead() != null && q.getLead().getArea() != null ? q.getLead().getArea().getAreaName() : null) // Added null check
+                .place(q.getLead() != null && q.getLead().getArea() != null ? q.getLead().getArea().getAreaName() : null)
                 .makeOfElevator(q.getMakeOfElevator() != null ? q.getMakeOfElevator().getName() : null)
                 .quatationDate(q.getQuatationDate())
                 .forecastMonth(q.getForecastMonth())
