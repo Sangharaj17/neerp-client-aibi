@@ -312,7 +312,7 @@ const PricingTablePdf = ({ contractData }) => {
 /* ===========================
    The PDF Document Component which uses apiData prop
    =========================== */
-const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) => {
+const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead  , styleDto}) => {
   // prepare extracted pieces (same as original code)
   const firstPageImage =
   apiData?.amcQuotationPdfHeadingWithContentsDtos
@@ -399,6 +399,17 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
   const footerLeft = `${apiData?.company_name || ""} | GSTIN: ${apiData?.company_gstin || ""} | PAN: ${apiData?.company_pan || ""}`;
   const footerRight = `Page `;
 
+   let mainPageCss = {
+    position: "relative",   // important
+    paddingTop: styleDto?.paddingTop ? parseInt(styleDto.paddingTop) : 100,
+    paddingBottom: styleDto?.paddingBottom ? parseInt(styleDto.paddingBottom) : 120,
+    paddingHorizontal: 30,
+    fontSize: 11,
+    fontFamily: "Helvetica",
+    color: "#000",
+    lineHeight: 1.4,
+  }
+
   return (
     <Document>
       {/* COVER PAGE */}
@@ -424,7 +435,7 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
 
 
       {/* MAIN CONTENT PAGES */}
-      <Page size="A4" style={styles.page} wrap>
+      <Page size="A4" style={mainPageCss} wrap>
 
            {/* BACKGROUND IMAGE */}
   <Image
@@ -697,7 +708,7 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
 
     {/* SHOW LAST PAGE ONLY IF isWithLetterHead IS TRUE */}
 {isWithLetterHead && (
-  <Page size="A4" style={styles.page}>
+  <Page size="A4" >
     {lastPageImage ? (
       <Image
         src={lastPageImage}
@@ -735,6 +746,35 @@ export default function AmcQuotationPdfSettingPreviewAndPrint({  amcQuotationId,
            isWithLetterHead
 
 }) {
+
+
+   // 1. Local state for the CSS DTO
+  const [styleDto, setStyleDto] = useState({
+    paddingTop: "",
+    paddingBottom: "",
+    amcQuotationPdfHeadingsId: 0 // Initialize with the heading's ID
+  });
+
+  // 2. Fetch existing styles from Backend using heading.id
+useEffect(() => {
+  const fetchStyles = async () => {
+    try {
+      const res = await axiosInstance.get(
+        `/api/css-styles/by-heading-name/${encodeURIComponent("MAIN CONTENT BACKGROUND PAGE")}`
+      );
+      
+      if (res.data) {
+        setStyleDto(res.data);
+      }
+    } catch (err) {
+      console.error("Style fetch failed. Likely no style record exists yet.", err);
+    }
+  };
+
+  fetchStyles();
+}, []);
+
+
   const [apiData, setApiData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -776,6 +816,7 @@ const apiUrl = `/api/amc/quotation/pdf/pdf-data?${params.toString()}`;
       apiData={apiData || {}}
       isWithoutLetterhead={isWithoutLetterhead}
       isWithLetterHead={isWithLetterHead}
+      styleDto={styleDto}
     />
   ),
   [apiData, isWithoutLetterhead, isWithLetterHead]
