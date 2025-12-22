@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axiosInstance";
+import { pdfFirstPageToImage } from "./pdfUtils";
 
 export default function AmcQuotationEditor() {
   const [data, setData] = useState([]);
   const [expanded, setExpanded] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+
 
   // ==========================
   // 1. LOAD DATA FROM API
@@ -69,6 +71,8 @@ export default function AmcQuotationEditor() {
     updated[headingIndex].contents.splice(contentIndex, 1);
     setData(updated);
   };
+
+
 
   // ==========================
   // SAVE ALL
@@ -180,28 +184,85 @@ heading.headingName === "THIS IS FIXED LAST PAGE"? (
       </div>
     )}
 
-    {/* File Input */}
+{/* File Input */}
+<div className="flex gap-3 items-center flex-wrap">
+  {/* IMAGE INPUT */}
+  <label className="cursor-pointer">
+    <span className="inline-block py-2 px-4 rounded-md bg-blue-50 text-blue-700 text-sm hover:bg-blue-100">
+      Upload Image
+    </span>
     <input
       type="file"
       accept="image/*"
-      onChange={(e) => {
+      onChange={async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = () => {
+        try {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const updated = [...data];
+            updated[hIndex] ||= {};
+            updated[hIndex].contents ||= [];
+            updated[hIndex].contents[0] ||= { picture: null };
+            updated[hIndex].contents[0].picture = reader.result;
+            setData(updated);
+          };
+          reader.readAsDataURL(file);
+          
+          // Reset input
+          e.target.value = '';
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          alert("Failed to upload image. Please try again.");
+        }
+      }}
+      className="hidden"
+    />
+  </label>
+
+  {/* PDF INPUT */}
+  <label className="cursor-pointer">
+    <span className="inline-block py-2 px-4 rounded-md bg-green-50 text-green-700 text-sm hover:bg-green-100">
+      Upload PDF
+    </span>
+    <input
+      type="file"
+      accept="application/pdf"
+      onChange={async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+          // Show loading state (optional)
+          console.log("Converting PDF to image...");
+          
+          const imageBase64 = await pdfFirstPageToImage(file);
+
           const updated = [...data];
           updated[hIndex] ||= {};
           updated[hIndex].contents ||= [];
           updated[hIndex].contents[0] ||= { picture: null };
-          updated[hIndex].contents[0].picture = reader.result;
+          updated[hIndex].contents[0].picture = imageBase64;
           setData(updated);
-        };
-        reader.readAsDataURL(file);
+          
+          console.log("PDF converted successfully!");
+        } catch (error) {
+          console.error("Error converting PDF:", error);
+          alert("Failed to convert PDF. Please try again.");
+        }
+        
+        // Reset input
+        e.target.value = '';
       }}
-      className="text-sm text-gray-700 file:py-2 file:px-4 file:rounded-md
-                 file:bg-blue-50 file:text-blue-700"
+      className="hidden"
     />
+  </label>
+
+  
+</div>
+    
+
   </div>
               ) : (
                 <>
