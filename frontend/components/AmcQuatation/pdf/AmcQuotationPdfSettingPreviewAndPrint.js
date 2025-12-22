@@ -20,7 +20,7 @@ import {
    Styles for react-pdf
    =========================== */
 const styles = StyleSheet.create({
-  page: {
+   firstpage: {
     paddingTop: 50,
     paddingBottom: 50,
     paddingHorizontal: 30,
@@ -28,6 +28,32 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     color: "#000",
     lineHeight: 1.4,
+    position: "relative", // REQUIRED
+  },
+  page: {
+    position: "relative",   // important
+    paddingTop: 100,
+    paddingBottom: 120,
+    paddingHorizontal: 30,
+    fontSize: 11,
+    fontFamily: "Helvetica",
+    color: "#000",
+    lineHeight: 1.4,
+  },
+  background: {
+    position: "absolute",
+    top: 0,        // ⬅️ cancel page padding
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "auto",
+    height: "auto",
+    zIndex: -1,
+  },
+
+  content: {
+    position: "relative",
+    zIndex: 1,
   },
 
   header: {
@@ -298,18 +324,20 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
     ?.find((h) => h.headingName === "THIS IS FIXED LAST PAGE")
     ?.contents?.[0]?.picture || null;
 
-     const header =
+     const MAIN_CONTENT_BACKGROUND_PAGE =
   apiData?.amcQuotationPdfHeadingWithContentsDtos
-    ?.find((h) => h.headingName === "HEADER")
+    ?.find((h) => h.headingName === "MAIN CONTENT BACKGROUND PAGE")
     ?.contents?.[0]?.picture || null;
 
-     const footer =
-  apiData?.amcQuotationPdfHeadingWithContentsDtos
-    ?.find((h) => h.headingName === "FOOTER")
-    ?.contents?.[0]?.picture || null;
+  //    const footer =
+  // apiData?.amcQuotationPdfHeadingWithContentsDtos
+  //   ?.find((h) => h.headingName === "FOOTER")
+  //   ?.contents?.[0]?.picture || null;
+
+
      // Set padding dynamically based on header/footer
-  const paddingTop = header ? 50 : 40;
-  const paddingBottom = footer ? 50 : 40;
+  // const paddingTop = header ? 50 : 40;
+  // const paddingBottom = footer ? 50 : 40;
 
 
   const introContent =
@@ -376,7 +404,7 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
       {/* COVER PAGE */}
        {/* SHOW FIRST PAGE ONLY IF isWithLetterHead IS TRUE */}
     {isWithLetterHead && (
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" >
         {firstPageImage ? (
           <Image
             src={firstPageImage}
@@ -397,30 +425,18 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
 
       {/* MAIN CONTENT PAGES */}
       <Page size="A4" style={styles.page} wrap>
-{/* SHOW HEADER ONLY IF isWithLetterHead IS TRUE */}
-{isWithLetterHead && (
-  <View style={styles.header} fixed>
-    {header ? (
-      <View style={styles.headerWithImage}>
-        <Image src={header} style={styles.headerImage} />
-      </View>
-    ) : (
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>{headerLeft}</Text>
-        <Text style={{ fontSize: 10 }}>{headerRight}</Text>
-      </View>
-    )}
-  </View>
-)}
 
-
-
-
+           {/* BACKGROUND IMAGE */}
+  <Image
+    src={MAIN_CONTENT_BACKGROUND_PAGE}
+    style={styles.background}
+    fixed
+  />
 
         <View style={styles.hr} />
 
         {/* Body */}
-        <View>
+        <View  >
           {/* Ref and Date */}
           <View style={{ marginTop: 8, marginBottom: 6 }}>
             <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
@@ -675,23 +691,6 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead }) =>
             </View>
           </View>
         </View>
-
-     {/* SHOW FOOTER ONLY IF isWithLetterHead IS TRUE */}
-{isWithLetterHead && (
-  <View style={styles.footer} fixed>
-    {footer ? (
-      <View style={styles.footerWithImage}>
-        <Image src={footer} style={styles.footerImage} />
-      </View>
-    ) : (
-      <View style={styles.footerRow}>
-        <Text style={styles.footerLeft}>{footerLeft}</Text>
-        <Text style={styles.footerRight}>{footerRight}</Text>
-      </View>
-    )}
-  </View>
-)}
-
 
         
       </Page>

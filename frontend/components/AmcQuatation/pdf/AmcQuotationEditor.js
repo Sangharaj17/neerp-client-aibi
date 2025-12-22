@@ -128,8 +128,7 @@ export default function AmcQuotationEditor() {
 
               {/* SPECIAL FIRST PAGE SECTION */}
               {heading.headingName === "THIS IS FIXED FIRST PAGE"  
-|| heading.headingName === "HEADER" || 
-heading.headingName === "FOOTER" ||
+|| heading.headingName === "MAIN CONTENT BACKGROUND PAGE" || 
 heading.headingName === "THIS IS FIXED LAST PAGE"? (
   <div
     className="flex flex-col items-center py-4"
