@@ -445,7 +445,8 @@ public class AmcQuotationPdfService {
 
             dto.setId(heading.getId());
             dto.setHeadingName(heading.getHeadingName());
-
+            dto.setQuotationType(heading.getQuotationType());
+            
             // Fetch contents for this heading
             List<AmcQuotationPdfHeadingsContents> contents =
                     contentsRepo.findByAmcQuotationPdfHeadingsId(heading.getId());

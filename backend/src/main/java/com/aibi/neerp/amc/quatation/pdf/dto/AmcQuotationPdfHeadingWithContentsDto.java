@@ -7,5 +7,6 @@ import lombok.Data;
 public class AmcQuotationPdfHeadingWithContentsDto {
     private Integer id;
     private String headingName;
+    private String quotationType;
     private List<AmcQuotationPdfHeadingsContentsDto> contents;
 }
