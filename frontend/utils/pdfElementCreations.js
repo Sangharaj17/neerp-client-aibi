@@ -1,3 +1,6 @@
+
+import { formatDateShort, formatCurrency } from "@/utils/common";
+
 // Function to generate the HTML table for a single lift
 export const generateLiftTable = (liftDetail, index, customerName, site_address, refName, financialYear, monthName, quotationNo, newQuatationDate) => {
   const {
@@ -154,7 +157,7 @@ export const generateLiftTable = (liftDetail, index, customerName, site_address,
         </tr>
 
         ${row("Car Travel", `${floorDesignations} rises – About ${carTravel1} M`)}
-        ${row("No. of Stops", `0${stops} Nos [${floorDesignations}, ${floorSelectionLabels}]` )}
+        ${row("No. of Stops", `0${stops} Nos [${floorDesignations}, ${floorSelectionLabels}]`)}
         ${row("Shaft Size", `${shaftWidth} mm W × ${shaftDepth} mm D`)}
         ${row("Machine Room", machineRoomName)}
         ${row("Pit Depth", `${pitDepth} mm`)}
@@ -574,8 +577,8 @@ export const generateLiftPriceRow = (lift) => {
   const basic = gstRate ? (total / (1 + gstRate / 100)) : total;
   const gstAmount = total - basic;
 
-  const basicDisplay = basic.toFixed(2) + "/-";
-  const gstDisplay = gstAmount.toFixed(2) + "/-";
+  const basicDisplay = formatCurrency(basic) + "/-";
+  const gstDisplay = formatCurrency(gstAmount) + "/-";
 
   return `
     <tr>
@@ -595,7 +598,7 @@ export const generateLiftPriceRow = (lift) => {
       <td style="border:1px solid black; text-align:center; padding: 20px; padding-top:10px;">${basicDisplay}</td>
       <td style="border:1px solid black; text-align:center; padding: 20px; padding-top:10px;">${basicDisplay}</td>
       <td style="border:1px solid black; text-align:center; padding: 20px; padding-top:10px;">${gstDisplay}</td>
-      <td style="border:1px solid black; text-align:center; padding: 20px; padding-top:10px;">${total}/-</td>
+      <td style="border:1px solid black; text-align:center; padding: 20px; padding-top:10px;">${formatCurrency(total)}/-</td>
     </tr>
   `;
 };
