@@ -246,6 +246,7 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
         { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
         { title: 'Invoices', href: `/dashboard/jobs/amc-invoices` },
         { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments` },
+        { title: 'NI Job List', href: `/dashboard/jobs/ni_job_list` },
       ]
     },
     {
