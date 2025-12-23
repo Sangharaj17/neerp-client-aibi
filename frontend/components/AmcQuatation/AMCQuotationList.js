@@ -12,6 +12,8 @@ import { AlignJustify } from 'lucide-react';
 import ActionModal from '../AMC/ActionModal';
 import AmcQuotationPdfSettingPreviewAndPrint from './pdf/AmcQuotationPdfSettingPreviewAndPrint';
 
+import AmcQuotationPdfAutoSender from './sms/Amcquotationpdfautosender';
+
 export default function AMCQuotationList() {
   const router = useRouter();
   const [quotations, setQuotations] = useState([]);
@@ -68,6 +70,31 @@ export default function AMCQuotationList() {
   //     setLoading(false);
   //   }
   // };
+
+    const [shouldSendPdf, setShouldSendPdf] = useState('idle');
+
+     const handleSendSms = () => {
+    // Trigger the PDF generation and sending
+    setShouldSendPdf('sending');
+  };
+
+ const handleSuccess = () => {
+  console.log("PDF sent successfully!");
+  setShouldSendPdf('success');
+   
+  toast.success("Quotation PDF sent successfully via email!");
+  setLoadingBtn(null);
+};
+
+const handleError = (error) => {
+  console.error("Failed to send PDF:", error);
+  setShouldSendPdf('failed');
+
+  toast.error("Failed to send PDF. Please try again.");
+    setLoadingBtn(null);
+
+};
+
 
   const fetchQuotations = async () => {
     try {
@@ -461,9 +488,31 @@ export default function AMCQuotationList() {
                       )}
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <button onClick={() => previewMail(q.id)} className="bg-green-400 hover:bg-green-500 text-white p-1 rounded">
-                        <Mail className="w-4 h-4" />
-                      </button>
+                    <button
+  disabled={loadingBtn === `sms-${q.id}`}
+  onClick={() => {
+    if (loadingBtn) return;
+
+    setLoadingBtn(`sms-${q.id}`);
+
+    setSiteName(q.siteName);
+    setAmcQuotationId(q.id);
+
+    handleSendSms(); // no concern about async / success
+  }}
+  className={`p-1 rounded transition
+    ${loadingBtn === `sms-${q.id}`
+      ? "bg-green-300 cursor-not-allowed"
+      : "bg-green-400 hover:bg-green-500 text-white"}
+  `}
+>
+  {loadingBtn === `sms-${q.id}` ? (
+    <Loader2 className="w-4 h-4 animate-spin text-white" />
+  ) : (
+    <Mail className="w-4 h-4" />
+  )}
+</button>
+
                     </td>
                     <td className="px-2 py-2">
                       <div className="flex gap-1">
@@ -582,6 +631,20 @@ export default function AMCQuotationList() {
 
 
 
+ {/* Hidden component that auto-generates and sends PDF */}
+{shouldSendPdf === 'sending' && (
+          <AmcQuotationPdfAutoSender
+         amcQuotationId={amcQuotationId}
+          siteName={siteName}
+          isWithoutLetterhead={false}
+          isWithLetterHead={true}
+          onSuccess={handleSuccess}
+          onError={handleError}
+          shouldSendPdf={shouldSendPdf}
+        />
+      )}
+
+
       {/* Quotation View Modal */}
       {selectedQuotationId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -595,5 +658,7 @@ export default function AMCQuotationList() {
         </div>
       )}
     </div>
+
+    
   );
 }
