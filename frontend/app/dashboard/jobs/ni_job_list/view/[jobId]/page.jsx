@@ -11,7 +11,7 @@ import NiJobActivityModal from "@/components/Jobs/NiJobActivityModal";
 import JobActivityTable from "@/components/Jobs/JobActivityTable";
 import { toast } from "react-hot-toast";
 import { getTenant } from "@/utils/tenant";
-import { Image as ImageIcon, Upload } from "lucide-react";
+import { Image as ImageIcon, Upload, Eye, Trash2, X } from "lucide-react";
 import { FileText } from "lucide-react";
 
 import * as XLSX from "xlsx";
@@ -44,6 +44,7 @@ const JobDetailPage = () => {
   const [isDocModalOpen, setIsDocModalOpen] = useState(false);
   const [isUploadDocOpen, setIsUploadDocOpen] = useState(false);
   const [jobDocuments, setJobDocuments] = useState([]); // fetched from backend
+  const [imageDocs, setImageDocs] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const [isFilePicking, setIsFilePicking] = useState(false);
@@ -169,9 +170,11 @@ const JobDetailPage = () => {
 
       console.log("Response data:", response.data);
       const data = response.data.data;
+      const documents = data.documents || [];
+
       setJobDetails(data.jobDetails || {});
       setJobActivities(data.jobActivities || []);
-      setJobDocuments(data.documents || []); // ✅ Load documents from API
+      setJobDocuments(documents); // ✅ Load documents from API
       setLiftDatas(data.liftDatas || []);
       setEmployeeDtos(data.employeeDtos || []);
 
@@ -184,6 +187,11 @@ const JobDetailPage = () => {
       const endYear = startYear ? startYear + 1 : "";
       setStartYear(startYear);
       setEndYear(endYear);
+
+      const imageDocs1 =
+        documents?.filter((doc) => isImage(doc.filePath)) || [];
+
+      setImageDocs(imageDocs1);
     } catch (error) {
       console.error("Error fetching job detail:", error);
     } finally {
@@ -1225,20 +1233,19 @@ const JobDetailPage = () => {
         <div className="relative mb-4">
           <h2 className="text-xl font-bold text-center">Job Documents</h2>
 
-          <button
+          {/* <button
             onClick={() => setIsDocModalOpen(false)}
             className="absolute top-0 right-0 hover:text-blue-600 hover:scale-125 transition cursor-pointer"
           >
-            ✕
-          </button>
+            <X size={20} />
+          </button> */}
         </div>
 
         {/* Image Gallery - Thumbnails */}
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mb-6">
-          {jobDocuments
-            .filter((doc) => isImage(doc.filePath))
-            .map((doc, idx) => (
-              <div key={idx} className="relative group">
+        {imageDocs.length > 0 && (
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+            {imageDocs.map((doc, idx) => (
+              <div key={idx} className="relative group overflow-visible">
                 <img
                   src={`${
                     axiosInstance.defaults.baseURL || ""
@@ -1259,14 +1266,27 @@ const JobDetailPage = () => {
                     e.stopPropagation();
                     handleDeleteDocument(doc.id);
                   }}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  className="
+                    absolute 
+                    -top-3 -right-3
+                    bg-red-500 text-white 
+                    rounded-full 
+                    w-7 h-7
+                    flex items-center justify-center
+                    shadow-lg
+                    opacity-50 group-hover:opacity-100
+                    transition-all duration-200
+                    hover:bg-red-600 hover:scale-110
+                    z-10
+                  "
                   title="Delete image"
                 >
-                  ✕
+                  <Trash2 size={14} />
                 </button>
               </div>
             ))}
-        </div>
+          </div>
+        )}
 
         {/* Other Documents */}
         <ul className="space-y-2">
@@ -1287,16 +1307,18 @@ const JobDetailPage = () => {
                     }/api/job-activities/files/${doc.filePath}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 text-sm hover:underline"
+                    className="flex items-center gap-1  text-blue-600 text-sm hover:underline"
                   >
-                    View
+                    <Eye size={14} />
+                    <span>View</span>
                   </a>
                   <button
                     onClick={() => handleDeleteDocument(doc.id)}
-                    className="text-red-500 hover:text-red-700 text-xs font-bold px-2"
+                    className="flex items-center gap-1  text-red-500 hover:text-red-700 text-xs font-bold px-2"
                     title="Delete document"
                   >
-                    ✕
+                    <Trash2 size={14} />
+                    <span>Delete</span>
                   </button>
                 </div>
               </li>
