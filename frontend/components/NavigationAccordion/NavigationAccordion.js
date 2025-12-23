@@ -249,6 +249,15 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       ]
     },
     {
+      id: 'site-expenses',
+      title: 'Site Expenses',
+      icon: Briefcase,
+      hasSubmenu: true,
+      submenu: [
+        { title: 'Site Expense Dashboard', href: `/dashboard/site-expences` },
+      ]
+    },
+    {
       id: 'settings',
       title: 'Settings',
       icon: Settings,
