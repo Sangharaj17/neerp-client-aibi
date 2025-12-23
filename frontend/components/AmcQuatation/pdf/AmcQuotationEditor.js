@@ -30,7 +30,7 @@ useEffect(() => {
           setStyleDto(res.data);
         }
       } catch (err) {
-        console.error("Style fetch failed. Likely no style record exists yet.", err);
+        //console.error("Style fetch failed. Likely no style record exists yet.", err);
       }
     }
   };

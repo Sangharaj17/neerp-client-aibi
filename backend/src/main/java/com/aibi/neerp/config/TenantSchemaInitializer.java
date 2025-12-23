@@ -74,7 +74,7 @@ public class TenantSchemaInitializer {
         }
     }
 
-    @Transactional
+    //@Transactional
     public void initializeIfRequired(String tenantId) {
         if (tenantId == null || tenantId.isBlank()) {
             System.out.println("[TenantInit] ⚠️ Tenant ID is null or blank, skipping initialization");

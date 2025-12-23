@@ -10,6 +10,8 @@ import com.aibi.neerp.amc.common.repository.ElevatorMakeRepository;
 import com.aibi.neerp.amc.common.repository.JobActivityTypeRepository;
 import com.aibi.neerp.amc.common.repository.NumberOfServiceRepository;
 import com.aibi.neerp.amc.common.repository.PaymentTermRepository;
+import com.aibi.neerp.amc.quatation.pdf.entity.AmcQuotationPdfHeadings;
+import com.aibi.neerp.amc.quatation.pdf.repository.AmcQuotationPdfHeadingsRepository;
 import com.aibi.neerp.componentpricing.dto.FloorRequestDTO;
 import com.aibi.neerp.componentpricing.entity.*;
 import com.aibi.neerp.componentpricing.repository.*;
@@ -54,6 +56,7 @@ public class TenantDefaultDataInitializer {
     private final AirTypeRepository airTypeRepository;
     private final FloorService floorService;
     private final JobActivityTypeRepository jobActivityTypeRepository;
+    private final AmcQuotationPdfHeadingsRepository headingsRepository;
     // Removed: private final DatabaseColumnNamingFixer columnNamingFixer;
 
     @Autowired(required = false)
@@ -76,7 +79,8 @@ public class TenantDefaultDataInitializer {
             AdditionalFloorsRepository additionalFloorsRepository,
             AirTypeRepository airTypeRepository,
             FloorService floorService,
-            JobActivityTypeRepository jobActivityTypeRepository
+            JobActivityTypeRepository jobActivityTypeRepository,
+            AmcQuotationPdfHeadingsRepository headingsRepository
     /* Removed: DatabaseColumnNamingFixer columnNamingFixer */) {
         this.unitRepository = unitRepository;
         this.capacityTypeRepository = capacityTypeRepository;
@@ -96,10 +100,11 @@ public class TenantDefaultDataInitializer {
         this.airTypeRepository = airTypeRepository;
         this.floorService = floorService;
         this.jobActivityTypeRepository = jobActivityTypeRepository;
+        this.headingsRepository = headingsRepository;
         // Removed: this.columnNamingFixer = columnNamingFixer;
     }
 
-    @Transactional
+   // @Transactional
     public void initializeDefaults() {
         long startTime = System.currentTimeMillis();
         System.out
@@ -176,6 +181,10 @@ public class TenantDefaultDataInitializer {
             System.out.println("[DataInit] Step 17/17: Inserting JobActivityTypes...");
             insertDefaultJobActivityTypes();
             System.out.println("[DataInit] Step 17/17: ✅ Completed");
+            
+            System.out.println("[DataInit] Step 18/18: Inserting insertDefaultPdfHeadings...");
+            insertDefaultPdfHeadings();
+            System.out.println("[DataInit] Step 18/18: ✅ Completed");
 
             // Explicitly flush to ensure data is saved
             if (entityManager != null) {
@@ -846,6 +855,49 @@ public class TenantDefaultDataInitializer {
             }
         } catch (Exception e) {
             System.err.println("[DataInit] Error inserting JobActivityType '" + name + "': " + e.getMessage());
+            throw e;
+        }
+    }
+    
+    
+    private void insertDefaultPdfHeadings() {
+        try {
+            // Data mapping: {Heading Name, Quotation Type String}
+            String[][] defaultHeadings = {
+                {"NON-COMPREHENSIVE MAINTENANCE", "AMC"},
+                {"SEMI-COMPREHENSIVE MAINTENANCE", "AMC"},
+                {"Introduction Page", "AMC"},
+                {"MAINTENANCE CONTRACT OFFER:", "AMC"},
+                {"COMPREHENSIVE MAINTENANCE:", "AMC"},
+                {"EXCLUDED COMPONENT IN THIS CONTRACT -", "AMC"},
+                {"INSTRUCTIONS:", "AMC"},
+                {"THIS IS FIXED FIRST PAGE", "Common"},
+                {"THIS IS FIXED LAST PAGE", "Common"},
+                {"Introduction", "Modernization"},
+                {"Terms and Conditions", "Modernization"},
+                {"Introduction", "Oncall"},
+                {"Terms and Conditions", "Oncall"},
+                {"MAIN CONTENT BACKGROUND PAGE", "Common"}
+            };
+
+            for (String[] data : defaultHeadings) {
+                String heading = data[0];
+                String type = data[1];
+
+                // Idempotent check: ensures we don't insert the same heading for the same type twice
+                if (!headingsRepository.existsByHeadingNameAndQuotationType(heading, type)) {
+                    AmcQuotationPdfHeadings entity = new AmcQuotationPdfHeadings();
+                    entity.setHeadingName(heading);
+                    entity.setQuotationType(type); // Now strictly a String like "AMC" or "Common"
+                    
+                    headingsRepository.save(entity);
+                    System.out.println("[DataInit] ✅ Inserted: " + heading + " | Type: " + type);
+                }
+            }
+
+            System.out.println("[DataInit] PDF Headings sync complete. Current count: " + headingsRepository.count());
+        } catch (Exception e) {
+            System.err.println("[DataInit] ❌ Error during PDF Headings initialization: " + e.getMessage());
             throw e;
         }
     }

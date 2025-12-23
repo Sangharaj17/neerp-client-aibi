@@ -17,7 +17,7 @@ import {
    Styles for react-pdf
    =========================== */
 const styles = StyleSheet.create({
-  page: {
+  firstpage: {
     paddingTop: 50,
     paddingBottom: 50,
     paddingHorizontal: 30,
@@ -25,7 +25,34 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     color: "#000",
     lineHeight: 1.4,
+    position: "relative", // REQUIRED
   },
+  page: {
+    position: "relative",   // important
+    paddingTop: 100,
+    paddingBottom: 120,
+    paddingHorizontal: 30,
+    fontSize: 11,
+    fontFamily: "Helvetica",
+    color: "#000",
+    lineHeight: 1.4,
+  },
+  background: {
+    position: "absolute",
+    top: 0,        // ⬅️ cancel page padding
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "auto",
+    height: "auto",
+    zIndex: -1,
+  },
+
+  content: {
+    position: "relative",
+    zIndex: 1,
+  },
+
 
   header: {
     position: "absolute",
@@ -309,7 +336,7 @@ const OncallPricingTablePdf = ({ pricingData }) => {
 /* ===========================
    The PDF Document Component
    =========================== */
-const OncallDocument = ({ apiData, isWithLetterHead }) => {
+const OncallDocument = ({ apiData, isWithLetterHead , styleDto}) => {
   // Extract images and content
   const firstPageImage =
     apiData?.oncallQuotationPdfHeadingWithContentsDtos
@@ -321,14 +348,9 @@ const OncallDocument = ({ apiData, isWithLetterHead }) => {
       ?.find((h) => h.headingName === "THIS IS FIXED LAST PAGE")
       ?.contents?.[0]?.picture || null;
 
-  const header =
+ const MAIN_CONTENT_BACKGROUND_PAGE =
     apiData?.oncallQuotationPdfHeadingWithContentsDtos
-      ?.find((h) => h.headingName === "HEADER")
-      ?.contents?.[0]?.picture || null;
-
-  const footer =
-    apiData?.oncallQuotationPdfHeadingWithContentsDtos
-      ?.find((h) => h.headingName === "FOOTER")
+      ?.find((h) => h.headingName === "MAIN CONTENT BACKGROUND PAGE")
       ?.contents?.[0]?.picture || null;
 
   // Extract content sections
@@ -356,11 +378,23 @@ const OncallDocument = ({ apiData, isWithLetterHead }) => {
   const headerLeft = `${apiData?.companyName || ""} - OnCall Quotation`;
   const headerRight = `Date: ${formatDate(apiData?.quotationDate)}`;
 
+   let mainPageCss = {
+    position: "relative",   // important
+    paddingTop: styleDto?.paddingTop ? parseInt(styleDto.paddingTop) : 100,
+    paddingBottom: styleDto?.paddingBottom ? parseInt(styleDto.paddingBottom) : 120,
+    paddingHorizontal: 30,
+    fontSize: 11,
+    fontFamily: "Helvetica",
+    color: "#000",
+    lineHeight: 1.4,
+  }
+
+
   return (
     <Document>
       {/* FIRST PAGE */}
       {isWithLetterHead && (
-        <Page size="A4" style={styles.page}>
+        <Page size="A4" >
           {firstPageImage ? (
             <Image
               src={firstPageImage}
@@ -379,22 +413,15 @@ const OncallDocument = ({ apiData, isWithLetterHead }) => {
       )}
 
       {/* MAIN CONTENT PAGES */}
-      <Page size="A4" style={styles.page} wrap>
+      <Page size="A4" style={mainPageCss} wrap>
         {/* HEADER */}
-        {isWithLetterHead && (
-          <View style={styles.header} fixed>
-            {header ? (
-              <View style={styles.headerWithImage}>
-                <Image src={header} style={styles.headerImage} />
-              </View>
-            ) : (
-              <View style={styles.headerRow}>
-                <Text style={styles.headerTitle}>{headerLeft}</Text>
-                <Text style={{ fontSize: 10 }}>{headerRight}</Text>
-              </View>
-            )}
-          </View>
-        )}
+         {isWithLetterHead && (
+                   <Image
+                      src={MAIN_CONTENT_BACKGROUND_PAGE}
+                      style={styles.background}
+                      fixed
+                    />
+                )}
 
         <View style={styles.hr} />
 
@@ -558,21 +585,7 @@ const OncallDocument = ({ apiData, isWithLetterHead }) => {
           </View>
         </View>
 
-        {/* FOOTER */}
-        {isWithLetterHead && (
-          <View style={styles.footer} fixed>
-            {footer ? (
-              <View style={styles.footerWithImage}>
-                <Image src={footer} style={styles.footerImage} />
-              </View>
-            ) : (
-              <View style={styles.footerRow}>
-                <Text style={styles.footerText}>{apiData?.companyName}</Text>
-                <Text style={styles.footerPage}>Page </Text>
-              </View>
-            )}
-          </View>
-        )}
+       
       </Page>
 
       {/* LAST PAGE */}
@@ -605,6 +618,35 @@ export default function OncallQuotationPdfPreview({
   oncallId,
   isWithLetterHead = true
 }) {
+
+
+  
+       // 1. Local state for the CSS DTO
+      const [styleDto, setStyleDto] = useState({
+        paddingTop: "",
+        paddingBottom: "",
+        amcQuotationPdfHeadingsId: 0 // Initialize with the heading's ID
+      });
+    
+      // 2. Fetch existing styles from Backend using heading.id
+    useEffect(() => {
+      const fetchStyles = async () => {
+        try {
+          const res = await axiosInstance.get(
+            `/api/css-styles/by-heading-name/${encodeURIComponent("MAIN CONTENT BACKGROUND PAGE")}`
+          );
+          
+          if (res.data) {
+            setStyleDto(res.data);
+          }
+        } catch (err) {
+          //console.error("Style fetch failed. Likely no style record exists yet.", err);
+        }
+      };
+    
+      fetchStyles();
+    }, []);
+
   const [apiData, setApiData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -630,6 +672,7 @@ export default function OncallQuotationPdfPreview({
       <OncallDocument
         apiData={apiData || {}}
         isWithLetterHead={isWithLetterHead}
+        styleDto={styleDto}
       />
     ),
     [apiData, isWithLetterHead]

@@ -9,6 +9,8 @@ import com.aibi.neerp.amc.quatation.pdf.entity.CssStyle;
 public interface AmcQuotationPdfHeadingsRepository extends JpaRepository<AmcQuotationPdfHeadings, Integer> {
 
 	Optional<AmcQuotationPdfHeadings> findByHeadingName(String headingName);
+
+	boolean existsByHeadingNameAndQuotationType(String heading, String type);
 	
 
 }

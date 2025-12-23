@@ -438,11 +438,13 @@ const ProposalDocument = ({ apiData, isWithoutLetterhead, isWithLetterHead  , st
       <Page size="A4" style={mainPageCss} wrap>
 
            {/* BACKGROUND IMAGE */}
+            {isWithLetterHead && (
   <Image
     src={MAIN_CONTENT_BACKGROUND_PAGE}
     style={styles.background}
     fixed
   />
+    )}
 
         <View style={styles.hr} />
 
@@ -767,7 +769,7 @@ useEffect(() => {
         setStyleDto(res.data);
       }
     } catch (err) {
-      console.error("Style fetch failed. Likely no style record exists yet.", err);
+      //console.error("Style fetch failed. Likely no style record exists yet.", err);
     }
   };
 
