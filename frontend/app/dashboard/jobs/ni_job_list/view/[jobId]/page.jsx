@@ -66,6 +66,9 @@ const JobDetailPage = () => {
 
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const fileUrl = `${API_BASE_URL}/api/job-activities/files/`;
+
   const renderTruncatedText = (text, title, limit = 30) => {
     if (!text) return "-";
     if (text.length <= limit) return text;
@@ -981,6 +984,7 @@ const JobDetailPage = () => {
           )}
         </div>
       </ActionModal>
+
       {/* Lift Modal (omitted for brevity) */}
       <ActionModal
         isOpen={isLiftModalOpen}
@@ -1330,10 +1334,11 @@ const JobDetailPage = () => {
                 <div
                   key={idx}
                   className="relative group cursor-pointer overflow-hidden rounded-lg border"
-                  onClick={() => setPreviewImage(photo.photoUrl)}
+                  // onClick={() => setPreviewImage(photo.photoUrl)}
+                  onClick={() => setPreviewImage(fileUrl + photo.photoUrl)}
                 >
                   <img
-                    src={photo.photoUrl}
+                    src={fileUrl + photo.photoUrl}
                     alt="Activity"
                     className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110"
                   />
