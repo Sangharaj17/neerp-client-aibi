@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState , useRef } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import {
   Document,
@@ -635,16 +635,16 @@ export default function AmcQuotationPdfAutoSender({
   onError,
   shouldSendPdf
 }) {
-
-
-
-  const [status, setStatus] = useState("idle"); // idle, generating, sending, success, error
+  const [status, setStatus] = useState("idle");
   const [styleDto, setStyleDto] = useState({
     paddingTop: "",
     paddingBottom: "",
     amcQuotationPdfHeadingsId: 0
   });
   const [apiData, setApiData] = useState(null);
+  
+  // ✅ Add a ref to track if PDF has been sent
+  const hasSentPdf = useRef(false);
 
   // Fetch styles
   useEffect(() => {
@@ -666,7 +666,13 @@ export default function AmcQuotationPdfAutoSender({
   // Fetch API data and auto-generate PDF
   useEffect(() => {
     const generateAndSendPdf = async () => {
+      // ✅ Prevent double execution
+      if (hasSentPdf.current) {
+        return;
+      }
+
       try {
+        hasSentPdf.current = true; // ✅ Mark as sent immediately
         setStatus("generating");
 
         // 1. Fetch quotation data
@@ -705,22 +711,21 @@ export default function AmcQuotationPdfAutoSender({
         });
 
         setStatus("success");
-        onSuccess();
+        onSuccess(); // ✅ This will now only be called once
         
       } catch (err) {
         console.error("Error generating or sending PDF:", err);
         setStatus("error");
+        hasSentPdf.current = false; // ✅ Reset on error so user can retry
         if (onError) onError(err);
       }
     };
 
-    // Only run if we have at least one ID
-    if (amcQuotationId || revisedQuotationId || renewalQuaId || revisedRenewalId) {
-        if(shouldSendPdf==='sending')
-        generateAndSendPdf();
-      
+    // Only run if we have at least one ID and shouldSendPdf is 'sending'
+    if (shouldSendPdf === 'sending' && (amcQuotationId || revisedQuotationId || renewalQuaId || revisedRenewalId)) {
+      generateAndSendPdf();
     }
-  }, [amcQuotationId, revisedQuotationId, renewalQuaId, revisedRenewalId, siteName, isWithoutLetterhead, isWithLetterHead]);
+  }, [shouldSendPdf, amcQuotationId, revisedQuotationId, renewalQuaId, revisedRenewalId, siteName, isWithoutLetterhead, isWithLetterHead, styleDto]);
 
   // Optional: Return status indicator (can be removed if you want completely silent operation)
   if (status === "idle") return null;

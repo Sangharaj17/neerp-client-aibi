@@ -71,30 +71,26 @@ export default function AMCQuotationList() {
   //   }
   // };
 
-    const [shouldSendPdf, setShouldSendPdf] = useState('idle');
+const [shouldSendPdf, setShouldSendPdf] = useState('idle');
 
-     const handleSendSms = () => {
-    // Trigger the PDF generation and sending
-    setShouldSendPdf('sending');
-  };
+const handleSendSms = () => {
+  // Trigger the PDF generation and sending
+  setShouldSendPdf('sending');
+};
 
- const handleSuccess = () => {
+const handleSuccess = () => {
   console.log("PDF sent successfully!");
-  setShouldSendPdf('success');
-   
+  setShouldSendPdf('idle'); // ✅ Reset to idle
   toast.success("Quotation PDF sent successfully via email!");
   setLoadingBtn(null);
 };
 
 const handleError = (error) => {
   console.error("Failed to send PDF:", error);
-  setShouldSendPdf('failed');
-
+  setShouldSendPdf('idle'); // ✅ Reset to idle
   toast.error("Failed to send PDF. Please try again.");
-    setLoadingBtn(null);
-
+  setLoadingBtn(null);
 };
-
 
   const fetchQuotations = async () => {
     try {
