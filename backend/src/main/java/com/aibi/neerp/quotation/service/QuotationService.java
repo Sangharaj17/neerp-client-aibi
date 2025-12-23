@@ -1100,11 +1100,21 @@ public class QuotationService {
                 customer = customerRepository.save(customer);
                 log.info("Created NEW customer for Lead ID {}", lead.getLeadId());
             } else {
-                customer.setCustomerName(quotation.getCustomerName());
-                customer.setContactNumber(lead.getCustomer1Contact());
-                customer.setEmailId(lead.getEmailId());
-                customer.setAddress(quotation.getSiteName());
+                if (quotation.getCustomerName() != null) {
+                    customer.setCustomerName(quotation.getCustomerName());
+                }
 
+                if (lead.getContactNo() != null) {
+                    customer.setContactNumber(lead.getContactNo());
+                }
+
+                if (lead.getEmailId() != null) {
+                    customer.setEmailId(lead.getEmailId());
+                }
+
+                if (quotation.getSiteName() != null) {
+                    customer.setAddress(quotation.getSiteName());
+                }
                 customer = customerRepository.save(customer);
                 log.info("Updated EXISTING customer for Lead ID {}", lead.getLeadId());
             }
@@ -1216,7 +1226,6 @@ public class QuotationService {
     }
 
 
-
     public ApiResponse<List<QuotationMinimalDTO>> getFinalizedActiveQuotations() {
         log.info("Service: Fetching finalized & active quotations (minimal data)...");
 
@@ -1255,8 +1264,6 @@ public class QuotationService {
             );
         }
     }
-
-
 
 
 // ***********************************************************************************

@@ -265,6 +265,7 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       submenu: [
         { title: 'Company Setting', href: '/dashboard/settings' },
         { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
+        { title: 'NI Job Activity Setting', href: '/dashboard/settings/ni-job-activity' },
       ]
     }
   ];

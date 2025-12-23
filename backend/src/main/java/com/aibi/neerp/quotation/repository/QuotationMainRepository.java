@@ -131,21 +131,29 @@ public interface QuotationMainRepository extends JpaRepository<QuotationMain, In
 //            "AND is_finalized = false " +
 //            "AND parent_quotation_id IS NULL",
 //            nativeQuery = true)
+
+//    @Query(value = "SELECT COUNT(qm.id) " +
+//            "FROM tbl_quotation_main qm " +
+//            "WHERE qm.is_deleted = false " +
+//            "AND qm.edition = 0 " +
+//            "AND qm.parent_quotation_id IS NULL " +
+//            "AND NOT EXISTS (" +
+//            "    SELECT 1 " +
+//            "    FROM tbl_quotation_main revision " +
+//            "    WHERE revision.is_finalized = true " + // CRITICAL: Check for TRUE finalization
+//            "      AND revision.lead_id = qm.lead_id " +
+//            "      AND revision.combined_enquiry_id = qm.combined_enquiry_id " +
+//            ")",
+//            nativeQuery = true)
+//    Long countAllActiveQuotations();
+
     @Query(value = "SELECT COUNT(qm.id) " +
             "FROM tbl_quotation_main qm " +
             "WHERE qm.is_deleted = false " +
             "AND qm.edition = 0 " +
-            "AND qm.parent_quotation_id IS NULL " +
-            "AND NOT EXISTS (" +
-            "    SELECT 1 " +
-            "    FROM tbl_quotation_main revision " +
-            "    WHERE revision.is_finalized = true " + // CRITICAL: Check for TRUE finalization
-            "      AND revision.lead_id = qm.lead_id " +
-            "      AND revision.combined_enquiry_id = qm.combined_enquiry_id " +
-            ")",
+            "AND qm.parent_quotation_id IS NULL " ,
             nativeQuery = true)
     Long countAllActiveQuotations();
-
 
     List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseAndJobStatusIsNullOrderByIdDesc();
 }

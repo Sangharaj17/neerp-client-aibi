@@ -1340,41 +1340,41 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
         let to = 0;
 
         if (name === "landingEntranceCount") {
-            count = Number(value);
-            subType1 = prev.landingEntranceSubType1;
-            subType2 = prev.landingEntranceSubType2;
-            from = Number(value) + 1;
-            to = openings;
+          count = Number(value);
+          subType1 = prev.landingEntranceSubType1;
+          subType2 = prev.landingEntranceSubType2;
+          from = Number(value) + 1;
+          to = openings;
 
         }
 
         if (
           name === "landingEntranceSubType2_fromFloor") {
-            count = Number(value)-1;
-            subType1 = prev.landingEntranceSubType1;
-            subType2 = prev.landingEntranceSubType2;
-            from = Number(value);
-            to = openings;
+          count = Number(value) - 1;
+          subType1 = prev.landingEntranceSubType1;
+          subType2 = prev.landingEntranceSubType2;
+          from = Number(value);
+          to = openings;
 
         }
 
         if (
           name === "landingEntranceSubType1") {
-            count = prev.landingEntranceCount;
-            subType1 = Number(value);
-            subType2 = prev.landingEntranceSubType2;
-            from = prev.landingEntranceSubType2_fromFloor;
-            to = prev.landingEntranceSubType2_toFloor;
+          count = prev.landingEntranceCount;
+          subType1 = Number(value);
+          subType2 = prev.landingEntranceSubType2;
+          from = prev.landingEntranceSubType2_fromFloor;
+          to = prev.landingEntranceSubType2_toFloor;
 
         }
 
         if (
           name === "landingEntranceSubType2") {
-            count = prev.landingEntranceCount;
-            subType1 = prev.landingEntranceSubType1;
-            subType2 = Number(value);
-            from = prev.landingEntranceSubType2_fromFloor;
-            to = prev.landingEntranceSubType2_toFloor;
+          count = prev.landingEntranceCount;
+          subType1 = prev.landingEntranceSubType1;
+          subType2 = Number(value);
+          from = prev.landingEntranceSubType2_fromFloor;
+          to = prev.landingEntranceSubType2_toFloor;
 
         }
 
@@ -3079,6 +3079,27 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
   }, [formData.selectedMaterials]); // Keep formData.selectedMaterials in dependency array
 
 
+  useEffect(() => {
+    const noOfFloors = safeNumber(formData.floors || 0);
+
+    if (!initialOptions.floors?.length || noOfFloors <= 0) return;
+
+    const selectedIndex = Math.max(0, noOfFloors - 1);
+    const selectedFloor = initialOptions.floors[selectedIndex];
+
+    const calculatedDesignation =
+      selectedFloor?.floorName || lift?.floorsDesignation || "";
+
+    // ✅ prevent unnecessary state update
+    if (formData.floorDesignations === calculatedDesignation) return;
+
+    setFormData(prev => ({
+      ...prev,
+      floorDesignations: calculatedDesignation,
+    }));
+  }, [initialOptions.floors, formData.floors]);
+
+
   //✅ Auto-update carTravel whenever floors change
   // Auto-update carTravel, stops, openings & floorDesignations
   useEffect(() => {
@@ -3091,7 +3112,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
     const updatedStops = noOfFloors + currentSelections.length;
     const updatedOpenings = updatedStops;
     // console.log("updatedStops:", updatedStops, "updatedOpenings:", updatedOpenings);
-    
+
     const updatedCarTravel = noOfFloors > 0 ? (updatedStops - 1) * 3000 : 0;
 
     // ---------- FLOOR DESIGNATION LOGIC ----------
@@ -4630,6 +4651,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onClick={() => handleRefresh(
                     "Cabin SubType",
                     null,
+                    // "cabinSubTypes",//----added 
                     loadCabinSubTypes,
                     setFormData,
                     // ["cabinSubType", "cabinPrice"]
@@ -4930,6 +4952,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onClick={() => handleRefresh(
                     "Car Entrance",
                     null,
+                    // "carEntranceTypes",//----added 
                     loadEntranceOptions,
                     setFormData,
                     ["carEntrance", "carEntranceSubType"]
@@ -4985,6 +5008,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onClick={() => handleRefresh(
                     "Car Entrance Sub Type",
                     null,
+                    // "carEntranceSubTypes",//----added 
                     loadCarEntranceSubTypes,
                     setFormData,
                     ["carEntranceSubType", "carEntrancePrice"]
@@ -5051,6 +5075,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onClick={() => handleRefresh(
                     "Landing Entrance",
                     null,
+                    // "landingEntranceSubTypes",//----added 
                     loadEntranceOptions,
                     setFormData,
                     ["landingEntranceSubType1", "landingEntranceCount"]
@@ -6286,6 +6311,12 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   // ⭐️ Add the disabled condition
                   disabled={!formData.pwdIncludeExclude}
                   type="number"
+                  min="0"
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 {!formData.pwdIncludeExclude && (
                   <PriceBelowSelect
@@ -6352,7 +6383,14 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   // ⭐️ Add the disabled condition
                   disabled={!formData.scaffoldingIncludeExclude}
                   // ⭐️ If using number input, specify type
+
                   type="number"
+                  min="0"
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 {!formData.scaffoldingIncludeExclude && (
                   <PriceBelowSelect
@@ -6374,6 +6412,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   value={formData.ardAmount}
                   onChange={handleChange}
                   error={errors.ardAmount}
+                  type="number"
+                  min="0"
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 {formData.ardAmount && formData.capacityType && formData.capacityValue && (
                   <PriceBelowSelect
@@ -6399,6 +6444,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.overloadDevice}
                 onChange={handleChange}
                 error={errors.overloadDevice}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6407,6 +6459,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.transportCharges}
                 onChange={handleChange}
                 error={errors.transportCharges}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6415,6 +6474,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.otherCharges}
                 onChange={handleChange}
                 error={errors.otherCharges}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6423,6 +6489,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.powerBackup}
                 onChange={handleChange}
                 error={errors.powerBackup}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6431,6 +6504,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.fabricatedStructure}
                 onChange={handleChange}
                 error={errors.fabricatedStructure}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <div className="relative flex flex-col">
@@ -6441,6 +6521,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onChange={handleChange}
                   error={errors.installationAmount}
                   disabled={true}
+                  type="number"
+                  min="0"
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
                 {formData.installationAmount && formData.capacityType && formData.capacityValue && (
                   <PriceBelowSelect
@@ -6460,6 +6547,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.electricalWork}
                 onChange={handleChange}
                 error={errors.electricalWork}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6468,6 +6562,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.ibeamChannel}
                 onChange={handleChange}
                 error={errors.ibeamChannel}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6476,6 +6577,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.duplexSystem}
                 onChange={handleChange}
                 error={errors.duplexSystem}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6484,6 +6592,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.telephonicIntercom}
                 onChange={handleChange}
                 error={errors.telephonicIntercom}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6492,6 +6607,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.gsmIntercom}
                 onChange={handleChange}
                 error={errors.gsmIntercom}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6500,6 +6622,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.numberLockSystem}
                 onChange={handleChange}
                 error={errors.numberLockSystem}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6508,6 +6637,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.thumbLockSystem}
                 onChange={handleChange}
                 error={errors.thumbLockSystem}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6516,6 +6652,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 value={formData.tax}
                 onChange={handleChange}
                 error={errors.tax}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <Input
@@ -6525,6 +6668,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                 onChange={handleChange}
                 disabled={true}
                 error={errors.totalAmountWithoutGST}
+                type="number"
+                min="0"
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "e") {
+                    e.preventDefault();
+                  }
+                }}
               />
 
               <div className="relative flex flex-col">

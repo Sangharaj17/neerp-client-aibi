@@ -29,6 +29,13 @@ public class CompanySettingService {
     }
 
     @Transactional
+    public CompanySettingDTO getCompanySettingsForMail(String refName) {
+        return repository.findByRefName(refName)
+                .map(this::convertToDTOforMail)
+                .orElse(null);
+    }
+
+    @Transactional
     public CompanySettingDTO saveInitialSettings(CompanySettingDTO dto) throws IOException {
         CompanySetting entity = convertToEntity(dto);
 
@@ -165,4 +172,39 @@ public class CompanySettingService {
                 .map(CompanySetting::getCompanyName)
                 .orElse(null);
     }
+    
+    public String getCompanyOwnerName(String refName) {
+        return repository.findById(refName)
+                .map(CompanySetting::getCompanyOwnerName)
+                .orElse(null);
+    }
+    
+    public String getOwnerNumber(String refName) {
+        return repository.findById(refName)
+                .map(CompanySetting::getOwnerNumber)
+                .orElse(null);
+    }
+    
+    public String getCompanyMail(String refName) {
+        return repository.findById(refName)
+                .map(CompanySetting::getCompanyMail)
+                .orElse(null);
+    }
+
+    private CompanySettingDTO convertToDTOforMail(CompanySetting entity) {
+        CompanySettingDTO dto = new CompanySettingDTO();
+
+        dto.setRefName(entity.getRefName());
+        dto.setCompanyOwnerName(entity.getCompanyOwnerName());
+        dto.setCompanyName(entity.getCompanyName());
+        dto.setOwnerNumber(entity.getOwnerNumber());
+        dto.setCompanyMail(entity.getCompanyMail());
+        dto.setBccMail(entity.getBccMail());
+
+        dto.setLogo(entity.getLogo());
+
+
+        return dto;
+    }
+
 }

@@ -78,6 +78,18 @@
 			<scope>test</scope>
 		</dependency>
 
+		<!-- Spring Boot Starter Mail -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
+		<!-- Jackson for JSON -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-crypto</artifactId>
@@ -118,6 +130,14 @@
 			<groupId>org.owasp.encoder</groupId>
 			<artifactId>encoder</artifactId>
 			<version>1.2.3</version>
+		</dependency>
+
+		<!-- iText PDF Generation -->
+		<dependency>
+			<groupId>com.itextpdf</groupId>
+			<artifactId>itext7-core</artifactId>
+			<version>8.0.2</version>
+			<type>pom</type>
 		</dependency>
 
 	</dependencies>

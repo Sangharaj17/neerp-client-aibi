@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        log.error("Invalid argument: {}", ex.getMessage());
         return ResponseEntity
                 .badRequest()
                 .body(new ApiResponse<>(false, ex.getMessage(), null));
@@ -79,20 +81,20 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                fieldErrors.put(error.getField(), error.getDefaultMessage())
-        );
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", java.time.LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("errors", fieldErrors);
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-    }
+//    @ExceptionHandler(MethodArgumentNotValidException.class)
+//    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+//        Map<String, String> fieldErrors = new HashMap<>();
+//        ex.getBindingResult().getFieldErrors().forEach(error ->
+//                fieldErrors.put(error.getField(), error.getDefaultMessage())
+//        );
+//
+//        Map<String, Object> body = new HashMap<>();
+//        body.put("timestamp", java.time.LocalDateTime.now());
+//        body.put("status", HttpStatus.BAD_REQUEST.value());
+//        body.put("errors", fieldErrors);
+//
+//        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+//    }
 
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -102,6 +104,8 @@ public class GlobalExceptionHandler {
         errorBody.put("status", HttpStatus.NOT_FOUND.value());
         errorBody.put("error", "Not Found");
         errorBody.put("message", ex.getMessage());
+
+        log.error("Resource not found: {}", ex.getMessage());
 
         return new ResponseEntity<>(errorBody, HttpStatus.NOT_FOUND);
     }
@@ -135,4 +139,32 @@ public class GlobalExceptionHandler {
 //    public ResponseEntity<String> handleDBError(DataIntegrityViolationException ex) {
 //        return ResponseEntity.status(HttpStatus.CONFLICT).body("Data integrity error: " + ex.getMostSpecificCause().getMessage());
 //    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationErrors(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+
+        log.error("Validation errors: {}", errors);
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiResponse<>(false, "Validation failed", errors));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
+        log.error("Unexpected error occurred", ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse<>(false, "An unexpected error occurred: " + ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ApiResponse<Object>> handleFileStorage(FileStorageException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ApiResponse<>(false, ex.getMessage(), null));
+    }
 }

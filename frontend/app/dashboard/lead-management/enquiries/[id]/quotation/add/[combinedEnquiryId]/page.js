@@ -779,7 +779,13 @@ export default function QuotationAddPage() {
       edition: edition || 0,
       // totalBasicAmount: quotationPrice,
       // totalGSTAmount: 0,
-      totalQuotationAmount: quotationPrice,
+      totalQuotationAmount: lifts.reduce((acc, l) => {
+        const currentLiftId = l.data?.id ?? l.enquiryId;
+        if (currentLiftId === liftId) {
+          return acc + (Number(data.totalAmount) || 0);
+        }
+        return acc + (Number(l.data?.totalAmount) || 0);
+      }, 0),
       status: "DRAFTED",
       remarks: data.remarks || "Draft but not saved",
       createdByEmployeeId: userId,

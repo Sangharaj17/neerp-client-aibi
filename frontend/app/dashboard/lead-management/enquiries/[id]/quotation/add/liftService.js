@@ -1741,8 +1741,9 @@ export const handleRefresh = async (
   // ✅ Step 2: Validate argument
   const isString = typeof refreshFnOrField === "string";
   const isFunction = typeof refreshFnOrField === "function";
+  const isEmpty = refreshFnOrField == null; // null or undefined
 
-  if (!isString && !isFunction) {
+  if (!isString && !isFunction && !isEmpty) {
     console.warn("⚠️ Invalid refresh argument passed to handleRefresh");
     return;
   }
@@ -1754,7 +1755,11 @@ export const handleRefresh = async (
         await refreshFnOrField(); // e.g. a custom refresh function
       } else if (isString && fetchOptionsFn) {
         await fetchOptionsFn(refreshFnOrField); // call your local fetchOptions
-      } else {
+      }
+      else if (isEmpty) {
+        return true;
+      }
+      else {
         console.warn("⚠️ fetchOptions function missing or invalid");
       }
     })(),

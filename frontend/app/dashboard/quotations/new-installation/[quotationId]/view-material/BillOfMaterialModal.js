@@ -358,14 +358,14 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
           <table className="min-w-full border text-sm">
             <thead>
               <tr className="bg-gray-100 sticky top-0">
-                <th className="p-2 border">
+                {/* <th className="p-2 border">
                   <input
                     type="checkbox"
                     ref={selectAllRef}
                     checked={allSelected}
                     onChange={handleSelectAll}
                   />
-                </th>
+                </th> */}
                 <th className="p-2 border">Material Name</th>
                 <th className="p-2 border">Quantity</th>
                 <th className="p-2 border">Price</th>
@@ -375,13 +375,13 @@ export default function BillOfMaterialModal({ liftId, liftData, onClose }) {
             <tbody>
               {rows.map((item, idx) => (
                 <tr key={item.id} className={item.selected ? "" : "opacity-50"}>
-                  <td className="border p-1 text-center">
+                  {/* <td className="border p-1 text-center">
                     <input
                       type="checkbox"
                       checked={item.selected}
                       onChange={() => handleSelect(idx)}
                     />
-                  </td>
+                  </td> */}
                   <td className="border p-1">{item.name}</td>
                   <td className="border p-1">
                     {item.qty} Set{item.qty > 1 ? "s" : ""}

@@ -1097,6 +1097,39 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
 
     if (onUserActivity) onUserActivity();
 
+    // List of fields that cannot be zero
+    const nonZeroFields = [
+      "pwdAmount",
+      "bambooScaffolding",
+      "ardAmount",
+      "overloadDevice",
+      "transportCharges",
+      "otherCharges",
+      "powerBackup",
+      "fabricatedStructure",
+      "electricalWork",
+      "ibeamChannel",
+      "duplexSystem",
+      "telephonicIntercom",
+      "gsmIntercom",
+      "numberLockSystem",
+      "thumbLockSystem",
+      "installationAmount",
+      "tax",
+      "liftRate"
+    ];
+
+    const numericValue = value === "" ? "" : Number(value);
+
+    if (
+      nonZeroFields.includes(name) &&
+      value !== "" &&
+      (isNaN(numericValue) || numericValue < 0)
+    ) {
+      toast.error("Negative values are not allowed");
+      return;
+    }
+
     setFormData((prev) => {
       let updated = { ...prev, [name]: value };
 
@@ -1178,6 +1211,11 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
     });
 
     setErrors((prevErrors) => {
+      // Validation for 0 amount
+      if (nonZeroFields.includes(name) && value !== "" && Number(value) === 0) {
+        return { ...prevErrors, [name]: "Amount cannot be 0" };
+      }
+
       if (!prevErrors[name]) return prevErrors;
       const updatedErrors = { ...prevErrors };
       delete updatedErrors[name];

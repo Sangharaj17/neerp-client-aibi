@@ -7,6 +7,8 @@ import com.aibi.neerp.quotation.service.QuotationService;
 import com.aibi.neerp.quotation.utility.PaginationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -252,6 +254,55 @@ public class QuotationController {
             // ?page=0&size=10&sort=id,desc (or sort=totalAmount,asc)
             @PageableDefault(page = 0, size = 10, sort = "id") Pageable pageable
     ) {
+
+        // Check if sorting is requested on the DTO-only field
+        Sort sort = pageable.getSort();
+        // ✅ Fix sorting for DTO-only field: createdByEmployeeName
+        if (sort.getOrderFor("createdByEmployeeName") != null) {
+            Sort.Order order = sort.getOrderFor("createdByEmployeeName");
+
+            // ✅ Map to REAL entity field
+            Sort newSort = Sort.by(
+                    new Sort.Order(order.getDirection(), "createdBy.employeeName").ignoreCase(),
+                    new Sort.Order(order.getDirection(), "createdBy.username").ignoreCase()
+            );
+
+            pageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    newSort
+            );
+        }
+
+        // ✅ Case-insensitive Site Name sorting
+        if (sort.getOrderFor("siteName") != null) {
+            Sort.Order order = sort.getOrderFor("siteName");
+
+            Sort siteSort = Sort.by(
+                    new Sort.Order(order.getDirection(), "siteName").ignoreCase()
+            );
+
+            pageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    siteSort
+            );
+        }
+
+        // ✅ Case-insensitive Customer Name sorting
+        if (sort.getOrderFor("customerName") != null) {
+            Sort.Order order = sort.getOrderFor("customerName");
+            Sort customerSort = Sort.by(new Sort.Order(order.getDirection(), "customerName").ignoreCase());
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), customerSort);
+        }
+
+        // ✅ Case-insensitive Quotation No sorting
+        if (sort.getOrderFor("quotationNo") != null) {
+            Sort.Order order = sort.getOrderFor("quotationNo");
+            Sort quotationNoSort = Sort.by(new Sort.Order(order.getDirection(), "quotationNo").ignoreCase());
+            pageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), quotationNoSort);
+        }
+
         log.info("REST request to fetch paginated QuotationMain records. Pageable: {}", pageable);
 
         // Call the service method with Pageable

@@ -263,7 +263,7 @@ export default function EditEnquiryForm({ enquiryTypeId, enquiryTypeName, action
           value: String(item.id)  // This will be used as radio value
         }));
 
-console.log(options);
+        console.log(options);
         setCapacityTypeOptions(options);
       } catch (error) {
         console.error("Error fetching capacity types:", error);
@@ -310,14 +310,14 @@ console.log(options);
     const repeatSetting = repeatSettings[index] || {}; // fallback if missing
     let lessByOne = lift.noOfStops - 1;
 
-   // alert("noOfStops-1: " + lessByOne);
+    // alert("noOfStops-1: " + lessByOne);
 
-     const selectedFloor = floorOption.find((opt) => {
-  const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
-  return num === Number(lessByOne);
-});
+    const selectedFloor = floorOption.find((opt) => {
+      const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
+      return num === Number(lessByOne);
+    });
 
-let floorId = selectedFloor ? selectedFloor.id : null;
+    let floorId = selectedFloor ? selectedFloor.id : null;
 
     return {
       leadId: lift.leadId,
@@ -884,7 +884,7 @@ let floorId = selectedFloor ? selectedFloor.id : null;
               }
               <Select
                 label="No. of Floors *"
-               value={String(lift.noOfFloors || "")} // lift.noOfFloors should store selected floor `id`
+                value={String(lift.noOfFloors || "")} // lift.noOfFloors should store selected floor `id`
                 onChange={(e) => {
                   handleLiftChange(index, 'noOfFloors', e.target.value);
                   //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
@@ -934,7 +934,7 @@ let floorId = selectedFloor ? selectedFloor.id : null;
 
               {enquiryTypeName === 'New Installation' && (
                 <>
-                {console.log(lift)}
+                  {console.log(lift)}
                   <Input label="Shaft Width (mm) *" value={lift.shaftWidth} onChange={(e) => handleLiftChange(index, 'shaftWidth', e.target.value)} />
                   <Input label="Shaft Depth (mm) *" value={lift.shaftDepth} onChange={(e) => handleLiftChange(index, 'shaftDepth', e.target.value)} />
                   <Input label="Pit (mm) *" value={lift.pit} onChange={(e) => handleLiftChange(index, 'pit', e.target.value)} />

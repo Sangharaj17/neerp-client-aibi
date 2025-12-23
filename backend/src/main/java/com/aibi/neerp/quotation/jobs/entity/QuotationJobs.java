@@ -7,11 +7,14 @@ import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
 import com.aibi.neerp.quotation.entity.QuotationMain;
+import com.aibi.neerp.quotation.jobsActivities.entity.NiJobActivity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tbl_ni_job")
@@ -93,6 +96,9 @@ public class QuotationJobs {
     @Column(name = "pwd_status", length = 255)
     private String pwdStatus;
 
+    @Column(name = "pwd_act_date")
+    private LocalDate pwdActDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
     private Employee createdBy;
@@ -101,6 +107,43 @@ public class QuotationJobs {
     @Builder.Default
     private LocalDate createdAt = LocalDate.now();
 
-    @Column(name = "pwd_act_date")
-    private LocalDate pwdActDate;
+    @OneToMany(
+            mappedBy = "job",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<NiJobActivity> jobActivities = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "job",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @Builder.Default
+    private List<NiJobDocument> jobDocuments = new ArrayList<NiJobDocument>();
+
+    // ✅ Helper methods to manage bidirectional relationship
+    public void addJobActivity(NiJobActivity activity) {
+        jobActivities.add(activity);
+        activity.setJob(this);
+    }
+
+    public void removeJobActivity(NiJobActivity activity) {
+        jobActivities.remove(activity);
+        activity.setJob(null);
+    }
+
+    public void addJobDocument(NiJobDocument doc) {
+        jobDocuments.add(doc);
+        doc.setJob(this);
+    }
+
+    public void removeJobDocument(NiJobDocument doc) {
+        jobDocuments.remove(doc);
+        doc.setJob(null);
+    }
+
 }
