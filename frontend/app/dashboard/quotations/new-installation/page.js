@@ -403,7 +403,8 @@ export default function QuotationList() {
                     <td className="px-4 py-3 whitespace-nowrap">{formatDate(row.quotationDate)}</td>
                     <td className="px-4 py-3 font-medium">{row.customerName}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{row.siteName}</td>
-                    <td className="px-4 py-3">{row.createdByEmployeeName ? row.createdByEmployeeName.split(' - ')[0] : 'N/A'}</td>
+                    {/* <td className="px-4 py-3">{row.createdByEmployeeName ? row.createdByEmployeeName.split(' - ')[0] : 'N/A'}</td> */}
+                    <td className="px-4 py-3">{row.executiveName}</td>
                     <td className="px-4 py-3">
                       <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{row.quotationNo}</span>
                     </td>

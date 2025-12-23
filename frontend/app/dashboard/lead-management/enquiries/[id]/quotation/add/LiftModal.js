@@ -5378,6 +5378,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onClick={() => handleRefresh(
                     "Control Panel Manufacturers",
                     "manufacturers",
+                    fetchOptions,
                     setFormData,
                     ["controlPanelMake"]
                   )}
@@ -5431,6 +5432,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   onClick={() => handleRefresh(
                     "Wiring Harness",
                     "manufacturers",
+                    fetchOptions,
                     setFormData,
                     ["wiringHarness"]
                   )}
@@ -7022,9 +7024,13 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
               🧮 Quotation Total (Incl. {formData.tax}% GST & {formData.loadPerAmt}% Load)
             </div>
             <div className="text-rose-700 text-base font-bold flex items-center gap-2 mr-4">
-              ₹{formData.totalAmount.toLocaleString()}
+              ₹{Number(formData.totalAmount || 0).toLocaleString()}
               <span className="text-xs font-normal text-gray-500 ml-1">
-                [{formData.totalAmountWithoutGST} + {(formData.totalAmountWithoutGST * formData.tax) / 100} + {formData.loadAmt}]
+                [
+                {Number(formData.totalAmountWithoutGST || 0)} +
+                {Number((formData.totalAmountWithoutGST || 0) * (formData.tax || 0) / 100)} +
+                {Number(formData.loadAmt || 0)}
+                ]
               </span>
               <SmallPopover>
                 <h3 className="text-sm font-bold mb-2 text-green-700">Total Breakdown</h3>
