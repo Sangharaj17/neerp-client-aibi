@@ -215,6 +215,10 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
         localStorage.setItem(`${tenant}_token`, token);
         localStorage.setItem(`${tenant}_clientName`, clientName);
 
+        // ✅ Set first-party cookie for middleware authentication
+        const maxAge = 60 * 60 * 24; // 1 day in seconds
+        document.cookie = `token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+
         try { await initStatesAndCities(); } catch (err) { }
         router.push(`/dashboard/dashboard-data`);
       }
@@ -270,6 +274,12 @@ export default function LoginForm({ tenant, clientName: initialClientName = '' }
         localStorage.setItem(`${tenant}_userId`, userId);
         localStorage.setItem(`${tenant}_token`, token);
         localStorage.setItem(`${tenant}_clientName`, clientName);
+
+        // ✅ Set first-party cookie for middleware authentication
+        // Cross-origin API cookies are not accessible to Next.js middleware,
+        // so we set our own cookie on the frontend domain
+        const maxAge = 60 * 60 * 24; // 1 day in seconds
+        document.cookie = `token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
 
         try { await initStatesAndCities(); } catch (err) { }
         router.push(`/dashboard/dashboard-data`);
