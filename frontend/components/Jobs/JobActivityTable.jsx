@@ -16,6 +16,9 @@ const JobActivityTable = ({
     direction: "asc",
   });
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const fileUrl = `${API_BASE_URL}/api/job-activities/files/`;
+
   // Sortable columns (excluding action columns)
   const sortableColumns = [
     { key: "jobActivityId", label: "Sr.No" },
@@ -299,7 +302,10 @@ const JobActivityTable = ({
                       <td className="px-4 py-3 border border-gray-300 text-center">
                         {activity.signatureUrl ? (
                           <button
-                            onClick={() => setPreviewUrl(activity.signatureUrl)}
+                            // onClick={() => setPreviewUrl(activity.signatureUrl)}
+                            onClick={() =>
+                              setPreviewUrl(fileUrl + activity.signatureUrl)
+                            }
                             className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-100 transition"
                             title="View Signature"
                           >

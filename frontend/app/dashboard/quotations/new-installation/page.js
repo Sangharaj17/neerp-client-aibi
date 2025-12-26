@@ -146,6 +146,32 @@ export default function QuotationList() {
     });
   }, [quotations, searchQuery]);
 
+  const handleSendMail = async (quotationId) => {
+    const toastId = toast.loading("Sending email function is not implemented yet");
+    console.log("Quotation ID", quotationId);
+    // try {
+    //   const response = await axiosInstance.post(
+    //     `/api/job-activities/${activityId}/send-activity-email`
+    //   );
+    //   //const response = null;
+
+    //   if (response.data.success) {
+    //     toast.success("Email sent successfully!", { id: toastId });
+    //     fetchJobDetail(); // Refresh to update mailSent status
+    //   } else {
+    //     toast.error(response.data.message || "Failed to send email.", {
+    //       id: toastId,
+    //     });
+    //   }
+    // } catch (error) {
+    //   console.error("Send mail failed:", error);
+    //   const errorMessage =
+    //     error.response?.data?.message || "Failed to send email.";
+    //   toast.error(errorMessage, { id: toastId });
+    // }
+  };
+
+
   // --- PDF generation handlers ---
   const getTenantId = () => {
     // Implement your logic to retrieve the active tenant ID
@@ -403,7 +429,8 @@ export default function QuotationList() {
                     <td className="px-4 py-3 whitespace-nowrap">{formatDate(row.quotationDate)}</td>
                     <td className="px-4 py-3 font-medium">{row.customerName}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{row.siteName}</td>
-                    <td className="px-4 py-3">{row.createdByEmployeeName ? row.createdByEmployeeName.split(' - ')[0] : 'N/A'}</td>
+                    {/* <td className="px-4 py-3">{row.createdByEmployeeName ? row.createdByEmployeeName.split(' - ')[0] : 'N/A'}</td> */}
+                    <td className="px-4 py-3">{row.executiveName}</td>
                     <td className="px-4 py-3">
                       <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">{row.quotationNo}</span>
                     </td>
@@ -490,7 +517,10 @@ export default function QuotationList() {
 
                     {/* 5. Send Mail */}
                     <td className="px-4 py-3 text-center">
-                      <Mail className="h-5 w-5 text-blue-600 hover:text-blue-800 cursor-pointer mx-auto transition" title="Send Quotation via Email" />
+                      <Mail className="h-5 w-5 text-blue-600 hover:text-blue-800 cursor-pointer mx-auto transition" title="Send Quotation via Email"
+                        onClick={() =>
+                          handleSendMail(row.id)
+                        } />
                     </td>
 
                     {/* 6. Edit Button (Disabled if Finalized) */}

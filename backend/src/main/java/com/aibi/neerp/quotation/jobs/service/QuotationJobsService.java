@@ -495,7 +495,6 @@ public class QuotationJobsService {
         // need to set=====================>from "SELECT SUM(amount_paid) as paid_amount from tbl_job_payment where job_id= '$job_id'";
         jobDetail.setPaidAmount(BigDecimal.valueOf(0));
         jobDetail.setCustomerGstNo(job.getCustomerGstNo());
-        log.info("job date ......... {}", job.getCreatedAt());
         jobDetail.setCreatedAt(job.getCreatedAt());
         jobDetail.setCreatedById(job.getCreatedBy().getEmployeeId());
         jobDetail.setCreatedByName(job.getCreatedBy().getEmployeeName());
@@ -579,12 +578,12 @@ public class QuotationJobsService {
                 .activityTitle(act.getActivityTitle())
                 .activityDescription(act.getActivityDescription())
                 .remark(act.getRemark())
-//                .signatureUrl(act.getSignatureUrl())
-                .signatureUrl(
-                        act.getSignatureUrl() != null
-                                ? buildFileUrl(act.getSignatureUrl())
-                                : null
-                )
+                .signatureUrl(act.getSignatureUrl() != null ? act.getSignatureUrl() : null)
+//                .signatureUrl(
+//                        act.getSignatureUrl() != null
+//                                ? buildFileUrl(act.getSignatureUrl())
+//                                : null
+//                )
                 .signaturePersonName(act.getSignaturePersonName())
                 .status(act.getStatus())
                 .createdBy(act.getCreatedBy().getEmployeeId())
@@ -603,8 +602,8 @@ public class QuotationJobsService {
     private JobActivityPhotoDTO mapPhotoToDto(NiJobActivityPhoto photo) {
         return JobActivityPhotoDTO.builder()
                 .photoId(photo.getPhotoId())
-//                .photoUrl(photo.getPhotoPath())
-                .photoUrl(buildFileUrl(photo.getPhotoPath()))
+                .photoUrl(photo.getPhotoPath())
+//                .photoUrl(buildFileUrl(photo.getPhotoPath()))
                 .createdAt(photo.getCreatedAt())
                 .createdById(
                         photo.getCreatedBy() != null

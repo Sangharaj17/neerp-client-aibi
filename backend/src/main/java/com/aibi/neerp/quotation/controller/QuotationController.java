@@ -262,9 +262,16 @@ public class QuotationController {
             Sort.Order order = sort.getOrderFor("createdByEmployeeName");
 
             // ✅ Map to REAL entity field
+//            Sort newSort = Sort.by(
+//                    new Sort.Order(order.getDirection(), "createdBy.employeeName").ignoreCase(),
+//                    new Sort.Order(order.getDirection(), "createdBy.username").ignoreCase()
+//            );
+
             Sort newSort = Sort.by(
-                    new Sort.Order(order.getDirection(), "createdBy.employeeName").ignoreCase(),
-                    new Sort.Order(order.getDirection(), "createdBy.username").ignoreCase()
+                    new Sort.Order(
+                            order.getDirection(),
+                            "lead.activityBy.employeeName"
+                    ).ignoreCase()
             );
 
             pageable = PageRequest.of(

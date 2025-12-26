@@ -54,6 +54,8 @@ public class QuotationMainResponseDTO {
     private String createdByEmployeeName;
     private LocalDateTime createdAt;
 
+    private String executiveName;
+
     private Boolean isFinalized;
     private Integer finalizedByEmployeeId;
     private String finalizedByEmployeeName;

@@ -402,6 +402,8 @@ public class QuotationEntityToResponseDTO {
                 .createdByEmployeeName(createdBy != null ? createdBy.getEmployeeName() + " - " + createdBy.getUsername() : null) // Adjust names as needed
                 .createdAt(entity.getCreatedAt())
 
+                .executiveName(entity.getLead().getActivityBy().getEmployeeName())
+
                 .isFinalized(entity.getIsFinalized())
                 .finalizedByEmployeeId(finalizedBy != null ? finalizedBy.getEmployeeId() : null)
                 .finalizedByEmployeeName(finalizedBy != null ? finalizedBy.getEmployeeName() + " - " + finalizedBy.getUsername() : null) // Adjust names as needed
