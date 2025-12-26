@@ -231,11 +231,11 @@ public class LoginController {
         // ✅ Step 5: Generate token
         String token = jwtUtil.generateToken(Long.valueOf(user.getEmployeeId()), user.getUsername(), domainNm);
 
-        // ✅ Step 6: Cookies (no .domain, secure=false for local dev)
+        // ✅ Step 6: Cookies (secure=true for HTTPS production)
         ResponseCookie tokenCookie = ResponseCookie.from("token", token)
                 .httpOnly(true)
-                .secure(false) // .secure(true) When deploying to production
-                .sameSite("Lax") // .sameSite("Strict") When deploying to production
+                .secure(true) // Required for HTTPS
+                .sameSite("None") // Required for cross-origin cookies with secure=true
                 .path("/")
                 .maxAge(60 * 60 * 24) // 1 day (24 hours)
                 .build();
@@ -352,8 +352,8 @@ public class LoginController {
         // ✅ Step 3: Expire cookies
         ResponseCookie expiredToken = ResponseCookie.from("token", "")
                 .httpOnly(true)
-                .secure(false) // ✅ set true in production (HTTPS)
-                .sameSite("Lax")
+                .secure(true) // Match login cookie settings for HTTPS
+                .sameSite("None") // Required for cross-origin cookies
                 .path("/")
                 .maxAge(0) // expire immediately
                 .build();
