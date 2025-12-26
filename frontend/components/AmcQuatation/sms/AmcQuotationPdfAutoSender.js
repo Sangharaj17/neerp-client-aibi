@@ -664,70 +664,92 @@ export default function AmcQuotationPdfAutoSender({
   }, []);
 
   // Fetch API data and auto-generate PDF
-  useEffect(() => {
-    const generateAndSendPdf = async () => {
-      // ✅ Prevent double execution
-      if (hasSentPdf.current) {
-        return;
-      }
-
-      try {
-        hasSentPdf.current = true; // ✅ Mark as sent immediately
-        setStatus("generating");
-
-        // 1. Fetch quotation data
-        const params = new URLSearchParams();
-        params.append("amcQuatationId", amcQuotationId || "");
-        params.append("revisedQuatationId", revisedQuotationId || "");
-        params.append("renewalQuaId", renewalQuaId || "");
-        params.append("revisedRenewalId", revisedRenewalId || "");
-
-        const apiUrl = `/api/amc/quotation/pdf/pdf-data?${params.toString()}`;
-        const res = await axiosInstance.get(apiUrl);
-        const data = res.data || {};
-        setApiData(data);
-
-        // 2. Generate PDF blob
-        const doc = (
-          <ProposalDocument
-            apiData={data}
-            isWithoutLetterhead={isWithoutLetterhead}
-            isWithLetterHead={isWithLetterHead}
-            styleDto={styleDto}
-          />
-        );
-
-        const blob = await pdf(doc).toBlob();
-
-        // 3. Send PDF to backend
-        setStatus("sending");
-        const formData = new FormData();
-        formData.append("file", blob, `${siteName || "Site"}_AmcQuotation.pdf`);
-
-        await axiosInstance.post("/api/amc/quotation/mail/send-pdf", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        setStatus("success");
-        onSuccess(); // ✅ This will now only be called once
-        
-      } catch (err) {
-        console.error("Error generating or sending PDF:", err);
-        setStatus("error");
-        hasSentPdf.current = false; // ✅ Reset on error so user can retry
-        if (onError) onError(err);
-      }
-    };
-
-    // Only run if we have at least one ID and shouldSendPdf is 'sending'
-    if (shouldSendPdf === 'sending' && (amcQuotationId || revisedQuotationId || renewalQuaId || revisedRenewalId)) {
-      generateAndSendPdf();
+ // Fetch API data and auto-generate PDF
+useEffect(() => {
+  const generateAndSendPdf = async () => {
+    // ✅ Prevent double execution
+    if (hasSentPdf.current) {
+      return;
     }
-  }, [shouldSendPdf, amcQuotationId, revisedQuotationId, renewalQuaId, revisedRenewalId, siteName, isWithoutLetterhead, isWithLetterHead, styleDto]);
 
-  // Optional: Return status indicator (can be removed if you want completely silent operation)
+    try {
+      hasSentPdf.current = true; // ✅ Mark as sent immediately
+      setStatus("generating");
+
+      // 1. Fetch quotation data
+      const params = new URLSearchParams();
+      params.append("amcQuatationId", amcQuotationId || "");
+      params.append("revisedQuatationId", revisedQuotationId || "");
+      params.append("renewalQuaId", renewalQuaId || "");
+      params.append("revisedRenewalId", revisedRenewalId || "");
+
+      const apiUrl = `/api/amc/quotation/pdf/pdf-data?${params.toString()}`;
+      const res = await axiosInstance.get(apiUrl);
+      const data = res.data || {};
+      setApiData(data);
+
+      // 2. Generate PDF blob
+      const doc = (
+        <ProposalDocument
+          apiData={data}
+          isWithoutLetterhead={isWithoutLetterhead}
+          isWithLetterHead={isWithLetterHead}
+          styleDto={styleDto}
+        />
+      );
+
+      const blob = await pdf(doc).toBlob();
+
+      // 3. Send PDF to backend
+      setStatus("sending");
+      const formData = new FormData();
+      formData.append("file", blob, `${siteName || "Site"}_AmcQuotation.pdf`);
+      
+      // ✅ Append only the ID that exists (MATCH BACKEND PARAM NAMES EXACTLY)
+      if (revisedRenewalId) {
+        formData.append("revisedRenewalQuotationId", revisedRenewalId.toString());
+      } else if (renewalQuaId) {
+        formData.append("renewalQuotationId", renewalQuaId.toString());
+      } else if (revisedQuotationId) {
+        formData.append("revisedAmcQuotationId", revisedQuotationId.toString());
+      } else if (amcQuotationId) {
+        formData.append("amcQuotationId", amcQuotationId.toString());
+      }
+
+      // ✅ Debug log to verify what's being sent
+      console.log("Sending FormData with:", {
+        file: blob.size + " bytes",
+        amcQuotationId,
+        revisedQuotationId,
+        renewalQuaId,
+        revisedRenewalId
+      });
+
+      await axiosInstance.post("/api/amc/quotation/mail/send-pdf", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setStatus("success");
+      onSuccess(); // ✅ This will now only be called once
+      
+    } catch (err) {
+      console.error("Error generating or sending PDF:", err);
+      setStatus("error");
+      hasSentPdf.current = false; // ✅ Reset on error so user can retry
+      if (onError) onError(err);
+    }
+  };
+
+  // Only run if we have at least one ID and shouldSendPdf is 'sending'
+  if (shouldSendPdf === 'sending' && (amcQuotationId || revisedQuotationId || renewalQuaId || revisedRenewalId)) {
+    generateAndSendPdf();
+  }
+}, [shouldSendPdf, amcQuotationId, revisedQuotationId, renewalQuaId, revisedRenewalId, siteName, isWithoutLetterhead, isWithLetterHead, styleDto, onSuccess, onError]);
+
+
+// Optional: Return status indicator (can be removed if you want completely silent operation)
   if (status === "idle") return null;
   
   return (

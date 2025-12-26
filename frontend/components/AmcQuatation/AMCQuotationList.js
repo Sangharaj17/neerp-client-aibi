@@ -12,7 +12,7 @@ import { AlignJustify } from 'lucide-react';
 import ActionModal from '../AMC/ActionModal';
 import AmcQuotationPdfSettingPreviewAndPrint from './pdf/AmcQuotationPdfSettingPreviewAndPrint';
 
-import AmcQuotationPdfAutoSender from './sms/Amcquotationpdfautosender';
+import AmcQuotationPdfAutoSender from './sms/AmcQuotationPdfAutoSender';
 
 export default function AMCQuotationList() {
   const router = useRouter();

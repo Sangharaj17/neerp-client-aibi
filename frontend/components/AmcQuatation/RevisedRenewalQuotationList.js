@@ -11,6 +11,7 @@ import AmcRenewalQuotationView from "./AmcRenewalQuotationView";
 import ActionModal from '../AMC/ActionModal';
 import AmcQuotationPdfSettingPreviewAndPrint from './pdf/AmcQuotationPdfSettingPreviewAndPrint';
 
+import AmcQuotationPdfAutoSender from "./sms/AmcQuotationPdfAutoSender";
 
 import toast from "react-hot-toast";
 
@@ -103,6 +104,28 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
         
       
          const [revisedRenewalId, setRevisedRenewalId] = useState(null);
+
+         
+         const [shouldSendPdf, setShouldSendPdf] = useState('idle');
+         
+         const handleSendSms = () => {
+           // Trigger the PDF generation and sending
+           setShouldSendPdf('sending');
+         };
+         
+         const handleSuccess = () => {
+           console.log("PDF sent successfully!");
+           setShouldSendPdf('idle'); // ✅ Reset to idle
+           toast.success("Quotation PDF sent successfully via email!");
+           setLoadingBtn(null);
+         };
+         
+         const handleError = (error) => {
+           console.error("Failed to send PDF:", error);
+           setShouldSendPdf('idle'); // ✅ Reset to idle
+           toast.error("Failed to send PDF. Please try again.");
+           setLoadingBtn(null);
+         };
 
   return (
     <div className="min-h-screen">
@@ -276,12 +299,42 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
 
                     {/* Preview Mail */}
                     <td className="px-2 py-2 text-center">
-                      <button
+
+
+                      {/* <button
                         onClick={() => previewMail(q.revisedQuatationId)}
                         className="bg-green-400 hover:bg-green-500 text-white p-1 rounded"
                       >
                         <Mail className="w-4 h-4" />
+                      </button> */}
+
+                        <button
+                        disabled={loadingBtn === `sms-${q.id}`}
+                        onClick={() => {
+                          if (loadingBtn) return;
+                      
+                          setLoadingBtn(`sms-${q.id}`);
+                      
+                          setSiteName(q.siteName);
+                          setRevisedRenewalId(q.id);
+                      
+                          handleSendSms(); // no concern about async / success
+                        }}
+                        className={`p-1 rounded transition
+                          ${loadingBtn === `sms-${q.id}`
+                            ? "bg-green-300 cursor-not-allowed"
+                            : "bg-green-400 hover:bg-green-500 text-white"}
+                        `}
+                      >
+                        {loadingBtn === `sms-${q.id}` ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        ) : (
+                          <Mail className="w-4 h-4" />
+                        )}
                       </button>
+
+
+
                     </td>
                   </tr>
                 ))}
@@ -323,6 +376,21 @@ export default function RevisedRenewalQuotationList({ quotationId }) {
                   />
          
                </ActionModal>
+
+
+               {/* Hidden component that auto-generates and sends PDF */}
+               {shouldSendPdf === 'sending' && (
+                         <AmcQuotationPdfAutoSender
+                        revisedRenewalId={revisedRenewalId}
+                         siteName={siteName}
+                         isWithoutLetterhead={false}
+                         isWithLetterHead={true}
+                         onSuccess={handleSuccess}
+                         onError={handleError}
+                         shouldSendPdf={shouldSendPdf}
+                       />
+                     )}
+               
 
     </div>
   );
