@@ -8,6 +8,10 @@ import {
   FaEye, FaEdit, FaFilePdf, FaEnvelope, FaReceipt, FaThumbsUp, FaThumbsDown, FaCheckCircle, FaTimesCircle
 } from 'react-icons/fa';
 import { Trash2 } from "lucide-react";
+import { Loader2 } from 'lucide-react';
+
+import { FaSpinner } from "react-icons/fa";
+
 
 // Assuming you have saved ActionModal.js in a relevant path
 import ActionModal from '@/components/AMC/ActionModal';
@@ -18,6 +22,8 @@ import ModernizationEdit from '@/components/Modernization/ModernizationEdit';
 import ModernizationInvoicePrint from '@/components/Modernization/ModernizationInvoicePrint';
 
 import ModernizationQuotationPdfPreview from '@/components/Modernization/ModernizationQuotationPdfPreview';
+
+import ModernizationQuotationPdfGenerator from '@/components/Modernization/ModernizationQuotationPdfGenerator';
 
 export default function ModernizationList() {
   const [records, setRecords] = useState([]);
@@ -265,6 +271,36 @@ export default function ModernizationList() {
 
   const [selectedModernizationId, setSelectedModernizationId] = useState(null);
 
+  const [shouldSendPdf , setShouldSendPdf] = useState('idle'); // 
+  const [modernizationIdForPdf, setModernizationIdForPdf] = useState(null);
+
+  const [loadingBtn, setLoadingBtn] = useState(null);
+
+          const handleSendSms = (qId) => {
+             // Trigger the PDF generation and sending
+  setLoadingBtn(`sms-${qId}`); // ✅ correct id
+
+              setModernizationIdForPdf(qId);
+             setShouldSendPdf('sending');
+           };
+           
+           const handleSuccess = () => {
+             console.log("PDF sent successfully!");
+             setShouldSendPdf('idle'); // ✅ Reset to idle
+             toast.success("Quotation PDF sent successfully via email!");
+               setLoadingBtn(null);
+
+            // setLoadingBtn(null);
+           };
+           
+           const handleError = (error) => {
+             console.error("Failed to send PDF:", error);
+             setShouldSendPdf('idle'); // ✅ Reset to idle
+             toast.error("Failed to send PDF. Please try again.");
+               setLoadingBtn(null);
+
+            /// setLoadingBtn(null);
+           };
 
   // Modal Content (ViewDetailsModalContent) is the same
 
@@ -566,13 +602,26 @@ export default function ModernizationList() {
                           <FaFilePdf size={16} />
                         </button>
 
-                        <button
-                          title="Send Mail"
-                          className="text-sky-500 hover:text-sky-600 transition"
-                          onClick={() => handleAction('Send Mail', item.modernization.id)}
-                        >
-                          <FaEnvelope size={16} />
-                        </button>
+         <button
+  title="Send Mail"
+  disabled={loadingBtn === `sms-${item.modernization.id}`}
+  className={`transition ${
+    loadingBtn === `sms-${item.modernization.id}`
+      ? "text-gray-400 cursor-not-allowed"
+      : "text-sky-500 hover:text-sky-600"
+  }`}
+  onClick={() => handleSendSms(item.modernization.id)}
+>
+  {loadingBtn === `sms-${item.modernization.id}` ? (
+    <Loader2 size={16} className="animate-spin" />
+  ) : (
+    <FaEnvelope size={16} />
+  )}
+</button>
+
+
+
+
                         <button
                           title="Invoice"
                           className="text-sky-500 hover:text-sky-600 transition"
@@ -728,6 +777,17 @@ export default function ModernizationList() {
         onCancel={handleCancel}
         onConfirm={handleConfirmDelete}
       />
+
+
+       {shouldSendPdf === 'sending' && (
+      <ModernizationQuotationPdfGenerator
+  modernizationId={modernizationIdForPdf}
+  isWithLetterHead={true}
+  onSuccess={() => handleSuccess()}
+  onError={(error) => handleError(error)}
+/>
+ )}
+
 
 
     </div>
