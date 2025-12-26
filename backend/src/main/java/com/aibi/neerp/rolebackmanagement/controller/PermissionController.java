@@ -44,4 +44,24 @@ public class PermissionController {
         permissionService.assignPermissionsToRole(roleId, permissionIds);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    /**
+     * Get permissions for a user by userId (employeeId).
+     * Returns a list of maps with moduleName and featureName.
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getUserPermissions(@PathVariable Integer userId) {
+        try {
+            if (userId == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "User ID is required"));
+            }
+            List<Map<String, String>> permissions = permissionService.getUserPermissions(userId);
+            return ResponseEntity.ok(permissions);
+        } catch (Exception e) {
+            System.err.println("Error fetching user permissions for userId: " + userId);
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Failed to fetch user permissions", "message", e.getMessage()));
+        }
+    }
 }

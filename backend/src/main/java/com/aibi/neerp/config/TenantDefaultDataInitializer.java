@@ -104,7 +104,7 @@ public class TenantDefaultDataInitializer {
         // Removed: this.columnNamingFixer = columnNamingFixer;
     }
 
-   // @Transactional
+    @Transactional
     public void initializeDefaults() {
         long startTime = System.currentTimeMillis();
         System.out
@@ -181,7 +181,7 @@ public class TenantDefaultDataInitializer {
             System.out.println("[DataInit] Step 17/17: Inserting JobActivityTypes...");
             insertDefaultJobActivityTypes();
             System.out.println("[DataInit] Step 17/17: ✅ Completed");
-            
+
             System.out.println("[DataInit] Step 18/18: Inserting insertDefaultPdfHeadings...");
             insertDefaultPdfHeadings();
             System.out.println("[DataInit] Step 18/18: ✅ Completed");
@@ -859,38 +859,38 @@ public class TenantDefaultDataInitializer {
             throw e;
         }
     }
-    
-    
+
     private void insertDefaultPdfHeadings() {
         try {
             // Data mapping: {Heading Name, Quotation Type String}
             String[][] defaultHeadings = {
-                {"NON-COMPREHENSIVE MAINTENANCE", "AMC"},
-                {"SEMI-COMPREHENSIVE MAINTENANCE", "AMC"},
-                {"Introduction Page", "AMC"},
-                {"MAINTENANCE CONTRACT OFFER:", "AMC"},
-                {"COMPREHENSIVE MAINTENANCE:", "AMC"},
-                {"EXCLUDED COMPONENT IN THIS CONTRACT -", "AMC"},
-                {"INSTRUCTIONS:", "AMC"},
-                {"THIS IS FIXED FIRST PAGE", "Common"},
-                {"THIS IS FIXED LAST PAGE", "Common"},
-                {"Introduction", "Modernization"},
-                {"Terms and Conditions", "Modernization"},
-                {"Introduction", "Oncall"},
-                {"Terms and Conditions", "Oncall"},
-                {"MAIN CONTENT BACKGROUND PAGE", "Common"}
+                    { "NON-COMPREHENSIVE MAINTENANCE", "AMC" },
+                    { "SEMI-COMPREHENSIVE MAINTENANCE", "AMC" },
+                    { "Introduction Page", "AMC" },
+                    { "MAINTENANCE CONTRACT OFFER:", "AMC" },
+                    { "COMPREHENSIVE MAINTENANCE:", "AMC" },
+                    { "EXCLUDED COMPONENT IN THIS CONTRACT -", "AMC" },
+                    { "INSTRUCTIONS:", "AMC" },
+                    { "THIS IS FIXED FIRST PAGE", "Common" },
+                    { "THIS IS FIXED LAST PAGE", "Common" },
+                    { "Introduction", "Modernization" },
+                    { "Terms and Conditions", "Modernization" },
+                    { "Introduction", "Oncall" },
+                    { "Terms and Conditions", "Oncall" },
+                    { "MAIN CONTENT BACKGROUND PAGE", "Common" }
             };
 
             for (String[] data : defaultHeadings) {
                 String heading = data[0];
                 String type = data[1];
 
-                // Idempotent check: ensures we don't insert the same heading for the same type twice
+                // Idempotent check: ensures we don't insert the same heading for the same type
+                // twice
                 if (!headingsRepository.existsByHeadingNameAndQuotationType(heading, type)) {
                     AmcQuotationPdfHeadings entity = new AmcQuotationPdfHeadings();
                     entity.setHeadingName(heading);
                     entity.setQuotationType(type); // Now strictly a String like "AMC" or "Common"
-                    
+
                     headingsRepository.save(entity);
                     System.out.println("[DataInit] ✅ Inserted: " + heading + " | Type: " + type);
                 }

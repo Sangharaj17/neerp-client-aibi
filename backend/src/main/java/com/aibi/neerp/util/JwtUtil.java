@@ -10,10 +10,11 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    // Generate a strong random secret key (in real apps, store in environment/config)
+    // Generate a strong random secret key (in real apps, store in
+    // environment/config)
     private static final String SECRET = "supersecretkeyforsigningjwttokensandshouldbeatleast256bitlong!";
 
-    private final long EXPIRATION = 1000 * 60 * 60; // 1 hour
+    private final long EXPIRATION = 1000 * 60 * 60 * 24; // 1 day (24 hours)
 
     // ✅ Convert string to secure Key object
     private Key getSigningKey() {
@@ -27,13 +28,13 @@ public class JwtUtil {
                 .claim("domain", domain)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)  // ✅ updated usage
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // ✅ updated usage
                 .compact();
     }
 
     public Claims validateToken(String token) throws JwtException {
         return Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())  // ✅ updated usage
+                .setSigningKey(getSigningKey()) // ✅ updated usage
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

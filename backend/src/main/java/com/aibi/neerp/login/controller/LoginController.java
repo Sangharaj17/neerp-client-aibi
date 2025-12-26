@@ -237,7 +237,7 @@ public class LoginController {
                 .secure(false) // .secure(true) When deploying to production
                 .sameSite("Lax") // .sameSite("Strict") When deploying to production
                 .path("/")
-                .maxAge(60 * 60)
+                .maxAge(60 * 60 * 24) // 1 day (24 hours)
                 .build();
 
         // ResponseCookie visibleCookie = ResponseCookie.from("access_token", token)

@@ -46,6 +46,10 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
   const [username, setUsername] = useState('');
   const [userEmail, setUserEmail] = useState('');
 
+  // RBAC State
+  const [userPermissions, setUserPermissions] = useState(new Set());
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+
   useEffect(() => {
     if (!tenant) return;
     const userKey = `${tenant}_username`;
@@ -59,6 +63,53 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
     const clientNameKey = `${tenant}_clientName`;
     const storedClientName = localStorage.getItem(clientNameKey);
     setClientname(storedClientName || 'Client Portal');
+  }, [tenant]);
+
+  // Fetch user permissions for RBAC
+  useEffect(() => {
+    const fetchUserPermissions = async () => {
+      if (!tenant) {
+        setPermissionsLoading(false);
+        return;
+      }
+
+      try {
+        const userIdKey = `${tenant}_userId`;
+        const userId = localStorage.getItem(userIdKey);
+
+        if (!userId) {
+          setPermissionsLoading(false);
+          return;
+        }
+
+        const tokenKey = `${tenant}_token`;
+        const storedToken = localStorage.getItem(tokenKey);
+
+        const response = await axiosInstance.get(`/api/permissions/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+          },
+        });
+
+        // Create a Set of permission strings in format "moduleName|featureName"
+        const permissionSet = new Set();
+        if (Array.isArray(response.data)) {
+          response.data.forEach(perm => {
+            if (perm.moduleName && perm.featureName) {
+              permissionSet.add(`${perm.moduleName}|${perm.featureName}`);
+            }
+          });
+        }
+        setUserPermissions(permissionSet);
+      } catch (error) {
+        console.error('Failed to fetch user permissions:', error);
+        // On error, userPermissions remains empty, so all items will be hidden (fail closed)
+      } finally {
+        setPermissionsLoading(false);
+      }
+    };
+
+    fetchUserPermissions();
   }, [tenant]);
 
   const handleLogout = async () => {
@@ -160,30 +211,47 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
     href: `/dashboard/components-pricing/${type.slug}`,
   }));
 
+  // Helper function to check if user has permission for a module and feature
+  const hasPermission = (moduleName, featureName) => {
+    if (permissionsLoading) return false;
+    const permissionKey = `${moduleName}|${featureName}`;
+    return userPermissions.has(permissionKey);
+  };
+
+  // Helper function to check if user has permission for a module (for sections without specific features)
+  const hasModulePermission = (moduleName) => {
+    if (permissionsLoading) return false;
+    // Check if any permission exists for this module
+    return Array.from(userPermissions).some(perm => perm.startsWith(`${moduleName}|`));
+  };
+
   const menuSections = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: LayoutDashboard,
       hasSubmenu: false,
-      href: '/dashboard/dashboard-data'
+      href: '/dashboard/dashboard-data',
+      moduleName: 'Dashboard',
+      featureName: 'Dashboard'
     },
     {
       id: 'user-resource',
       title: 'User/Resource',
       icon: Users,
       hasSubmenu: true,
+      moduleName: 'User/Resource',
       submenu: [
-        { title: 'Employee List', href: '/dashboard/user-resource/employee-list' },
-        { title: 'Add User Role', href: '/dashboard/user-resource/add-user-role' },
-        { title: 'Assign Role', href: '/dashboard/user-resource/assign-role' },
-        { title: 'Change Password', href: '/dashboard/user-resource/change-password' },
-        { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document' },
-        { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type' },
-        { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time' },
-        { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time' },
-        { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry' },
-        { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list' },
+        { title: 'Employee List', href: '/dashboard/user-resource/employee-list', featureName: 'Employee List' },
+        { title: 'Add User Role', href: '/dashboard/user-resource/add-user-role', featureName: 'Add User Role' },
+        { title: 'Assign Role', href: '/dashboard/user-resource/assign-role', featureName: 'Assign Role' },
+        { title: 'Change Password', href: '/dashboard/user-resource/change-password', featureName: 'Change Password' },
+        { title: 'Add Required Document', href: '/dashboard/user-resource/add-required-document', featureName: 'Add Required Document' },
+        { title: 'Add Tax Type', href: '/dashboard/user-resource/add-tax-type', featureName: 'Add Tax Type' },
+        { title: 'Employee In Time', href: '/dashboard/user-resource/employee-in-time', featureName: 'Employee In Time' },
+        { title: 'Employee Out Time', href: '/dashboard/user-resource/employee-out-time', featureName: 'Employee Out Time' },
+        { title: 'Employee Leave Entry', href: '/dashboard/user-resource/employee-leave-entry', featureName: 'Employee Leave Entry' },
+        { title: 'Employee Attendance List', href: '/dashboard/user-resource/employee-attendance-list', featureName: 'Employee Attendance List' },
       ]
     },
     {
@@ -191,18 +259,23 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       title: 'Components & Pricing',
       icon: Package,
       hasSubmenu: true,
-      submenu: componentsPricingSubmenu,
+      moduleName: 'Components & Pricing',
+      submenu: componentsPricingSubmenu.map(item => ({
+        ...item,
+        featureName: item.title
+      })),
     },
     {
       id: 'lead-management',
       title: 'Lead Management',
       icon: Target,
       hasSubmenu: true,
+      moduleName: 'Lead Management',
       submenu: [
-        { title: 'Lead List', href: `/dashboard/lead-management/lead-list` },
-        { title: 'To Do List', href: `/dashboard/lead-management/to-do-list` },
-        { title: 'Activity List', href: `/dashboard/lead-management/activity-list` },
-        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting` }
+        { title: 'Lead List', href: `/dashboard/lead-management/lead-list`, featureName: 'Lead List' },
+        { title: 'To Do List', href: `/dashboard/lead-management/to-do-list`, featureName: 'To Do List' },
+        { title: 'Activity List', href: `/dashboard/lead-management/activity-list`, featureName: 'Activity List' },
+        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting`, featureName: 'Lead Setting (setup)' }
       ]
     },
     {
@@ -210,12 +283,13 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       title: 'Customers',
       icon: UserCheck,
       hasSubmenu: true,
+      moduleName: 'Customers',
       submenu: [
-        { title: 'Customer List', href: '/dashboard/customer/customer-list' },
-        { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list` },
-        { title: 'Customer Groups', href: '/customer-groups' },
-        { title: 'Customer History', href: '/customer-history' },
-        { title: 'Feedback', href: '/feedback' }
+        { title: 'Customer List', href: '/dashboard/customer/customer-list', featureName: 'Customer List' },
+        { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list`, featureName: 'Customers Sites Todo List' },
+        { title: 'Customer Groups', href: '/customer-groups', featureName: 'Customer Groups' },
+        { title: 'Customer History', href: '/customer-history', featureName: 'Customer History' },
+        { title: 'Feedback', href: '/feedback', featureName: 'Feedback' }
       ]
     },
     {
@@ -223,14 +297,15 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       title: 'Quotations',
       icon: FileText,
       hasSubmenu: true,
+      moduleName: 'Quotations',
       submenu: [
-        { title: 'New Installation Quotation List', href: `/dashboard/quotations/new-installation` },
-        { title: 'AMC Quotation List', href: `/dashboard/quotations/amc_quatation_list` },
-        { title: 'Material Repair Quotation List', href: `/dashboard/quotations/material_repair_quatation_list` },
-        { title: 'Modernization Quotation List', href: `/dashboard/quotations/ModernizationList` },
-        { title: 'Oncall Quotation List', href: `/dashboard/quotations/oncall-quotation-list` },
-        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/amc-renewal-quatation-list` },
-        { title: 'AMC Quatation Setup', href: `/dashboard/quotations/amc_quatation_setup` }
+        { title: 'New Installation Quotation List', href: `/dashboard/quotations/new-installation`, featureName: 'New Installation Quotation List' },
+        { title: 'AMC Quotation List', href: `/dashboard/quotations/amc_quatation_list`, featureName: 'AMC Quotation List' },
+        { title: 'Material Repair Quotation List', href: `/dashboard/quotations/material_repair_quatation_list`, featureName: 'Material Repair Quotation List' },
+        { title: 'Modernization Quotation List', href: `/dashboard/quotations/ModernizationList`, featureName: 'Modernization Quotation List' },
+        { title: 'Oncall Quotation List', href: `/dashboard/quotations/oncall-quotation-list`, featureName: 'Oncall Quotation List' },
+        { title: 'AMC Renewals Quotation List', href: `/dashboard/quotations/amc-renewal-quatation-list`, featureName: 'AMC Renewals Quotation List' },
+        { title: 'AMC Quatation Setup', href: `/dashboard/quotations/amc_quatation_setup`, featureName: 'AMC Quatation Setup' }
       ]
     },
     {
@@ -238,15 +313,16 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       title: 'Jobs',
       icon: Briefcase,
       hasSubmenu: true,
+      moduleName: 'Jobs',
       submenu: [
-        { title: 'Add New Job Detail', href: `/dashboard/jobs/add-new-job-detail` },
-        { title: 'Add Payment', href: `/dashboard/jobs/add-payment` },
-        { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list/false` },
-        { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call` },
-        { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0` },
-        { title: 'Invoices', href: `/dashboard/jobs/amc-invoices` },
-        { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments` },
-        { title: 'NI Job List', href: `/dashboard/jobs/ni_job_list` },
+        { title: 'Add New Job Detail', href: `/dashboard/jobs/add-new-job-detail`, featureName: 'Add New Job Detail' },
+        { title: 'Add Payment', href: `/dashboard/jobs/add-payment`, featureName: 'Add Payment' },
+        { title: 'Amc Jobs List', href: `/dashboard/jobs/amc_job_list/false`, featureName: 'Amc Jobs List' },
+        { title: 'Brekdown Todo Form ', href: `/dashboard/jobs/add-breakdown-call`, featureName: 'Brekdown Todo Form' },
+        { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0`, featureName: 'Add Renewal Job Activity' },
+        { title: 'Invoices', href: `/dashboard/jobs/amc-invoices`, featureName: 'Invoices' },
+        { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments`, featureName: 'Payment Invoices' },
+        { title: 'NI Job List', href: `/dashboard/jobs/ni_job_list`, featureName: 'NI Job List' },
       ]
     },
     {
@@ -254,8 +330,9 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       title: 'Site Expenses',
       icon: Briefcase,
       hasSubmenu: true,
+      moduleName: 'Site Expenses',
       submenu: [
-        { title: 'Site Expense Dashboard', href: `/dashboard/site-expences` },
+        { title: 'Site Expense Dashboard', href: `/dashboard/site-expences`, featureName: 'Site Expense Dashboard' },
       ]
     },
     {
@@ -263,18 +340,56 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       title: 'Settings',
       icon: Settings,
       hasSubmenu: true,
+      moduleName: 'Settings',
       submenu: [
-        { title: 'Company Setting', href: '/dashboard/settings' },
-        { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting' },
-        { title: 'NI Job Activity Setting', href: '/dashboard/settings/ni-job-activity' },
+        { title: 'Company Setting', href: '/dashboard/settings', featureName: 'Company Setting' },
+        { title: 'Amc Quotation Pdf Setting', href: '/dashboard/settings/pdf_setting', featureName: 'Amc Quotation Pdf Setting' },
+        { title: 'NI Job Activity Setting', href: '/dashboard/settings/ni-job-activity', featureName: 'NI Job Activity Setting' },
       ]
     }
   ];
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredSections = useMemo(() => {
-    if (!normalizedQuery) return menuSections;
-    return menuSections
+    // If permissions are still loading, don't show navigation items yet
+    if (permissionsLoading) return [];
+
+    let sections = menuSections;
+
+    // Apply RBAC filtering
+    sections = sections
+      .map(section => {
+        // Check if section has permission
+        if (!section.hasSubmenu) {
+          // For sections without submenu, check module and feature permission
+          if (section.moduleName && section.featureName) {
+            return hasPermission(section.moduleName, section.featureName) ? section : null;
+          }
+          // If no module/feature specified, hide it for security (fail closed)
+          return null;
+        }
+
+        // For sections with submenu, filter submenu items based on permissions
+        const filteredSubmenu = (section.submenu || []).filter(item => {
+          if (section.moduleName && item.featureName) {
+            return hasPermission(section.moduleName, item.featureName);
+          }
+          // If no permission info, hide it for security (fail closed)
+          return false;
+        });
+
+        // Only show section if it has at least one allowed submenu item
+        if (filteredSubmenu.length > 0) {
+          return { ...section, submenu: filteredSubmenu };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    // Apply search filtering
+    if (!normalizedQuery) return sections;
+    return sections
       .map(section => {
         if (!section.hasSubmenu) {
           return section.title.toLowerCase().includes(normalizedQuery) ? section : null;
@@ -283,7 +398,7 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
         return sub.length ? { ...section, submenu: sub } : null;
       })
       .filter(Boolean);
-  }, [normalizedQuery]);
+  }, [normalizedQuery, userPermissions, permissionsLoading]);
 
   return (
     <>
@@ -347,7 +462,7 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
         <nav className={`flex-1 overflow-y-auto pb-4 apple-scrollbar ${isCollapsed ? 'px-1 pt-3' : 'px-3 space-y-1'}`}>
           {isCollapsed ? (
             <div className="flex flex-col items-center gap-3">
-              {(normalizedQuery ? filteredSections : menuSections).map((section) => {
+              {filteredSections.map((section) => {
                 const isActive = isSectionActive(section);
                 const Icon = section.icon;
 
@@ -394,7 +509,7 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
               })}
             </div>
           ) : (
-            (normalizedQuery ? filteredSections : menuSections).map((section) => {
+            filteredSections.map((section) => {
               const isActive = isSectionActive(section);
               const isOpen = normalizedQuery ? true : openSections[section.id];
               const Icon = section.icon;
