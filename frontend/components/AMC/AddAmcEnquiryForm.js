@@ -383,13 +383,20 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
 
     //alert(floorOption.length);
 
-    let lessByOne = lift.noOfStops - 1;
+   // let lessByOne = lift.noOfStops - 1;
 
     // alert("noOfStops-1: " + lessByOne);
 
-    const selectedFloor = floorOption.find((opt) => {
-      const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
-      return num === Number(lessByOne);
+    // const selectedFloor = floorOption.find((opt) => {
+    //   const num = parseInt(opt.name.split("+")[1], 10); // enxtract number from "G+X"
+    //   return num === Number(lessByOne);
+    // });
+
+     // find selected floor object (G+X logic already fixed earlier)
+    const selectedFloor = floorOption.find(opt => {
+      const floorNumber = parseInt(lift.noOfFloors, 10);
+      if (isNaN(floorNumber)) return false;
+      return opt.name === `G+${floorNumber - 1}`;
     });
 
     let floorId = selectedFloor ? selectedFloor.id : null;
@@ -498,24 +505,34 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
       const currentLift = updatedLifts[index];
 
       if (field === 'noOfFloors') {
-        const selectedFloor = floorOption.find(opt => String(opt.id) === value);
+       // const selectedFloor = floorOption.find(opt => String(opt.id) === value);
 
-        if (selectedFloor) {
-          currentLift.noOfStops = selectedFloor.id;
-          //currentLift.noOfOpenings = selectedFloor.id * 2;
-          currentLift.noOfOpenings = selectedFloor.id;
+      const selectedFloor = floorOption.find(opt => {
+            if (!value) return false;
 
-          if (selectedFloor.id === 1) {
-            // For Floor 1, use its own name
-            currentLift.floorsDesignation = selectedFloor.name;
-          } else {
-            // Find the floor option with an ID one less than the selected one
-            const floorOneLess = floorOption.find(opt => opt.id === selectedFloor.id - 1);
+            // value example: "10"
+            const floorNumber = parseInt(value, 10);
 
-            // Use the name of that found option, or default to an empty string
-            currentLift.floorsDesignation = floorOneLess?.name || '';
-          }
-        } else {
+            if (isNaN(floorNumber)) return false;
+
+            // convert back: 10 → G+9
+            const originalFloorName = `G+${floorNumber - 1}`;
+
+            return opt.name === originalFloorName;
+          });
+
+
+       if (selectedFloor) {
+
+        const updatedLifts = [...prevForm.lifts];
+        const selectedAddtionalFloors = updatedLifts[index]["floorSelections"] || [];
+
+        currentLift.noOfStops = Number(value) + selectedAddtionalFloors.length;
+        currentLift.noOfOpenings = Number(value) + selectedAddtionalFloors.length;
+        currentLift.floorsDesignation = selectedFloor.name;
+
+      }
+       else {
           currentLift.noOfStops = 0;
           currentLift.noOfOpenings = 0;
           currentLift.floorsDesignation = '';
@@ -917,24 +934,31 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
               }
 
 
-              <Select
-                label="No. of Floors *"
-                value={String(lift.noOfFloors || "")} // lift.noOfFloors should store selected floor `id`
-                onChange={(e) => {
-                  handleLiftChange(index, 'noOfFloors', e.target.value);
-                  //handleUpdateFloorDesignationAndStopsAndOpenings(index, e.target.value);
-                }
-                }
-              >
-                <option value="">Please Select</option>
-                {floorOption.map((opt, idx) => (
-                  <option key={opt.id} value={idx + 1}>
-                    {/* {opt.name} */}
-                    {/* {idx + 1} - {opt.name} */}
-                    {idx + 1}
-                  </option>
-                ))}
-              </Select>
+             <Select
+  label="No. of Floors *"
+  value={String(lift.noOfFloors || "")}
+  onChange={(e) => {
+    handleLiftChange(index, "noOfFloors", e.target.value);
+  }}
+>
+  <option value="">Please Select</option>
+
+  {floorOption.map((opt) => {
+    // opt.name example: "G+9"
+    const plusIndex = opt.name.indexOf("+");
+    const floorNumber =
+      plusIndex !== -1
+        ? parseInt(opt.name.substring(plusIndex + 1), 10) + 1
+        : "";
+
+    return (
+      <option key={opt.id} value={floorNumber}>
+        {floorNumber}
+      </option>
+    );
+  })}
+</Select>
+
 
               <div>
                 <label className="block text-gray-700 text-sm mb-1">Floor Designation</label>
