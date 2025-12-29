@@ -473,7 +473,7 @@ function ViewEnquiryClientPageContent() {
         </div>
 
         {/* Category Buttons */}
-        <div className="mb-6 flex justify-center gap-3">
+        {/* <div className="mb-6 flex justify-center gap-3">
           {enquiryTypes && enquiryTypes.map((type) => (
             <button
               key={type.enquiryTypeId}
@@ -494,10 +494,46 @@ function ViewEnquiryClientPageContent() {
               {categoryLoading === type.enquiryTypeName && (
                 <Loader2 className="w-4 h-4 animate-spin" />
               )}
-              {type.enquiryTypeName}
+                {type.enquiryTypeName === "Moderization"
+                  ? "Modernization"
+                  : type.enquiryTypeName}
             </button>
           ))}
-        </div>
+        </div> */}
+
+
+        <div className="mb-6 flex justify-center gap-3">
+  {enquiryTypes && enquiryTypes
+    // Filter out the "Modernization" (or the misspelled "Moderization") type
+    .filter((type) => type.enquiryTypeName !== "Modernization")
+    .map((type) => (
+      <button
+        key={type.enquiryTypeId}
+        onClick={() => {
+          setCategoryLoading(type.enquiryTypeName);
+          setTimeout(() => {
+            setSelectedCategory(type.enquiryTypeName);
+            setSelectedCategoryObj(type);
+            setCategoryLoading(null);
+          }, 400); // simulate delay
+        }}
+        className={`px-4 py-2 rounded-full text-sm font-medium border flex items-center gap-2 ${
+          selectedCategory === type.enquiryTypeName
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-100'
+        }`}
+        disabled={categoryLoading !== null}
+      >
+        {categoryLoading === type.enquiryTypeName && (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        )}
+        {/* Keeping your original display logic for safety */}
+        {type.enquiryTypeName === "Moderization"
+          ? "Modernization"
+          : type.enquiryTypeName}
+      </button>
+    ))}
+</div>
 
         {/* Grouped Enquiry Tables */}
         {loading ? (

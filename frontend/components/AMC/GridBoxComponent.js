@@ -75,7 +75,6 @@ const GridBoxComponent = () => {
     { id: 13, title: 'Add Person Capacity', api: '/api/personCapacity', type: 'personCapacity', color: 'lime' },
     { id: 14, title: 'Add Weight', api: '/api/weights', type: 'weight', color: 'brown' },
     { id: 15, title: 'Add Lift Quantity', api: '/api/leadmanagement/lift-quantities', type: 'liftQuantity', color: 'navy' },
-    { id: 16, title: 'Add Enquiry Type', api: '/api/enquiry-types', type: 'enquiryType', color: 'pink' } 
   ];
 
   const [formData, setFormData] = useState({});
