@@ -729,7 +729,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
           </div>
 
           {/* Site Name Input */}
-          <div className="flex items-center gap-2">
+          {/* <div className="flex items-center gap-2">
             <label
               htmlFor="siteName"
               className="text-gray-600 text-xs font-medium whitespace-nowrap"
@@ -737,6 +737,7 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
               Site Name
             </label>
             <input
+              readOnly
               type="text"
               id="siteName"
               name="siteName"
@@ -745,7 +746,20 @@ export default function AddAmcEnquiryForm({ enquiryTypeId, enquiryTypeName }) {
               className="border text-sm rounded px-2 py-1"
               placeholder="Enter site name"
             />
-          </div>
+          </div> */}
+
+          <div className="flex items-center gap-2">
+  <label
+    htmlFor="siteName"
+    className="text-gray-600 text-xs font-medium whitespace-nowrap"
+  >
+    Site Name:
+  </label>
+  <span className="text-sm font-semibold text-gray-800">
+    {siteName}
+  </span>
+</div>
+
         </div>
 
 

@@ -17,7 +17,7 @@ function AddEnquiryTypePageContent() {
   const { id, tenant } = useParams();
 
   return (
-    <div>
+    <div className="p-10">
       <h1 className="text-2xl font-bold mb-4">Add {enquiryTypeName || enqType} Enquiry</h1>
 
       <AddAmcEnquiryForm

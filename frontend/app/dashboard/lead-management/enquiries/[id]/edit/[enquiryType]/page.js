@@ -15,7 +15,7 @@ function EditEnquiryTypePageContent() {
   const action = searchParams.get('action');
 
   return (
-    <div>
+    <div className="p-10">
       <h1 className="text-2xl font-bold mb-4">
         {action} {enquiryTypeName || enquiryType} Enquiry
       </h1>
