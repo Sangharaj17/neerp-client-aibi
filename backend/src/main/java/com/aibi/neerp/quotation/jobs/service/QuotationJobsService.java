@@ -7,19 +7,25 @@ import com.aibi.neerp.componentpricing.payload.ApiResponse;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
 import com.aibi.neerp.employeemanagement.entity.Employee;
+import com.aibi.neerp.exception.ResourceNotFoundException;
 import com.aibi.neerp.leadmanagement.entity.CombinedEnquiry;
 import com.aibi.neerp.leadmanagement.entity.EnquiryType;
 import com.aibi.neerp.leadmanagement.entity.NewLeads;
+import com.aibi.neerp.quotation.entity.QuotationLiftDetail;
 import com.aibi.neerp.quotation.entity.QuotationMain;
+import com.aibi.neerp.quotation.jobs.dto.JobForPaymentResponseDTO;
 import com.aibi.neerp.quotation.jobs.dto.NiJobDetailPageResponseDto;
 import com.aibi.neerp.quotation.jobs.dto.QuotationJobRequestDTO;
 import com.aibi.neerp.quotation.jobs.dto.QuotationJobResponseDTO;
 import com.aibi.neerp.quotation.jobs.entity.QuotationJobs;
+import com.aibi.neerp.quotation.jobs.repository.JobPaymentRepository;
 import com.aibi.neerp.quotation.jobs.repository.QuotationJobsRepository;
 import com.aibi.neerp.quotation.jobsActivities.dto.JobActivityPhotoDTO;
 import com.aibi.neerp.quotation.jobsActivities.dto.JobActivityResponseDTO;
 import com.aibi.neerp.quotation.jobsActivities.entity.NiJobActivity;
 import com.aibi.neerp.quotation.jobsActivities.entity.NiJobActivityPhoto;
+import com.aibi.neerp.settings.dto.CompanySettingDTO;
+import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.service.CompanySettingService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
@@ -31,9 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.aibi.neerp.quotation.jobs.entity.NiJobDocument;
@@ -41,7 +45,6 @@ import com.aibi.neerp.quotation.jobsActivities.service.FileStorageService;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 
@@ -58,6 +61,7 @@ public class QuotationJobsService {
     private final CompanySettingService companySettingService;
     private final com.aibi.neerp.quotation.jobs.repository.NiJobDocumentRepository niJobDocumentRepository;
     private final com.aibi.neerp.quotation.jobsActivities.service.FileStorageService fileStorageService;
+    private final JobPaymentRepository jobPaymentRepo;
 
 
     @Value("${app.backend.url:http://localhost:8080}")
@@ -127,6 +131,28 @@ public class QuotationJobsService {
                     .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
 
             return new ApiResponse<>(true, "Job Fetched Successfully", mapToResponse(job, true));
+
+        } catch (EntityNotFoundException e) {
+            log.warn("Job not found: {}", e.getMessage());
+            return new ApiResponse<>(false, e.getMessage(), null);
+        } catch (Exception e) {
+            log.error("Error fetching job: {}", e.getMessage(), e);
+            return new ApiResponse<>(false, "Error fetching job: " + e.getMessage(), null);
+        }
+    }
+
+
+    public ApiResponse<QuotationJobResponseDTO> getByIdToAddInvoice(Integer id) {
+        log.info("Fetching job by ID to add invoice: {}", id);
+        try {
+            if (id == null) {
+                return new ApiResponse<>(false, "Job ID is required", null);
+            }
+
+            QuotationJobs job = repo.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Job not found with ID: " + id));
+
+            return new ApiResponse<>(true, "Job Fetched Successfully", mapToResponseForInvoice(job));
 
         } catch (EntityNotFoundException e) {
             log.warn("Job not found: {}", e.getMessage());
@@ -271,14 +297,14 @@ public class QuotationJobsService {
     @Transactional
     public void deleteJobDocument(Long documentId) {
         log.info("Deleting job document with ID: {}", documentId);
-        
+
         NiJobDocument document = niJobDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Document not found with ID: " + documentId));
-        
+
         // Soft delete by setting status to DELETED
         document.setStatus("DELETED");
         niJobDocumentRepository.save(document);
-        
+
         // Optionally delete the physical file
         try {
             if (document.getFilePath() != null) {
@@ -301,6 +327,7 @@ public class QuotationJobsService {
             job.setCustomer(em.getReference(Customer.class, dto.getCustomerId()));
         if (dto.getSiteId() != null)
             job.setSite(em.getReference(Site.class, dto.getSiteId()));
+
 
         if (dto.getNiQuotationId() != null)
             job.setNiQuotation(em.getReference(QuotationMain.class, dto.getNiQuotationId()));
@@ -345,6 +372,7 @@ public class QuotationJobsService {
         res.setCustomerName(job.getCustomer() != null ? job.getCustomer().getCustomerName() : null);
         res.setSiteId(job.getSite() != null ? job.getSite().getSiteId() : null);
         res.setSiteName(job.getSite() != null ? job.getSite().getSiteName() : null);
+        res.setSiteAddress(job.getSite() != null ? job.getSite().getSiteAddress() : null);
 
         res.setNiQuotationId(
                 job.getNiQuotation() != null ? job.getNiQuotation().getId() : null
@@ -364,6 +392,10 @@ public class QuotationJobsService {
         res.setSalesExecutiveName(
                 job.getSalesExecutive() != null ? job.getSalesExecutive().getEmployeeName() : null
         );
+        BigDecimal paidAmount =
+                jobPaymentRepo.getTotalPaidByJob(job.getJobId());
+
+        res.setPaidAmount(paidAmount);
 
         res.setJobNo(job.getJobNo());
         res.setJobTypeId(job.getJobType() != null ? job.getJobType().getEnquiryTypeId() : null);
@@ -430,6 +462,64 @@ public class QuotationJobsService {
                 .status(activity.getStatus())
                 .createdAt(activity.getCreatedAt())
                 .build();
+    }
+
+    private QuotationJobResponseDTO mapToResponseForInvoice(QuotationJobs job) {
+
+        QuotationJobResponseDTO res = new QuotationJobResponseDTO();
+
+        res.setJobId(job.getJobId());
+        res.setLeadId(job.getLead() != null ? job.getLead().getLeadId() : null);
+        res.setCombinedEnquiryId(job.getCombinedEnquiry() != null ? job.getCombinedEnquiry().getId() : null);
+
+        res.setCustomerId(job.getCustomer() != null ? job.getCustomer().getCustomerId() : null);
+        res.setCustomerName(job.getCustomer() != null ? job.getCustomer().getCustomerName() : null);
+        res.setSiteId(job.getSite() != null ? job.getSite().getSiteId() : null);
+        res.setSiteName(job.getSite() != null ? job.getSite().getSiteName() : null);
+
+        QuotationMain quotationMain = job.getNiQuotation();
+
+        res.setNiQuotationId(
+                quotationMain != null ? quotationMain.getId() : null
+        );
+        res.setQuotationNo(
+                quotationMain != null ? quotationMain.getQuotationNo() : null
+        );
+
+        double pwdAmount = 0;
+        boolean pwdIncluded = false;
+        Integer noOfLifts = 0;
+
+        if (quotationMain != null && quotationMain.getLiftDetails() != null) {
+            List<QuotationLiftDetail> lifts = quotationMain.getLiftDetails();
+//            Checks if at least one lift has PWD included
+            pwdIncluded = lifts.stream()
+                    .anyMatch(l -> Boolean.TRUE.equals(l.getPwdIncludeExclude()));
+
+            pwdAmount = lifts.stream()
+                    .filter(l -> Boolean.TRUE.equals(l.getPwdIncludeExclude()))
+                    .map(l -> l.getPwdAmount() != null ? l.getPwdAmount() : 0.0)
+                    .mapToDouble(Double::doubleValue)
+                    .sum();
+
+            noOfLifts = lifts.size();
+        }
+        res.setNoOfLifts(noOfLifts);
+        res.setPwdIncluded(pwdIncluded);
+        res.setPwdAmount(pwdAmount);
+
+        res.setJobNo(job.getJobNo());
+        res.setJobTypeId(job.getJobType() != null ? job.getJobType().getEnquiryTypeId() : null);
+        res.setJobTypeName(job.getJobType() != null ? job.getJobType().getEnquiryTypeName() : null);
+        res.setJobAmount(job.getJobAmount());
+        res.setJobStatus(job.getJobStatus());
+        res.setJobLiftDetail(job.getJobLiftDetail());
+        BigDecimal paidAmount =
+                jobPaymentRepo.getTotalPaidByJob(job.getJobId());
+
+        res.setPaidAmount(paidAmount);
+
+        return res;
     }
 
 
@@ -626,4 +716,51 @@ public class QuotationJobsService {
         dto.setRole(employee.getRole() != null ? employee.getRole().getRole() : null);
         return dto;
     }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<List<JobForPaymentResponseDTO>> getAllJobsForPayment() {
+
+        CompanySettingDTO settings = companySettingService
+                .getCompanySettings("COMPANY_SETTINGS_1")
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Company settings not found")
+                );
+
+        List<JobForPaymentResponseDTO> jobs =
+                repo.findAll().stream().map(job -> {
+
+                    BigDecimal paidAmount = BigDecimal.ZERO; // future-proof
+
+                    return JobForPaymentResponseDTO.builder()
+                            .jobId(job.getJobId())
+                            .jobNo(job.getJobNo())
+                            .jobTypeName(
+                                    job.getJobType() != null
+                                            ? job.getJobType().getEnquiryTypeName()
+                                            : null
+                            )
+                            .customerName(
+                                    job.getCustomer() != null
+                                            ? job.getCustomer().getCustomerName()
+                                            : null
+                            )
+                            .siteName(
+                                    job.getSite() != null
+                                            ? job.getSite().getSiteName()
+                                            : null
+                            )
+                            .jobAmount(job.getJobAmount())
+                            .paidAmount(paidAmount)
+                            .companyName(settings.getCompanyName())   // ✅ OK
+                            .companyMail(settings.getCompanyMail())   // ✅ OK
+                            .build();
+                }).toList();
+
+        return new ApiResponse<>(
+                true,
+                "Jobs Fetched Successfully",
+                jobs
+        );
+    }
+
 }

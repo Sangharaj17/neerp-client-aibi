@@ -116,7 +116,7 @@ const AmcInvoices = () => {
     return <span className="text-gray-500">-</span>;
   };
 
-  
+
 
   const handleSort = (column) => {
     if (sortBy === column) {
@@ -149,44 +149,44 @@ const AmcInvoices = () => {
   const handlePrintPdf = (invoice) => {
 
     const invoiceId = invoice.invoiceId;
-     setSelectedInvoiceId(invoiceId);
+    setSelectedInvoiceId(invoiceId);
 
-       // Foreign Keys (IDs)
+    // Foreign Keys (IDs)
     const jobNo = invoice.jobNo;
     const renewlJobId = invoice.renewlJobId;
-    
+
     const materialRepairQuotationId = invoice.materialRepairQuotationId;
     const oncallQuotationId = invoice.oncallQuotationId;
     const modernizationId = invoice.modernizationId;
 
-     if(jobNo !== null || renewlJobId !== null)
+    if (jobNo !== null || renewlJobId !== null)
       setIsModalOpen(true);
-     else{
-        if(materialRepairQuotationId !== null){
-          setSelectedMaterialQuotationId(materialRepairQuotationId);
-          setIsMaterialInvoiceModalOpen(true);
-        }
-        else if(oncallQuotationId !== null){
-          setSelectedOncallQuotationId(oncallQuotationId);
-          setIsOncallInvoiceModalOpen(true);
-        }
-        else if(modernizationId !== null){
-          setSelectedModernizationQuotationId(modernizationId);
-          setIsModernizationInvoiceModalOpen(true);
-        }
-     }
+    else {
+      if (materialRepairQuotationId !== null) {
+        setSelectedMaterialQuotationId(materialRepairQuotationId);
+        setIsMaterialInvoiceModalOpen(true);
+      }
+      else if (oncallQuotationId !== null) {
+        setSelectedOncallQuotationId(oncallQuotationId);
+        setIsOncallInvoiceModalOpen(true);
+      }
+      else if (modernizationId !== null) {
+        setSelectedModernizationQuotationId(modernizationId);
+        setIsModernizationInvoiceModalOpen(true);
+      }
+    }
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     // Optionally reset the selected ID when closing the modal
-    setSelectedInvoiceId(null); 
+    setSelectedInvoiceId(null);
   };
 
 
-   const [isMaterialInvoiceModalOpen, setIsMaterialInvoiceModalOpen] = useState(false);
-   const [isOncallInvoiceModalOpen, setIsOncallInvoiceModalOpen] = useState(false);
-   const [isModernizationInvoiceModalOpen, setIsModernizationInvoiceModalOpen] = useState(false);
+  const [isMaterialInvoiceModalOpen, setIsMaterialInvoiceModalOpen] = useState(false);
+  const [isOncallInvoiceModalOpen, setIsOncallInvoiceModalOpen] = useState(false);
+  const [isModernizationInvoiceModalOpen, setIsModernizationInvoiceModalOpen] = useState(false);
   const [selectedMaterialQuotationId, setSelectedMaterialQuotationId] = useState(null);
   const [selectedOncallQuotationId, setSelectedOncallQuotationId] = useState(null);
   const [selectedModernizationQuotationId, setSelectedModernizationQuotationId] = useState(null);
@@ -212,7 +212,7 @@ const AmcInvoices = () => {
   return (
     <div className="p-6 sm:p-8 bg-gray-10 min-h-screen">
       <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
-         Invoice
+        Invoice
       </h1>
 
       {/* ✅ Summary Section */}
@@ -315,20 +315,18 @@ const AmcInvoices = () => {
                     <th
                       key={col.key}
                       onClick={() => col.sortable && handleSort(col.key)}
-                      className={`px-6 py-2 text-${col.align} text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                        col.sortable
+                      className={`px-6 py-2 text-${col.align} text-xs font-medium text-gray-500 uppercase tracking-wider ${col.sortable
                           ? "cursor-pointer hover:bg-gray-100 transition duration-150"
                           : ""
-                      }`}
+                        }`}
                     >
                       <div
-                        className={`flex items-center ${
-                          col.align === "center"
+                        className={`flex items-center ${col.align === "center"
                             ? "justify-center"
                             : col.align === "right"
-                            ? "justify-end"
-                            : ""
-                        }`}
+                              ? "justify-end"
+                              : ""
+                          }`}
                       >
                         {col.label}
                         {col.sortable && getSortIcon(col.key, sortBy, direction)}
@@ -366,13 +364,13 @@ const AmcInvoices = () => {
                       </td>
                       <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 font-mono text-right">
                         <span className="font-bold">
-                          {invoice.invoiceFor }
+                          {invoice.invoiceFor}
                         </span>
                       </td>
                       <td className="px-6 py-2 whitespace-nowrap text-center">
                         {getPaymentStatus(invoice.isCleared)}
                       </td>
-                     <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
+                      <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium">
                         <button
                           onClick={() => handlePrintPdf(invoice)} // Calls the handler with the invoice ID
                           className="text-blue-600 hover:text-blue-900 transition duration-150 p-1 rounded-full hover:bg-blue-100"
@@ -443,11 +441,10 @@ const AmcInvoices = () => {
                     )}
                     <button
                       onClick={() => handlePageChange(idx)}
-                      className={`px-4 py-2 rounded-lg font-medium transition ${
-                        idx === pagination.page
+                      className={`px-4 py-2 rounded-lg font-medium transition ${idx === pagination.page
                           ? "bg-blue-600 text-white shadow-md hover:bg-blue-700"
                           : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       {idx + 1}
                     </button>
@@ -466,62 +463,62 @@ const AmcInvoices = () => {
         )}
       </div>
 
-      <ActionModal 
-        isOpen={isModalOpen} 
+      <ActionModal
+        isOpen={isModalOpen}
         onCancel={closeModal} // Closes the modal when clicking outside
       >
         {/* Pass the AMCInvoicePrint component as children */}
         {selectedInvoiceId !== null && (
           <AMCInvoicePrint invoiceId={selectedInvoiceId} />
         )}
-        
+
         {/* Add a close button inside the modal content for better UX (optional) */}
         <div className="flex justify-end pt-4 print:hidden">
-            <button
-                onClick={closeModal}
-                className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-                Close Preview
-            </button>
+          <button
+            onClick={closeModal}
+            className="py-2 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Close Preview
+          </button>
         </div>
       </ActionModal>
 
-       <ActionModal 
-              isOpen={isMaterialInvoiceModalOpen} 
-              onCancel={closeMaterialInvoiceModal} // Closes the modal when clicking outside
-            >
-              {/* Pass the AMCInvoicePrint component as children */}
-              {selectedMaterialQuotationId !== null && (
-                <MaterialQuotationPrint quotationId={selectedMaterialQuotationId}  
-                onCancel={closeMaterialInvoiceModal}/>
-              )}
-            
-       </ActionModal>
+      <ActionModal
+        isOpen={isMaterialInvoiceModalOpen}
+        onCancel={closeMaterialInvoiceModal} // Closes the modal when clicking outside
+      >
+        {/* Pass the AMCInvoicePrint component as children */}
+        {selectedMaterialQuotationId !== null && (
+          <MaterialQuotationPrint quotationId={selectedMaterialQuotationId}
+            onCancel={closeMaterialInvoiceModal} />
+        )}
 
-        <ActionModal
-              isOpen={isOncallInvoiceModalOpen}
-              onCancel={closeOncallInvoiceModal} // Closes the modal when clicking outside
-            >
-              {/* Pass the AMCInvoicePrint component as children */}
-              {selectedOncallQuotationId !== null && (
-                
-                <OncallInvoicePrint invoiceId={selectedOncallQuotationId}
-                  onCancel={closeOncallInvoiceModal} />
-              )}
-        </ActionModal>
+      </ActionModal>
 
-        <ActionModal
-              isOpen={isModernizationInvoiceModalOpen}
-              onCancel={closeModernizationInvoiceModal} // Closes the modal when clicking outside
-            >
-              {/* Pass the AMCInvoicePrint component as children */}
-              {selectedModernizationQuotationId !== null && (
-                <ModernizationInvoicePrint invoiceId={selectedModernizationQuotationId}
-                  onCancel={closeModernizationInvoiceModal} />
-              )}
-        </ActionModal>
-        
-      
+      <ActionModal
+        isOpen={isOncallInvoiceModalOpen}
+        onCancel={closeOncallInvoiceModal} // Closes the modal when clicking outside
+      >
+        {/* Pass the AMCInvoicePrint component as children */}
+        {selectedOncallQuotationId !== null && (
+
+          <OncallInvoicePrint invoiceId={selectedOncallQuotationId}
+            onCancel={closeOncallInvoiceModal} />
+        )}
+      </ActionModal>
+
+      <ActionModal
+        isOpen={isModernizationInvoiceModalOpen}
+        onCancel={closeModernizationInvoiceModal} // Closes the modal when clicking outside
+      >
+        {/* Pass the AMCInvoicePrint component as children */}
+        {selectedModernizationQuotationId !== null && (
+          <ModernizationInvoicePrint invoiceId={selectedModernizationQuotationId}
+            onCancel={closeModernizationInvoiceModal} />
+        )}
+      </ActionModal>
+
+
 
     </div>
   );

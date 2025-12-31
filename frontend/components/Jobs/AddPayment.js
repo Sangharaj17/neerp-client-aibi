@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axiosInstance from "@/utils/axiosInstance";
 import { Search, ChevronDown, CheckCircle, XCircle, IndianRupee, Calendar, CreditCard, Loader2, Info, FileText } from 'lucide-react'; // Added FileText icon
 import { useSearchParams, useRouter } from "next/navigation";
+import { getTenant } from "@/utils/tenant";
 
 import toast from "react-hot-toast";
 // Helper function to get the current date in YYYY-MM-DD format
@@ -36,6 +37,33 @@ export default function AddPayment() {
   const [branchName, setBranchName] = useState("");
   // ---------------------------------------------
 
+
+  const [tenant, setTenant] = useState(getTenant());
+  const [userId, setUserId] = useState(0);
+  const [clientId, setClientId] = useState(0);
+
+  useEffect(() => {
+    // const tenant = getTenant();
+    const storedId = localStorage.getItem(
+      tenant ? `${tenant}_userId` : "userId"
+    );
+
+    const storedClient = localStorage.getItem(
+      tenant ? `${tenant}_clientId` : "clientId"
+    );
+    if (storedClient) {
+      setClientId(storedClient);
+    }
+
+    if (!storedId) {
+      onClose();
+      toast.error("Session expired. Please login again.");
+    }
+    if (storedId && storedId !== userId) {
+      setUserId(storedId);
+    }
+  }, [userId]);
+
   // --- Utility Functions (Keeping existing logic) ---
   // Helper to fetch jobs based on type
   const fetchJobsByType = async (selected) => {
@@ -59,12 +87,14 @@ export default function AddPayment() {
         })),
       ];
     } else if (selected === "new") {
-      const res = await axiosInstance.get("/api/payments/getAllActiveJobs");
-      return res.data.map((j) => ({
+      const res = await axiosInstance.get("/api/jobs/payment");
+      console.log("Jobs", res.data);
+      return res.data.data.map((j) => ({
         id: j.jobId,
-        selectDetailForJob: `${j.customerName} - ${j.siteName} (Job)`,
-        type: "job",
-        mailId: j.mailId,
+        selectDetailForJob: `${j.companyName} : ${j.jobId} / ${j.customerName} - ${j.siteName} (NI)`,
+        type: "new",
+        // mailId: j.mailId,
+        mailId: "",
       }));
     } else if (selected === "materialRepair") {
       const res = await axiosInstance.get("/api/payments/materialRepairQuotationsDropdownForAddPayments");
@@ -127,6 +157,8 @@ export default function AddPayment() {
   };
 
   const handleJobSelect = async (job) => {
+    console.log("Selected job:", job);
+    console.log("Selected job type:", job.type);
     // Reset states
     setSelectedJob(job);
     setJobSearch(job.selectDetailForJob);
@@ -158,6 +190,10 @@ export default function AddPayment() {
           // Corresponds to the backend API: /api/payments/invoices/by-modernizationQid/{modernizationId}
           apiUrl = `/api/payments/invoices/by-modernizationQid/${job.id}`;
           break;
+        case "new":
+          // Corresponds to the backend API: /api/payments/invoices/by-modernizationQid/{modernizationId}
+          apiUrl = `/api/ni-invoices/by-job/${job.id}?pendingOnly=true`;
+          break;
         default:
           console.error("Unknown job type:", job.type);
           setInvoices([]);
@@ -168,10 +204,14 @@ export default function AddPayment() {
       const res = await axiosInstance.get(apiUrl);
       let validInvoices = [];
 
-      if (res?.data && Array.isArray(res.data)) {
+      let responseData = res?.data;
+      if (job.type == "new") {
+        responseData = res?.data?.data;
+      }
+      if (responseData && Array.isArray(responseData)) {
         // Your backend is designed to return UNCLEARED invoices already,
         // but we'll keep the frontend filter for robustness (inv.isCleared !== 1)
-        validInvoices = res.data.filter(inv => inv.isCleared !== 1);
+        validInvoices = responseData.filter(inv => inv.isCleared !== 1);
         setInvoices(validInvoices);
 
         // Auto-select if only one uncleared invoice
@@ -275,6 +315,12 @@ export default function AddPayment() {
     setBranchName("");
   };
 
+  useEffect(() => {
+    if (selectedInvoice) {
+      setIsCleared(Boolean(selectedInvoice.isCleared));
+    }
+  }, [selectedInvoice]);
+
 
   /**
    * IMPORTANT: UPDATED FUNCTION FOR API CALL
@@ -305,7 +351,7 @@ export default function AddPayment() {
     } else if (selectedJob.type === "job" && jobType === "amc") {
       // This handles AMC jobs selected under the "AMC / Renewal" category
       payForValue = "AMC Job Payment";
-    } else if (selectedJob.type === "job" && jobType === "new") {
+    } else if (selectedJob.type === "job" || jobType === "new") {
       // This handles New Installation jobs selected under the "New Installation" category
       payForValue = "New Installation Payment";
     } else if (selectedJob.type === "materialRepair") {
@@ -322,7 +368,6 @@ export default function AddPayment() {
       payForValue = "Unspecified Payment";
     }
 
-
     const paymentPayload = {
       // Data Transfer Object (DTO) fields
       paymentDate: paymentDate,
@@ -332,11 +377,14 @@ export default function AddPayment() {
       chequeNo: paymentType === "Cheque" ? instrumentNo : null, // Use chequeNo for "Cheque"
       bankName: requiresInstrumentDetails ? bankName : null,
       branchName: requiresInstrumentDetails ? branchName : null,
-      amountPaid: selectedInvoice.totalAmt, // Send the full invoice amount
+      amountPaid: (jobType === "new"
+        ? selectedInvoice.totalAmount
+        : selectedInvoice.totalAmt
+      ), // Send the full invoice amount
       paymentCleared: isCleared ? "Yes" : "No", // Convert boolean to "Yes" / "No"
 
       // Foreign key references (IDs only)
-      jobId: selectedJob.type === "job" ? selectedJob.id : null,
+      jobId: selectedJob.type === "job" || selectedJob.type === "new" ? selectedJob.id : null,
       renewalJobId: selectedJob.type === "renewal" ? selectedJob.id : null,
       invoiceId: selectedInvoice.invoiceId,
     };
@@ -362,15 +410,29 @@ export default function AddPayment() {
       paymentPayload.branchName = null;
     }
 
+    if (userId && jobType === "new") {
+      paymentPayload.createdBy = Number(userId);
+    }
+
     console.log("Submitting Payment Payload:", paymentPayload);
 
     setIsSubmitting(true);
 
     try {
-      const response = await axiosInstance.post(
-        "/api/payments/createPayment",
-        paymentPayload
-      );
+      // const response = await axiosInstance.post(
+      //   "/api/payments/createPayment",
+      //   paymentPayload
+      // );
+
+      const endpoint =
+        selectedJob.type === "new"
+          ? "/api/job-payments"
+          : "/api/payments/createPayment";
+
+      const response = await axiosInstance.post(endpoint, paymentPayload);
+
+      //const response = null;
+
 
       console.log("API Response:", response.data);
       setSubmitStatus('success');
@@ -581,7 +643,10 @@ export default function AddPayment() {
                         **Date:** {inv.invoiceDate || "N/A"}
                       </p>
                       <p className="text-md text-gray-800 font-bold mt-1">
-                        **Amount:** ₹{inv.totalAmt ? inv.totalAmt.toLocaleString('en-IN') : 0}
+                        **Amount:** ₹ {(jobType === "new"
+                          ? inv.totalAmount
+                          : inv.totalAmt
+                        )?.toLocaleString("en-IN") || 0}
                       </p>
                       <div
                         className={`text-xs font-medium mt-2 p-1 rounded inline-flex items-center ${inv.isCleared === 1 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
@@ -655,7 +720,10 @@ export default function AddPayment() {
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 font-bold">₹</span>
                   <input
                     type="text"
-                    value={selectedInvoice.totalAmt ? selectedInvoice.totalAmt.toLocaleString('en-IN') : '0'}
+                    value={(jobType === "new"
+                      ? selectedInvoice.totalAmount
+                      : selectedInvoice.totalAmt
+                    )?.toLocaleString("en-IN") || 0}
                     readOnly
                     className="w-full border border-gray-300 rounded-lg p-3 pl-7 bg-gray-100 font-semibold text-lg text-green-700"
                   />

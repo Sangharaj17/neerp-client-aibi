@@ -1,6 +1,7 @@
 package com.aibi.neerp.quotation.jobs.controller;
 
 import com.aibi.neerp.componentpricing.payload.ApiResponse;
+import com.aibi.neerp.quotation.jobs.dto.JobForPaymentResponseDTO;
 import com.aibi.neerp.quotation.jobs.dto.NiJobDetailPageResponseDto;
 import com.aibi.neerp.quotation.jobs.dto.QuotationJobRequestDTO;
 import com.aibi.neerp.quotation.jobs.dto.QuotationJobResponseDTO;
@@ -51,6 +52,17 @@ public class QuotationJobsController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}/invoice")
+    public ResponseEntity<ApiResponse<QuotationJobResponseDTO>> getForInvoice(@PathVariable Integer id) {
+        log.info("Request to get job to add invoice {}", id);
+        ApiResponse<QuotationJobResponseDTO> response = service.getByIdToAddInvoice(id);
+
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<QuotationJobResponseDTO>> getWithActivities(
             @PathVariable Integer id) {
@@ -75,10 +87,18 @@ public class QuotationJobsController {
         );
     }
 
+
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<QuotationJobResponseDTO>>> getAll() {
         log.info("Request to get all jobs");
         return ResponseEntity.ok(service.getAll());
+    }
+
+    @GetMapping("/payment")
+    public ResponseEntity<ApiResponse<List<JobForPaymentResponseDTO>>> getJobsForPayment() {
+        log.info("Fetching jobs for payment");
+        return ResponseEntity.ok(service.getAllJobsForPayment());
     }
 
     @DeleteMapping("/{id}")

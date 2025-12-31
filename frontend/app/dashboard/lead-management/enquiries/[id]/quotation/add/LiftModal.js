@@ -2741,6 +2741,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
       // If formData.floors can be multiple, you may loop or pick the first floor
       const floorId = Array.isArray(floors) ? floors[0] : floors;
 
+      console.log("fetching lop types for floorId", floorId);
       const lopSubTypes = await fetchLOP(liftType, floorId, setErrors);
 
       setInitialOptions(prev => ({
@@ -5625,12 +5626,9 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   ))}
                 </Select>
                 <button
-                  onClick={() => handleRefresh(
-                    "Lop Type",
-                    loadLOPOptions,
-                    setFormData,
-                    ["lopType", "lopTypePrice"]
-                  )}
+                  onClick={() =>
+                    loadLOPOptions(formData.liftType, formData.floors)
+                  }
                   className="absolute right-1 top-[65px] text-blue-600 hover:text-blue-800"
                 >
                   <RefreshCcw className="w-4 h-4" />
@@ -5680,12 +5678,9 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
                   ))}
                 </Select>
                 <button
-                  onClick={() => handleRefresh(
-                    "Cop Type",
-                    loadCOPOptions,
-                    setFormData,
-                    ["copType", "copTypePrice"]
-                  )}
+                  onClick={() =>
+                    loadCOPOptions(formData.liftType, formData.floors)
+                  }
                   className="absolute right-1 top-[65px] text-blue-600 hover:text-blue-800"
                 >
                   <RefreshCcw className="w-4 h-4" />

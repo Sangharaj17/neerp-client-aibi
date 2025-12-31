@@ -353,7 +353,7 @@ export default function QuotationList() {
         {/* Header & Search Bar */}
         <div className="p-6 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
           <h2 className="text-2xl font-bold text-blue-700 tracking-wide">
-            Quotation List ({quotations.length} total)
+            Quotation List ({totalElements} total)
           </h2>
           {/* <input
             type="text"

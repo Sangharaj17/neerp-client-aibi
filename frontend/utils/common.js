@@ -77,3 +77,32 @@ export const hasAlphabet = (value = "") => /[a-zA-Z]/.test(value);
 export const isOnlyDigitsOrSpecialChars = (value = "") =>
     !hasAlphabet(value);
 
+
+export const formatJobNo = (job, companyName) => {
+    console.log("job", job);
+    console.log("companyName", companyName);
+    if (!job || !job.startDate || !companyName) return job.jobNo;
+
+    try {
+        const startYear = new Date(job.startDate).getFullYear();
+        const nextYear = startYear - 1999; // as per convention or just (startYear + 1).toString().slice(-2)?
+        // User requested: (startDate year-startDateNextYear)
+        // Usually financial year is 2024-25. 
+        // Let's assume standard YYYY-YY format or YYYY-YYYY?
+        // User example: jobNo as fetcedCompanyName:job.jobId(startDate year-startDateNextYear)
+        // Example: SMASH:123(2024-2025) or (2024-25)?
+        // I will use full year for now as it is safer: (2024-2025)
+
+        const nextYearFull = startYear + 1;
+
+        // job.jobId is integer.
+        // jobNo as fetchedCompanyName:job.jobId(startDate year-startDateNextYear)
+
+        return `${companyName}:${job.jobId}(${startYear}-${nextYearFull})`;
+
+    } catch (e) {
+        console.error("Error formatting job no", e);
+        return job.jobNo;
+    }
+};
+

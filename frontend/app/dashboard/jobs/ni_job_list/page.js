@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { getTenant } from "@/utils/tenant";
 import * as XLSX from "xlsx";
+import { formatJobNo } from "@/utils/common";
 
 // API Endpoint for New Installation Jobs
 const JOBS_API = '/api/jobs';
@@ -40,6 +41,30 @@ export default function NiJobList() {
 
   const initialRef = 'COMPANY_SETTINGS_1';
 
+
+  const matchesSearch = (job, searchText) => {
+    if (!searchText) return true;
+
+    const lowerSearch = searchText.toLowerCase();
+
+    // 🔹 Include formatted Job No
+    const formattedJobNo = formatJobNo(job, companyName)?.toLowerCase() || "";
+
+    // 🔹 Search formatted job no first
+    if (formattedJobNo.includes(lowerSearch)) {
+      return true;
+    }
+
+    // 🔹 Search remaining raw fields
+    return Object.values(job).some(value =>
+      value !== null &&
+      value !== undefined &&
+      String(value).toLowerCase().includes(lowerSearch)
+    );
+  };
+
+
+
   /**
    * Fetch Jobs
    */
@@ -65,24 +90,28 @@ export default function NiJobList() {
       let allJobs = res.data.data || [];
 
       // Client-side filtering
+      // if (search) {
+      //   const lowerSearch = search.toLowerCase();
+      //   allJobs = allJobs.filter(job =>
+      //     (job.jobNo && job.jobNo.toLowerCase().includes(lowerSearch)) ||
+      //     (job.customerName && job.customerName.toLowerCase().includes(lowerSearch)) || // Assuming these fields exist in DTO or need to be fetched? 
+      //     // Wait, QuotationJobResponseDTO has IDs (customerId, siteId), not names.
+      //     // This suggests I might need to fetch detailed info or the DTO needs names.
+      //     // Looking at the DTO again:
+      //     // private Integer customerId; private Integer siteId;
+      //     // It DOES NOT have names. This is a potential issue for display.
+      //     // I will use IDs for now or IDs placeholders.
+      //     // Correction: The reference AmcJobList uses customerName.
+      //     // The NI Job DTO I modified earlier has IDs.
+      //     // I should double check if the transformer populates names?
+      //     // The mapToResponse in QuotationJobsService sets IDs.
+      //     // I will proceed with IDs/Values available and note this limitation.
+      //     (job.jobTypeName && job.jobTypeName.toLowerCase().includes(lowerSearch))
+      //   );
+      // }
+
       if (search) {
-        const lowerSearch = search.toLowerCase();
-        allJobs = allJobs.filter(job =>
-          (job.jobNo && job.jobNo.toLowerCase().includes(lowerSearch)) ||
-          (job.customerName && job.customerName.toLowerCase().includes(lowerSearch)) || // Assuming these fields exist in DTO or need to be fetched? 
-          // Wait, QuotationJobResponseDTO has IDs (customerId, siteId), not names.
-          // This suggests I might need to fetch detailed info or the DTO needs names.
-          // Looking at the DTO again:
-          // private Integer customerId; private Integer siteId;
-          // It DOES NOT have names. This is a potential issue for display.
-          // I will use IDs for now or IDs placeholders.
-          // Correction: The reference AmcJobList uses customerName.
-          // The NI Job DTO I modified earlier has IDs.
-          // I should double check if the transformer populates names?
-          // The mapToResponse in QuotationJobsService sets IDs.
-          // I will proceed with IDs/Values available and note this limitation.
-          (job.jobTypeName && job.jobTypeName.toLowerCase().includes(lowerSearch))
-        );
+        allJobs = allJobs.filter(job => matchesSearch(job, search));
       }
 
       // Client-side Sorting
@@ -130,31 +159,31 @@ export default function NiJobList() {
     fetchCompanyName();
   }, []);
 
-  const formatJobNo = (job) => {
-    if (!job || !job.startDate || !companyName) return job.jobNo;
+  // const formatJobNo = (job) => {
+  //   if (!job || !job.startDate || !companyName) return job.jobNo;
 
-    try {
-      const startYear = new Date(job.startDate).getFullYear();
-      const nextYear = startYear - 1999; // as per convention or just (startYear + 1).toString().slice(-2)?
-      // User requested: (startDate year-startDateNextYear)
-      // Usually financial year is 2024-25. 
-      // Let's assume standard YYYY-YY format or YYYY-YYYY?
-      // User example: jobNo as fetcedCompanyName:job.jobId(startDate year-startDateNextYear)
-      // Example: SMASH:123(2024-2025) or (2024-25)?
-      // I will use full year for now as it is safer: (2024-2025)
+  //   try {
+  //     const startYear = new Date(job.startDate).getFullYear();
+  //     const nextYear = startYear - 1999; // as per convention or just (startYear + 1).toString().slice(-2)?
+  //     // User requested: (startDate year-startDateNextYear)
+  //     // Usually financial year is 2024-25. 
+  //     // Let's assume standard YYYY-YY format or YYYY-YYYY?
+  //     // User example: jobNo as fetcedCompanyName:job.jobId(startDate year-startDateNextYear)
+  //     // Example: SMASH:123(2024-2025) or (2024-25)?
+  //     // I will use full year for now as it is safer: (2024-2025)
 
-      const nextYearFull = startYear + 1;
+  //     const nextYearFull = startYear + 1;
 
-      // job.jobId is integer.
-      // jobNo as fetchedCompanyName:job.jobId(startDate year-startDateNextYear)
+  //     // job.jobId is integer.
+  //     // jobNo as fetchedCompanyName:job.jobId(startDate year-startDateNextYear)
 
-      return `${companyName}:${job.jobId}(${startYear}-${nextYearFull})`;
+  //     return `${companyName}:${job.jobId}(${startYear}-${nextYearFull})`;
 
-    } catch (e) {
-      console.error("Error formatting job no", e);
-      return job.jobNo;
-    }
-  };
+  //   } catch (e) {
+  //     console.error("Error formatting job no", e);
+  //     return job.jobNo;
+  //   }
+  // };
 
 
   const handleSort = (field) => {
@@ -176,7 +205,7 @@ export default function NiJobList() {
     const exportData = jobs.map((job, index) => ({
       "Sr No": index + 1,
       // "Job ID": job.jobId,
-      "Job No": formatJobNo(job),
+      "Job No": formatJobNo(job, companyName),
       "Job Type": job.jobTypeName || "-",
       "Job Amount": job.jobAmount ?? "-",
       "Status": job.jobStatus || "-",
@@ -226,10 +255,12 @@ export default function NiJobList() {
     { key: 'jobId', label: 'Job ID' }, // Using ID as proxy for Sr No if needed or index
     { key: 'jobNo', label: 'Job No' },
     { key: 'jobTypeName', label: 'Job Type' },
-    { key: 'jobAmount', label: 'Amount' },
+    { key: 'siteName', label: 'Site' },
+    { key: 'placeName', label: 'Place' },
+    // { key: 'jobAmount', label: 'Amount' },
     { key: 'jobStatus', label: 'Status' },
     { key: 'paymentTerm', label: 'Payment Term' }, // ID? name?
-    { key: 'startDate', label: 'Start Date' },
+    // { key: 'startDate', label: 'Start Date' },
     // { key: 'customerName', label: 'Customer' }, // Missing in DTO
     // { key: 'siteName', label: 'Site' },         // Missing in DTO
     { key: 'actions', label: 'Actions' },
@@ -245,7 +276,8 @@ export default function NiJobList() {
   };
 
   return (
-    <div className="p-4 bg-gray-10 min-h-screen">
+    // <div className="p-4 bg-gray-10 min-h-screen">
+    <div className="p-6 sm:p-8 bg-gray-10 min-h-screen">
 
 
 
@@ -259,11 +291,15 @@ export default function NiJobList() {
         </div>
       )} */}
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+      <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
+        New Installation Job List
+      </h1>
+
+      {/* <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-indigo-700 tracking-wide">
           New Installation Job List
         </h1>
-      </div>
+      </div> */}
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
         <input
@@ -349,18 +385,20 @@ export default function NiJobList() {
                 <tr key={job.jobId} className="hover:bg-gray-50 transition-colors text-center">
                   <td className="px-3 py-2">{job.jobId}</td>
                   <td className="px-3 py-2 font-medium">
-                    {formatJobNo(job)}
+                    {formatJobNo(job, companyName)}
                     {/* Fallback to original if company name missing, visually distinct maybe? No, logic handles it return original */}
                   </td>
                   <td className="px-3 py-2">{job.jobTypeName}</td>
-                  <td className="px-3 py-2">₹{job.jobAmount}</td>
+                  <td className="px-3 py-2">{job.siteName}</td>
+                  <td className="px-3 py-2">{job.siteAddress}</td>
+                  {/* <td className="px-3 py-2">₹{job.jobAmount}</td> */}
                   <td className="px-3 py-2">
                     <span className={`px-2 py-1 rounded-full text-white text-xs font-semibold ${getStatusColor(job.jobStatus)}`}>
                       {job.jobStatus}
                     </span>
                   </td>
                   <td className="px-3 py-2">{job.paymentTerm}</td>
-                  <td className="px-3 py-2 text-red-500 font-semibold">{job.startDate}</td>
+                  {/* <td className="px-3 py-2 text-red-500 font-semibold">{job.startDate}</td> */}
 
                   <td className="px-3 py-2 text-center">
                     <div className="flex items-center justify-center gap-3">
@@ -381,7 +419,8 @@ export default function NiJobList() {
                       <button title="Invoice" className="flex flex-col items-center"
                         onClick={() => {
                           setLoadingBtn(`invoice-${job.jobId}`);
-                          router.push(`/dashboard/jobs/ni_job_list/invoice/${job.jobId}`);
+                          // router.push(`/dashboard/jobs/ni_job_list/invoice/${job.jobId}`);
+                          router.push(`/dashboard/ni-invoice/${job.jobId}`);
                         }}>
                         {loadingBtn === `invoice-${job.jobId}` ? (
                           <Loader2 className="w-4 h-4 text-green-500 animate-spin" />

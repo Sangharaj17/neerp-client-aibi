@@ -55,6 +55,10 @@ public class QuotationJobResponseDTO {
     private String createdByName;
     private LocalDate createdAt;
 
+    private Boolean pwdIncluded;
+    private Double pwdAmount;
+    private Integer noOfLifts;
+
     private Long attachedDocumentCount;
 
     private Integer totalActivities;
