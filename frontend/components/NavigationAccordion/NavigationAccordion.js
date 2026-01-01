@@ -322,9 +322,12 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
         { title: 'Add Renewal Job Activity', href: `/dashboard/jobs/add-renewal-job-activity/0`, featureName: 'Add Renewal Job Activity' },
         { title: 'Invoices', href: `/dashboard/jobs/amc-invoices`, featureName: 'Invoices' },
         { title: 'Payment Invoices', href: `/dashboard/jobs/amc-payments`, featureName: 'Payment Invoices' },
+
         { title: 'NI Job List', href: `/dashboard/jobs/ni_job_list`, featureName: 'NI Job List' },
-        { title: 'NI Invoice List(NI Payment Invoice)', href: `/dashboard/jobs/ni-invoice/list`, featureName: 'NI Invoice List(NI Payment Invoice)' },
-        { title: 'NI Payment List(NI Job Payment List)', href: `/dashboard/jobs/ni-payment`, featureName: 'NI Payment List(NI Job Payment List)' },
+
+        { title: 'NI Invoice List', href: `/dashboard/jobs/ni-invoice/list`, featureName: 'NI Invoice List' },
+
+        { title: 'NI Payment List', href: `/dashboard/jobs/ni-payment`, featureName: 'NI Payment List' },
       ]
     },
     {

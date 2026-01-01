@@ -289,17 +289,29 @@ public class NiInvoiceService {
         );
     }
 
+//    private String resolveSortColumn(String sortBy) {
+//        return switch (sortBy) {
+//            case "invoiceNo" -> "invoiceNo";
+//            case "siteName" -> "site.siteName";
+//            case "siteAddress" -> "site.siteAddress";
+//            case "invoiceDate" -> "invoiceDate";
+//            case "totalAmount" -> "totalAmount";
+//            case "payFor" -> "payFor";
+//            case "status" -> "isCleared";
+//            case "customerName" -> "lead.customerName";
+//            case "createdAt" -> "createdAt";
+//            default -> "createdAt";
+//        };
+//    }
+
     private String resolveSortColumn(String sortBy) {
         return switch (sortBy) {
             case "invoiceNo" -> "invoiceNo";
-            case "siteName" -> "site.siteName";
-            case "siteAddress" -> "site.siteAddress";
             case "invoiceDate" -> "invoiceDate";
             case "totalAmount" -> "totalAmount";
-            case "payFor" -> "payFor";
             case "status" -> "isCleared";
             case "customerName" -> "lead.customerName";
-            case "createdAt" -> "createdAt";
+            case "siteName" -> "job.site.siteName";
             default -> "createdAt";
         };
     }
@@ -312,26 +324,19 @@ public class NiInvoiceService {
             String direction
     ) {
 
-        if (sortBy == null || sortBy.isBlank()) {
-            sortBy = "createdAt";
-        }
+        // ✅ Whitelist sorting (VERY IMPORTANT)
+        String sortColumn = resolveSortColumn(sortBy);
 
-        String orderBy = resolveSortColumn(sortBy);
-        String dir = direction.equalsIgnoreCase("asc") ? "ASC" : "DESC";
+        Sort sort = Sort.by(
+                Sort.Direction.fromString(direction),
+                sortColumn
+        );
 
-        Sort sort = direction.equalsIgnoreCase("asc")
-                ? Sort.by(resolveSortColumn(sortBy)).ascending()
-                : Sort.by(resolveSortColumn(sortBy)).descending();
-
-
-        // Don't pass sort to PageRequest - the native query handles ORDER BY
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<NiInvoice> invoicePage =
                 invoiceRepo.searchInvoices(
                         (search == null || search.isBlank()) ? null : search,
-                        sortBy,
-                        direction,
                         pageable
                 );
 
@@ -352,6 +357,56 @@ public class NiInvoiceService {
                         .build()
         );
     }
+
+
+//    public ApiResponse<PageResponse<NiInvoiceResponseDTO>> getAll(
+//            int page,
+//            int size,
+//            String search,
+//            String sortBy,
+//            String direction
+//    ) {
+//
+//        if (sortBy == null || sortBy.isBlank()) {
+//            sortBy = "createdAt";
+//        }
+//
+//        String orderBy = resolveSortColumn(sortBy);
+//        String dir = direction.equalsIgnoreCase("asc") ? "ASC" : "DESC";
+//
+//        Sort sort = direction.equalsIgnoreCase("asc")
+//                ? Sort.by(resolveSortColumn(sortBy)).ascending()
+//                : Sort.by(resolveSortColumn(sortBy)).descending();
+//
+//
+//        // Don't pass sort to PageRequest - the native query handles ORDER BY
+//        Pageable pageable = PageRequest.of(page, size);
+//
+//        Page<NiInvoice> invoicePage =
+//                invoiceRepo.searchInvoices(
+//                        (search == null || search.isBlank()) ? null : search,
+//                        sortBy,
+//                        direction,
+//                        pageable
+//                );
+//
+//        List<NiInvoiceResponseDTO> content = invoicePage.getContent()
+//                .stream()
+//                .map(this::mapToDto)
+//                .toList();
+//
+//        return new ApiResponse<>(
+//                true,
+//                "Invoices fetched successfully",
+//                PageResponse.<NiInvoiceResponseDTO>builder()
+//                        .content(content)
+//                        .page(invoicePage.getNumber())
+//                        .size(invoicePage.getSize())
+//                        .totalElements(invoicePage.getTotalElements())
+//                        .totalPages(invoicePage.getTotalPages())
+//                        .build()
+//        );
+//    }
 
     @Transactional(readOnly = true)
     public ApiResponse<List<NiInvoiceResponseDTO>> getInvoicesByJob(

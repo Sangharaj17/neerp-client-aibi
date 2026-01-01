@@ -420,7 +420,7 @@ export default function NiJobList() {
                         onClick={() => {
                           setLoadingBtn(`invoice-${job.jobId}`);
                           // router.push(`/dashboard/jobs/ni_job_list/invoice/${job.jobId}`);
-                          router.push(`/dashboard/ni-invoice/${job.jobId}`);
+                          router.push(`/dashboard/jobs/ni-invoice/${job.jobId}`);
                         }}>
                         {loadingBtn === `invoice-${job.jobId}` ? (
                           <Loader2 className="w-4 h-4 text-green-500 animate-spin" />
