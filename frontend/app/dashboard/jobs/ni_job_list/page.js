@@ -192,6 +192,7 @@ export default function NiJobList() {
       "Sr No": index + 1,
       "Job No": formatJobNo(job, companyName),
       "Job Type": job.jobTypeName || "-",
+      "Customer": job.customerName || "-",
       "Job Amount": job.jobAmount ?? "-",
       "Status": job.jobStatus || "-",
       "Payment Term": job.paymentTerm || "-",
@@ -240,6 +241,7 @@ export default function NiJobList() {
     { key: 'jobId', label: 'Job ID' }, // Using ID as proxy for Sr No if needed or index
     { key: 'jobNo', label: 'Job No' },
     { key: 'jobTypeName', label: 'Job Type' },
+    { key: 'customerName', label: 'Customer' },
     { key: 'siteName', label: 'Site' },
     { key: 'siteAddress', label: 'Address' }, // Correct key from DTO? DTO has siteAddress
     // { key: 'jobAmount', label: 'Amount' },
@@ -354,8 +356,9 @@ export default function NiJobList() {
                   <td className="px-3 py-2 font-medium">
                     {formatJobNo(job, companyName)}
                   </td>
-                  <td className="px-3 py-2">{job.jobTypeName}</td>
-                  <td className="px-3 py-2">{job.siteName}</td>
+                  <td className="px-3 py-2 text-center">{job.jobTypeName}</td>
+                  <td className="px-3 py-2 text-center">{job.customerName}</td>
+                  <td className="px-3 py-2 text-center max-w-xs">{job.siteName}</td>
                   <td className="px-3 py-2 max-w-xs truncate">{job.siteAddress}</td>
                   {/* <td className="px-3 py-2">₹{job.jobAmount}</td> */}
                   <td className="px-3 py-2">
