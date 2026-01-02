@@ -1086,12 +1086,26 @@ public class QuotationService {
             // ************** add or update customer ***************************
             Customer customer = customerRepository.findByLead_LeadId(lead.getLeadId());
             if (customer == null) {
-                // ✅ 4A. Create New Customer
+
+                String contactNumber =
+                        Optional.ofNullable(lead.getCustomer1Contact())
+                                .orElseGet(() ->
+                                        Optional.ofNullable(lead.getContactNo())
+                                                .orElseThrow(() ->
+                                                        new RuntimeException(
+                                                                "Cannot finalize quotation. Lead contact number is missing (Lead ID: " + lead.getLeadId() + ")"
+                                                        )
+                                                )
+                                );
+
                 customer = Customer.builder()
-                        .customerName(lead.getCustomerName())
-                        .contactNumber(lead.getCustomer1Contact())
+                        .customerName(
+                                Optional.ofNullable(quotation.getCustomerName())
+                                        .orElse(lead.getCustomerName())
+                        )
+                        .contactNumber(contactNumber)   // ✅ NEVER NULL
                         .emailId(lead.getEmailId())
-                        .address(lead.getSiteName()) // or actual lead address field
+                        .address(lead.getSiteAddress())
                         .isVerified(false)
                         .active(true)
                         .lead(lead)
@@ -1099,13 +1113,15 @@ public class QuotationService {
 
                 customer = customerRepository.save(customer);
                 log.info("Created NEW customer for Lead ID {}", lead.getLeadId());
+
             } else {
                 if (quotation.getCustomerName() != null) {
                     customer.setCustomerName(quotation.getCustomerName());
                 }
 
-                if (lead.getContactNo() != null) {
-                    customer.setContactNumber(lead.getContactNo());
+//                if (lead.getContactNo() != null) {
+                if (lead.getCustomer1Contact() != null) {
+                    customer.setContactNumber(lead.getCustomer1Contact());
                 }
 
                 if (lead.getEmailId() != null) {
