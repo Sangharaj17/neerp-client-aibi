@@ -306,13 +306,29 @@ public class NiInvoiceService {
 
     private String resolveSortColumn(String sortBy) {
         return switch (sortBy) {
-            case "invoiceNo" -> "invoiceNo";
-            case "invoiceDate" -> "invoiceDate";
-            case "totalAmount" -> "totalAmount";
-            case "status" -> "isCleared";
-            case "customerName" -> "lead.customerName";
-            case "siteName" -> "job.site.siteName";
-            default -> "createdAt";
+//            case "invoiceNo" -> "invoiceNo";
+//            case "invoiceDate" -> "invoiceDate";
+//            case "totalAmount" -> "totalAmount";
+//            case "status" -> "isCleared";
+//            case "customerName" -> "lead.customerName";
+//            case "siteName" -> "job.site.siteName";
+//            default -> "createdAt";
+
+//            case "invoiceNo" -> "i.invoice_no";
+//            case "invoiceDate" -> "i.invoice_date";
+//            case "totalAmount" -> "i.total_amt";
+//            case "status" -> "i.is_cleared";
+//            case "customerName" -> "l.customer_name";
+//            case "siteName" -> "s.site_name";
+//            default -> "i.created_at";
+
+            case "invoiceNo" -> "invoice_no";
+            case "customerName" -> "customer_name";
+            case "siteName" -> "site_name";
+            case "invoiceDate" -> "invoice_date";
+            case "totalAmount" -> "total_amt";
+            case "status" -> "status";
+            default -> "created_at";
         };
     }
 
@@ -332,7 +348,9 @@ public class NiInvoiceService {
                 sortColumn
         );
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        //Pageable pageable = PageRequest.of(page, size, sort);
+
+        Pageable pageable = PageRequest.of(page, size);
 
         Page<NiInvoice> invoicePage =
                 invoiceRepo.searchInvoices(

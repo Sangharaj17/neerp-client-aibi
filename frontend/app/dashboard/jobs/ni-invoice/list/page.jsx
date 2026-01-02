@@ -67,6 +67,41 @@ const InvoiceListPage = () => {
     }
   };
 
+  /*
+   * ✅ CLIENT-SIDE SORTING LOGIC
+   * Sorts the currently fetched page data locally.
+   */
+  const sortedInvoices = [...invoices].sort((a, b) => {
+    let valA = a[sortBy];
+    let valB = b[sortBy];
+
+    // Handle null/undefined values safely
+    if (valA === null || valA === undefined) valA = "";
+    if (valB === null || valB === undefined) valB = "";
+
+    // Specific handling for dates (if string is ISO format or standard date string)
+    if (sortBy === "invoiceDate" || sortBy === "createdAt") {
+      valA = new Date(valA).getTime();
+      valB = new Date(valB).getTime();
+    }
+
+    // Numeric sorting for amounts
+    if (sortBy === "totalAmount") {
+      valA = Number(valA) || 0;
+      valB = Number(valB) || 0;
+    }
+
+    // String sorting (case-insensitive)
+    if (typeof valA === "string") {
+      valA = valA.toLowerCase();
+      valB = valB.toLowerCase();
+    }
+
+    if (valA < valB) return direction === "asc" ? -1 : 1;
+    if (valA > valB) return direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
   const fetchInvoices = async () => {
     try {
       setLoading(true);
@@ -75,8 +110,8 @@ const InvoiceListPage = () => {
           page: pagination.page,
           size: pagination.size,
           search: search || null,
-          sortBy,
-          direction,
+          // sortBy,  <-- REMOVED: We want to fetch data as-is (or default order)
+          // direction, <-- REMOVED: and sort locally on the client.
         },
       });
 
@@ -123,10 +158,10 @@ const InvoiceListPage = () => {
     }
   }, [search]);
 
-  // ✅ Refetch list when filters change
+  // ✅ Refetch list when filters change (NOTE: Removed sortBy/direction dependency)
   useEffect(() => {
     fetchInvoices();
-  }, [pagination.page, pagination.size, search, sortBy, direction]);
+  }, [pagination.page, pagination.size, search]); // Removed sortBy, direction
 
   const handleRowsChange = (e) => {
     const newSize = Number(e.target.value);
@@ -139,17 +174,14 @@ const InvoiceListPage = () => {
   };
 
   const handleSort = (column) => {
+    // Just updates state, which triggers re-render and re-sort of `sortedInvoices`
     if (sortBy === column) {
-      // toggle direction
       setDirection((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
-      // new column → default asc
       setSortBy(column);
       setDirection("asc");
     }
-
-    // reset to first page when sorting changes
-    setPagination((prev) => ({ ...prev, page: 0 }));
+    // No need to reset page on local sort
   };
 
   const handlePageChange = (newPage) => {
@@ -343,8 +375,8 @@ const InvoiceListPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {invoices.length > 0 ? (
-                    invoices.map((inv, idx) => (
+                  {sortedInvoices.length > 0 ? (
+                    sortedInvoices.map((inv, idx) => (
                       <tr
                         key={inv.invoiceId}
                         className="hover:bg-blue-50 transition duration-100 ease-in-out even:bg-gray-50"

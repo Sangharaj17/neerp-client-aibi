@@ -125,6 +125,7 @@ const InvoiceDetailPage = () => {
     try {
       console.log("payload", payload);
       await axiosInstance.post("/api/ni-invoices", payload);
+      console.log("/dashboard/jobs/ni-invoice/list");
       toast.success("Invoice added successfully");
       //router.back();
       router.push("/dashboard/jobs/ni-invoice/list");

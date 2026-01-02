@@ -90,8 +90,17 @@ public class QuotationJobsController {
 
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<QuotationJobResponseDTO>>> getAll() {
-        log.info("Request to get all jobs");
+    public ResponseEntity<ApiResponse<?>> getAll(
+            @org.springframework.data.web.PageableDefault(sort = "jobId", direction = org.springframework.data.domain.Sort.Direction.DESC) org.springframework.data.domain.Pageable pageable,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "false") boolean paged
+    ) {
+        log.info("Request to get jobs. Paged: {}, Search: {}", paged, search);
+        
+        if (paged) {
+            return ResponseEntity.ok(new ApiResponse<>(true, "Paginated jobs fetched", service.getPagewiseJobs(pageable, search)));
+        }
+        
         return ResponseEntity.ok(service.getAll());
     }
 

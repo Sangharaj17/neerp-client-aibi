@@ -22,28 +22,35 @@ public interface NiInvoiceRepository extends JpaRepository<NiInvoice, Integer> {
     @Query("SELECT COALESCE(SUM(i.totalAmount), 0) FROM NiInvoice i WHERE i.isCleared = true")
     BigDecimal sumPaidAmount();
 
+
     @Query(
             value = """
         SELECT i.*
         FROM tbl_ni_invoice i
         JOIN tbl_ni_job j ON j.job_id = i.job_id
         JOIN tbl_site s ON s.site_id = j.site_id
-        JOIN tbl_lead l ON l.lead_id = i.lead_id
+        JOIN tbl_new_leads l ON l.lead_id = i.lead_id
         WHERE (
-            :search IS NULL
-            OR i.search_vector @@ plainto_tsquery(:search)
+            :search IS NULL OR :search = ''
+            OR i.invoice_no ILIKE CONCAT('%', :search, '%')
+            OR i.quotation_no ILIKE CONCAT('%', :search, '%')
+            OR l.customer_name ILIKE CONCAT('%', :search, '%')
+            OR s.site_name ILIKE CONCAT('%', :search, '%')
         )
-        """,
+    """,
             countQuery = """
-        SELECT count(*)
-        FROM tbl_ni_invoice i
-        JOIN tbl_ni_job j ON j.job_id = i.job_id
-        JOIN tbl_site s ON s.site_id = j.site_id
-        JOIN tbl_lead l ON l.lead_id = i.lead_id
-        WHERE (
-            :search IS NULL
-            OR i.search_vector @@ plainto_tsquery(:search)
-        )
+            SELECT COUNT(*)
+            FROM tbl_ni_invoice i
+            JOIN tbl_ni_job j ON j.job_id = i.job_id
+            JOIN tbl_site s ON s.site_id = j.site_id
+            JOIN tbl_new_leads l ON l.lead_id = i.lead_id
+            WHERE (
+                :search IS NULL OR :search = ''
+                OR i.invoice_no ILIKE CONCAT('%', :search, '%')
+                OR i.quotation_no ILIKE CONCAT('%', :search, '%')
+                OR l.customer_name ILIKE CONCAT('%', :search, '%')
+                OR s.site_name ILIKE CONCAT('%', :search, '%')
+            )
         """,
             nativeQuery = true
     )
@@ -51,6 +58,94 @@ public interface NiInvoiceRepository extends JpaRepository<NiInvoice, Integer> {
             @Param("search") String search,
             Pageable pageable
     );
+
+
+//    @Query(
+//            value = """
+//        SELECT i.*
+//        FROM tbl_ni_invoice i
+//        JOIN tbl_ni_job j ON j.job_id = i.job_id
+//        JOIN tbl_site s ON s.site_id = j.site_id
+//        JOIN tbl_new_leads l ON l.lead_id = i.lead_id
+//        WHERE (
+//            :search IS NULL
+//            OR :search = ''
+//
+//            OR i.invoice_no ILIKE CONCAT('%', :search, '%')
+//            OR i.quotation_no ILIKE CONCAT('%', :search, '%')
+//            OR i.pay_for ILIKE CONCAT('%', :search, '%')
+//
+//            OR l.customer_name ILIKE CONCAT('%', :search, '%')
+//
+//            OR s.site_name ILIKE CONCAT('%', :search, '%')
+//            OR s.site_address ILIKE CONCAT('%', :search, '%')
+//
+//            OR TO_CHAR(i.invoice_date, 'DD') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'Mon') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'MON') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'YYYY') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'DD/Mon/YYYY') ILIKE CONCAT('%', :search, '%')
+//
+//            OR CAST(i.total_amt AS TEXT) ILIKE CONCAT('%', :search, '%')
+//
+//            OR (
+//                CASE
+//                    WHEN i.is_cleared = true THEN 'paid'
+//                    ELSE 'pending'
+//                END
+//            ) ILIKE CONCAT('%', :search, '%')
+//        )
+//        ORDER BY
+//            CASE WHEN :sortBy = 'invoice_no' THEN i.invoice_no END,
+//            CASE WHEN :sortBy = 'customer_name' THEN l.customer_name END,
+//            CASE WHEN :sortBy = 'site_name' THEN s.site_name END,
+//            CASE WHEN :sortBy = 'invoice_date' THEN i.invoice_date END,
+//            CASE WHEN :sortBy = 'total_amt' THEN i.total_amt END,
+//            CASE WHEN :sortBy = 'status' THEN i.is_cleared END,
+//            i.created_at DESC
+//        """,
+//            countQuery = """
+//        SELECT COUNT(*)
+//        FROM tbl_ni_invoice i
+//        JOIN tbl_ni_job j ON j.job_id = i.job_id
+//        JOIN tbl_site s ON s.site_id = j.site_id
+//        JOIN tbl_new_leads l ON l.lead_id = i.lead_id
+//        WHERE (
+//            :search IS NULL
+//            OR :search = ''
+//
+//            OR i.invoice_no ILIKE CONCAT('%', :search, '%')
+//            OR i.quotation_no ILIKE CONCAT('%', :search, '%')
+//            OR i.pay_for ILIKE CONCAT('%', :search, '%')
+//
+//            OR l.customer_name ILIKE CONCAT('%', :search, '%')
+//
+//            OR s.site_name ILIKE CONCAT('%', :search, '%')
+//            OR s.site_address ILIKE CONCAT('%', :search, '%')
+//
+//            OR TO_CHAR(i.invoice_date, 'DD') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'Mon') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'MON') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'YYYY') ILIKE CONCAT('%', :search, '%')
+//            OR TO_CHAR(i.invoice_date, 'DD/Mon/YYYY') ILIKE CONCAT('%', :search, '%')
+//
+//            OR CAST(i.total_amt AS TEXT) ILIKE CONCAT('%', :search, '%')
+//
+//            OR (
+//                CASE
+//                    WHEN i.is_cleared = true THEN 'paid'
+//                    ELSE 'pending'
+//                END
+//            ) ILIKE CONCAT('%', :search, '%')
+//        )
+//        """,
+//            nativeQuery = true
+//    )
+//    Page<NiInvoice> searchInvoices(
+//            @Param("search") String search,
+//            @Param("sortBy") String sortBy,
+//            Pageable pageable
+//    );
 
 
 

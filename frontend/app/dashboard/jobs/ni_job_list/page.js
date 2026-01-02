@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import axiosInstance from '@/utils/axiosInstance';
 import {
   Loader2,
@@ -30,119 +30,131 @@ export default function NiJobList() {
 
   // Pagination & Search
   const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState(""); // Debounce input
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   // Sorting
   const [sortBy, setSortBy] = useState('jobId');
   const [direction, setDirection] = useState('desc');
 
+  // Debouncing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
-  const initialRef = 'COMPANY_SETTINGS_1';
-
-
-  const matchesSearch = (job, searchText) => {
-    if (!searchText) return true;
-
-    const lowerSearch = searchText.toLowerCase();
-
-    // 🔹 Include formatted Job No
-    const formattedJobNo = formatJobNo(job, companyName)?.toLowerCase() || "";
-
-    // 🔹 Search formatted job no first
-    if (formattedJobNo.includes(lowerSearch)) {
-      return true;
-    }
-
-    // 🔹 Search remaining raw fields
-    return Object.values(job).some(value =>
-      value !== null &&
-      value !== undefined &&
-      String(value).toLowerCase().includes(lowerSearch)
-    );
-  };
-
+  // Reset page on search change
+  useEffect(() => {
+    setPage(0);
+  }, [search]);
 
 
   /**
-   * Fetch Jobs
+   * Fetch Jobs (Server-Side Pagination)
    */
   const fetchJobs = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // Build params similar to AmcJobList (adjust as needed if backend supports searching/pagination)
-      // Note: The current QuotationJobsController.getAll() implementation in the provided file 
-      // is a simple list return without pagination support in the Controller code I saw.
-      // However, to keep the UI consistent, I'll structure the call. 
-      // If the backend returns a List, I might need to handle pagination client-side 
-      // or assume the backend will be updated to support Pageable.
-      // Based on the controller code I viewed: 
-      // public ResponseEntity<ApiResponse<List<QuotationJobResponseDTO>>> getAll()
-      // It returns a List, NOT a Page. So client-side pagination is safer for now 
-      // unless I update the backend. I will implement client-side pagination for now 
-      // to match the expected UI behavior if the list is small, or just display all.
-
-      const res = await axiosInstance.get(JOBS_API);
-
-      let allJobs = res.data.data || [];
-
-      // Client-side filtering
-      // if (search) {
-      //   const lowerSearch = search.toLowerCase();
-      //   allJobs = allJobs.filter(job =>
-      //     (job.jobNo && job.jobNo.toLowerCase().includes(lowerSearch)) ||
-      //     (job.customerName && job.customerName.toLowerCase().includes(lowerSearch)) || // Assuming these fields exist in DTO or need to be fetched? 
-      //     // Wait, QuotationJobResponseDTO has IDs (customerId, siteId), not names.
-      //     // This suggests I might need to fetch detailed info or the DTO needs names.
-      //     // Looking at the DTO again:
-      //     // private Integer customerId; private Integer siteId;
-      //     // It DOES NOT have names. This is a potential issue for display.
-      //     // I will use IDs for now or IDs placeholders.
-      //     // Correction: The reference AmcJobList uses customerName.
-      //     // The NI Job DTO I modified earlier has IDs.
-      //     // I should double check if the transformer populates names?
-      //     // The mapToResponse in QuotationJobsService sets IDs.
-      //     // I will proceed with IDs/Values available and note this limitation.
-      //     (job.jobTypeName && job.jobTypeName.toLowerCase().includes(lowerSearch))
-      //   );
-      // }
-
-      if (search) {
-        allJobs = allJobs.filter(job => matchesSearch(job, search));
-      }
-
-      // Client-side Sorting
-      allJobs.sort((a, b) => {
-        const aVal = a[sortBy] || '';
-        const bVal = b[sortBy] || '';
-        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
-        return 0;
+      const res = await axiosInstance.get(JOBS_API, {
+        params: {
+          page: page,
+          size: size,
+          search: search || null,
+          paged: true // ✅ Use server-side pagination
+        }
       });
 
-      // Client-side Pagination
-      const totalItems = allJobs.length;
-      setTotalPages(Math.ceil(totalItems / size));
-      const paginatedJobs = allJobs.slice(page * size, (page + 1) * size);
-
-      setJobs(paginatedJobs);
-
+      if (res.data.success) {
+        const data = res.data.data;
+        // Check if response is paginated (it should be due to paged=true)
+        if (data.content) {
+          setJobs(data.content);
+          setTotalPages(data.totalPages);
+          setTotalElements(data.totalElements);
+        } else {
+          // Fallback if backend didn't return page (e.g. error in param)
+          setJobs(data);
+        }
+      }
     } catch (err) {
       console.error("Error fetching NI Jobs:", err);
       setError("Failed to load New Installation Jobs");
     } finally {
       setLoading(false);
     }
-  }, [search, page, size, sortBy, direction]);
+  }, [search, page, size]); // ✅ Removed sortBy/direction from deps
 
   useEffect(() => {
     fetchJobs();
   }, [fetchJobs]);
 
+  // Client-Side Sorting of the Fetched Page
+  const sortedJobs = useMemo(() => {
+    if (!sortBy) return jobs;
+
+    return [...jobs].sort((a, b) => {
+      const valA = a[sortBy];
+      const valB = b[sortBy];
+
+      if (valA == null) return 1;
+      if (valB == null) return -1;
+
+      if (typeof valA === "number") {
+        return direction === "asc" ? valA - valB : valB - valA;
+      }
+
+      return direction === "asc"
+        ? String(valA).localeCompare(String(valB))
+        : String(valB).localeCompare(String(valA));
+    });
+  }, [jobs, sortBy, direction]);
+
+  // const sortedJobs = [...jobs].sort((a, b) => {
+  //   let valA, valB;
+
+  //   // ✅ Special Handling for 'jobNo' to sort by the FORMATTED string
+  //   if (sortBy === 'jobNo') {
+  //     valA = formatJobNo(a, companyName);
+  //     valB = formatJobNo(b, companyName);
+  //   } else {
+  //     valA = a[sortBy];
+  //     valB = b[sortBy];
+  //   }
+
+  //   // Handle nulls
+  //   if (valA == null) valA = "";
+  //   if (valB == null) valB = "";
+
+  //   // Numeric checks
+  //   if (sortBy === 'jobId' || sortBy === 'jobAmount') {
+  //     valA = Number(valA) || 0;
+  //     valB = Number(valB) || 0;
+  //   }
+  //   // Date checks usually strings in JSON, but simple comparison works for ISO YYYY-MM-DD
+  //   // If format is differnet, might need Date.parse
+
+  //   // String case insensitive
+  //   if (typeof valA === 'string') {
+  //     valA = valA.toLowerCase();
+  //     valB = valB.toLowerCase();
+  //   }
+
+  //   if (valA < valB) return direction === 'asc' ? -1 : 1;
+  //   if (valA > valB) return direction === 'asc' ? 1 : -1;
+  //   return 0;
+  // });
+
+
   // Fetch Company Name
+
+
   useEffect(() => {
     const fetchCompanyName = async () => {
       const tenant = getTenant();
@@ -159,32 +171,6 @@ export default function NiJobList() {
     fetchCompanyName();
   }, []);
 
-  // const formatJobNo = (job) => {
-  //   if (!job || !job.startDate || !companyName) return job.jobNo;
-
-  //   try {
-  //     const startYear = new Date(job.startDate).getFullYear();
-  //     const nextYear = startYear - 1999; // as per convention or just (startYear + 1).toString().slice(-2)?
-  //     // User requested: (startDate year-startDateNextYear)
-  //     // Usually financial year is 2024-25. 
-  //     // Let's assume standard YYYY-YY format or YYYY-YYYY?
-  //     // User example: jobNo as fetcedCompanyName:job.jobId(startDate year-startDateNextYear)
-  //     // Example: SMASH:123(2024-2025) or (2024-25)?
-  //     // I will use full year for now as it is safer: (2024-2025)
-
-  //     const nextYearFull = startYear + 1;
-
-  //     // job.jobId is integer.
-  //     // jobNo as fetchedCompanyName:job.jobId(startDate year-startDateNextYear)
-
-  //     return `${companyName}:${job.jobId}(${startYear}-${nextYearFull})`;
-
-  //   } catch (e) {
-  //     console.error("Error formatting job no", e);
-  //     return job.jobNo;
-  //   }
-  // };
-
 
   const handleSort = (field) => {
     if (sortBy === field) {
@@ -196,15 +182,14 @@ export default function NiJobList() {
   };
 
   const handleExportExcel = () => {
-    if (!jobs || jobs.length === 0) {
+    if (!sortedJobs || sortedJobs.length === 0) {
       alert("No job data available to export");
       return;
     }
 
     // 👉 Prepare export data
-    const exportData = jobs.map((job, index) => ({
+    const exportData = sortedJobs.map((job, index) => ({
       "Sr No": index + 1,
-      // "Job ID": job.jobId,
       "Job No": formatJobNo(job, companyName),
       "Job Type": job.jobTypeName || "-",
       "Job Amount": job.jobAmount ?? "-",
@@ -256,7 +241,7 @@ export default function NiJobList() {
     { key: 'jobNo', label: 'Job No' },
     { key: 'jobTypeName', label: 'Job Type' },
     { key: 'siteName', label: 'Site' },
-    { key: 'placeName', label: 'Place' },
+    { key: 'siteAddress', label: 'Address' }, // Correct key from DTO? DTO has siteAddress
     // { key: 'jobAmount', label: 'Amount' },
     { key: 'jobStatus', label: 'Status' },
     { key: 'paymentTerm', label: 'Payment Term' }, // ID? name?
@@ -279,34 +264,16 @@ export default function NiJobList() {
     // <div className="p-4 bg-gray-10 min-h-screen">
     <div className="p-6 sm:p-8 bg-gray-10 min-h-screen">
 
-
-
-      {/* Container Loader */}
-      {/* {loadingBtn && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-lg">
-          <div className="bg-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/30 flex flex-col items-center gap-3">
-            <Loader2 className="h-10 w-10 text-white animate-spin" />
-            <p className="text-white text-sm font-semibold">Loading...</p>
-          </div>
-        </div>
-      )} */}
-
       <h1 className="text-3xl font-extrabold text-gray-900 mb-6 border-b pb-2">
         New Installation Job List
       </h1>
 
-      {/* <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-indigo-700 tracking-wide">
-          New Installation Job List
-        </h1>
-      </div> */}
-
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
         <input
           type="text"
-          placeholder="Search jobs..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search jobs (Job No, Customer, Site, Type, Status)..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="w-full md:w-1/3 p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm"
         />
 
@@ -376,21 +343,20 @@ export default function NiJobList() {
               <tr>
                 <td colSpan={columns.length} className="text-center py-6 text-red-500">{error}</td>
               </tr>
-            ) : jobs.length === 0 ? (
+            ) : sortedJobs.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="text-center py-6 text-gray-400">No jobs found</td>
               </tr>
             ) : (
-              jobs.map((job, index) => (
+              sortedJobs.map((job, index) => (
                 <tr key={job.jobId} className="hover:bg-gray-50 transition-colors text-center">
                   <td className="px-3 py-2">{job.jobId}</td>
                   <td className="px-3 py-2 font-medium">
                     {formatJobNo(job, companyName)}
-                    {/* Fallback to original if company name missing, visually distinct maybe? No, logic handles it return original */}
                   </td>
                   <td className="px-3 py-2">{job.jobTypeName}</td>
                   <td className="px-3 py-2">{job.siteName}</td>
-                  <td className="px-3 py-2">{job.siteAddress}</td>
+                  <td className="px-3 py-2 max-w-xs truncate">{job.siteAddress}</td>
                   {/* <td className="px-3 py-2">₹{job.jobAmount}</td> */}
                   <td className="px-3 py-2">
                     <span className={`px-2 py-1 rounded-full text-white text-xs font-semibold ${getStatusColor(job.jobStatus)}`}>
@@ -454,7 +420,9 @@ export default function NiJobList() {
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2 text-sm">
-        <div>Page {page + 1} of {totalPages || 1}</div>
+        <div>
+          Showing {Math.min(page * size + 1, totalElements)} to {Math.min((page + 1) * size, totalElements)} of {totalElements} results
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => setPage(p => Math.max(0, p - 1))}
@@ -463,6 +431,9 @@ export default function NiJobList() {
           >
             Prev
           </button>
+
+          {/* Simple pagination UI - Page numbers can be improved if needed, but Prev/Next suffices for basics */}
+
           <button
             onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}

@@ -24,13 +24,21 @@ import com.aibi.neerp.quotation.jobsActivities.dto.JobActivityPhotoDTO;
 import com.aibi.neerp.quotation.jobsActivities.dto.JobActivityResponseDTO;
 import com.aibi.neerp.quotation.jobsActivities.entity.NiJobActivity;
 import com.aibi.neerp.quotation.jobsActivities.entity.NiJobActivityPhoto;
+import com.aibi.neerp.quotation.utility.PaginationResponse;
 import com.aibi.neerp.settings.dto.CompanySettingDTO;
 import com.aibi.neerp.settings.entity.CompanySetting;
 import com.aibi.neerp.settings.service.CompanySettingService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -189,9 +197,6 @@ public class QuotationJobsService {
     public ApiResponse<List<QuotationJobResponseDTO>> getAll() {
         log.info("Fetching all jobs");
         try {
-//            List<QuotationJobResponseDTO> jobs = repo.findAll().stream()
-//                    .map(this::mapToResponse)
-//                    .collect(Collectors.toList());
             List<QuotationJobResponseDTO> jobs = repo.findAll().stream()
                     .map(job -> mapToResponse(job, false))
                     .collect(Collectors.toList());
@@ -200,6 +205,98 @@ public class QuotationJobsService {
             log.error("Error fetching all jobs: {}", e.getMessage(), e);
             return new ApiResponse<>(false, "Error fetching jobs: " + e.getMessage(), null);
         }
+    }
+
+    public PaginationResponse<QuotationJobResponseDTO> getPagewiseJobs(
+            Pageable pageable, String search) {
+
+        log.info("Fetching pagewise jobs search: {}", search);
+
+        Specification<QuotationJobs> spec = (root, query, cb) -> {
+
+            if (search == null || search.trim().isEmpty()) {
+                return cb.conjunction();
+            }
+
+            String raw = search.trim().toLowerCase();
+            String like = "%" + raw + "%";
+            String numericOnly = raw.replaceAll("[^0-9]", "");
+
+            Join<QuotationJobs, Customer> customerJoin = root.join("customer", JoinType.LEFT);
+            Join<QuotationJobs, Site> siteJoin = root.join("site", JoinType.LEFT);
+            Join<QuotationJobs, EnquiryType> typeJoin = root.join("jobType", JoinType.LEFT);
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            /* ---------- BASIC SEARCH ---------- */
+            predicates.add(cb.like(cb.lower(root.get("jobNo")), like));
+            predicates.add(cb.like(cb.lower(customerJoin.get("customerName")), like));
+            predicates.add(cb.like(cb.lower(siteJoin.get("siteName")), like));
+            predicates.add(cb.like(cb.lower(typeJoin.get("enquiryTypeName")), like));
+            predicates.add(cb.like(cb.lower(root.get("jobStatus")), like));
+
+            /* ---------- JOB ID SEARCH (1, :1, Company:1) ---------- */
+            if (!numericOnly.isEmpty()) {
+                predicates.add(
+                        cb.equal(root.get("jobId"), Integer.valueOf(numericOnly))
+                );
+            }
+
+            /* ---------- YEAR SEARCH (2025 / 2026) ---------- */
+//            if (numericOnly.matches("\\d{4}")) {
+//                Integer year = Integer.valueOf(numericOnly);
+//
+//                Expression<Integer> startYear =
+//                        cb.function("year", Integer.class, root.get("startDate"));
+//
+//                predicates.add(cb.equal(startYear, year));
+//                predicates.add(cb.equal(cb.sum(startYear, 1), year));
+//            }
+
+            /* ---------- JOB ID SEARCH (1, :1 etc.) ---------- */
+            /* ---------- SMART SEARCH (Formatted String) ---------- */
+            // Handle: "Customer:123(2025-2026)" -> Extract "123"
+            if (search.contains(":") && search.contains("(")) {
+                try {
+                    int start = search.lastIndexOf(":") + 1;
+                    int end = search.indexOf("(", start);
+                    if (start > 0 && end > start) {
+                        String idPart = search.substring(start, end);
+                        if (idPart.matches("\\d+")) {
+                            predicates.add(cb.equal(root.get("jobId"), Integer.valueOf(idPart)));
+                        }
+                    }
+                } catch (Exception e) {
+                    // ignore parsing errors
+                }
+            }
+
+            /* ---------- JOB ID SEARCH ---------- */
+            // Fix for Postgres: Use 'text' function explicitly for casting to string
+            predicates.add(
+                    cb.like(cb.function("text", String.class, root.get("jobId")), like)
+            );
+
+            /* ---------- YEAR/DATE SEARCH ---------- */
+            // Fix for Postgres: Use 'text' function for date
+            predicates.add(
+                    cb.like(cb.function("text", String.class, root.get("startDate")), like)
+            );
+
+            return cb.or(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<QuotationJobs> page = repo.findAll(spec, pageable);
+
+        return new PaginationResponse<>(
+                page.getContent().stream()
+                        .map(job -> mapToResponse(job, false))
+                        .collect(Collectors.toList()),
+                page.getNumber(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.getSize()
+        );
     }
 
     public ApiResponse<String> delete(Integer id) {

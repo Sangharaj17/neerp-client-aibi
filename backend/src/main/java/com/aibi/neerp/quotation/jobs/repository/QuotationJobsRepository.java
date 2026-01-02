@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface QuotationJobsRepository extends JpaRepository<QuotationJobs, Integer> {
+public interface QuotationJobsRepository extends JpaRepository<QuotationJobs, Integer>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<QuotationJobs> {
 
 }
