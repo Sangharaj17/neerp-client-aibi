@@ -242,8 +242,8 @@ export default function NiJobList() {
     { key: 'jobNo', label: 'Job No' },
     { key: 'jobTypeName', label: 'Job Type' },
     { key: 'customerName', label: 'Customer' },
-    { key: 'siteName', label: 'Site' },
-    { key: 'siteAddress', label: 'Address' }, // Correct key from DTO? DTO has siteAddress
+    { key: 'siteName', label: 'Site Name' },
+    { key: 'siteAddress', label: 'Site Address' }, // Correct key from DTO? DTO has siteAddress
     // { key: 'jobAmount', label: 'Amount' },
     { key: 'jobStatus', label: 'Status' },
     { key: 'paymentTerm', label: 'Payment Term' }, // ID? name?

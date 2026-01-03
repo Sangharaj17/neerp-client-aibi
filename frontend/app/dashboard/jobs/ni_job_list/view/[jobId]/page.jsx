@@ -67,8 +67,20 @@ const JobDetailPage = () => {
 
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  const [imageLoading, setImageLoading] = useState({});
+
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const fileUrl = `${API_BASE_URL}/api/job-activities/files/`;
+
+  useEffect(() => {
+    if (galleryOpen) {
+      const initialLoading = {};
+      galleryImages.forEach((_, index) => {
+        initialLoading[index] = true;
+      });
+      setImageLoading(initialLoading);
+    }
+  }, [galleryOpen, galleryImages]);
 
   const renderTruncatedText = (text, title, limit = 30) => {
     if (!text) return "-";
@@ -495,6 +507,7 @@ const JobDetailPage = () => {
     try {
       const doc = new jsPDF("p", "mm", "a4"); // Portrait mode is usually better for reports
       let y = 15;
+      let endedMidPhotoRow = false;
 
       /* HEADER */
       doc.setFontSize(16);
@@ -619,7 +632,7 @@ const JobDetailPage = () => {
         y += 8;
 
         const images = await Promise.all(
-          activity.photos.map((p) => loadImageSafe(p.photoUrl))
+          activity.photos.map((p) => loadImageSafe(fileUrl + p.photoUrl))
         );
 
         let x = 14;
@@ -649,10 +662,16 @@ const JobDetailPage = () => {
           if (x + imgWidth > 200) {
             x = 14;
             y += imgHeight + gap;
+            endedMidPhotoRow = false;
+          } else {
+            endedMidPhotoRow = true;
           }
         }
         // Update y after images
-        y += imgHeight + 10;
+        if (endedMidPhotoRow) {
+          y += imgHeight + gap;
+        }
+        y += 10;
       }
 
       /* SIGNATURE */
@@ -663,10 +682,15 @@ const JobDetailPage = () => {
           y = 20;
         } else {
           // If we are essentially on a new line after images but not a new page, ensure some spacing
-          if (x > 14) y += 5; // Add a bit more buffer if we were mid-row
+          // if (x > 14) y += 5;
+          // Add a bit more buffer if we were mid-row
+
+          if (endedMidPhotoRow) {
+            y += 5;
+          }
         }
 
-        const sign = await loadImageSafe(activity.signatureUrl);
+        const sign = await loadImageSafe(fileUrl + activity.signatureUrl);
         if (sign) {
           doc.setFontSize(12);
           doc.text("Signature", 14, y);
@@ -1359,10 +1383,26 @@ const JobDetailPage = () => {
                   // onClick={() => setPreviewImage(photo.photoUrl)}
                   onClick={() => setPreviewImage(fileUrl + photo.photoUrl)}
                 >
+                  {/* Loader overlay */}
+                  {imageLoading[idx] !== false && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70">
+                      <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+
                   <img
                     src={fileUrl + photo.photoUrl}
                     alt="Activity"
-                    className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-110"
+                    onLoad={() =>
+                      setImageLoading((prev) => ({ ...prev, [idx]: false }))
+                    }
+                    onError={() =>
+                      setImageLoading((prev) => ({ ...prev, [idx]: false }))
+                    }
+                    className={`w-full h-40 object-cover transition-opacity duration-300
+                    ${imageLoading[idx] !== false ? "opacity-0" : "opacity-100"}
+                    group-hover:scale-110
+                  `}
                   />
 
                   {/* Hover overlay */}
