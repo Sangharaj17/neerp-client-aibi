@@ -21,6 +21,7 @@ import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportDto;
 import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportForAddLiftsDatas;
 import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportRepeatLiftDto;
 import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportRequestDto;
+import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportViewAndPdfData;
 import com.aibi.neerp.leadmanagement.inspectionreport.entity.InspectionCategoryCheckpoint;
 import com.aibi.neerp.leadmanagement.inspectionreport.entity.InspectionCheckpointStatus;
 import com.aibi.neerp.leadmanagement.inspectionreport.entity.InspectionReport;
@@ -416,5 +417,68 @@ public class InspectionReportService {
             })
             .collect(Collectors.toList());
     }
+    
+    
+    
+    public List<InspectionReportViewAndPdfData> getInspectionReportViewAndPdfDataByReportId(
+            Integer reportId) {
+
+        // Validate report exists
+        inspectionReportsRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Inspection Report not found"));
+
+        List<InspectionReportViewAndPdfData> responseList = new ArrayList<>();
+
+        List<InspectionReportRepeatLift> repeatLifts =
+                inspectionReportRepeatLiftRepository.findByInspectionReports_Id(reportId);
+
+        for (InspectionReportRepeatLift repeatLift : repeatLifts) {
+
+            String liftName = repeatLift.getEnquiry().getLiftName();
+
+            List<InspectionReport> inspectionReports =
+                    inspectionReportRepository.findByRepeatLift_Id(repeatLift.getId());
+
+            for (InspectionReport report : inspectionReports) {
+
+                InspectionCategoryCheckpoint categoryCheckpoint =
+                        inspectionCategoryCheckpointRepository
+                                .findById(report.getCheckpoint().getId())
+                                .orElseThrow(() -> new RuntimeException("Checkpoint not found"));
+
+                InspectionReportViewAndPdfData dto =
+                        new InspectionReportViewAndPdfData();
+
+                dto.setCategoryName(
+                        categoryCheckpoint.getCategory().getCategoryName());
+                dto.setCheckPointName(
+                        report.getCheckpoint().getCheckpointName());
+                dto.setCheckPointStatus(
+                        report.getStatus().getStatusName());
+                dto.setRemark(report.getRemark());
+                dto.setLiftname(liftName);
+
+                responseList.add(dto);
+            }
+        }
+
+        return responseList;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
 }

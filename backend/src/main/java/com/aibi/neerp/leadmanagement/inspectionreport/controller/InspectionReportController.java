@@ -9,6 +9,7 @@ import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportAndRep
 import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportCategoryAndCheckpointsDto;
 import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportForAddLiftsDatas;
 import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportRequestDto;
+import com.aibi.neerp.leadmanagement.inspectionreport.dto.InspectionReportViewAndPdfData;
 import com.aibi.neerp.leadmanagement.inspectionreport.service.InspectionCheckpointStatusService;
 import com.aibi.neerp.leadmanagement.inspectionreport.service.InspectionReportCategoryAndCheckpointsService;
 import com.aibi.neerp.leadmanagement.inspectionreport.service.InspectionReportService;
@@ -128,6 +129,18 @@ public class InspectionReportController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
+    }
+    
+    @GetMapping("/{reportId}/view-pdf-data")
+    public ResponseEntity<List<InspectionReportViewAndPdfData>> 
+        getInspectionReportViewAndPdfData(
+            @PathVariable Integer reportId) {
+
+        List<InspectionReportViewAndPdfData> response =
+                inspectionReportService
+                        .getInspectionReportViewAndPdfDataByReportId(reportId);
+
+        return ResponseEntity.ok(response);
     }
 
     
