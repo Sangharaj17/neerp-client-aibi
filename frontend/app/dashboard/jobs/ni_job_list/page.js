@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { getTenant } from "@/utils/tenant";
 import * as XLSX from "xlsx";
-import { formatJobNo } from "@/utils/common";
+import { formatJobNo, TruncatedTextWithTooltip } from "@/utils/common";
 
 // API Endpoint for New Installation Jobs
 const JOBS_API = '/api/jobs';
@@ -311,7 +311,8 @@ export default function NiJobList() {
 
       <div className="relative overflow-x-auto rounded-lg shadow-lg">
 
-        <table className="min-w-full bg-white text-sm">
+        {/* <table className="min-w-full bg-white text-sm"> */}
+        <table className="table-fixed w-full bg-white text-sm">
           <thead className="bg-indigo-100 text-gray-700 uppercase text-xs font-semibold">
             <tr>
               {columns.map((col) => (
@@ -319,7 +320,7 @@ export default function NiJobList() {
                   key={col.key}
                   onClick={() => col.key !== "actions" && handleSort(col.key)}
 
-                  className={`px-3 py-2 text-center 
+                  className={`${col.key === "jobId" ? "px-2 w-16" : "px-3"}  py-2 text-center 
           ${col.key !== "actions" ? "cursor-pointer hover:bg-indigo-200" : ""}
           transition-colors whitespace-nowrap`}
                 >
@@ -352,14 +353,25 @@ export default function NiJobList() {
             ) : (
               sortedJobs.map((job, index) => (
                 <tr key={job.jobId} className="hover:bg-gray-50 transition-colors text-center">
-                  <td className="px-3 py-2">{job.jobId}</td>
+                  <td className="px-2 py-2 text-center w-16">{job.jobId}</td>
                   <td className="px-3 py-2 font-medium">
                     {formatJobNo(job, companyName)}
                   </td>
                   <td className="px-3 py-2 text-center">{job.jobTypeName}</td>
-                  <td className="px-3 py-2 text-center">{job.customerName}</td>
-                  <td className="px-3 py-2 text-center max-w-xs">{job.siteName}</td>
-                  <td className="px-3 py-2 max-w-xs truncate">{job.siteAddress}</td>
+                  <td className="px-3 py-2 text-center max-w-xs"><TruncatedTextWithTooltip
+                    text={job.customerName}
+                    maxLength={30}
+                  /></td>
+                  <td className="px-3 py-2 text-center max-w-xs">
+                    <TruncatedTextWithTooltip
+                      text={job.siteName}
+                      maxLength={30}
+                    />
+                  </td>
+                  <td className="px-3 py-2 max-w-xs"><TruncatedTextWithTooltip
+                    text={job.siteAddress}
+                    maxLength={30}
+                  /></td>
                   {/* <td className="px-3 py-2">₹{job.jobAmount}</td> */}
                   <td className="px-3 py-2">
                     <span className={`px-2 py-1 rounded-full text-white text-xs font-semibold ${getStatusColor(job.jobStatus)}`}>
