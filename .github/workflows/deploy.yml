@@ -1,4 +1,4 @@
-name: Deploy Client to VPS
+name: Build and Deploy Client to VPS
 
 on:
   push:
@@ -7,12 +7,48 @@ on:
   workflow_dispatch:
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build JAR
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ☕ Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 📦 Build Backend JAR
+        working-directory: backend
+        run: ./mvnw clean package -DskipTests
+
+      - name: 📤 Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: backend/target/*.jar
+          retention-days: 1
+
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy Client Frontend & Backend
-    
+    needs: build
+    name: Deploy to VPS
+
     steps:
-      - name: 🚀 Deploy via SSH
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-jar
+          path: ./jar
+
+      - name: 🚀 Deploy Frontend and Pull Code
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -23,7 +59,6 @@ jobs:
             cd /var/www/neerp-client-aibi
             git pull origin main
             
-            # Client Frontend
             echo "📦 Building Client Frontend..."
             cd frontend
             yarn install
@@ -31,12 +66,37 @@ jobs:
             pm2 restart neerp-client-frontend
             cd ..
             
-            # Client Backend
-            echo "☕ Building Client Backend..."
-            cd backend
-            ./mvnw clean package -DskipTests
+            echo "✅ Frontend Updated!"
+
+      - name: 📤 Copy JAR to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          source: "./jar/*.jar"
+          target: "/var/www/neerp-client-aibi/backend/target/"
+          strip_components: 1
+
+      - name: 🔄 Restart Backend Service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            echo "🔄 Restarting Client Backend..."
             pm2 restart neerp-client-backend
-            cd ..
-            
             echo "✅ Client Deployment Complete!"
             pm2 status
+
+      - name: 📊 Deployment Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+          fi
