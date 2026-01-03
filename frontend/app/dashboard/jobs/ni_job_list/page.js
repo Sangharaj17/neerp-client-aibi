@@ -13,7 +13,8 @@ import {
 import { useRouter } from 'next/navigation';
 import { getTenant } from "@/utils/tenant";
 import * as XLSX from "xlsx";
-import { formatJobNo, TruncatedTextWithTooltip } from "@/utils/common";
+import { TruncatedTextWithTooltip } from "@/utils/TruncatedTextWithTooltip";
+import { formatJobNo } from "@/utils/common";
 
 // API Endpoint for New Installation Jobs
 const JOBS_API = '/api/jobs';

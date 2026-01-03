@@ -1,6 +1,7 @@
 package com.aibi.neerp.dashboard.service;
 
 import com.aibi.neerp.quotation.repository.QuotationMainRepository;
+import com.aibi.neerp.quotation.utility.QuotationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -117,7 +118,15 @@ public class DashboardService {
         Long renewalJobsRenewalCounts = amcRenewalJobRepository.countAmcLatestRenewals(currentDate);
         totalAmcForRenewalsCounts = totalAmcForRenewalsCounts + renewalJobsRenewalCounts.intValue();
 
-        Long totalNewInstallationCount = quotationMainRepository.countAllActiveQuotations();
+
+        List<QuotationStatus> allowedStatuses = List.of(
+                QuotationStatus.SAVED,
+                QuotationStatus.FINALIZED,
+                QuotationStatus.DELETED
+        );
+        Long totalNewInstallationCount =
+                quotationMainRepository.countAllActiveQuotationsByStatus(allowedStatuses);
+//        Long totalNewInstallationCount = quotationMainRepository.countAllActiveQuotations();
 
 
         // Set values in DTO

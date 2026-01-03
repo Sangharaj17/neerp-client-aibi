@@ -16,6 +16,20 @@ const JobActivityTable = ({
     direction: "asc",
   });
 
+  // PDF Loading State
+  const [pdfLoadingActivityId, setPdfLoadingActivityId] = useState(null);
+
+  const handlePdfExport = async (activity) => {
+    try {
+      setPdfLoadingActivityId(activity.jobActivityId);
+      await exportSingleActivityPDF(activity);
+    } catch (error) {
+      console.error("PDF generation failed", error);
+    } finally {
+      setPdfLoadingActivityId(null);
+    }
+  };
+
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const fileUrl = `${API_BASE_URL}/api/job-activities/files/`;
 
@@ -337,23 +351,30 @@ const JobActivityTable = ({
                       {/* PDF */}
                       <td className="px-4 py-3 border border-gray-300 text-center">
                         <button
-                          onClick={() => exportSingleActivityPDF(activity)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-red-100 transition"
+                          onClick={() => handlePdfExport(activity)}
+                          disabled={
+                            pdfLoadingActivityId === activity.jobActivityId
+                          }
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Generate Activity PDF"
                         >
-                          <svg
-                            className="w-5 h-5 text-red-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                            />
-                          </svg>
+                          {pdfLoadingActivityId === activity.jobActivityId ? (
+                            <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg
+                              className="w-5 h-5 text-red-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                              />
+                            </svg>
+                          )}
                         </button>
                       </td>
 

@@ -66,6 +66,14 @@ const JobDetailPage = () => {
   });
 
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  // Reset loading when preview opens
+  useEffect(() => {
+    if (previewUrl) {
+      setIsPreviewLoading(true);
+    }
+  }, [previewUrl]);
 
   const [imageLoading, setImageLoading] = useState({});
 
@@ -1467,18 +1475,31 @@ const JobDetailPage = () => {
 
       {previewUrl && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg relative max-w-3xl">
+          <div className="bg-white p-4 rounded-lg relative max-w-3xl min-h-[200px] flex items-center justify-center">
             <button
-              className="absolute top-2 right-2 text-xl"
-              onClick={() => setPreviewUrl(null)}
+              className="absolute top-2 right-2 text-xl z-10 hover:text-red-500 transition-colors"
+              onClick={() => {
+                setPreviewUrl(null);
+                setIsPreviewLoading(false);
+              }}
             >
               ✕
             </button>
 
+            {isPreviewLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 z-0">
+                <span className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
             <img
               src={previewUrl}
               alt="Preview"
-              className="max-h-[80vh] object-contain"
+              className={`max-h-[80vh] object-contain transition-opacity duration-300 ${
+                isPreviewLoading ? "opacity-0" : "opacity-100"
+              }`}
+              onLoad={() => setIsPreviewLoading(false)}
+              onError={() => setIsPreviewLoading(false)}
             />
           </div>
         </div>
