@@ -20,25 +20,48 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
   //alert(reportId);
 
   useEffect(() => {
-    const getReportData = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosInstance.get(
-          `/api/inspection-report/${reportId}/view-pdf-data`
-        );
-        console.log('API Response:', response.data);
-        setData(response.data || []);
-        setError(null);
-      } catch (err) {
-        console.error('API Error:', err);
-        setError('Failed to load inspection data.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const getReportData = async () => {
+    try {
+      setLoading(true);
 
-    if (reportId) getReportData();
-  }, [reportId]);
+      const response = await axiosInstance.get(
+        `/api/inspection-report/${reportId}/view-pdf-data`
+      );
+
+      console.log('API Success:', response.data);
+      setData(response.data || []);
+      setError(null);
+
+    } catch (err) {
+
+      // ✅ PRINT FULL ERROR
+      console.error('API Error Full:', err);
+
+      // ✅ PRINT BACKEND MESSAGE
+      console.error(
+        'Backend Error:',
+        err?.response?.data
+      );
+
+      // ✅ PRINT STATUS CODE
+      console.error(
+        'Status Code:',
+        err?.response?.status
+      );
+
+      // ✅ SHOW MESSAGE IN UI
+      setError(
+        err?.response?.data || 'Failed to load inspection data.'
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (reportId) getReportData();
+}, [reportId]);
+
 
   // ================= PDF GENERATION =================
   const generatePDF = () => {

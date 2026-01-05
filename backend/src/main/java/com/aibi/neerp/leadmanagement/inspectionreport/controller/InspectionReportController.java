@@ -1,6 +1,7 @@
 package com.aibi.neerp.leadmanagement.inspectionreport.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -131,17 +132,38 @@ public class InspectionReportController {
         }
     }
     
+//    @GetMapping("/{reportId}/view-pdf-data")
+//    public ResponseEntity<List<InspectionReportViewAndPdfData>> 
+//        getInspectionReportViewAndPdfData(
+//            @PathVariable Integer reportId) {
+//
+//        List<InspectionReportViewAndPdfData> response =
+//                inspectionReportService
+//                        .getInspectionReportViewAndPdfDataByReportId(reportId);
+//
+//        return ResponseEntity.ok(response);
+//    }
+    
     @GetMapping("/{reportId}/view-pdf-data")
-    public ResponseEntity<List<InspectionReportViewAndPdfData>> 
-        getInspectionReportViewAndPdfData(
+    public ResponseEntity<?> getInspectionReportViewAndPdfData(
             @PathVariable Integer reportId) {
 
-        List<InspectionReportViewAndPdfData> response =
-                inspectionReportService
-                        .getInspectionReportViewAndPdfDataByReportId(reportId);
+        try {
 
-        return ResponseEntity.ok(response);
+            List<InspectionReportViewAndPdfData> response =
+                    inspectionReportService
+                            .getInspectionReportViewAndPdfDataByReportId(reportId);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());
+        }
     }
+
 
     
 }
