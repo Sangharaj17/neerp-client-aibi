@@ -27,7 +27,7 @@ public class MaterialQuotation {
     // 1. Foreign Key to AmcJob (Job Header)
     // Replaces Integer jobId
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_id", nullable = false) 
+    @JoinColumn(name = "job_id") 
     private AmcJob amcJob; // Relationship using the AmcJob entity
     
     // 2. Foreign Key to AmcRenewalJob (New Field)

@@ -190,8 +190,29 @@ public class MaterialQuotationService {
         dto.setStaticHsnCode(hsnCode);
         ;
         dto.setJobNo(entity.getAmcJob() != null ? entity.getAmcJob().getJobNo() : null);
-        dto.setCustomerName(entity.getAmcJob() != null ? entity.getAmcJob().getCustomer().getCustomerName(): null);
-        dto.setSiteName(entity.getAmcJob() != null ? entity.getAmcJob().getSite().getSiteName(): null);
+        
+        String customerName = "";
+        String siteName = "";
+        		
+        AmcJob amcJob = entity.getAmcJob();
+        AmcRenewalJob amcRenewalJob = entity.getAmcRenewalJob();
+        
+        if(amcJob!=null) {
+        	customerName = amcJob.getCustomer().getCustomerName();
+        	siteName = amcJob.getSite().getSiteName();
+        	
+        }else {
+        	
+        	customerName = amcRenewalJob.getCustomer().getCustomerName();
+        	siteName = amcRenewalJob.getSite().getSiteName();
+        	
+        }
+        
+//        dto.setCustomerName(entity.getAmcJob() != null ? entity.getAmcJob().getCustomer().getCustomerName(): null);
+//        dto.setSiteName(entity.getAmcJob() != null ? entity.getAmcJob().getSite().getSiteName(): null);
+
+        dto.setCustomerName(customerName);
+        dto.setSiteName(siteName);
 
 
         dto.setRenewalJobNo(entity.getAmcRenewalJob() != null ? entity.getAmcRenewalJob().getJobNo() : null);

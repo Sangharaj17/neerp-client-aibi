@@ -14,6 +14,8 @@ import { Eye, Loader2 } from "lucide-react";
 import autoTable from "jspdf-autotable";
 import QrCodeGenerator from "./QrCodeGenerator";
 
+import MaterialQuotationForm from "./MaterialQuotationForm";
+
 const RenewalJobDetailPage = ({ jobId }) => {
   const router = useRouter();
   const [jobDetails, setJobDetails] = useState(null);
@@ -30,6 +32,15 @@ const RenewalJobDetailPage = ({ jobId }) => {
 
           const [isQrModalOpen, setIsQrModalOpen] = useState(false); // <--- New State
 
+          const [repairModelOpen, setRepairModelOpen] = useState(false);
+
+  const handleOpenRepairModel = () => {
+    setRepairModelOpen(true);
+  }
+
+  const handleCloseRepairModel = () => {
+    setRepairModelOpen(false);
+  }
 
   useEffect(() => {
     const fetchJobDetail = async () => {
@@ -172,6 +183,7 @@ const exportToPDF = () => {
   };
 
 
+  
 
 
   return (
@@ -193,7 +205,7 @@ const exportToPDF = () => {
               ()=>handleAddActivity(label) : label === "Export Job Activity to Excel" ? 
               ()=>exportJobActivityToExcel(label) : label === "Export Activity Details to PDF" ? 
               ()=>exportActivityDetailsToPDF(label) : label === "Generate QR Code" ?
-            ()=>handleGenerateQrCode() : null}
+            ()=>handleGenerateQrCode() : label === "Add Quotation for Repair" ? handleOpenRepairModel : null}
             className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded"
           >
             {label}
@@ -436,6 +448,16 @@ const exportToPDF = () => {
           )}
         </div>
       </ActionModal>
+
+       <ActionModal isOpen={repairModelOpen} onCancel={handleCloseRepairModel}>
+              <MaterialQuotationForm
+                customerName={jobDetails.customerName}
+                siteName={jobDetails.siteName}
+                jobId={0}
+                jobRenewalId={jobId}
+                onClose={handleCloseRepairModel}
+              />
+            </ActionModal>
     </div>
   );
 };

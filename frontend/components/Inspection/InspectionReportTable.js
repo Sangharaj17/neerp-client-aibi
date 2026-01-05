@@ -63,8 +63,9 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
     doc.text(`Customer: ${customer || 'N/A'}`, 14, 45);
     doc.text(`Site: ${site || 'N/A'}`, 14, 51);
 
-    // Table Data - Include all lifts
-    const tableRows = data.map(item => [
+    // Table Data - Include Sr. No and all lifts
+    const tableRows = data.map((item, index) => [
+      index + 1,
       item.categoryName,
       item.liftname,
       item.checkPointName,
@@ -75,6 +76,7 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
     autoTable(doc, {
       startY: 60,
       head: [[
+        'Sr. No',
         'Category',
         'Lift Name',
         'Inspection Point',
@@ -89,7 +91,8 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
       },
       styles: { fontSize: 9 },
       columnStyles: {
-        3: { fontStyle: 'bold' }
+        0: { halign: 'center', cellWidth: 15 },
+        4: { fontStyle: 'bold' }
       }
     });
 
@@ -156,11 +159,12 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
         </div>
       </div>
 
-      {/* Table - FIXED to show all lifts properly */}
+      {/* Table - FIXED to show all lifts properly with Sr. No */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider">
+              <th className="px-6 py-4 font-bold border-b text-center">Sr. No</th>
               <th className="px-6 py-4 font-bold border-b">Category</th>
               <th className="px-6 py-4 font-bold border-b">Lift Name</th>
               <th className="px-6 py-4 font-bold border-b">Inspection Point</th>
@@ -171,6 +175,9 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
           <tbody className="text-sm divide-y divide-gray-100">
             {data.map((row, index) => (
               <tr key={index} className="hover:bg-blue-50/20 transition-colors">
+                <td className="px-6 py-4 text-center font-semibold text-gray-600">
+                  {index + 1}
+                </td>
                 <td className="px-6 py-4">
                   <span className="inline-block px-2 py-1 bg-slate-100 text-slate-700 rounded text-[11px] font-black uppercase">
                     {row.categoryName}
