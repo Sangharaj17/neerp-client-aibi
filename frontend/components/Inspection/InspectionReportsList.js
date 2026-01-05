@@ -20,6 +20,7 @@ const InspectionReportsList = ({ combinedEnquiryId, onSelectReport }) => {
             setLoading(true);
             const response = await axiosInstance.get(`/api/inspection-report/list/${combinedEnquiryId}`);
             setReports(response.data || []);
+            console.log('Fetched reports:', response.data);
         } catch (err) {
             toast.error('Failed to fetch reports: ' + err.message);
         } finally {

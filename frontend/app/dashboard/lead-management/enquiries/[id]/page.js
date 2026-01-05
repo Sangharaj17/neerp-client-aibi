@@ -398,18 +398,54 @@ function ViewEnquiryClientPageContent() {
     setDeleteId(null);
   };
 
+  // // Inspection Report Handlers
+  // const handleSelectReport = (reportId, mode) => {
+  //   // 1. Get the parameters
+  //   const queryParams = new URLSearchParams({
+  //     combinedEnquiryId: selectedCombinedEnquiryId,
+  //     reportId: reportId || '', // Handle null reportId for create mode
+  //     mode: mode,
+  //   }).toString();
+
+  //   // 2. Redirect to the InspectionReportPage
+  //   router.push(`/dashboard/lead-management/enquiries/${id}/inspection-report?${queryParams}`);
+  // };
+
+  const customerFromSearchParam = searchParams.get("customer") || "";
+    const siteFromSearchParam = searchParams.get("site") || "";
+
   // Inspection Report Handlers
-  const handleSelectReport = (reportId, mode) => {
-    // 1. Get the parameters
-    const queryParams = new URLSearchParams({
-      combinedEnquiryId: selectedCombinedEnquiryId,
-      reportId: reportId || '', // Handle null reportId for create mode
-      mode: mode,
+const handleSelectReport = (reportId, mode) => {
+
+  //alert("You are in " + mode + " mode for reportId: " + reportId);
+
+  // For create / edit (UNCHANGED)
+  const queryParams = new URLSearchParams({
+    combinedEnquiryId: selectedCombinedEnquiryId,
+    mode: mode,
+  }).toString();
+
+  // ✅ VIEW MODE ONLY
+  if (mode === "view" && reportId) {
+
+    const viewParams = new URLSearchParams({
+      customer: customerFromSearchParam, // or customerId
+      site: siteFromSearchParam,         // or siteId
     }).toString();
 
-    // 2. Redirect to the InspectionReportPage
-    router.push(`/dashboard/lead-management/enquiries/${id}/inspection-report?${queryParams}`);
-  };
+    router.push(
+      `/dashboard/lead-management/enquiries/${id}/InspectionDetailsPage/${reportId}?${viewParams}`
+    );
+
+  } else {
+
+    // Create / Edit (AS-IS)
+    router.push(
+      `/dashboard/lead-management/enquiries/${id}/inspection-report?reportId=${reportId || ''}&${queryParams}`
+    );
+  }
+};
+
 
   const handleOpenInspectionReports = (combinedId) => {
     setSelectedCombinedEnquiryId(combinedId);

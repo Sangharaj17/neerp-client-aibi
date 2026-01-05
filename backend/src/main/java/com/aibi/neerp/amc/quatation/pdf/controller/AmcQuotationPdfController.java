@@ -148,6 +148,19 @@ public class AmcQuotationPdfController {
         return ResponseEntity.ok(response);
     }
     
+    
+    @GetMapping("/background-image")
+    public ResponseEntity<String> getMainContentBackground() {
+        String picture = service.getMainContentBackgroundPage();
+
+        if (picture == null) {
+            // Returns 204 No Content if the database had no record
+            return ResponseEntity.noContent().build();
+        }
+
+        // Returns 200 OK with the picture string (URL or Base64)
+        return ResponseEntity.ok(picture);
+    }
 
 
 }

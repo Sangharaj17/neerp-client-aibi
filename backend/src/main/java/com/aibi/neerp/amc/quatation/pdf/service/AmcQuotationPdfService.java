@@ -1151,6 +1151,15 @@ public class AmcQuotationPdfService {
     }
 
 
+    
+    public String getMainContentBackgroundPage() {
+        return headingsRepo.findByHeadingName("MAIN CONTENT BACKGROUND PAGE")
+            .map(heading -> contentsRepo.findByAmcQuotationPdfHeadingsId(heading.getId()))
+            .filter(contents -> contents != null && !contents.isEmpty())
+            .map(contents -> contents.get(0).getPicture())
+            .orElse(null);
+    }
+
 
 
 
