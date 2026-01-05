@@ -58,12 +58,12 @@ public interface QuotationMainRepository extends JpaRepository<QuotationMain, In
                     "LEFT JOIN FETCH q.createdBy cb " +
                     "LEFT JOIN FETCH q.finalizedBy fb " +
                     // 💡 Use the named parameter ':statuses'
-                    // "WHERE q.status IN (:statuses) AND q.isDeleted = FALSE AND q.edition = 0",
-                    "WHERE q.status IN (:statuses) AND q.edition = 0",
+                     "WHERE q.status IN (:statuses) AND q.isDeleted = FALSE AND q.edition = 0 AND q.parentQuotation IS NULL",
+                  //  "WHERE q.status IN (:statuses) AND q.edition = 0",
 
             // 💡 CRITICAL: The countQuery must match the WHERE clause
-            // countQuery = "SELECT COUNT(q.id) FROM QuotationMain q WHERE q.status IN (:statuses) AND q.isDeleted = FALSE"
-            countQuery = "SELECT COUNT(q.id) FROM QuotationMain q WHERE q.status IN (:statuses) AND q.edition = 0"
+            countQuery = "SELECT COUNT(q.id) FROM QuotationMain q WHERE q.status IN (:statuses) AND q.isDeleted = FALSE AND q.edition = 0 AND q.parentQuotation IS NULL"
+            // countQuery = "SELECT COUNT(q.id) FROM QuotationMain q WHERE q.status IN (:statuses) AND q.edition = 0"
     )
     Page<QuotationMain> findAllWithEagerAssociationsPageable(
             // 💡 The method now accepts a List of the QuotationStatus Enum
@@ -154,6 +154,19 @@ public interface QuotationMainRepository extends JpaRepository<QuotationMain, In
             "AND qm.parent_quotation_id IS NULL " ,
             nativeQuery = true)
     Long countAllActiveQuotations();
+
+    @Query(
+            "SELECT COUNT(q.id) " +
+                    "FROM QuotationMain q " +
+                    "WHERE q.status IN (:statuses) " +
+                    "AND q.isDeleted = false " +
+                    "AND q.edition = 0 " +
+                    "AND q.parentQuotation IS NULL"
+    )
+    Long countAllActiveQuotationsByStatus(
+            @Param("statuses") List<QuotationStatus> statuses
+    );
+
 
     List<QuotationMain> findByIsFinalizedTrueAndIsDeletedFalseAndJobStatusIsNullOrderByIdDesc();
 }

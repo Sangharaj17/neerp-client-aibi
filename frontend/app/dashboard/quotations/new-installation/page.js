@@ -58,14 +58,14 @@ export default function QuotationList() {
   const fetchQuotations = async () => {
     setIsLoading(true);
 
-    const sortString = `${sortConfig.key},${sortConfig.direction}`;
+    // const sortString = `${sortConfig.key},${sortConfig.direction}`;
 
     try {
       // Call the new API function
       const response = await getPagewiseQuotations(
         currentPage - 1, // API expects 0-based page number
         itemsPerPage,
-        sortString
+        // sortString
       );
 
       if (response.success && response.data) {
@@ -99,7 +99,67 @@ export default function QuotationList() {
 
   useEffect(() => {
     fetchQuotations();
-  }, [currentPage, itemsPerPage, sortConfig]); // 💡 Critical dependency array change!
+  }, [currentPage, itemsPerPage]);
+  // }, [currentPage, itemsPerPage, sortConfig]); // 💡 Critical dependency array change!
+
+
+  const sortedAndFilteredData = useMemo(() => {
+    if (!Array.isArray(quotations)) return [];
+
+    let data = [...quotations];
+
+    // 🔍 Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      data = data.filter(item =>
+        [
+          item.id,
+          item.quotationNo,
+          item.customerName,
+          item.siteName,
+          item.executiveName,
+          formatDate(item.quotationDate),
+          formatCurrency(item.totalAmount),
+          item.status
+        ]
+          .filter(Boolean)
+          .some(val => String(val).toLowerCase().includes(q))
+      );
+    }
+
+    // 🔃 Sorting (CLIENT SIDE ONLY)
+    if (sortConfig.key) {
+      data.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+
+        if (aVal == null) return 1;
+        if (bVal == null) return -1;
+
+        // number
+        if (typeof aVal === "number") {
+          return sortConfig.direction === "asc"
+            ? aVal - bVal
+            : bVal - aVal;
+        }
+
+        // date
+        if (sortConfig.key.toLowerCase().includes("date")) {
+          return sortConfig.direction === "asc"
+            ? new Date(aVal) - new Date(bVal)
+            : new Date(bVal) - new Date(aVal);
+        }
+
+        // string
+        return sortConfig.direction === "asc"
+          ? String(aVal).localeCompare(String(bVal))
+          : String(bVal).localeCompare(String(aVal));
+      });
+    }
+
+    return data;
+  }, [quotations, searchQuery, sortConfig]);
+
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -263,21 +323,33 @@ export default function QuotationList() {
     });
   };
 
+  // const requestSort = (key) => {
+  //   let direction = "asc";
+  //   if (sortConfig.key === key && sortConfig.direction === "asc") {
+  //     direction = "desc";
+  //   }
+  //   setSortConfig({ key, direction });
+  // };
+
   const requestSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
+    setSortConfig(prev => ({
+      key,
+      direction:
+        prev.key === key && prev.direction === "asc"
+          ? "desc"
+          : "asc"
+    }));
   };
 
+
   const handleExportExcel = () => {
-    if (!filteredData || filteredData.length === 0) {
+    if (!sortedAndFilteredData || sortedAndFilteredData.length === 0) {
       alert("No data available to export");
       return;
     }
 
-    const exportData = filteredData.map(item => ({
+    // const exportData = filteredData.map(item => ({
+    const exportData = sortedAndFilteredData.map(item => ({
       "Quotation No": item.quotationNo,
       "Customer Name": item.customerName,
       "Site Name": item.siteName,
@@ -420,7 +492,8 @@ export default function QuotationList() {
                 //   quotations.map((row) => (
 
               ) : filteredData.length > 0 ? (
-                filteredData.map((row) => (
+                // filteredData.map((row) => (
+                sortedAndFilteredData.map((row) => (
                   <tr
                     key={row.sr}
                     className="hover:bg-indigo-50 transition duration-150 text-gray-800"
@@ -641,7 +714,7 @@ export default function QuotationList() {
               <option value={10}>10 per page</option>
               <option value={20}>20 per page</option>
               <option value={50}>50 per page</option>
-              <option value={filteredData.length}>All</option>
+              {/* <option value={filteredData.length}>All</option> */}
             </select>
 
             <div className="flex items-center gap-1">

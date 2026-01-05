@@ -32,12 +32,46 @@ export default function NiJobActivityModal({
 
   const [jobTypeId, setJobTypeId] = useState(activityType);
 
+  const [primaryMessage, setPrimaryMessage] = useState("");
+  const [secondaryMessage, setSecondaryMessage] = useState("");
+
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_IMAGE_TYPES = [
     "image/jpeg",
     "image/jpg",
     "image/png",
     "image/webp",
+  ];
+
+  const [submitting, setSubmitting] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+
+  const startLoading = (message) => {
+    setLoadingMessage(message);
+    // setSubmitting(true);
+  };
+
+  const stopLoading = () => {
+    setLoadingMessage("");
+    setSubmitting(false);
+  };
+
+  const isMailTimeout = (error) => {
+    const msg = error?.response?.data?.message || error?.message || "";
+
+    return (
+      msg.includes("SocketTimeoutException") ||
+      msg.includes("Read timed out") ||
+      msg.toLowerCase().includes("mail server")
+    );
+  };
+
+  const loadingSteps = [
+    "Working on it…",
+    "Still processing, please don’t close this window",
+    "Almost there…",
+    "Finalizing details…",
   ];
 
   useEffect(() => {
@@ -61,7 +95,7 @@ export default function NiJobActivityModal({
       setUserId(storedId);
       setForm((prev) => ({
         ...prev,
-        createdBy: Number(userId),
+        createdBy: Number(storedId),
       }));
     }
   }, [userId]);
@@ -385,10 +419,39 @@ export default function NiJobActivityModal({
   // };
 
   const handleSubmit = async () => {
-    console.log("SUBMIT CLICKED");
+    // console.log("SUBMIT CLICKED");
+
+    let loadingInterval = null;
+
+    const startProgressMessages = (primaryText) => {
+      setPrimaryMessage(primaryText);
+      let index = 0;
+
+      setSecondaryMessage(loadingSteps[0]);
+
+      loadingInterval = setInterval(() => {
+        index++;
+        setSecondaryMessage(loadingSteps[index % loadingSteps.length]);
+      }, 1200);
+    };
+
+    const stopProgressMessages = () => {
+      if (loadingInterval) {
+        clearInterval(loadingInterval);
+        loadingInterval = null;
+      }
+      setPrimaryMessage("");
+      setSecondaryMessage("");
+    };
+
+    if (submitting || submitFailed) return;
+    setSubmitting(true);
 
     const valid = await validate();
-    if (!valid) return;
+    if (!valid) {
+      setSubmitting(false);
+      return;
+    }
 
     let activityId = null;
     let creationToastId = null;
@@ -396,6 +459,10 @@ export default function NiJobActivityModal({
     try {
       // 1️⃣ CREATE ACTIVITY (JSON)
       creationToastId = toast.loading("Creating activity...");
+
+      startLoading("Creating activity...");
+      startProgressMessages("Creating activity...");
+
       const activityRes = await axiosInstance.post(
         "/api/job-activities",
         buildActivityPayload()
@@ -406,9 +473,13 @@ export default function NiJobActivityModal({
         throw new Error("Activities list missing");
       }
 
-      console.log("ACTIVITIES:", updatedActivities);
-      console.log("ACTIVITIES LENGTH:", updatedActivities.length);
-      console.log("ACTIVITY ID:", updatedActivities?.jobActivityId);
+      if (!updatedActivities?.jobActivityId) {
+        throw new Error("Activity ID missing");
+      }
+
+      // console.log("ACTIVITIES:", updatedActivities);
+      // console.log("ACTIVITIES LENGTH:", updatedActivities.length);
+      // console.log("ACTIVITY ID:", updatedActivities?.jobActivityId);
 
       activityId = updatedActivities?.jobActivityId;
 
@@ -416,11 +487,16 @@ export default function NiJobActivityModal({
 
       toast.success("Activity created successfully", { id: creationToastId });
 
+      setLoadingMessage("Uploading photos...");
+
+      startProgressMessages("Uploading photos...");
+
       // 2️⃣ UPLOAD PHOTOS (MULTIPART)
       if (form.images.length > 0) {
         const photoToastId = toast.loading(
           `Uploading ${form.images.length} photo(s)...`
         );
+
         try {
           const photoFormData = new FormData();
           form.images.forEach((img) => {
@@ -439,6 +515,9 @@ export default function NiJobActivityModal({
         }
       }
 
+      setLoadingMessage("Uploading signature...");
+
+      startProgressMessages("Uploading signature...");
       // 3️⃣ UPLOAD SIGNATURE (if exists)
       const signatureBlob = await getSignatureBlob();
       console.log("Signature blob:", signatureBlob, signatureBlob?.size);
@@ -465,6 +544,9 @@ export default function NiJobActivityModal({
         }
       }
 
+      setLoadingMessage("Sending email...");
+
+      startProgressMessages("Sending email...");
       // 4️⃣ SEND EMAIL AUTOMATICALLY
       const emailToastId = toast.loading("Sending email to customer...");
       try {
@@ -484,13 +566,25 @@ export default function NiJobActivityModal({
         const errorMessage =
           emailError.response?.data?.message ||
           "Activity created but email failed to send";
-        toast.error(errorMessage, { id: emailToastId });
-        // Don't fail the entire operation if email fails
+        console.log(errorMessage);
+        // toast.error(errorMessage, { id: emailToastId });
+
+        let userMessage =
+          "Activity saved successfully, but email could not be sent.";
+
+        if (isMailTimeout(emailError)) {
+          userMessage =
+            "Activity saved successfully. Email delivery is taking longer than expected and may be delayed. You can resend it later from the activity list.";
+        }
+        toast.error(userMessage, { id: emailToastId });
       }
 
       onSubmit(updatedActivities);
 
       toast.success("Job Activity completed successfully!");
+
+      stopProgressMessages();
+      stopLoading();
       onClose();
     } catch (err) {
       console.error(err);
@@ -513,11 +607,17 @@ export default function NiJobActivityModal({
           err?.response?.data?.message || "Failed to save job activity",
           { id: creationToastId }
         );
-      } else {
-        toast.error(
-          err?.response?.data?.message || "Failed to save job activity"
-        );
       }
+
+      setLoadingMessage("");
+      setSubmitting(false);
+      setSubmitFailed(true);
+      stopProgressMessages();
+      stopLoading();
+
+      toast.error(
+        err?.response?.data?.message || "Failed to save job activity"
+      );
     }
   };
 
@@ -715,7 +815,7 @@ export default function NiJobActivityModal({
               type="file"
               multiple
               // accept="image/*"
-              accept=".jpg,.jpeg,.png"
+              accept=".jpg,.jpeg,.png,.webp"
               // accept="image/jpeg,image/jpg,image/png,image/webp"
               className="hidden"
               onChange={handleImageUpload}
@@ -850,23 +950,29 @@ export default function NiJobActivityModal({
           <div className="md:col-span-3 flex justify-center gap-4 pt-6">
             <button
               onClick={handleSubmit}
-              className="
-                px-6 py-2
-                text-sm font-medium
-                bg-blue-600 text-white
-                rounded-md
-                cursor-pointer
-                disabled:cursor-not-allowed
-                hover:bg-blue-700
-                hover:shadow-md
-                transition-all duration-200
-              "
+              disabled={submitting || submitFailed}
+              className={`
+                px-6 py-2 text-sm font-medium rounded-md transition-all duration-200
+                ${
+                  submitFailed
+                    ? "bg-red-400 cursor-not-allowed"
+                    : submitting
+                    ? "bg-blue-300 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700 hover:shadow-md"
+                }
+                text-white
+              `}
             >
-              Submit
+              {submitting
+                ? "Submitting..."
+                : submitFailed
+                ? "Submission Failed"
+                : "Submit"}
             </button>
 
             <button
               onClick={onClose}
+              disabled={submitting}
               className="px-6 py-2
                 text-sm font-medium
                 bg-gray-500 text-white
@@ -881,6 +987,25 @@ export default function NiJobActivityModal({
             </button>
           </div>
         </div>
+        {submitting && !submitFailed && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg">
+            <div className="bg-white rounded-xl p-6 shadow-xl flex flex-col items-center gap-4">
+              <span className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm font-semibold text-gray-800 text-center">
+                {primaryMessage}
+              </p>
+
+              {secondaryMessage && (
+                <p className="text-xs text-gray-500 text-center mt-1">
+                  {secondaryMessage}
+                </p>
+              )}
+              <p className="text-xs text-gray-400">
+                Please do not close this window
+              </p>
+            </div>
+          </div>
+        )}
       </ActionModal>
 
       {previewImage && (

@@ -1,7 +1,32 @@
 import { NextResponse } from 'next/server';
 
+/**
+ * Get the full origin URL from request headers (handles reverse proxy)
+ */
+function getOrigin(request) {
+  // Check X-Forwarded headers first (from reverse proxy)
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  // Fall back to Host header
+  const host = request.headers.get('host');
+  if (host) {
+    // Determine protocol - assume https in production, http for localhost
+    const proto = host.includes('localhost') ? 'http' : 'https';
+    return `${proto}://${host}`;
+  }
+
+  // Last resort - use request.url
+  return new URL(request.url).origin;
+}
+
 export function middleware(request) {
   const { pathname } = request.nextUrl;
+  const origin = getOrigin(request);
 
   // Get tenant from various sources
   const host = request.headers.get('host') || '';
@@ -30,10 +55,10 @@ export function middleware(request) {
     );
 
     if (!tokenCookie?.value) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      return NextResponse.redirect(new URL('/auth/login', origin));
     }
     // If logged in, redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard/dashboard-data', request.url));
+    return NextResponse.redirect(new URL('/dashboard/dashboard-data', origin));
   }
 
   // Allow public routes
@@ -51,7 +76,7 @@ export function middleware(request) {
 
     if (!tokenCookie?.value) {
       // No token found, redirect to login
-      const loginUrl = new URL('/auth/login', request.url);
+      const loginUrl = new URL('/auth/login', origin);
       // Store the intended destination for redirect after login
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);

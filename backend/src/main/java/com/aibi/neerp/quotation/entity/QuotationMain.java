@@ -90,7 +90,7 @@ public class QuotationMain {
     private LocalDateTime quotationDate;
 
     @Column(name = "edition")
-    private Integer edition = 0; // e.g. Rev 1, Rev 2, etc.
+    private Integer edition = 0;
 
     @Column(name = "total_amount")
     private Double totalAmount;
