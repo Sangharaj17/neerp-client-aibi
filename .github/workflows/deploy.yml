@@ -68,12 +68,19 @@ jobs:
           # Copy static files and public folder to standalone
           cp -r public .next/standalone/public
           cp -r .next/static .next/standalone/.next/static
+          
+          # Debug: Show the structure
+          echo "=== Standalone build structure ==="
+          ls -la .next/standalone/
+          echo "=== .next folder inside standalone ==="
+          ls -la .next/standalone/.next/
 
       - name: 📤 Upload frontend artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/.next/standalone
+          include-hidden-files: true
           retention-days: 1
 
   # ===== DEPLOY TO VPS =====
@@ -122,8 +129,12 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            echo "🔄 Restarting Frontend..."
+            echo "� Verifying deployment..."
             cd /var/www/neerp-client-aibi/frontend
+            ls -la
+            ls -la .next/ || echo "⚠️ .next folder missing!"
+            
+            echo "🔄 Restarting Frontend..."
             pm2 delete neerp-client-frontend 2>/dev/null || true
             PORT=3001 pm2 start server.js --name neerp-client-frontend
             
