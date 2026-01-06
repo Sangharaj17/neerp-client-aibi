@@ -448,9 +448,17 @@ const handleSelectReport = (reportId, mode) => {
 
 
   const handleOpenInspectionReports = (combinedId) => {
-    setSelectedCombinedEnquiryId(combinedId);
-    setModalView('list');
-    setInspectionReportModalOpen(true);
+   
+    const queryParams = new URLSearchParams({
+      combinedEnquiryId: combinedId,
+      customer: customerFromSearchParam,
+      site: siteFromSearchParam,
+    }).toString();
+
+     router.push(
+      `/dashboard/lead-management/enquiries/${id}/inspection-report-list?${queryParams}`
+    );
+
   };
 
   const handleCloseInspectionReports = () => {
@@ -817,7 +825,7 @@ const handleSelectReport = (reportId, mode) => {
       </div >
 
       {/* Inspection Report Modal */}
-      {
+      {/* {
         inspectionReportModalOpen && (
           <div
             className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -854,7 +862,7 @@ const handleSelectReport = (reportId, mode) => {
             </div>
           </div>
         )
-      }
+      } */}
     </>
   );
 }
