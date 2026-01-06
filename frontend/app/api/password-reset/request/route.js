@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to prevent build-time errors
+let resend = null;
+function getResend() {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 // Test route to verify it's working
 export async function GET() {
@@ -103,7 +110,7 @@ export async function POST(request) {
     const resetLink = `${baseUrl}/auth/reset-password?token=${resetToken}`;
 
     // Send email using Resend
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'noreply@email.aibistreet.com',
       to: email,
       subject: 'Reset Your Password',
