@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  output: 'standalone',
   // Trust X-Forwarded-Host header from reverse proxy (Nginx)
   // This fixes redirects going to localhost:3001 instead of the actual domain
   experimental: {
