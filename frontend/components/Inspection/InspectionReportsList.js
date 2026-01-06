@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Plus, Loader2 } from 'lucide-react';
+import { Eye, Edit, Plus, Loader2, FileDown } from 'lucide-react';
 import axiosInstance from '@/utils/axiosInstance';
 import toast from 'react-hot-toast';
+import { generateInspectionPDF } from './generateInspectionPDF';
 
 const InspectionReportsList = ({
   combinedEnquiryId,
@@ -109,17 +110,25 @@ const InspectionReportsList = ({
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => onSelectReport(report.id, 'view')}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-md"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                       >
                         <Eye className="w-4 h-4" />
                         View
                       </button>
                       <button
                         onClick={() => onSelectReport(report.id, 'edit')}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-md"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-green-600 hover:bg-green-50 rounded-md transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                         Edit
+                      </button>
+                      {/* ✅ PDF BUTTON - CALLS UTILITY FUNCTION */}
+                      <button
+                        onClick={() => generateInspectionPDF(report.id, customer, site)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        PDF
                       </button>
                     </div>
                   </td>

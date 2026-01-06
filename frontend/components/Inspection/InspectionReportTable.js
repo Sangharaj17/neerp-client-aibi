@@ -9,118 +9,42 @@ import {
   User,
   MapPin
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { generateInspectionPDF } from './generateInspectionPDF';
 
 const InspectionReportTable = ({ reportId, customer, site }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  //alert(reportId);
-
   useEffect(() => {
-  const getReportData = async () => {
-    try {
-      setLoading(true);
+    const getReportData = async () => {
+      try {
+        setLoading(true);
 
-      const response = await axiosInstance.get(
-        `/api/inspection-report/${reportId}/view-pdf-data`
-      );
+        const response = await axiosInstance.get(
+          `/api/inspection-report/${reportId}/view-pdf-data`
+        );
 
-      console.log('API Success:', response.data);
-      setData(response.data || []);
-      setError(null);
+        console.log('API Success:', response.data);
+        setData(response.data || []);
+        setError(null);
 
-    } catch (err) {
+      } catch (err) {
+        console.error('API Error Full:', err);
+        console.error('Backend Error:', err?.response?.data);
+        console.error('Status Code:', err?.response?.status);
 
-      // ✅ PRINT FULL ERROR
-      console.error('API Error Full:', err);
+        setError(
+          err?.response?.data || 'Failed to load inspection data.'
+        );
 
-      // ✅ PRINT BACKEND MESSAGE
-      console.error(
-        'Backend Error:',
-        err?.response?.data
-      );
-
-      // ✅ PRINT STATUS CODE
-      console.error(
-        'Status Code:',
-        err?.response?.status
-      );
-
-      // ✅ SHOW MESSAGE IN UI
-      setError(
-        err?.response?.data || 'Failed to load inspection data.'
-      );
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (reportId) getReportData();
-}, [reportId]);
-
-
-  // ================= PDF GENERATION =================
-  const generatePDF = () => {
-    if (!data.length) return;
-
-    const doc = new jsPDF();
-
-    // Title
-    doc.setFontSize(20);
-    doc.setTextColor(44, 62, 80);
-    doc.text('Inspection Report', 14, 22);
-
-    // Meta Data Section
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Report ID: ${reportId}`, 14, 30);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 35);
-    
-    // Customer & Site Info in PDF
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    doc.text(`Customer: ${customer || 'N/A'}`, 14, 45);
-    doc.text(`Site: ${site || 'N/A'}`, 14, 51);
-
-    // Table Data - Include Sr. No and all lifts
-    const tableRows = data.map((item, index) => [
-      index + 1,
-      item.categoryName,
-      item.liftname,
-      item.checkPointName,
-      item.checkPointStatus?.toUpperCase(),
-      item.remark || '-'
-    ]);
-
-    autoTable(doc, {
-      startY: 60,
-      head: [[
-        'Sr. No',
-        'Category',
-        'Lift Name',
-        'Inspection Point',
-        'Status',
-        'Remarks'
-      ]],
-      body: tableRows,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [44, 62, 80],
-        textColor: [255, 255, 255]
-      },
-      styles: { fontSize: 9 },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 15 },
-        4: { fontStyle: 'bold' }
+      } finally {
+        setLoading(false);
       }
-    });
+    };
 
-    doc.save(`Report_${reportId}_${customer || 'Export'}.pdf`);
-  };
+    if (reportId) getReportData();
+  }, [reportId]);
 
   const getStatusBadge = status => {
     const s = status?.toLowerCase();
@@ -172,8 +96,9 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
             </div>
           </div>
 
+          {/* ✅ PDF BUTTON - CALLS UTILITY FUNCTION */}
           <button
-            onClick={generatePDF}
+            onClick={() => generateInspectionPDF(reportId, customer, site)}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-bold transition-all shadow-md active:scale-95"
           >
             <FileDown size={20} />
@@ -182,7 +107,7 @@ const InspectionReportTable = ({ reportId, customer, site }) => {
         </div>
       </div>
 
-      {/* Table - FIXED to show all lifts properly with Sr. No */}
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
