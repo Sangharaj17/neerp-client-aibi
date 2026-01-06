@@ -32,7 +32,7 @@ jobs:
           path: backend/target/*.jar
           retention-days: 1
 
-  # ===== BUILD FRONTEND ON GITHUB ACTIONS (NOT VPS!) =====
+  # ===== BUILD FRONTEND ON GITHUB (NOT VPS!) =====
   build-frontend:
     runs-on: ubuntu-latest
     name: Build Frontend
@@ -62,24 +62,11 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      - name: 📦 Package standalone build
-        working-directory: frontend
-        run: |
-          # Copy static files and public folder to standalone
-          cp -r public .next/standalone/public
-          cp -r .next/static .next/standalone/.next/static
-          
-          # Debug: Show the structure
-          echo "=== Standalone build structure ==="
-          ls -la .next/standalone/
-          echo "=== .next folder inside standalone ==="
-          ls -la .next/standalone/.next/
-
-      - name: 📤 Upload frontend artifact
+      - name: � Upload .next folder
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: frontend/.next/standalone
+          path: frontend/.next
           include-hidden-files: true
           retention-days: 1
 
@@ -89,6 +76,9 @@ jobs:
     needs: [build-backend, build-frontend]
     name: Deploy to VPS
     steps:
+      - name: 📥 Checkout code (for package.json)
+        uses: actions/checkout@v4
+
       - name: 📥 Download backend JAR
         uses: actions/download-artifact@v4
         with:
@@ -108,11 +98,17 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: 🚀 Deploy Frontend via rsync
+      - name: 🚀 Deploy Frontend .next folder (no delete!)
         run: |
-          rsync -avz --delete \
+          rsync -avz \
             -e "ssh -p ${{ secrets.VPS_PORT }}" \
             ./frontend-build/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/neerp-client-aibi/frontend/.next/
+
+      - name: 🚀 Deploy package.json
+        run: |
+          scp -P ${{ secrets.VPS_PORT }} \
+            ./frontend/package.json \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/neerp-client-aibi/frontend/
 
       - name: 📤 Deploy Backend JAR
@@ -129,14 +125,16 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            echo "� Verifying deployment..."
-            cd /var/www/neerp-client-aibi/frontend
-            ls -la
-            ls -la .next/ || echo "⚠️ .next folder missing!"
-            
             echo "🔄 Restarting Frontend..."
-            pm2 delete neerp-client-frontend 2>/dev/null || true
-            PORT=3001 pm2 start server.js --name neerp-client-frontend
+            cd /var/www/neerp-client-aibi/frontend
+            
+            # Ensure node_modules exists
+            if [ ! -d "node_modules" ]; then
+              echo "� Installing dependencies..."
+              npm install --production
+            fi
+            
+            pm2 restart neerp-client-frontend || pm2 start npm --name neerp-client-frontend -- start
             
             echo "🔄 Restarting Backend..."
             pm2 restart neerp-client-backend
