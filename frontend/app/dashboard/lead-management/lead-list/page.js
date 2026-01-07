@@ -207,7 +207,7 @@ export default function LeadListPage() {
   };
 
   const handleRouteToAddLeadAndEnquiry = () => {
-    router.push(`/dashboard/lead-management/lead-list/add-lead-enquiry`);
+    router.push(`/dashboard/lead-management/lead-list/add-lead-with-enquiry`);
   };
 
   const [editModalOpen, setEditModalOpen] = useState(false);
