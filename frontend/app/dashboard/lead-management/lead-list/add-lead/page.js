@@ -185,7 +185,7 @@ export default function AddLeadPage() {
     return { isValid: Object.keys(newErrors).length === 0, errors: newErrors };
   };
 
-  // Step validation (for stepper navigation)
+  // Step validation (for stepper navigation) - UPDATED: Contact validation moved to Step 2
   const validateStep = (step) => {
     const newErrors = {};
     const isEmpty = (v) => !v || (typeof v === 'string' && !v.trim());
@@ -200,6 +200,11 @@ export default function AddLeadPage() {
     if (step === 2) {
       if (isEmpty(formData.customer1Name)) newErrors.customer1Name = 'Required';
       if (!formData.customer1Designation) newErrors.customer1Designation = 'Required';
+      if (isEmpty(formData.contactNo)) {
+        newErrors.contactNo = 'Required';
+      } else if (!isValidMobileNumber(formData.contactNo)) {
+        newErrors.contactNo = '10 digits required';
+      }
       if (isEmpty(formData.companyName)) newErrors.companyName = 'Required';
       if (formData.siteSame === 'No' && isEmpty(formData.siteName)) newErrors.siteName = 'Required';
       if (formData.email && !isValidEmail(formData.email)) newErrors.email = 'Invalid email';
@@ -207,11 +212,6 @@ export default function AddLeadPage() {
     }
 
     if (step === 3) {
-      if (isEmpty(formData.contactNo)) {
-        newErrors.contactNo = 'Required';
-      } else if (!isValidMobileNumber(formData.contactNo)) {
-        newErrors.contactNo = '10 digits required';
-      }
       if (isEmpty(formData.companyAddress)) newErrors.companyAddress = 'Required';
       if (formData.siteSameAddress === 'No' && isEmpty(formData.siteAddress)) newErrors.siteAddress = 'Required';
     }
@@ -384,13 +384,13 @@ export default function AddLeadPage() {
           {/* ═══════════════════════════════════════════════════════════ */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              {/* Customer 1 */}
+              {/* Customer 1 - UPDATED: Now includes contact number */}
               <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200">
                 <label className="block text-xs font-medium text-neutral-700 mb-3">Customer *</label>
-                {(errors.customer1Name || errors.customer1Designation) && (
-                  <p className="text-xs text-red-500 mb-2">{errors.customer1Name || errors.customer1Designation}</p>
+                {(errors.customer1Name || errors.customer1Designation || errors.contactNo) && (
+                  <p className="text-xs text-red-500 mb-2">{errors.customer1Name || errors.customer1Designation || errors.contactNo}</p>
                 )}
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3 mb-3">
                   <select name="customer1Title" value={formData.customer1Title} onChange={handleChange} className="border border-neutral-300 rounded px-3 py-2 text-sm">
                     <option>Mr.</option><option>Ms.</option><option>Mrs.</option>
                   </select>
@@ -404,6 +404,13 @@ export default function AddLeadPage() {
                   {!showCustomer2 && (
                     <button type="button" onClick={() => setShowCustomer2(true)} className="bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded text-sm font-medium">Add</button>
                   )}
+                </div>
+                {/* Contact Number for Customer 1 */}
+                <div className="flex gap-2">
+                  <select name="contactCountry" value={formData.contactCountry} onChange={handleChange} className="border border-neutral-300 rounded px-3 py-2 text-sm">
+                    <option>India (+91)</option>
+                  </select>
+                  <input type="text" name="contactNo" placeholder="Contact Number (10-digit mobile)" value={formData.contactNo} onChange={handleChange} maxLength={10} className={`flex-1 border rounded px-3 py-2 text-sm ${errors.contactNo ? 'border-red-400' : 'border-neutral-300'}`} />
                 </div>
               </div>
 
@@ -474,20 +481,10 @@ export default function AddLeadPage() {
           )}
 
           {/* ═══════════════════════════════════════════════════════════ */}
-          {/* STEP 3: Contact & Address */}
+          {/* STEP 3: Contact & Address - UPDATED: Contact No removed */}
           {/* ═══════════════════════════════════════════════════════════ */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              {/* Contact No */}
-              <Field label="Contact No." required error={errors.contactNo}>
-                <div className="flex gap-2">
-                  <select name="contactCountry" value={formData.contactCountry} onChange={handleChange} className="border border-neutral-300 rounded px-3 py-2 text-sm">
-                    <option>India (+91)</option>
-                  </select>
-                  <input type="text" name="contactNo" placeholder="10-digit mobile" value={formData.contactNo} onChange={handleChange} maxLength={10} className={`flex-1 ${inputClass(errors.contactNo)}`} />
-                </div>
-              </Field>
-
               {/* Landline */}
               <Field label="Landline No.">
                 <input type="text" name="landlineNo" value={formData.landlineNo} onChange={handleChange} className={inputClass()} />

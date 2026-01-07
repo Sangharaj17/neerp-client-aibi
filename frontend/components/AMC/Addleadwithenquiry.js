@@ -363,6 +363,11 @@ export default function AddLeadWithEnquiry() {
     if (step === 2) {
       if (isEmpty(leadFormData.customer1Name)) newErrors.customer1Name = 'Required';
       if (!leadFormData.customer1Designation) newErrors.customer1Designation = 'Required';
+      if (isEmpty(leadFormData.contactNo)) {
+        newErrors.contactNo = 'Required';
+      } else if (!isValidMobileNumber(leadFormData.contactNo)) {
+        newErrors.contactNo = '10 digits required';
+      }
       if (isEmpty(leadFormData.companyName)) newErrors.companyName = 'Required';
       if (leadFormData.siteSame === 'No' && isEmpty(leadFormData.siteName)) newErrors.siteName = 'Required';
       if (leadFormData.email && !isValidEmail(leadFormData.email)) newErrors.email = 'Invalid email';
@@ -370,11 +375,6 @@ export default function AddLeadWithEnquiry() {
     }
 
     if (step === 3) {
-      if (isEmpty(leadFormData.contactNo)) {
-        newErrors.contactNo = 'Required';
-      } else if (!isValidMobileNumber(leadFormData.contactNo)) {
-        newErrors.contactNo = '10 digits required';
-      }
       if (isEmpty(leadFormData.companyAddress)) newErrors.companyAddress = 'Required';
       if (leadFormData.siteSameAddress === 'No' && isEmpty(leadFormData.siteAddress)) newErrors.siteAddress = 'Required';
     }
@@ -758,10 +758,10 @@ export default function AddLeadWithEnquiry() {
                   {/* Customer 1 */}
                   <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
                     <label className="block text-sm font-semibold text-gray-800 mb-3">Customer Information *</label>
-                    {(errors.customer1Name || errors.customer1Designation) && (
-                      <p className="text-xs text-red-500 mb-3">{errors.customer1Name || errors.customer1Designation}</p>
+                    {(errors.customer1Name || errors.customer1Designation || errors.contactNo) && (
+                      <p className="text-xs text-red-500 mb-3">{errors.customer1Name || errors.customer1Designation || errors.contactNo}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
                       <select name="customer1Title" value={leadFormData.customer1Title} onChange={handleLeadChange} className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500">
                         <option>Mr.</option><option>Ms.</option><option>Mrs.</option>
                       </select>
@@ -777,6 +777,13 @@ export default function AddLeadWithEnquiry() {
                           <UserPlus className="w-4 h-4" /> Add Customer 2
                         </button>
                       )}
+                    </div>
+                    {/* Contact Number for Customer 1 */}
+                    <div className="flex gap-3">
+                      <select name="contactCountry" value={leadFormData.contactCountry} onChange={handleLeadChange} className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500">
+                        <option>India (+91)</option>
+                      </select>
+                      <input type="text" name="contactNo" placeholder="Contact Number (10-digit mobile)" value={leadFormData.contactNo} onChange={handleLeadChange} maxLength={10} className={`flex-1 border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 ${errors.contactNo ? 'border-red-400' : 'border-gray-300'}`} />
                     </div>
                   </div>
 
@@ -845,15 +852,6 @@ export default function AddLeadWithEnquiry() {
               {/* Step 3: Contact & Address */}
               {currentStep === 3 && (
                 <div className="space-y-5">
-                  <Field label="Contact No." required error={errors.contactNo}>
-                    <div className="flex gap-3">
-                      <select name="contactCountry" value={leadFormData.contactCountry} onChange={handleLeadChange} className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500">
-                        <option>India (+91)</option>
-                      </select>
-                      <input type="text" name="contactNo" placeholder="10-digit mobile" value={leadFormData.contactNo} onChange={handleLeadChange} maxLength={10} className={`flex-1 ${inputClass(errors.contactNo)}`} />
-                    </div>
-                  </Field>
-
                   <Field label="Landline No.">
                     <input type="text" name="landlineNo" value={leadFormData.landlineNo} onChange={handleLeadChange} className={inputClass()} />
                   </Field>
