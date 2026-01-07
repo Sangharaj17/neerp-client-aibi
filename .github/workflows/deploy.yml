@@ -2,15 +2,14 @@ name: Build and Deploy Client to VPS
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
-  build:
+  # ===== BUILD BACKEND JAR =====
+  build-backend:
     runs-on: ubuntu-latest
-    name: Build JAR
-
+    name: Build Backend JAR
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -33,22 +32,92 @@ jobs:
           path: backend/target/*.jar
           retention-days: 1
 
-  deploy:
+  # ===== BUILD FRONTEND ON GITHUB (NOT VPS!) =====
+  build-frontend:
     runs-on: ubuntu-latest
-    needs: build
-    name: Deploy to VPS
-
+    name: Build Frontend
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 📥 Download JAR artifact
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📥 Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: 📝 Create .env.production
+        working-directory: frontend
+        run: |
+          cat > .env.production << EOF
+          NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          EOF
+
+      - name: 🔨 Build Next.js
+        working-directory: frontend
+        run: npm run build
+
+      - name: � Upload .next folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next
+          include-hidden-files: true
+          retention-days: 1
+
+  # ===== DEPLOY TO VPS =====
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-frontend]
+    name: Deploy to VPS
+    steps:
+      - name: 📥 Checkout code (for package.json)
+        uses: actions/checkout@v4
+
+      - name: 📥 Download backend JAR
         uses: actions/download-artifact@v4
         with:
           name: backend-jar
-          path: ./jar
+          path: ./backend-jar
 
-      - name: 🚀 Deploy Frontend and Pull Code
+      - name: 📥 Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: ./frontend-build
+
+      - name: 🔑 Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: 🚀 Deploy Frontend .next folder (no delete!)
+        run: |
+          rsync -avz \
+            -e "ssh -p ${{ secrets.VPS_PORT }}" \
+            ./frontend-build/ \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/neerp-client-aibi/frontend/.next/
+
+      - name: 🚀 Deploy package.json
+        run: |
+          scp -P ${{ secrets.VPS_PORT }} \
+            ./frontend/package.json \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/neerp-client-aibi/frontend/
+
+      - name: 📤 Deploy Backend JAR
+        run: |
+          scp -P ${{ secrets.VPS_PORT }} \
+            ./backend-jar/*.jar \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/neerp-client-aibi/backend/target/
+
+      - name: 🔄 Restart Services
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -56,40 +125,21 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
           script: |
-            cd /var/www/neerp-client-aibi
-            git pull origin main
+            echo "🔄 Restarting Frontend..."
+            cd /var/www/neerp-client-aibi/frontend
             
-            echo "📦 Building Client Frontend..."
-            cd frontend
-            yarn install
-            yarn build
-            pm2 restart neerp-client-frontend
-            cd ..
+            # Ensure node_modules exists
+            if [ ! -d "node_modules" ]; then
+              echo "� Installing dependencies..."
+              npm install --production
+            fi
             
-            echo "✅ Frontend Updated!"
-
-      - name: 📤 Copy JAR to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          source: "./jar/*.jar"
-          target: "/var/www/neerp-client-aibi/backend/target/"
-          strip_components: 1
-
-      - name: 🔄 Restart Backend Service
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          script: |
-            echo "🔄 Restarting Client Backend..."
+            pm2 restart neerp-client-frontend || pm2 start npm --name neerp-client-frontend -- start
+            
+            echo "🔄 Restarting Backend..."
             pm2 restart neerp-client-backend
-            echo "✅ Client Deployment Complete!"
+            
+            echo "✅ Deployment Complete!"
             pm2 status
 
       - name: 📊 Deployment Status

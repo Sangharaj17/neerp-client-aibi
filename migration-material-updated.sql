@@ -34,72 +34,10 @@ INSERT INTO tbl_bracket_type (id, name) VALUES (1, 'GP BRACKET') ON CONFLICT (id
 INSERT INTO tbl_bracket_type (id, name) VALUES (2, 'COMBINATION BRACKET') ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_bracket_type_id_seq', 1, true);
 
--- tbl_counter_weights_types
-INSERT INTO tbl_counter_weights_types (id, name) VALUES (1, '1') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weights_types (id, name) VALUES (2, '2') ON CONFLICT (id) DO NOTHING;
+-- tbl_counter_weights_types - DONE
+INSERT INTO tbl_counter_weights_types (id, name) VALUES (1, '16 MM & 10 MM') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weights_types (id, name) VALUES (2, '6 MM & 10 MM') ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_counter_weights_types_id_seq', 2, true);
-
--- tbl_other_material_main
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (1, 'CABLE HENGER YELLOW', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (2, 'CAR GEAT SAFETY SWITCH ONLY FOR MANUAL LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (3, 'CARGET ANGLE ONLY FOR MANUAL LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (4, 'CARGET T ONLY FOR MANUAL LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (5, 'COTTON WEASTE 1 KG', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (6, 'CWT GUIDE CLIP SMALL WITH HARDWARE', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (7, 'DOOR OPEN BELL FOR MANUAL LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (8, 'DOOR SAFETUY SENSOR  ONLY FOR AUTOMATIC LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (9, 'EARTH - WIRE SMALL Â 0.5 MM', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (10, 'EARTH - WIRE.BIG 3 KG GALVENISE', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (11, 'EARTHING BRACKET', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (12, 'FINAL LIMIT CAMP 10FT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (13, 'FLEXIBLE PIPE 3/4"', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (14, 'GEAR OIL 90 NO', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (15, 'GEARED MACHINE UNIT 10 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (16, 'GEARED MACHINE UNIT 13 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (17, 'GEARED MACHINE UNIT 15 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (18, 'GEARED MACHINE UNIT 20 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (19, 'GEARED MACHINE UNIT 25 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (20, 'GEARED MACHINE UNIT 30 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (21, 'GEARED MACHINE UNIT 4 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (22, 'GEARED MACHINE UNIT 5 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (23, 'GEARED MACHINE UNIT 6 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (24, 'GEARED MACHINE UNIT 8 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (25, 'GEARLESS MACHINE UNIT 10 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (26, 'GEARLESS MACHINE UNIT 13 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (27, 'GEARLESS MACHINE UNIT 15 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (28, 'GEARLESS MACHINE UNIT 20 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (29, 'GEARLESS MACHINE UNIT 25 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (30, 'GEARLESS MACHINE UNIT 30 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (31, 'GEARLESS MACHINE UNIT 4 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (32, 'GEARLESS MACHINE UNIT 5 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (33, 'GEARLESS MACHINE UNIT 6 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (34, 'GEARLESS MACHINE UNIT 8 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (35, 'GREACE', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (36, 'HYDRALIC MACHINE FOR 10 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (37, 'HYDRALIC MACHINE FOR 13 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (38, 'HYDRALIC MACHINE FOR 15 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (39, 'HYDRALIC MACHINE FOR 20 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (40, 'HYDRALIC MACHINE FOR 25 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (41, 'HYDRALIC MACHINE FOR 30 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (42, 'HYDRALIC MACHINE FOR 4 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (43, 'HYDRALIC MACHINE FOR 5 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (44, 'HYDRALIC MACHINE FOR 6 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (45, 'HYDRALIC MACHINE FOR 8 PASSENGER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (46, 'JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (47, 'LANDING LOCK SET WITH HARDWARE ONLY FOR MANUAL LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (48, 'MACHINE RUBBER', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (49, 'MAGNET SQR SET', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (50, 'OVER LOAD ROPE TYPE 1 st 1', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (51, 'OVER LOAD ROPE TYPE 2 st 1', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (52, 'PENCIL READ', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (53, 'PIT SWITCH BOX', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (54, 'RCR CAMP SET OLYMPUS TYPE ONLY FOR MANUAL LIFT', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (55, 'SADDLE BOX 3/4"', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (56, 'TARMINAL PATA WITH G. CLIP BIG AND HARDWARE', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (57, 'TARMINAL SWITCH O/S TYPE', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (58, 'TRUFFING PLASTIC', true, true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_other_material_main (id, material_main_type, active, is_system_defined) VALUES (59, 'WIRE TIE', true, true) ON CONFLICT (id) DO NOTHING;
-SELECT setval('tbl_other_material_main_id_seq', 59, true);
 
 -- tbl_cabin_type - done
 INSERT INTO tbl_cabin_type (id, cabintype) VALUES (1, 'CABIN M.S POWDER COATED REGULAR') ON CONFLICT (id) DO NOTHING;
@@ -117,6 +55,46 @@ INSERT INTO tbl_cabin_type (id, cabintype) VALUES (12, 'CABIN GLASS CAPSULE CUST
 INSERT INTO tbl_cabin_type (id, cabintype) VALUES (13, 'CABIN S S Decorative') ON CONFLICT (id) DO NOTHING;
 INSERT INTO tbl_cabin_type (id, cabintype) VALUES (14, 'CABIN S S Decorative Laminated Cabin') ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_cabin_type_id_seq', 14, true);
+
+
+-- tbl other material
+INSERT INTO tbl_other_material (id, operator_type, other_material_display_name,
+ other_material_name, price, capacity_type, person_capacity_id, weight_id, machine_room_id, quantity, 
+ floors, quantity_unit, other_material_main_id) VALUES
+
+(29, NULL, 'GEARED MACHINE UNIT 4 PASSENGER','GEARED MACHINE UNIT 4 PASSENGER', 69375, 1, 1, NULL, 1, '1', NULL, '', 4 ),
+(30, NULL, 'GEARED MACHINE UNIT 6 PASSENGER','GEARED MACHINE UNIT 6 PASSENGER', 69375,1, 3, NULL, 1, '1', NULL, '', 4 ),
+(31, NULL, 'GEARED MACHINE UNIT 8 PASSENGER','GEARED MACHINE UNIT 8 PASSENGER', 89375,1, 4, NULL, 1, '1', NULL, '', 4 ),
+(32, NULL, 'GEARED MACHINE UNIT 10 PASSENGER','GEARED MACHINE UNIT 10 PASSENGER', 100625,1, 5, NULL, 1, '1', NULL, '', 4 ),
+(33, NULL, 'GEARED MACHINE UNIT 13 PASSENGER','GEARED MACHINE UNIT 13 PASSENGER', 140625,1, 6, NULL, 1, '1', NULL, '', 4 ),
+(34, NULL, 'GEARED MACHINE UNIT 15 PASSENGER','GEARED MACHINE UNIT 15 PASSENGER', 145625,1, 7, NULL, 1, '1', NULL, '', 4 ),
+(35, NULL, 'GEARED MACHINE UNIT 20 PASSENGER','GEARED MACHINE UNIT 20 PASSENGER', 210625,1, 8, NULL, 1, '1', NULL, '', 4 ),
+(36, NULL, 'GEARED MACHINE UNIT 25 PASSENGER','GEARED MACHINE UNIT 25 PASSENGER', 212500,1, 10, NULL, 1, '1', NULL, '', 4 ),
+(37, NULL, 'GEARED MACHINE UNIT 30 PASSENGER','GEARED MACHINE UNIT 30 PASSENGER', 212500,1, 13, NULL, 1, '1', NULL, '', 4 ),
+(38, NULL, 'GEARLESS MACHINE UNIT 4 PASSENGER','GEARLESS MACHINE UNIT 4 PASSENGER', 105000,1, 1, NULL, 2, '1', NULL, '', 4 ),
+(39, NULL, 'GEARLESS MACHINE UNIT 6 PASSENGER','GEARLESS MACHINE UNIT 6 PASSENGER', 106250,1, 3, NULL, 2, '1', NULL, '', 4 ),
+(40, NULL, 'GEARLESS MACHINE UNIT 8 PASSENGER','GEARLESS MACHINE UNIT 8 PASSENGER', 135000,1, 4, NULL, 2, '1', NULL, '', 4 ),
+(41, NULL, 'GEARLESS MACHINE UNIT 10 PASSENGER','GEARLESS MACHINE UNIT 10 PASSENGER', 144550,1, 5, NULL, 2, '1', NULL, '', 4 ),
+(42, NULL, 'GEARLESS MACHINE UNIT 13 PASSENGER','GEARLESS MACHINE UNIT 13 PASSENGER', 181250,1, 6, NULL, 2, '1', NULL, '', 4 ),
+(43, NULL, 'GEARLESS MACHINE UNIT 15 PASSENGER','GEARLESS MACHINE UNIT 15 PASSENGER', 194375, 1,7, NULL, 2, '1', NULL, '', 4 ),
+(44, NULL, 'GEARLESS MACHINE UNIT 20 PASSENGER', 'GEARLESS MACHINE UNIT 20 PASSENGER', 385000,1, 8, NULL, 2, '1', NULL, '', 4 ),
+(45, NULL, 'GEARLESS MACHINE UNIT 25 PASSENGER', 'GEARLESS MACHINE UNIT 25 PASSENGER', 425000,1, 10, NULL, 2, '1', NULL, '', 4 ),
+(46, NULL, 'GEARLESS MACHINE UNIT 30 PASSENGER','GEARLESS MACHINE UNIT 30 PASSENGER', 487500, 1,13, NULL, 2, '1', NULL, '', 4 ),
+(47, NULL, 'HYDRALIC MACHINE FOR 4 PASSENGER','HYDRALIC MACHINE FOR 4 PASSENGER', 212500,1, 1, NULL, 3, '1', NULL, '', 4 ),
+(48, NULL, 'HYDRALIC MACHINE FOR 6 PASSENGER', 'HYDRALIC MACHINE FOR 6 PASSENGER', 212500,1, 3, NULL, 3, '1', NULL, '', 4 ),
+(49, NULL, 'HYDRALIC MACHINE FOR 8 PASSENGER', 'HYDRALIC MACHINE FOR 8 PASSENGER', 231250,1, 4, NULL, 3, '1', NULL, '', 4 ),
+(50, NULL, 'HYDRALIC MACHINE FOR 10 PASSENGER', 'HYDRALIC MACHINE FOR 10 PASSENGER', 250000, 1,5, NULL, 3, '1', NULL, '', 4 ),
+(51, NULL, 'HYDRALIC MACHINE FOR 13 PASSENGER', 'HYDRALIC MACHINE FOR 13 PASSENGER', 268750,1, 6, NULL, 3, '1', NULL, '', 4 ),
+(52, NULL, 'HYDRALIC MACHINE FOR 15 PASSENGER', 'HYDRALIC MACHINE FOR 15 PASSENGER', 268750, 1,7, NULL, 3, '1', NULL, '', 4 ),
+(53, NULL, 'HYDRALIC MACHINE FOR 20 PASSENGER', 'HYDRALIC MACHINE FOR 20 PASSENGER', 343750,1, 8, NULL, 3, '1', NULL, '', 4 ),
+(54, NULL, 'HYDRALIC MACHINE FOR 25 PASSENGER','HYDRALIC MACHINE FOR 25 PASSENGER', 437500,1, 10, NULL, 3, '1', NULL, '', 4 ),
+(55, NULL, 'HYDRALIC MACHINE FOR 30 PASSENGER', 'HYDRALIC MACHINE FOR 30 PASSENGER', 437500,1, 13, NULL, 3, '1', NULL, '', 4 ),
+(56, NULL, 'GEARED MACHINE UNIT 5 PASSENGER', 'GEARED MACHINE UNIT 5 PASSENGER', 69375,1, 2, NULL, 1, '1', NULL, '', 4 ),
+(57, NULL, 'GEARLESS MACHINE UNIT 5 PASSENGER', 'GEARLESS MACHINE UNIT 5 PASSENGER', 105000,1, 2, NULL, 2, '1', NULL, '', 4 ),
+(58, NULL, 'HYDRALIC MACHINE FOR 5 PASSENGER', 'HYDRALIC MACHINE FOR 5 PASSENGER', 212500,1, 2, NULL, 3, '1', NULL, '', 4 ),
+(59, NULL, 'GEARED MACHINE UNIT 10 PASSENGER', 'GEARED MACHINE UNIT 10 PASSENGER', 45000,1, 5, NULL, 1, '1', NULL, '', 4 ),
+(60, NULL, 'GEARED MACHINE UNIT 10 PASSENGER', 'GEARED MACHINE UNIT 10 PASSENGER', 45000,1, 5, NULL, 1, '1', NULL, '', 4 );
+
 
 -- tbl_cabin_subtype - done
 INSERT INTO tbl_cabin_subtype (id, cabin_name, cabin_sub_name, prize, person_capacity_id, capacity_type, weight_id) VALUES 
@@ -294,27 +272,28 @@ INSERT INTO tbl_cabin_flooring (flooring_id, flooring_name, price) VALUES (5, 'S
 INSERT INTO tbl_cabin_flooring (flooring_id, flooring_name, price) VALUES (6, 'Rubber Anti-Skid Flooring', 1524) ON CONFLICT (flooring_id) DO NOTHING;
 SELECT setval('tbl_cabin_flooring_flooring_id_seq', 6, true);
 
--- tbl_operator_elevator
+-- tbl_operator_elevator - done
 INSERT INTO tbl_operator_elevator (id, name) VALUES (1, 'Manual') ON CONFLICT (id) DO NOTHING;
 INSERT INTO tbl_operator_elevator (id, name) VALUES (2, 'Automatic') ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_operator_elevator_id_seq', 2, true);
 
--- tbl_type_of_lift
+-- tbl_type_of_lift - done
 INSERT INTO tbl_type_of_lift (lift_type_id, lift_type_name) VALUES (1, 'GEARED') ON CONFLICT (lift_type_id) DO NOTHING;
 INSERT INTO tbl_type_of_lift (lift_type_id, lift_type_name) VALUES (2, 'GEARLESS') ON CONFLICT (lift_type_id) DO NOTHING;
 INSERT INTO tbl_type_of_lift (lift_type_id, lift_type_name) VALUES (3, 'HYDRALIC') ON CONFLICT (lift_type_id) DO NOTHING;
 SELECT setval('tbl_type_of_lift_lift_type_id_seq', 3, true);
 
--- tbl_machine_room
+-- tbl_machine_room - done
 INSERT INTO tbl_machine_room (id, machine_room_name) VALUES (1, 'MACHINE ROOM') ON CONFLICT (id) DO NOTHING;
 INSERT INTO tbl_machine_room (id, machine_room_name) VALUES (2, 'MACHINE ROOM LESS') ON CONFLICT (id) DO NOTHING;
 INSERT INTO tbl_machine_room (id, machine_room_name) VALUES (3, 'Machine Room Elevator') ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_machine_room_id_seq', 3, true);
 
--- tbl_lop_type
+-- tbl_lop_type - done
 INSERT INTO tbl_lop_type (id, lop_name, operator_type) VALUES (1, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH', 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_type (id, lop_name, operator_type) VALUES (2, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED LINEN FINISH', 1) ON CONFLICT (id) DO NOTHING;
-SELECT setval('tbl_lop_type_id_seq', 2, true);
+INSERT INTO tbl_lop_type (id, lop_name, operator_type) VALUES (2, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH', 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_type (id, lop_name, operator_type) VALUES (3, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH', 1) ON CONFLICT (id) DO NOTHING;
+SELECT setval('tbl_lop_type_id_seq', 3, true);
 
 -- tbl_car_door_type - done
 INSERT INTO tbl_car_door_type (car_door_id, car_door_type, operator_type) VALUES (1, 'IMPERFORATE MANUAL CABIN DOOR', 1) ON CONFLICT (car_door_id) DO NOTHING;
@@ -335,7 +314,7 @@ INSERT INTO tbl_car_door_type (car_door_id, car_door_type, operator_type) VALUES
 INSERT INTO tbl_car_door_type (car_door_id, car_door_type, operator_type) VALUES (16, 'M.S TELESCOPIC MANUAL CABIN DOOR WITH SMALL VISION', 1) ON CONFLICT (car_door_id) DO NOTHING;
 SELECT setval('tbl_car_door_type_car_door_id_seq', 16, true);
 
--- tbl_landing_door_type
+-- tbl_landing_door_type - done
 INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (1, 'M S COLLAPSIBLE MANUAL LANDING DOOR', 1) ON CONFLICT (door_type_id) DO NOTHING;
 INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (2, 'M.S.SWING MANUAL LANDING DOOR', 1) ON CONFLICT (door_type_id) DO NOTHING;
 INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (3, 'IMPERFORATE MANUAL LANDING DOOR', 1) ON CONFLICT (door_type_id) DO NOTHING;
@@ -353,7 +332,7 @@ INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUE
 INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (15, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION  GLASS DOOR', 2) ON CONFLICT (door_type_id) DO NOTHING;
 INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (16, 'M.S.AUTOMATIC CENTER OPENING 4 PANEL LANDING DOOR', 2) ON CONFLICT (door_type_id) DO NOTHING;
 INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (17, 'S.S.AUTOMATIC CENTER OPENING 4 PANEL LANDING DOOR', 2) ON CONFLICT (door_type_id) DO NOTHING;
-INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (18, 'M S Collapsible Car Door', 1) ON CONFLICT (door_type_id) DO NOTHING;
+INSERT INTO tbl_landing_door_type (door_type_id, door_type, operator_type) VALUES (18, 'COLLAPSIBLE MANUAL LANDING DOOR', 1) ON CONFLICT (door_type_id) DO NOTHING;
 SELECT setval('tbl_landing_door_type_door_type_id_seq', 18, true);
 
 -- tbl_ard - done
@@ -431,78 +410,79 @@ INSERT INTO tbl_car_door_subtype (id, operator_type, car_door_type, car_door_sub
 SELECT setval('tbl_car_door_subtype_id_seq', 63, true);
 
 
+
 -- tbl_landing_door_subtype
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (1, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 600 CLEAR OPENING', 1, 6250, 1, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (2, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 700 CLEAR OPENING', 1, 4375, 1, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (3, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 800 CLEAR OPENING', 1, 4375, 1, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (4, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 900 CLEAR OPENING', 1, 6250, 1, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (5, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 1000 CLEAR OPENING', 1, 12500, 1, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (8, 'M.S.SWING MANUAL LANDING DOOR WITH DOOR FRAME 600 CLEAR OPENING', 1, 13438, 1, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (9, 'M.S.SWING MANUAL LANDING DOOR WITH DOOR FRAME 700 CLEAR OPENING', 1, 13650, 1, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (10, 'M.S.SWING MANUAL LANDING DOOR WITH DOOR FRAME 800 CLEAR OPENING', 1, 14550, 1, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (11, 'IMPERFORATE MANUAL LANDING DOOR WITH DOOR FRAME 600 CLEAR OPENING', 1, 10000, 3, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (12, 'IMPERFORATE MANUAL LANDING DOOR WITH DOOR FRAME 700 CLEAR OPENING', 1, 10625, 3, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (13, 'IMPERFORATE MANUAL LANDING DOOR WITH DOOR FRAME 800 CLEAR OPENING', 1, 11875, 3, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (14, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 600 CLEAR OPENING', 1, 13838, 4, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (15, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 700 CLEAR OPENING', 1, 14775, 4, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (16, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 800 CLEAR OPENING', 1, 15588, 4, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (17, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 900 CLEAR OPENING', 1, 16400, 4, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (18, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 600 CLEAR OPENING', 1, 27500, 5, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (19, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 700 CLEAR OPENING', 1, 28913, 5, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (20, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 800 CLEAR OPENING', 1, 30750, 5, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (21, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 900 CLEAR OPENING', 1, 32588, 5, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (22, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 600 CLEAR OPENING', 1, 16875, 6, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (23, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 700 CLEAR OPENING', 1, 16875, 6, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (24, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 800 CLEAR OPENING', 1, 16875, 6, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (25, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 900 CLEAR OPENING', 1, 19375, 6, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (26, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 600 CLEAR OPENING', 1, 29375, 7, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (27, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 700 CLEAR OPENING', 1, 29375, 7, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (28, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 800 CLEAR OPENING', 1, 30000, 7, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (29, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 900 CLEAR OPENING', 1, 33125, 7, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (30, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 17500, 8, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (31, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 17500, 8, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (32, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 21250, 8, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (33, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 29375, 8, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (34, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 35000, 8, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (35, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 27000, 9, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (36, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 27000, 9, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (37, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 29375, 9, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (38, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 33750, 9, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (39, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 38750, 9, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (40, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 17500, 10, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (41, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 17500, 10, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (42, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 21250, 10, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (43, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 29000, 10, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (44, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 35000, 10, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (45, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 25625, 11, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (46, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 25625, 11, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (47, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 29375, 11, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (48, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 33750, 11, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (49, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 38750, 11, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (50, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 35000, 12, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (51, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 35000, 12, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (52, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 36250, 12, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (53, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 36250, 12, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (54, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 38750, 12, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (55, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 40000, 13, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (56, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 40000, 13, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (57, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 42500, 13, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (58, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 43750, 13, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (59, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 46250, 13, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (60, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 35000, 14, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (61, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 35000, 14, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (62, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 36250, 14, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (63, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 36250, 14, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (64, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 38750, 14, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (65, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 40000, 15, 700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (66, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 40000, 15, 800) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (67, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 42500, 15, 900) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (68, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 43750, 15, 1000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (69, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 46250, 15, 1200) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (70, 'M.S.AUTOMATIC CENTER OPENING 4 PANEL LANDING DOOR WITH SMALL VISSION 600 CLEAR OPENING', 2, 32500, 16, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (71, 'S.S.AUTOMATIC CENTER OPENING 4 PANEL LANDING DOOR WITH SMALL VISSION 600 CLEAR OPENING', 2, 41250, 17, 600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_landing_door_subtype (id, name, operator_type, price, main_door_type, size) VALUES (72, 'M S COLLAPSIBLE MANUAL LANDING DOOR', 1, 5000, 1, 0) ON CONFLICT (id) DO NOTHING;
-SELECT setval('tbl_landing_door_subtype_id_seq', 72, true);
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (1, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 600 CLEAR OPENING', 1, 6250, 18, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (2, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 700 CLEAR OPENING', 1, 4375, 18, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (3, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 800 CLEAR OPENING', 1, 4375, 18, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (4, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 900 CLEAR OPENING', 1, 6250, 18, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (5, 'COLLAPSIBLE MANUAL LANDING DOOR WITH DOOR FRAME 1000 CLEAR OPENING', 1, 12500, 18, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (8, 'M.S.SWING MANUAL LANDING DOOR WITH DOOR FRAME 600 CLEAR OPENING', 1, 13438, 2, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (9, 'M.S.SWING MANUAL LANDING DOOR WITH DOOR FRAME 700 CLEAR OPENING', 1, 13650, 2, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (10, 'M.S.SWING MANUAL LANDING DOOR WITH DOOR FRAME 800 CLEAR OPENING', 1, 14550, 2, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (11, 'IMPERFORATE MANUAL LANDING DOOR WITH DOOR FRAME 600 CLEAR OPENING', 1, 10000, 3, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (12, 'IMPERFORATE MANUAL LANDING DOOR WITH DOOR FRAME 700 CLEAR OPENING', 1, 10625, 3, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (13, 'IMPERFORATE MANUAL LANDING DOOR WITH DOOR FRAME 800 CLEAR OPENING', 1, 11875, 3, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (14, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 600 CLEAR OPENING', 1, 13838, 4, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (15, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 700 CLEAR OPENING', 1, 14775, 4, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (16, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 800 CLEAR OPENING', 1, 15588, 4, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (17, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 900 CLEAR OPENING', 1, 16400, 4, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (18, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 600 CLEAR OPENING', 1, 27500, 5, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (19, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 700 CLEAR OPENING', 1, 28913, 5, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (20, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 800 CLEAR OPENING', 1, 30750, 5, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (21, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH SMALL VISION & DOOR FRAME IN 900 CLEAR OPENING', 1, 32588, 5, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (22, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 600 CLEAR OPENING', 1, 16875, 6, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (23, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 700 CLEAR OPENING', 1, 16875, 6, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (24, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 800 CLEAR OPENING', 1, 16875, 6, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (25, 'M.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 900 CLEAR OPENING', 1, 19375, 6, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (26, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 600 CLEAR OPENING', 1, 29375, 7, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (27, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 700 CLEAR OPENING', 1, 29375, 7, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (28, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 800 CLEAR OPENING', 1, 30000, 7, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (29, 'S.S.TELESCOPIC MANUAL LANDING DOOR WITH FULL VISION GLASS DOOR & DOOR FRAME IN 900 CLEAR OPENING', 1, 33125, 7, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (30, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 17500, 8, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (31, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 17500, 8, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (32, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 21250, 8, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (33, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 29375, 8, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (34, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 35000, 8, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (35, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 27000, 9, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (36, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 27000, 9, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (37, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 29375, 9, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (38, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 33750, 9, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (39, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 38750, 9, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (40, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 17500, 10, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (41, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 17500, 10, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (42, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 21250, 10, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (43, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 29000, 10, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (44, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 35000, 10, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (45, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 700 CLEAR OPENING', 2, 25625, 11, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (46, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 800 CLEAR OPENING', 2, 25625, 11, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (47, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 900 CLEAR OPENING', 2, 29375, 11, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (48, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1000 CLEAR OPENING', 2, 33750, 11, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (49, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH SMALL VISSION 1200 CLEAR OPENING', 2, 38750, 11, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (50, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 35000, 12, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (51, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 35000, 12, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (52, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 36250, 12, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (53, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 36250, 12, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (54, 'M.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 38750, 12, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (55, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 40000, 13, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (56, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 40000, 13, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (57, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 42500, 13, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (58, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 43750, 13, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (59, 'S.S.AUTOMATIC TELESCOPIC OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 46250, 13, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (60, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 35000, 14, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (61, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 35000, 14, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (62, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 36250, 14, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (63, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 36250, 14, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (64, 'M.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 38750, 14, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (65, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 700 CLEAR OPENING', 2, 40000, 15, 700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (66, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 800 CLEAR OPENING', 2, 40000, 15, 800) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (67, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 900 CLEAR OPENING', 2, 42500, 15, 900) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (68, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1000 CLEAR OPENING', 2, 43750, 15, 1000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (69, 'S.S.AUTOMATIC CENTER OPENING LANDING DOOR WITH FULL VISSION GLASS DOOR 1200 CLEAR OPENING', 2, 46250, 15, 1200) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (70, 'M.S.AUTOMATIC CENTER OPENING 4 PANEL LANDING DOOR WITH SMALL VISSION 600 CLEAR OPENING', 2, 32500, 16, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (71, 'S.S.AUTOMATIC CENTER OPENING 4 PANEL LANDING DOOR WITH SMALL VISSION 600 CLEAR OPENING', 2, 41250, 17, 600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_landing_door_subtype (id, name, operator_type, prize, main_door_type, size) VALUES (72, 'M S COLLAPSIBLE MANUAL LANDING DOOR', 1, 5000, 1, 0) ON CONFLICT (id) DO NOTHING;
+SELECT setval('tbl_landing_door_subtype_id_seq', 72);
 
 -- tbl_control_panel_type - done
 INSERT INTO tbl_control_panel_type (id, control_panel_type, machine_type, operator_type, price, person_capacity_id, capacity_type, weight_id) VALUES (1, 'CONTROL PANEL FOR GEARED MANUAL LIFT WITH V3F DRIVE FOR 4 person_capacity_id 5 HP', 1, 1, 75000, 1, 1, NULL) ON CONFLICT (id) DO NOTHING;
@@ -673,245 +653,245 @@ INSERT INTO tbl_cop (id, cop_name, operator_type, floors, price, cop_type) VALUE
 INSERT INTO tbl_cop (id, cop_name, operator_type, floors, price, cop_type) VALUES (100, 'C.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR AUTOMATIC LIFT G+25', 2, 26, 43125, '') ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_cop_id_seq', 100, true);
 
--- tbl_counter_frame
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (1, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 4 PASANGER', '1', '1', '04 Persons/272 Kg. ', 30000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (2, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 6 PASANGER', '1', '1', '06 Persons/408 Kg.', 30000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (3, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 8 PASANGER', '1', '1', '08 Persons/544 Kg. ', 31875) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (4, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 10 PASANGER', '1', '1', '10 Persons/680 Kg. ', 35000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (5, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 12 PASANGER', '1', '1', '12 Persons/669 Kg. ', 37500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (6, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 13 PASANGER', '1', '1', '13 Persons/884 Kg.', 41250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (7, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 15 PASANGER', '1', '1', '15 Persons/1020 Kg.', 43750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (8, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 18 PASANGER', '1', '1', '18 Persons/1224 Kg.', 56250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (9, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 20 PASANGER', '1', '1', '20 Persons/1360 Kg.', 81250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (10, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 22 PASANGER', '1', '1', '22 persons/ 1496 Kg.', 93750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (11, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 25 PASANGER', '1', '1', '25 persons/ 1700 Kg.', 112500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (12, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 30 PASANGER', '1', '1', '30 persons/ 2040 Kg.', 118750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (13, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 4 PASANGER', '2', '1', '04 Persons/272 Kg. ', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (14, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 6 PASANGER', '2', '1', '06 Persons/408 Kg.', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (15, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 8 PASANGER', '2', '1', '08 Persons/544 Kg. ', 60000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (16, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 10 PASANGER', '2', '1', '10 Persons/680 Kg. ', 67500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (17, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 12 PASANGER', '2', '1', '12 Persons/669 Kg. ', 70000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (18, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 13 PASANGER', '2', '1', '13 Persons/884 Kg.', 72500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (19, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 15 PASANGER', '2', '1', '15 Persons/1020 Kg.', 106250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (20, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 18 PASANGER', '2', '1', '18 Persons/1224 Kg.', 117500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (21, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 20 PASANGER', '2', '1', '20 Persons/1360 Kg.', 131250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (22, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 22 PASANGER', '2', '1', '22 persons/ 1496 Kg.', 137500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (23, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 25 PASANGER', '2', '1', '25 persons/ 1700 Kg.', 150000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (24, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 30 PASANGER', '2', '1', '30 persons/ 2040 Kg.', 156250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (25, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 4 PASANGER', '2', '2', '04 Persons/272 Kg. ', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (26, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 6 PASANGER', '2', '2', '06 Persons/408 Kg.', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (27, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 8 PASANGER', '2', '2', '08 Persons/544 Kg. ', 60000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (28, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 10 PASANGER', '2', '2', '10 Persons/680 Kg. ', 67500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (29, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 12 PASANGER', '2', '2', '12 Persons/669 Kg. ', 70000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (30, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 13 PASANGER', '2', '2', '13 Persons/884 Kg.', 72500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (31, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 15 PASANGER', '2', '2', '15 Persons/1020 Kg.', 106250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (32, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 18 PASANGER', '2', '2', '18 Persons/1224 Kg.', 117500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (33, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 20 PASANGER', '2', '2', '20 Persons/1360 Kg.', 131250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (34, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 22 PASANGER', '2', '2', '22 persons/ 1496 Kg.', 137500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (35, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 25 PASANGER', '2', '2', '25 persons/ 1700 Kg.', 150000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (36, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 30 PASANGER', '2', '2', '30 persons/ 2040 Kg.', 156250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (37, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 4 PASANGER', '2', '3', '04 Persons/272 Kg. ', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (38, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 6 PASANGER', '2', '3', '06 Persons/408 Kg.', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (39, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 8 PASANGER', '2', '3', '08 Persons/544 Kg. ', 60000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (40, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 10 PASANGER', '2', '3', '10 Persons/680 Kg. ', 67500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (41, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 12 PASANGER', '2', '3', '12 Persons/669 Kg. ', 72500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (42, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 13 PASANGER', '2', '3', '13 Persons/884 Kg.', 92500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (43, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 15 PASANGER', '2', '3', '15 Persons/1020 Kg.', 106250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (44, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 18 PASANGER', '2', '3', '18 Persons/1224 Kg.', 117500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (45, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 20 PASANGER', '2', '3', '20 Persons/1360 Kg.', 131250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (46, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 22 PASANGER', '2', '3', '22 persons/ 1496 Kg.', 137500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (47, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 25 PASANGER', '2', '3', '25 persons/ 1700 Kg.', 150000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (48, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 30 PASANGER', '2', '3', '30 persons/ 2040 Kg.', 156250) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (49, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1 ST 1 STANDARD ROPING 5 PASANGER', '1', '1', '05 Persons/340 Kg.', 30000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (50, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 5 PASANGER', '2', '1', '05 Persons/340 Kg.', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (51, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 5 PASANGER', '2', '2', '05 Persons/340 Kg.', 58750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, operator_type, passenger, price) VALUES (52, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 5 PASANGER', '2', '3', '05 Persons/340 Kg.', 58750) ON CONFLICT (id) DO NOTHING;
+-- tbl_counter_frame -- done
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (1, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 4 PASANGER', 1, 1,1, 1,NULL, 30000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (2, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 6 PASANGER', 1, 1,1, 3, NULL, 30000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (3, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 8 PASANGER', 1, 1,1, 4, NULL, 31875) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (4, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 10 PASANGER', 1, 1,1, 5, NULL, 35000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (5, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 12 PASANGER', 1, 1,1, 12, NULL, 37500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (6, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 13 PASANGER', 1, 1,1, 6, NULL, 41250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (7, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 15 PASANGER', 1, 1,1, 7, NULL, 43750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (8, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 18 PASANGER', 1, 1,1, 11,NULL, 56250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (9, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 20 PASANGER', 1, 1,1, 8, NULL, 81250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (10, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 22 PASANGER', 1, 1,1, 9, NULL, 93750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (11, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 25 PASANGER', 1, 1,1, 10, NULL, 112500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (12, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1ST 1 STANDARD ROPING 30 PASANGER', 1, 1,1, 13, NULL, 118750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (13, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 4 PASANGER', 2, 1,1, 1, NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (14, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 6 PASANGER', 2, 1,1, 3,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (15, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 8 PASANGER', 2, 1,1, 4, NULL, 60000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (16, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 10 PASANGER', 2, 1,1, 5,NULL, 67500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (17, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 12 PASANGER', 2, 1,1, 12,NULL, 70000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (18, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 13 PASANGER', 2, 1,1, 6,NULL, 72500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (19, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 15 PASANGER', 2, 1,1, 7,NULL, 106250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (20, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 18 PASANGER', 2, 1,1, 11,NULL, 117500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (21, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 20 PASANGER', 2, 1,1, 8,NULL, 131250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (22, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 22 PASANGER', 2, 1,1, 9,NULL, 137500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (23, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 25 PASANGER', 2, 1,1, 10,NULL, 150000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (24, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 30 PASANGER', 2, 1,1, 13,NULL, 156250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (25, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 4 PASANGER', 3, 2,1, 1,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (26, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 6 PASANGER', 3, 2,1, 3,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (27, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 8 PASANGER', 3, 2,1, 4,NULL, 60000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (28, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 10 PASANGER', 3, 2,1, 5,NULL, 67500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (29, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 12 PASANGER', 3, 2,1, 12,NULL, 70000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (30, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 13 PASANGER', 3, 2,1, 6,NULL, 72500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (31, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 15 PASANGER', 3, 2,1, 7,NULL, 106250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (32, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 18 PASANGER', 3, 2,1, 11,NULL, 117500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (33, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 20 PASANGER', 3, 2,1, 8,NULL, 131250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (34, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 22 PASANGER', 3, 2,1, 9,NULL, 137500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (35, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 25 PASANGER', 3, 2,1, 10,NULL, 150000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (36, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 30 PASANGER', 3, 2,1, 13,NULL, 156250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (37, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 4 PASANGER', 4, 3,1, 1,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (38, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 6 PASANGER', 4, 3,1, 3,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (39, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 8 PASANGER', 4, 3,1, 4,NULL, 60000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (40, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 10 PASANGER', 4, 3,1, 5,NULL, 67500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (41, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 12 PASANGER', 4, 3,1, 12,NULL, 72500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (42, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 13 PASANGER', 4, 3,1, 6,NULL, 92500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (43, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 15 PASANGER', 4, 3,1, 7,NULL, 106250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (44, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 18 PASANGER', 4, 3,1, 11,NULL, 117500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (45, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 20 PASANGER', 4, 3,1, 8,NULL, 131250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (46, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 22 PASANGER', 4, 3,1, 9,NULL, 137500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (47, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 25 PASANGER', 4, 3,1, 10,NULL, 150000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (48, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 30 PASANGER', 4, 3,1, 13,NULL, 156250) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (49, 'CAR & COUNTER WEIGHT FRAME SET GEARED 1 ST 1 STANDARD ROPING 5 PASANGER', 1, 1,1, 2,NULL, 30000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (50, 'CAR & COUNTER WEIGHT FRAME SET GEARED 2 ST 1 ROPING WITH PULLY 5 PASANGER', 2, 1,1, 2,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (51, 'CAR & COUNTER WEIGHT FRAME SET GEARELESS 2 ST 1 ROPING WITH PULLY 5 PASANGER', 3, 2,1, 2,NULL, 58750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_frame (id, counter_frame_name, counter_frame_type, machine_type_id, capacity_type, person_capacity_id, weight_id, price) VALUES (52, 'CAR & COUNTER WEIGHT FRAME SET HYDRALIC 2 ST 1 ROPING WITH PULLY 5 PASANGER', 4, 3,1, 2,NULL, 58750) ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_counter_frame_id_seq', 52, true);
 
--- tbl_fastener
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (1, 'HARDWARE WITH FASTNER For G+1', 'G+1', 4000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (2, 'HARDWARE WITH FASTNER For G+2', 'G+2', 5500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (3, 'HARDWARE WITH FASTNER For G+3', 'G+3', 7000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (4, 'HARDWARE WITH FASTNER For G+4', 'G+4', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (5, 'HARDWARE WITH FASTNER For G+5', 'G+5', 10000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (6, 'HARDWARE WITH FASTNER For G+6', 'G+6', 11500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (7, 'HARDWARE WITH FASTNER For G+7', 'G+7', 13000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (8, 'HARDWARE WITH FASTNER For G+8', 'G+8', 14500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (9, 'HARDWARE WITH FASTNER For G+9', 'G+9', 16000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (10, 'HARDWARE WITH FASTNER For G+10', 'G+10', 17500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (11, 'HARDWARE WITH FASTNER For G+11', 'G+11', 19000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (12, 'HARDWARE WITH FASTNER For G+12', 'G+12', 20500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (13, 'HARDWARE WITH FASTNER For G+13', 'G+13', 22000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (14, 'HARDWARE WITH FASTNER For G+14', 'G+14', 23500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (15, 'HARDWARE WITH FASTNER For G+15', 'G+15', 25000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (16, 'HARDWARE WITH FASTNER For G+16', 'G+16', 26500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (17, 'HARDWARE WITH FASTNER For G+17', 'G+17', 28000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (18, 'HARDWARE WITH FASTNER For G+18', 'G+18', 29500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (19, 'HARDWARE WITH FASTNER For G+19', 'G+19', 31000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (20, 'HARDWARE WITH FASTNER For G+20', 'G+20', 32500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (21, 'HARDWARE WITH FASTNER For G+21', 'G+21', 34000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (22, 'HARDWARE WITH FASTNER For G+22', 'G+22', 35500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (23, 'HARDWARE WITH FASTNER For G+23', 'G+23', 37000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (24, 'HARDWARE WITH FASTNER For G+24', 'G+24', 38500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (25, 'HARDWARE WITH FASTNER For G+25', 'G+25', 40000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (49, 'HARDWARE WITH FASTNER For G+26', 'G+26', 41500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (50, 'HARDWARE WITH FASTNER For G+27', 'G+27', 43000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (51, 'HARDWARE WITH FASTNER For G+28', 'G+28', 44500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (52, 'HARDWARE WITH FASTNER For G+29', 'G+29', 46000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (53, 'HARDWARE WITH FASTNER For G+30', 'G+30', 47500) ON CONFLICT (id) DO NOTHING;
-SELECT setval('tbl_fastener_id_seq', 53, true);
+-- tbl_fastener - done
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (1, 'HARDWARE WITH FASTNER For G+1', 2, 4000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (2, 'HARDWARE WITH FASTNER For G+2', 3, 5500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (3, 'HARDWARE WITH FASTNER For G+3', 4, 7000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (4, 'HARDWARE WITH FASTNER For G+4', 5, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (5, 'HARDWARE WITH FASTNER For G+5', 6, 10000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (6, 'HARDWARE WITH FASTNER For G+6', 7, 11500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (7, 'HARDWARE WITH FASTNER For G+7', 8, 13000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (8, 'HARDWARE WITH FASTNER For G+8', 9, 14500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (9, 'HARDWARE WITH FASTNER For G+9', 10, 16000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (10, 'HARDWARE WITH FASTNER For G+10', 11, 17500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (11, 'HARDWARE WITH FASTNER For G+11', 12, 19000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (12, 'HARDWARE WITH FASTNER For G+12', 13, 20500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (13, 'HARDWARE WITH FASTNER For G+13', 14, 22000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (14, 'HARDWARE WITH FASTNER For G+14', 15, 23500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (15, 'HARDWARE WITH FASTNER For G+15', 16, 25000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (16, 'HARDWARE WITH FASTNER For G+16', 17, 26500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (17, 'HARDWARE WITH FASTNER For G+17', 18, 28000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (18, 'HARDWARE WITH FASTNER For G+18', 19, 29500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (19, 'HARDWARE WITH FASTNER For G+19', 20, 31000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (20, 'HARDWARE WITH FASTNER For G+20', 21, 32500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (21, 'HARDWARE WITH FASTNER For G+21', 22, 34000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (22, 'HARDWARE WITH FASTNER For G+22', 23, 35500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (23, 'HARDWARE WITH FASTNER For G+23', 24, 37000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (24, 'HARDWARE WITH FASTNER For G+24', 25, 38500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (25, 'HARDWARE WITH FASTNER For G+25', 26, 40000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (26, 'HARDWARE WITH FASTNER For G+26', 27, 41500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (27, 'HARDWARE WITH FASTNER For G+27', 28, 43000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (28, 'HARDWARE WITH FASTNER For G+28', 29, 44500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (29, 'HARDWARE WITH FASTNER For G+29', 30, 46000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_fastener (id, fastener_name, floors, price) VALUES (30, 'HARDWARE WITH FASTNER For G+30', 31, 47500) ON CONFLICT (id) DO NOTHING;
+SELECT setval('tbl_fastener_id_seq', 30, true);
 
--- tbl_governor_rope
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (65, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+1', 1625, NULL, '20 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (66, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+2', 2275, NULL, '28 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (67, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+3', 2600, NULL, '32 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (68, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+4', 3250, NULL, '40 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (70, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+6', 4225, NULL, '52 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (71, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+7', 4713, NULL, '58 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (72, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+8', 5200, NULL, '64 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (73, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+9', 5688, NULL, '70 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (74, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+10', 6094, NULL, '75 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (75, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+11', 6500, NULL, '80 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (76, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+12', 6988, NULL, '86 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (77, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+13', 7475, NULL, '92 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (78, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+14', 7963, NULL, '98 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (79, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+15', 8450, NULL, '104 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (80, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+16', 8938, NULL, '110 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (81, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+17', 9425, NULL, '116 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (82, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+18', 9913, NULL, '122 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (83, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+19', 10400, NULL, '128 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (84, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+20', 10888, NULL, '134 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (85, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+21', 11375, NULL, '140 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (86, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+22', 11863, NULL, '146 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (87, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+23', 12350, NULL, '152 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (88, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+24', 12838, NULL, '158 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (89, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+25', 13325, NULL, '164 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (90, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+26', 13813, NULL, '170 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (91, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+27', 14300, NULL, '176 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (92, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+28', 14788, NULL, '182 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (93, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+29', 15275, NULL, '188 mts') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (94, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+30', 15763, NULL, '194 mts') ON CONFLICT (id) DO NOTHING;
-SELECT setval('tbl_governor_rope_id_seq', 94, true);
+-- tbl_governor_rope -done
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (1, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+1', 1625, 2, '20') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (2, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+2', 2275, 3, '28') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (3, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+3', 2600, 4, '32') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (4, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+4', 3250, 5, '40') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (5, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+6', 4225, 7, '52') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (6, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+7', 4713, 8, '58') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (7, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+8', 5200, 9, '64') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (8, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+9', 5688, 10, '70') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (9, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+10', 6094, 11, '75') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (10, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+11', 6500, 12, '80') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (11, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+12', 6988, 13, '86') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (12, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+13', 7475, 14, '92') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (13, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+14', 7963, 15, '98') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (14, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+15', 8450, 16, '104') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (15, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+16', 8938, 17, '110') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (16, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+17', 9425, 18, '116') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (17, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+18', 9913, 19, '122') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (18, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+19', 10400, 20, '128') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (19, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+20', 10888, 21, '134') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (20, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+21', 11375, 22, '140') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (21, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+22', 11863, 23, '146') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (22, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+23', 12350, 24, '152') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (23, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+24', 12838, 25, '158') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (24, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+25', 13325, 26, '164') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (25, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+26', 13813, 27, '170') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (26, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+27', 14300, 28, '176') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (27, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+28', 14788, 29, '182') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (28, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+29', 15275, 30, '188') ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_governor_rope (id, governor_name, prize, floor_id, quantity) VALUES (29, 'OVERSPEED GOVERNER SAFETY ROPE 8 MM G+30', 15763, 31, '194') ON CONFLICT (id) DO NOTHING;
+SELECT setval('tbl_governor_rope_id_seq', 29, true);
 
--- tbl_harness
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (1, 'WIRING PLUGABLE HARNES FOR G+1', 13750, 'G+1') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (1, 'WIRING PLUGABLE HARNES FOR G+2', 15625, 'G+2') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (3, 'WIRING PLUGABLE HARNES FOR G+3', 15625, 'G+3') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (4, 'WIRING PLUGABLE HARNES FOR G+4', 16875, 'G+4') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (5, 'WIRING PLUGABLE HARNES FOR G+5', 19375, 'G+5') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (6, 'WIRING PLUGABLE HARNES FOR G+6', 21875, 'G+6') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (7, 'WIRING PLUGABLE HARNES FOR G+7', 24375, 'G+7') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (8, 'WIRING PLUGABLE HARNES FOR G+8', 26875, 'G+8') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (9, 'WIRING PLUGABLE HARNES FOR G+9', 29375, 'G+9') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (10, 'WIRING PLUGABLE HARNES FOR G+10', 31875, 'G+10') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (11, 'WIRING PLUGABLE HARNES FOR G+11', 34375, 'G+11') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (12, 'WIRING PLUGABLE HARNES FOR G+12', 36875, 'G+12') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (13, 'WIRING PLUGABLE HARNES FOR G+13', 39375, 'G+13') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (14, 'WIRING PLUGABLE HARNES FOR G+14', 41875, 'G+14') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (15, 'WIRING PLUGABLE HARNES FOR G+15', 44375, 'G+15') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (16, 'WIRING PLUGABLE HARNES FOR G+16', 46875, 'G+16') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (17, 'WIRING PLUGABLE HARNES FOR G+17', 49375, 'G+17') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (18, 'WIRING PLUGABLE HARNES FOR G+18', 51875, 'G+18') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (19, 'WIRING PLUGABLE HARNES FOR G+19', 54375, 'G+19') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (20, 'WIRING PLUGABLE HARNES FOR G+20', 56875, 'G+20') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (21, 'WIRING PLUGABLE HARNES FOR G+21', 59375, 'G+21') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (22, 'WIRING PLUGABLE HARNES FOR G+22', 61875, 'G+22') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (23, 'WIRING PLUGABLE HARNES FOR G+23', 64375, 'G+23') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (24, 'WIRING PLUGABLE HARNES FOR G+24', 66875, 'G+24') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (25, 'WIRING PLUGABLE HARNES FOR G+25', 69375, 'G+25') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (26, 'WIRING PLUGABLE HARNES FOR G+26', 71875, 'G+26') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (27, 'WIRING PLUGABLE HARNES FOR G+27', 74375, 'G+27') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (28, 'WIRING PLUGABLE HARNES FOR G+28', 76875, 'G+28') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (29, 'WIRING PLUGABLE HARNES FOR G+29', 79375, 'G+29') ON CONFLICT (harness_id) DO NOTHING;
-INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (30, 'WIRING PLUGABLE HARNES FOR G+30', 81875, 'G+30') ON CONFLICT (harness_id) DO NOTHING;
+-- tbl_harness -done
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (1, 'WIRING PLUGABLE HARNES FOR G+1', 13750, 2) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (2, 'WIRING PLUGABLE HARNES FOR G+2', 15625, 3) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (3, 'WIRING PLUGABLE HARNES FOR G+3', 15625, 4) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (4, 'WIRING PLUGABLE HARNES FOR G+4', 16875, 5) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (5, 'WIRING PLUGABLE HARNES FOR G+5', 19375, 6) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (6, 'WIRING PLUGABLE HARNES FOR G+6', 21875, 7) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (7, 'WIRING PLUGABLE HARNES FOR G+7', 24375, 8) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (8, 'WIRING PLUGABLE HARNES FOR G+8', 26875, 9) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (9, 'WIRING PLUGABLE HARNES FOR G+9', 29375, 10) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (10, 'WIRING PLUGABLE HARNES FOR G+10', 31875, 11) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (11, 'WIRING PLUGABLE HARNES FOR G+11', 34375, 12) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (12, 'WIRING PLUGABLE HARNES FOR G+12', 36875, 13) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (13, 'WIRING PLUGABLE HARNES FOR G+13', 39375, 14) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (14, 'WIRING PLUGABLE HARNES FOR G+14', 41875, 15) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (15, 'WIRING PLUGABLE HARNES FOR G+15', 44375, 16) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (16, 'WIRING PLUGABLE HARNES FOR G+16', 46875, 17) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (17, 'WIRING PLUGABLE HARNES FOR G+17', 49375, 18) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (18, 'WIRING PLUGABLE HARNES FOR G+18', 51875, 19) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (19, 'WIRING PLUGABLE HARNES FOR G+19', 54375, 20) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (20, 'WIRING PLUGABLE HARNES FOR G+20', 56875, 21) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (21, 'WIRING PLUGABLE HARNES FOR G+21', 59375, 22) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (22, 'WIRING PLUGABLE HARNES FOR G+22', 61875, 23) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (23, 'WIRING PLUGABLE HARNES FOR G+23', 64375, 24) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (24, 'WIRING PLUGABLE HARNES FOR G+24', 66875, 25) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (25, 'WIRING PLUGABLE HARNES FOR G+25', 69375, 26) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (26, 'WIRING PLUGABLE HARNES FOR G+26', 71875, 27) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (27, 'WIRING PLUGABLE HARNES FOR G+27', 74375, 28) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (28, 'WIRING PLUGABLE HARNES FOR G+28', 76875, 29) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (29, 'WIRING PLUGABLE HARNES FOR G+29', 79375, 30) ON CONFLICT (harness_id) DO NOTHING;
+INSERT INTO tbl_harness (harness_id, harness_name, harness_price, floors) VALUES (30, 'WIRING PLUGABLE HARNES FOR G+30', 81875, 31) ON CONFLICT (harness_id) DO NOTHING;
 SELECT setval('tbl_harness_harness_id_seq', 30, true);
 
--- tbl_lop_subtype
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (1, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+1', 'G+1', 3250, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (2, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+2', 'G+2', 4875, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (3, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+3', 'G+3', 6500, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (4, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+4', 'G+4', 8125, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (5, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+5', 'G+5', 9750, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (6, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+6', 'G+6', 11375, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (7, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+7', 'G+7', 13000, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (8, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+8', 'G+8', 14625, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (9, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+9', 'G+9', 16250, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (10, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+10', 'G+10', 17875, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (11, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+11', 'G+11', 19500, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (12, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+12', 'G+12', 21125, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (13, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+13', 'G+13', 22750, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (14, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+14', 'G+14', 24375, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (15, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+15', 'G+15', 26000, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (16, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+16', 'G+16', 27625, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (17, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+17', 'G+17', 29250, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (18, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+18', 'G+18', 30875, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (19, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+19', 'G+19', 32500, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (20, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+20', 'G+20', 34125, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (21, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+21', 'G+21', 35750, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (22, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+22', 'G+22', 37375, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (23, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+23', 'G+23', 39000, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (24, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+24', 'G+24', 40625, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (25, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+25', 'G+25', 42250, '') ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (26, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+1', 'G+1', 6250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (27, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+2', 'G+2', 9375, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (28, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+3', 'G+3', 12500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (29, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+4', 'G+4', 15625, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (30, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+5', 'G+5', 18750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (31, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+6', 'G+6', 21875, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (32, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+7', 'G+7', 25000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (33, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+8', 'G+8', 28125, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (34, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+9', 'G+9', 31250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (35, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+10', 'G+10', 34375, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (36, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+11', 'G+11', 37500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (37, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+12', 'G+12', 40625, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (38, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+13', 'G+13', 43750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (39, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+14', 'G+14', 46875, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (40, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+15', 'G+15', 50000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (41, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+16', 'G+16', 53125, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (42, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+17', 'G+17', 56250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (43, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+18', 'G+18', 59375, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (44, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+19', 'G+19', 62500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (45, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+20', 'G+20', 65625, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (46, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+21', 'G+21', 68750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (47, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+22', 'G+22', 71875, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (48, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+23', 'G+23', 75000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (49, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+24', 'G+24', 78125, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (50, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+25', 'G+25', 81250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (51, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+1', 'G+1', 7500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (52, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+2', 'G+2', 11250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (53, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+3', 'G+3', 15000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (54, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+4', 'G+4', 18750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (55, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+5', 'G+5', 22500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (56, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+6', 'G+6', 26250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (57, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+7', 'G+7', 30000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (58, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+8', 'G+8', 33750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (59, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+9', 'G+9', 37500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (60, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+10', 'G+10', 41250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (61, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+11', 'G+11', 45000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (62, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+12', 'G+12', 48750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (63, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+13', 'G+13', 52500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (64, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+14', 'G+14', 56250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (65, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+15', 'G+15', 60000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (66, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+16', 'G+16', 63750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (67, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+17', 'G+17', 67500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (68, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+18', 'G+18', 71250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (69, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+19', 'G+19', 75000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (70, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+20', 'G+20', 78750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (71, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+21', 'G+21', 82500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (72, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+22', 'G+22', 86250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (73, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+23', 'G+23', 90000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (74, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+24', 'G+24', 93750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (75, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+25', 'G+25', 97500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (76, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+26', 'G+26', 84375, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (77, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+27', 'G+27', 87500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (78, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+28', 'G+28', 90625, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (79, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+29', 'G+29', 93750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (80, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+30', 'G+30', 96875, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (81, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+26', 'G+26', 101250, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (82, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+27', 'G+27', 105000, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (83, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+28', 'G+28', 108750, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (84, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+29', 'G+29', 112500, 1) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type_id) VALUES (85, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+30', 'G+30', 116250, 1) ON CONFLICT (id) DO NOTHING;
+-- tbl_lop_subtype -done
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (1, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+1', 2, 3250, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (2, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+2', 3, 4875, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (3, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+3', 4, 6500, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (4, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+4', 5, 8125, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (5, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+5', 6, 9750, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (6, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+6', 7, 11375, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (7, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+7', 8, 13000, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (8, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+8', 9, 14625, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (9, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+9', 10, 16250, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (10, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+10', 11, 17875, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (11, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+11', 12, 19500, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (12, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+12', 13, 21125, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (13, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+13', 14, 22750, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (14, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+14', 15, 24375, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (15, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+15', 16, 26000, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (16, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+16', 17, 27625, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (17, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+17', 18, 29250, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (18, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+18', 19, 30875, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (19, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+19', 20, 32500, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (20, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+20', 21, 34125, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (21, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+21', 22, 35750, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (22, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+22', 23, 37375, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (23, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+23', 24, 39000, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (24, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+24', 25, 40625, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (25, 'L.O.P WITH INDIAN SWITCH WITH SURFACE MOUNTED S.S. HAIRLINE FINISH FOR MANUAL LIFT G+25', 26, 42250, 3) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (26, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+1', 2, 6250, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (27, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+2', 3, 9375, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (28, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+3', 4, 12500, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (29, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+4', 5, 15625, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (30, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+5', 6, 18750, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (31, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+6', 7, 21875, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (32, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+7', 8, 25000, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (33, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+8', 9, 28125, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (34, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+9', 10, 31250, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (35, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+10', 11, 34375, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (36, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+11', 12, 37500, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (37, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+12', 13, 40625, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (38, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+13', 14, 43750, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (39, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+14', 15, 46875, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (40, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+15', 16, 50000, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (41, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+16', 17, 53125, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (42, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+17', 18, 56250, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (43, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+18', 19, 59375, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (44, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+19', 20, 62500, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (45, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+20', 21, 65625, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (46, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+21', 22, 68750, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (47, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+22', 23, 71875, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (48, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+23', 24, 75000, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (49, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+24', 25, 78125, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (50, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+25', 26, 81250, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (51, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+1', 2, 7500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (52, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+2', 3, 11250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (53, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+3', 4, 15000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (54, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+4', 5, 18750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (55, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+5', 6, 22500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (56, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+6', 7, 26250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (57, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+7', 8, 30000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (58, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+8', 9, 33750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (59, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+9', 10, 37500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (60, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+10', 11, 41250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (61, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+11', 12, 45000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (62, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+12', 13, 48750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (63, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+13', 14, 52500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (64, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+14', 15, 56250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (65, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+15', 16, 60000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (66, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+16', 17, 63750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (67, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+17', 18, 67500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (68, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+18', 19, 71250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (69, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+19', 20, 75000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (70, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+20', 21, 78750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (71, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+21', 22, 82500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (72, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+22', 23, 86250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (73, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+23', 24, 90000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (74, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+24', 25, 93750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (75, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+25', 26, 97500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (76, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+26', 27, 84375, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (77, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+27', 28, 87500, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (78, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+28', 29, 90625, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (79, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+29', 30, 93750, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (80, 'L.O.P WITH B.S.T SWITCH WITH SURFACE MOUNTED LINEN FINISH FOR G+30', 31, 96875, 1) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (81, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+26', 27, 101250, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (82, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+27', 28, 105000, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (83, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+28', 29, 108750, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (84, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+29', 30, 112500, 2) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_lop_subtype (id, lop_name, floors, price, lop_type) VALUES (85, 'L.O.P WITH TOUCH SWITCH WITH SURFACE MOUNTED ACRYLIC FINISH FOR G+30', 31, 116250, 2) ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_lop_subtype_id_seq', 85, true);
 
 -- tbl_bracket - done
@@ -985,201 +965,212 @@ ON CONFLICT (id) DO NOTHING;
 
 
 
--- tbl_counter_weight
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (1, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+1', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (2, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+2', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (3, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+3', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (4, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+4', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (5, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+5', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (6, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+6', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (7, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+7', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (8, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+8', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (9, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+9', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (10, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+10', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (11, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+11', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (12, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+12', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (13, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+13', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (14, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+14', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (15, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+15', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (16, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+16', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (17, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+17', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (18, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+18', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (19, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+19', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (20, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+20', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (21, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+21', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (22, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+22', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (23, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+23', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (24, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+24', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (25, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+25', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (26, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+1', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (27, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+2', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (28, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+3', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (29, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+4', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (30, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+5', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (31, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+6', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (32, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+7', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (33, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+8', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (34, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+9', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (35, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+10', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (36, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+11', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (37, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+12', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (38, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+13', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (39, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+14', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (40, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+15', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (41, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+16', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (42, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+17', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (43, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+18', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (44, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+19', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (45, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+20', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (46, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+21', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (47, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+22', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (48, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+23', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (49, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+24', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (50, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+25', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (51, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+26', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (52, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+27', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (53, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+28', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (54, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+29', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (55, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 'G+30', 8500) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (56, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+26', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (57, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+27', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (58, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+28', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (59, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+29', 5375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_counter_weight (id, counter_frame_name, counter_weight_type_id, floors, price) VALUES (60, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 1, 'G+30', 5375) ON CONFLICT (id) DO NOTHING;
+-- tbl_counter_weight - done
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (1, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 2, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (2, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 3, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (3, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 4, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (4, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 5, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (5, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 6, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (6, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 7, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (7, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 8, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (8, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 9, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (9, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 10, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (10, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 11, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (11, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 12, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (12, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 13, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (13, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 14, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (14, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 15, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (15, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 16, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (16, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 17, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (17, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 18, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (18, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 19, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (19, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 20, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (20, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 21, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (21, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 22, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (22, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 23, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (23, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 24, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (24, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 25, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (25, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 26, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (26, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 2, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (27, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 3, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (28, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 4, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (29, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 5, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (30, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 6, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (31, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 7, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (32, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 8, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (33, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 9, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (34, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 10, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (35, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 11, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (36, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 12, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (37, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 13, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (38, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 14, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (39, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 15, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (40, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 16, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (41, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 17, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (42, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 18, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (43, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 19, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (44, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 20, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (45, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 21, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (46, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 22, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (47, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 23, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (48, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 24, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (49, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 25, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (50, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 26, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (51, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 27, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (52, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 28, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (53, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 29, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (54, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 30, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (55, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 16 MM & 10 MM', 1, 31, 8500) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (56, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 27, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (57, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 28, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (58, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 29, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (59, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 30, 5375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_counter_weight (id,counter_weight_name, counter_weight_type, floors, price) VALUES (60, 'CAR & COUNTER WEIGHT GUIDE RAIL Â WITH HARDWARE 6 MM & 10 MM', 2, 31, 5375) ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_counter_weight_id_seq', 60, true);
 
--- tbl_wire_rope
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (1, 'G+1', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+1', 1, '1', '33 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (2, 'G+2', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+2', 1, '1', '43.5 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (3, 'G+3', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+3', 1, '1', '54 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (4, 'G+4', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+4', 1, '1', '64.5 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (5, 'G+5', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+5', 1, '1', '75 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (6, 'G+6', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+6', 1, '1', '85.5 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (7, 'G+7', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+7', 1, '1', '96 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (8, 'G+8', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+8', 1, '1', '142 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (9, 'G+9', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+9', 1, '1', '156 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (10, 'G+10', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+10', 1, '1', '170 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (11, 'G+11', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+11', 1, '1', '184 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (12, 'G+12', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+12', 1, '1', '198 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (13, 'G+13', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+13', 1, '1', '212 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (14, 'G+14', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+14', 1, '1', '226 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (15, 'G+15', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+15', 1, '1', '240 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (16, 'G+16', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+16', 1, '1', '254 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (17, 'G+17', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+17', 1, '1', '268 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (18, 'G+18', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+18', 1, '1', '282 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (19, 'G+19', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+19', 1, '1', '296 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (20, 'G+20', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+20', 1, '1', '310 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (21, 'G+21', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+21', 1, '1', '324 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (22, 'G+22', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+22', 1, '1', '338 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (23, 'G+23', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+23', 1, '1', '352 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (24, 'G+24', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+24', 1, '1', '366 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (25, 'G+25', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+25', 1, '1', '380 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (26, 'G+1', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+1', 1, '1', '72 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (27, 'G+2', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+2', 1, '1', '100 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (28, 'G+3', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+3', 1, '1', '128 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (29, 'G+4', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+4', 1, '1', '156 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (30, 'G+5', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+5', 1, '1', '184 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (31, 'G+6', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+6', 1, '1', '212 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (32, 'G+7', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+7', 1, '1', '240 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (33, 'G+8', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+8', 1, '1', '268 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (34, 'G+9', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+9', 1, '1', '292 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (35, 'G+10', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+10', 1, '1', '320 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (36, 'G+11', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+11', 1, '1', '348 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (37, 'G+12', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+12', 1, '1', '376 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (38, 'G+13', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+13', 1, '1', '404 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (39, 'G+14', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+14', 1, '1', '432 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (40, 'G+15', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+15', 1, '1', '460 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (41, 'G+16', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+16', 1, '1', '488 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (42, 'G+17', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+17', 1, '1', '516 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (43, 'G+18', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+18', 1, '1', '544 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (44, 'G+19', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+19', 1, '1', '572 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (45, 'G+20', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+20', 1, '1', '600 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (46, 'G+21', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+21', 1, '1', '628 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (47, 'G+22', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+22', 1, '1', '656 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (48, 'G+23', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+23', 1, '1', '684 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (49, 'G+24', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+24', 1, '1', '712 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (50, 'G+25', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+25', 1, '1', '740 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (51, 'G+1', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+1', 1, '2', '72 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (52, 'G+2', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+2', 1, '2', '100 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (53, 'G+3', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+3', 1, '2', '128 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (54, 'G+4', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+4', 1, '2', '156 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (55, 'G+5', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+5', 1, '2', '184 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (56, 'G+6', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+6', 1, '2', '212 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (57, 'G+7', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+7', 1, '2', '240 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (58, 'G+8', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+8', 1, '2', '268 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (59, 'G+9', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+9', 1, '2', '296 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (60, 'G+10', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+10', 1, '2', '324 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (61, 'G+11', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+11', 1, '2', '352 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (62, 'G+12', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+12', 1, '2', '380 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (63, 'G+13', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+13', 1, '2', '408 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (64, 'G+14', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+14', 1, '2', '436 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (65, 'G+15', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+15', 1, '2', '464 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (66, 'G+16', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+16', 1, '2', '492 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (67, 'G+17', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+17', 1, '2', '520 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (68, 'G+18', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+18', 1, '2', '548 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (69, 'G+19', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+19', 1, '2', '576 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (70, 'G+20', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+20', 1, '2', '604 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (71, 'G+21', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+21', 1, '2', '632 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (72, 'G+22', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+22', 1, '2', '660 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (73, 'G+23', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+23', 1, '2', '688 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (74, 'G+24', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+24', 1, '2', '716 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (75, 'G+25', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+25', 1, '2', '744 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (76, 'G+1', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+1', 1, '3', '54 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (77, 'G+2', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+2', 1, '3', '75 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (78, 'G+3', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+3', 1, '3', '96 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (79, 'G+4', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+4', 1, '3', '117 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (80, 'G+5', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+5', 1, '3', '138 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (81, 'G+6', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+6', 1, '3', '159 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (82, 'G+7', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+7', 1, '3', '180 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (83, 'G+8', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+8', 1, '3', '201 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (84, 'G+9', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+9', 1, '3', '222 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (85, 'G+10', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+10', 1, '3', '243 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (86, 'G+11', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+11', 1, '3', '264 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (87, 'G+12', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+12', 1, '3', '285 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (88, 'G+13', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+13', 1, '3', '306 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (89, 'G+14', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+14', 1, '3', '327 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (90, 'G+15', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+15', 1, '3', '348 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (91, 'G+16', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+16', 1, '3', '369 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (92, 'G+17', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+17', 1, '3', '390 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (93, 'G+18', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+18', 1, '3', '411 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (94, 'G+19', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+19', 1, '3', '432 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (95, 'G+20', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+20', 1, '3', '453 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (96, 'G+21', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+21', 1, '3', '474 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (97, 'G+22', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+22', 1, '3', '495 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (98, 'G+23', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+23', 1, '3', '516 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (99, 'G+24', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+24', 1, '3', '537 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (100, 'G+25', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+25', 1, '3', '558 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (101, 'G+26', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+26', 1, '1', '394 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (102, 'G+27', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+27', 1, '1', '408 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (103, 'G+28', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+28', 1, '1', '422 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (104, 'G+29', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+29', 1, '1', '436 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (105, 'G+30', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+30', 1, '1', '450 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (106, 'G+26', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+26', 1, '1', '768 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (107, 'G+27', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+27', 1, '1', '796 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (108, 'G+28', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+28', 1, '1', '820 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (109, 'G+29', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+29', 1, '1', '824 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (110, 'G+30', 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+30', 1, '1', '824 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (111, 'G+26', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+26', 1, '2', '772 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (112, 'G+27', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+27', 1, '2', '780 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (113, 'G+28', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+28', 1, '2', '828 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (114, 'G+29', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+29', 1, '2', '856 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (115, 'G+30', 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+30', 1, '2', '884 mtr', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (116, 'G+26', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+26', 1, '3', '579 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (117, 'G+27', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+27', 1, '3', '600 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (118, 'G+28', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+28', 1, '3', '621 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (119, 'G+29', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+29', 1, '3', '642 mtr', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope (id, floors, wire_rope_name, wire_rope_type_id, operator_type, wire_rope_qty, price) VALUES (120, 'G+30', 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+30', 1, '3', '663 mtr', 131) ON CONFLICT (id) DO NOTHING;
+-- tbl_wire_rope - done
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (1, 2, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+1', 1, 1, 33 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (2, 3, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+2', 1, 1, 43.5 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (3, 4, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+3', 1, 1, 54 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (4, 5, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+4', 1, 1, 64.5 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (5, 6, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+5', 1, 1, 75 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (6, 7, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+6', 1, 1, 85.5 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (7, 8, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+7', 1, 1, 96 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (8, 9, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+8', 1, 1, 142 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (9, 10, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+9', 1, 1, 156 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (10, 11, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+10', 1, 1, 170 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (11, 12, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+11', 1, 1, 184 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (12, 13, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+12', 1, 1, 198 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (13, 14, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+13', 1, 1, 212 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (14, 15, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+14', 1, 1, 226 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (15, 16, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+15', 1, 1, 240 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (16, 17, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+16', 1, 1, 254 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (17, 18, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+17', 1, 1, 268 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (18, 19, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+18', 1, 1, 282 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (19, 20, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+19', 1, 1, 296 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (20, 21, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+20', 1, 1, 310 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (21, 22, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+21', 1, 1, 324 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (22, 23, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+22', 1, 1, 338 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (23, 24, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+23', 1, 1, 352 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (24, 25, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+24', 1, 1, 366 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (25, 26, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+25', 1, 1, 380 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (26, 2, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+1', 2, 1, 72 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (27, 3, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+2', 2, 1, 100 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (28, 4, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+3', 2, 1, 128 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (29, 5, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+4', 2, 1, 156 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (30, 6, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+5', 2, 1, 184 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (31, 7, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+6', 2, 1, 212 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (32, 8, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+7', 2, 1, 240 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (33, 9, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+8', 2, 1, 268 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (34, 10, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+9', 2, 1, 292 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (35, 11, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+10', 2, 1, 320 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (36, 12, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+11', 2, 1, 348 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (37, 13, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+12', 2, 1, 376 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (38, 14, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+13', 2, 1, 404 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (39, 15, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+14', 2, 1, 432 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (40, 16, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+15', 2, 1, 460 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (41, 17, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+16', 2, 1, 488 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (42, 18, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+17', 2, 1, 516 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (43, 19, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+18', 2, 1, 544 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (44, 20, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+19', 2, 1, 572 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (45, 21, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+20', 2, 1, 600 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (46, 22, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+21', 2, 1, 628 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (47, 23, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+22', 2, 1, 656 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (48, 24, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+23', 2, 1, 684 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (49, 25, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+24', 2, 1, 712 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (50, 26, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+25', 2, 1, 740 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (51, 2, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+1', 3, 2, 72 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (52, 3, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+2', 3, 2, 100 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (53, 4, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+3', 3, 2, 128 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (54, 5, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+4', 3, 2, 156 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (55, 6, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+5', 3, 2, 184 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (56, 7, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+6', 3, 2, 212 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (57, 8, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+7', 3, 2, 240 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (58, 9, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+8', 3, 2, 268 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (59, 10, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+9', 3, 2, 296 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (60, 11, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+10', 3, 2, 324 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (61, 12, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+11', 3, 2, 352 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (62, 13, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+12', 3, 2, 380 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (63, 14, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+13', 3, 2, 408 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (64, 15, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+14', 3, 2, 436 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (65, 16, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+15', 3, 2, 464 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (66, 17, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+16', 3, 2, 492 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (67, 18, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+17', 3, 2, 520 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (68, 19, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+18', 3, 2, 548 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (69, 20, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+19', 3, 2, 576 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (70, 21, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+20', 3, 2, 604 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (71, 22, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+21', 3, 2, 632 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (72, 23, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+22', 3, 2, 660 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (73, 24, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+23', 3, 2, 688 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (74, 25, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+24', 3, 2, 716 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (75, 26, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+25', 3, 2, 744 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (65, 16, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+15', 3, 2, 464 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (66, 17, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+16', 3, 2, 492 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (67, 18, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+17', 3, 2, 520 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (68, 19, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+18', 3, 2, 548 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (69, 20, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+19', 3, 2, 576 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (70, 21, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+20', 3, 2, 604 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (71, 22, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+21', 3, 2, 632 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (72, 23, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+22', 3, 2, 660 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (73, 24, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+23', 3, 2, 688 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (74, 25, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+24', 3, 2, 716 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (75, 26, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+25', 3, 2, 744 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (76, 2, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+1', 4, 3, 54 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (77, 3, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+2', 4, 3, 75 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (78, 4, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+3', 4, 3, 96 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (79, 5, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+4', 4, 3, 117 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (80, 6, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+5', 4, 3, 138 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (81, 7, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+6', 4, 3, 159 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (82, 8, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+7', 4, 3, 180 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (83, 9, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+8', 4, 3, 201 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (84, 10, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+9', 4, 3, 222 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (85, 11, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+10', 4, 3, 243 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (86, 12, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+11', 4, 3, 264 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (87, 13, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+12', 4, 3, 285 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (88, 14, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+13', 4, 3, 306 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (89, 15, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+14', 4, 3, 327 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (90, 16, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+15', 4, 3, 348 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (91, 17, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+16', 4, 3, 369 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (92, 18, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+17', 4, 3, 390 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (93, 19, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+18', 4, 3, 411 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (94, 20, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+19', 4, 3, 432 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (95, 21, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+20', 4, 3, 453 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (96, 22, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+21', 4, 3, 474 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (97, 23, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+22', 4, 3, 495 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (98, 24, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+23', 4, 3, 516 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (99, 25, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+24', 4, 3, 537 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (100, 26, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+25', 4, 3, 558 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (101, 27, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+26', 1, 1, 394 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (102, 28, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+27', 1, 1, 408 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (103, 29, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+28', 1, 1, 422 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (104, 30, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+29', 1, 1, 436 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (105, 31, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING G+30', 1, 1, 450 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (106, 27, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+26', 2, 1, 768 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (107, 28, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+27', 2, 1, 796 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (108, 29, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+28', 2, 1, 820 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (109, 30, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+29', 2, 1, 824 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (110, 31, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING G+30', 2, 1, 824 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (111, 27, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+26', 3, 2, 772 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (112, 28, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+27', 3, 2, 780 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (113, 29, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+28', 3, 2, 828 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (114, 30, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+29', 3, 2, 856 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (115, 31, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING G+30', 3, 2, 884 , 81) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (116, 27, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+26', 4, 3, 579 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (117, 28, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+27', 4, 3, 600 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (118, 29, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+28', 4, 3, 621 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (119, 30, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+29', 4, 3, 642 , 131) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope (id, floor, wire_rope_name, wire_rope_type, machine_type, wire_rope_qty, price) VALUES (120, 31, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING G+30', 4, 3, 663 , 131) ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_wire_rope_id_seq', 120, true);
 
--- tbl_wire_rope_type
-INSERT INTO tbl_wire_rope_type (id, wire_rope_type, lift_type, price) VALUES (1, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 1 ST 1 ROPING', '1', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope_type (id, wire_rope_type, lift_type, price) VALUES (2, 'WIRE ROPE 13 MM  FOR GEARED MACHINE 2 ST 1 ROPING', '1', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope_type (id, wire_rope_type, lift_type, price) VALUES (3, 'WIRE ROPE 8 MM  FOR GEARLESS MACHINE 2 ST 1 ROPING', '2', 81) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope_type (id, wire_rope_type, lift_type, price) VALUES (4, 'WIRE ROPE 13 MM  FOR HYDRALIC MACHINE 2 ST 1 ROPING', '3', 131) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_wire_rope_type (id, wire_rope_type, lift_type, price) VALUES (5, 'WIRE ROPE 13 MM FOR GEARED MACHINE 1 ST 1 ROPING', '1', 131) ON CONFLICT (id) DO NOTHING;
-SELECT setval('tbl_wire_rope_type_id_seq', 5, true);
+-- tbl_wire_rope_type - done
+INSERT INTO tbl_wire_rope_type (id, wire_rope_type, machine_type, wire_rope_size) VALUES (1, '1:1', 1, 13) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope_type (id, wire_rope_type, machine_type, wire_rope_size) VALUES (2, '2:1', 1, 13) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope_type (id, wire_rope_type, machine_type, wire_rope_size) VALUES (3, '2:1', 2, 8) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope_type (id, wire_rope_type, machine_type, wire_rope_size) VALUES (4, '2:1', 3, 13) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_wire_rope_type (id, wire_rope_type, machine_type, wire_rope_size) VALUES (5, '3:1', 2, 30) ON CONFLICT (id) DO NOTHING;
+SELECT setval('tbl_wire_rope_type_seq', 5, true);
 
--- tbl_air_system
+-- tbl_air_system --done
 INSERT INTO tbl_air_system (air_system_id, passenger, price, air_type, quantity) VALUES (1, '04 Persons/272 Kg.', 2125, '1', '1 Set') ON CONFLICT (air_system_id) DO NOTHING;
 INSERT INTO tbl_air_system (air_system_id, passenger, price, air_type, quantity) VALUES (2, '06 Persons/408 Kg. ', 2125, '1', '1 Set') ON CONFLICT (air_system_id) DO NOTHING;
 INSERT INTO tbl_air_system (air_system_id, passenger, price, air_type, quantity) VALUES (3, '08 Persons/544 Kg. ', 2125, '1', '1 Set') ON CONFLICT (air_system_id) DO NOTHING;
@@ -1203,23 +1194,35 @@ INSERT INTO tbl_air_system (air_system_id, passenger, price, air_type, quantity)
 INSERT INTO tbl_air_system (air_system_id, passenger, price, air_type, quantity) VALUES (21, '', 2500, '', '') ON CONFLICT (air_system_id) DO NOTHING;
 SELECT setval('tbl_air_system_air_system_id_seq', 21, true);
 
--- tbl_new_counter_weight
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (1, 'COUNTER WEIGHT FOR 4 PASSENGER', '04 Persons/272 Kg.', '392 kg', 7350) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (2, 'COUNTER WEIGHT FOR 6 PASSENGER', '06 Persons/408 Kg.', '588 kg', 11025) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (3, 'COUNTER WEIGHT FOR 8 PASSENGER', '08 Persons/544 Kg.', '784 kg', 14700) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (4, 'COUNTER WEIGHT FOR 10 PASSENGER', '10 Persons/680 Kg.', '980 kg', 18375) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (5, 'COUNTER WEIGHT FOR 12 PASSENGER', '12 Persons/816 Kg.', '1176 kg', 22050) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (6, 'COUNTER WEIGHT FOR 13 PASSENGER', '13 Persons/884 Kg.', '1274 kg', 23888) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (7, 'COUNTER WEIGHT FOR 15 PASSENGER', '15 Persons/1020 Kg.', '1470 kg', 27563) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (8, 'COUNTER WEIGHT FOR 18 PASSENGER', '18 Persons/1224 Kg.', '1764 kg', 33075) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (9, 'COUNTER WEIGHT FOR 20 PASSENGER', '20 Persons/1360 Kg.', '1960 kg', 36750) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (10, 'COUNTER WEIGHT FOR 22 PASSENGER', '22 Persons/1496 Kg.', '2156 kg', 86240) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (11, 'COUNTER WEIGHT FOR 25 PASSENGER', '25 Persons/1700 Kg.', '2450 kg', 98000) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (12, 'COUNTER WEIGHT FOR 30 PASSENGER', '30 Persons/2040 Kg.', '2940 kg', 117600) ON CONFLICT (id) DO NOTHING;
-INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, passenger, quantity, prize) VALUES (15, 'COUNTER WEIGHT FOR 5 PASSENGER', '05 Persons/340 Kg. ', '392 kg', 7350) ON CONFLICT (id) DO NOTHING;
+-- tbl_new_counter_weight - done
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (1, 'COUNTER WEIGHT FOR 4 PASSENGER',1, 1, NULL,'392', 7350) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (2, 'COUNTER WEIGHT FOR 6 PASSENGER',1, 3,NULL, '588', 11025) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (3, 'COUNTER WEIGHT FOR 8 PASSENGER',1, 4, NULL,'784', 14700) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (4, 'COUNTER WEIGHT FOR 10 PASSENGER',1, 5,NULL, '980', 18375) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (5, 'COUNTER WEIGHT FOR 12 PASSENGER',1, 12,NULL, '1176', 22050) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (6, 'COUNTER WEIGHT FOR 13 PASSENGER',1, 6,NULL, '1274', 23888) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (7, 'COUNTER WEIGHT FOR 15 PASSENGER',1, 7,NULL, '1470', 27563) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (8, 'COUNTER WEIGHT FOR 18 PASSENGER',1, 11,NULL,  '1764', 33075) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (9, 'COUNTER WEIGHT FOR 20 PASSENGER',1, 8, NULL,'1960', 36750) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (10, 'COUNTER WEIGHT FOR 22 PASSENGER',1, 9,NULL,  '2156', 86240) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (11, 'COUNTER WEIGHT FOR 25 PASSENGER',1, 10,NULL,  '2450', 98000) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (12, 'COUNTER WEIGHT FOR 30 PASSENGER',1, 13,NULL, '2940', 117600) ON CONFLICT (id) DO NOTHING;
+INSERT INTO tbl_new_counter_weight (id, new_counter_weight_name, capacity_type, person_capacity_id, weight_id, quantity, price) VALUES (15, 'COUNTER WEIGHT FOR 5 PASSENGER',1, 2,NULL, '392', 7350) ON CONFLICT (id) DO NOTHING;
 SELECT setval('tbl_new_counter_weight_id_seq', 15, true);
 
--- Other statements
-SELECT setval('tbl_cabin_subtype_id_seq', 158, true);
-SELECT setval('tbl_other_material_id_seq', 64, true);
-COMMIT;
+-- -- Other statements
+-- SELECT setval('tbl_cabin_subtype_id_seq', 158, true);
+-- SELECT setval('tbl_other_material_id_seq', 64, true);
+-- COMMIT;
+
+
+
+
+
+
+
+
+
+
+-- default data
+
