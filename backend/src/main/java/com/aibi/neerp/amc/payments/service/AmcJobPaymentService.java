@@ -6,6 +6,7 @@ import com.aibi.neerp.amc.jobs.initial.entity.AmcJob;
 import com.aibi.neerp.amc.jobs.initial.repository.AmcJobRepository;
 import com.aibi.neerp.amc.jobs.renewal.entity.AmcRenewalJob;
 import com.aibi.neerp.amc.jobs.renewal.repository.AmcRenewalJobRepository;
+import com.aibi.neerp.amc.materialrepair.entity.MaterialQuotation;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
 import com.aibi.neerp.amc.payments.dto.PaymentSummaryDto;
@@ -16,6 +17,9 @@ import com.aibi.neerp.amc.payments.enums.PaymentClearanceStatus;
 import com.aibi.neerp.amc.payments.repository.AmcJobPaymentRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
+import com.aibi.neerp.leadmanagement.entity.NewLeads;
+import com.aibi.neerp.modernization.entity.Modernization;
+import com.aibi.neerp.oncall.entity.OnCallQuotation;
 
 import lombok.RequiredArgsConstructor;
 
@@ -228,6 +232,23 @@ public class AmcJobPaymentService {
         
         Customer customer = null;
         Site site = null;
+        
+        AmcInvoice invoice = entity.getAmcInvoice();
+        
+        
+        MaterialQuotation materialQuotation = null;
+        Modernization modernization = null;
+        OnCallQuotation onCallQuotation = null;
+        
+        
+        if(invoice!=null) {
+        	
+        	modernization = invoice.getModernization();
+        	onCallQuotation = invoice.getOnCallQuotation();
+        	materialQuotation = invoice.getMaterialQuotation();
+        	
+        
+        }
         		
         if(entity.getAmcJob()!=null) {
         	
@@ -253,6 +274,44 @@ public class AmcJobPaymentService {
         	if(site!=null) {
         		siteName = site.getSiteName();
         	}
+        }else if(modernization!=null) {
+        	
+        	NewLeads lead = modernization.getLead();
+        	
+        	customerName = lead.getCustomerName();
+        	siteName = lead.getSiteName();
+        	
+        	
+        }else if(onCallQuotation!=null) {
+        	
+            NewLeads lead = onCallQuotation.getLead();
+        	
+        	customerName = lead.getCustomerName();
+        	siteName = lead.getSiteName();
+        	
+        }else if(materialQuotation!=null) {
+        	
+        	AmcJob materialAmcJob = materialQuotation.getAmcJob();
+        	AmcRenewalJob materialAmcRenewalJob = materialQuotation.getAmcRenewalJob();
+        	
+        	Customer jobCustomer = null;
+        	Site jobSite = null;
+        	
+        	if(materialAmcJob!=null) {
+        		
+        		jobCustomer = materialAmcJob.getCustomer();
+        		jobSite = materialAmcJob.getSite();
+        	
+        	}else if(materialAmcRenewalJob!=null) {
+        		
+        		jobCustomer = materialAmcRenewalJob.getCustomer();
+        		jobSite = materialAmcRenewalJob.getSite();
+        	}
+        	
+        	customerName = jobCustomer.getCustomerName();
+        	siteName = jobSite.getSiteName();
+        	
+        	
         }
     	
         return AmcJobPaymentResponseDto.builder()

@@ -23,37 +23,105 @@ public interface AmcJobPaymentRepository extends JpaRepository<AmcJobPayment, In
     // --- Custom Query Methods (Examples) ---
 	
 	// ✅ Required Repository Method Signature
+//	@Query("""
+//	        SELECT p 
+//	        FROM AmcJobPayment p
+//	        
+//	        LEFT JOIN p.amcJob j 
+//	        LEFT JOIN j.site js 
+//	        LEFT JOIN j.customer jc 
+//	        
+//	        LEFT JOIN p.amcRenewalJob r
+//	        LEFT JOIN r.site rs
+//	        LEFT JOIN r.customer rc
+//	        
+//	        WHERE (:search IS NULL OR :search = '' OR (
+//	            LOWER(p.invoiceNo) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//	            LOWER(p.payFor) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//	            LOWER(p.paymentType) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//	            
+//	            LOWER(js.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//	            LOWER(jc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//	            
+//	            LOWER(rs.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+//	            LOWER(rc.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
+//	        ))
+//	        
+//	        AND (:dateSearch IS NULL OR :dateSearch = '' OR p.paymentDate = CAST(:dateSearch AS date))
+//	    """)
+//	Page<AmcJobPayment> searchAllPayments(
+//	    @Param("search") String search,
+//	    @Param("dateSearch") String dateSearch,
+//	    Pageable pageable
+//	);
+	
+	
 	@Query("""
-	        SELECT p 
-	        FROM AmcJobPayment p
-	        
-	        LEFT JOIN p.amcJob j 
-	        LEFT JOIN j.site js 
-	        LEFT JOIN j.customer jc 
-	        
-	        LEFT JOIN p.amcRenewalJob r
-	        LEFT JOIN r.site rs
-	        LEFT JOIN r.customer rc
-	        
-	        WHERE (:search IS NULL OR :search = '' OR (
-	            LOWER(p.invoiceNo) LIKE LOWER(CONCAT('%', :search, '%')) OR
-	            LOWER(p.payFor) LIKE LOWER(CONCAT('%', :search, '%')) OR
-	            LOWER(p.paymentType) LIKE LOWER(CONCAT('%', :search, '%')) OR
-	            
-	            LOWER(js.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-	            LOWER(jc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-	            
-	            LOWER(rs.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-	            LOWER(rc.customerName) LIKE LOWER(CONCAT('%', :search, '%'))
-	        ))
-	        
-	        AND (:dateSearch IS NULL OR :dateSearch = '' OR p.paymentDate = CAST(:dateSearch AS date))
-	    """)
-	Page<AmcJobPayment> searchAllPayments(
-	    @Param("search") String search,
-	    @Param("dateSearch") String dateSearch,
-	    Pageable pageable
-	);
+		    SELECT p
+		    FROM AmcJobPayment p
+
+		    LEFT JOIN p.amcJob j
+		    LEFT JOIN j.customer jc
+		    LEFT JOIN j.site js
+
+		    LEFT JOIN p.amcRenewalJob r
+		    LEFT JOIN r.customer rc
+		    LEFT JOIN r.site rs
+
+		    LEFT JOIN p.amcInvoice i
+
+		    LEFT JOIN i.materialQuotation mq
+		    LEFT JOIN mq.amcJob mqj
+		    LEFT JOIN mqj.customer mqjc
+		    LEFT JOIN mqj.site mqjs
+
+		    LEFT JOIN mq.amcRenewalJob mqr
+		    LEFT JOIN mqr.customer mqrc
+		    LEFT JOIN mqr.site mqrs
+
+		    LEFT JOIN i.onCallQuotation ocq
+		    LEFT JOIN ocq.lead ocl
+
+		    LEFT JOIN i.modernization mz
+		    LEFT JOIN mz.lead mzl
+
+		    WHERE (
+		        :search IS NULL OR :search = '' OR (
+		            LOWER(p.invoiceNo) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(p.payFor) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(p.paymentType) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+		            LOWER(jc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(js.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+		            LOWER(rc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(rs.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+		            LOWER(mqjc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(mqjs.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+		            LOWER(mqrc.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(mqrs.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+		            LOWER(ocl.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(ocl.siteName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+
+		            LOWER(mzl.customerName) LIKE LOWER(CONCAT('%', :search, '%')) OR
+		            LOWER(mzl.siteName) LIKE LOWER(CONCAT('%', :search, '%'))
+		        )
+		    )
+		    AND (
+		        :dateSearch IS NULL OR :dateSearch = '' 
+		        OR p.paymentDate = CAST(:dateSearch AS date)
+		    )
+		""")
+		Page<AmcJobPayment> searchAllPayments(
+		    @Param("search") String search,
+		    @Param("dateSearch") String dateSearch,
+		    Pageable pageable
+		);
+
+	
 	
 	
 	// Inside AmcJobPaymentRepository.java
