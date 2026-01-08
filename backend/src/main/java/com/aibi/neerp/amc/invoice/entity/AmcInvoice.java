@@ -84,4 +84,8 @@ public class AmcInvoice {
 
     @Column(name = "is_cleared") // nullable = false removed
     private Integer isCleared;
+    
+    @Column(name = "is_payment_entry_added") // nullable = false removed
+    private Integer isPaymentEntryAdded = 0;
+    
 }

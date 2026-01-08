@@ -3,6 +3,7 @@ package com.aibi.neerp.amc.payments.controller;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +31,7 @@ import com.aibi.neerp.amc.materialrepair.service.MaterialQuotationService;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
 import com.aibi.neerp.amc.payments.dto.PaymentSummaryDto;
+import com.aibi.neerp.amc.payments.dto.PaymentUpdateDTO;
 import com.aibi.neerp.amc.payments.service.AmcJobPaymentService;
 import com.aibi.neerp.modernization.service.ModernizationService;
 import com.aibi.neerp.oncall.service.OncallService;
@@ -308,6 +311,25 @@ public class PaymentController {
         // 2. Return the DTO in a successful HTTP response
         return ResponseEntity.ok(summary);
     }
+    
+    
+    @PatchMapping("/update")
+    public ResponseEntity<String> updatePaymentStatus(@RequestBody PaymentUpdateDTO updateDto) {
+        try {
+            paymentService.updatePaymentIsClearedStatusAndPaymentMode(updateDto);
+            return ResponseEntity.ok("Payment updated successfully.");
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());   // 👈 exact error
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(e.getMessage());   // 👈 exact error
+        }
+    }
+
+    
+    
+    
     
     
 }

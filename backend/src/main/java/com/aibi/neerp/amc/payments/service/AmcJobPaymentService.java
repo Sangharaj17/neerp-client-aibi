@@ -10,7 +10,9 @@ import com.aibi.neerp.amc.payments.dto.AmcJobPaymentRequestDto;
 import com.aibi.neerp.amc.payments.dto.AmcJobPaymentResponseDto;
 import com.aibi.neerp.amc.payments.dto.PaymentSummaryDto;
 import com.aibi.neerp.amc.payments.dto.PaymentTypeCount;
+import com.aibi.neerp.amc.payments.dto.PaymentUpdateDTO;
 import com.aibi.neerp.amc.payments.entity.AmcJobPayment;
+import com.aibi.neerp.amc.payments.enums.PaymentClearanceStatus;
 import com.aibi.neerp.amc.payments.repository.AmcJobPaymentRepository;
 import com.aibi.neerp.customer.entity.Customer;
 import com.aibi.neerp.customer.entity.Site;
@@ -22,10 +24,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -109,6 +115,44 @@ public class AmcJobPaymentService {
             throw new IllegalArgumentException("Both AMC Job and AMC Renewal Job are null. Cannot update balance.");
         }
     }
+    
+    private void increaseJobAmount(
+            BigDecimal addedAmount,
+            AmcJob amcJob,
+            AmcRenewalJob amcRenewalJob) {
+
+        if (addedAmount == null || addedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Invalid payment amount: " + addedAmount);
+        }
+
+        if (amcJob != null) {
+
+            BigDecimal balanceAmount = amcJob.getBalanceAmount() != null
+                    ? amcJob.getBalanceAmount()
+                    : BigDecimal.ZERO;
+
+            BigDecimal newBalance = balanceAmount.add(addedAmount);
+
+            amcJob.setBalanceAmount(newBalance);
+            amcJobRepository.save(amcJob);
+
+        } else if (amcRenewalJob != null) {
+
+            BigDecimal balanceAmount = amcRenewalJob.getBalanceAmount() != null
+                    ? amcRenewalJob.getBalanceAmount()
+                    : BigDecimal.ZERO;
+
+            BigDecimal newBalance = balanceAmount.add(addedAmount);
+
+            amcRenewalJob.setBalanceAmount(newBalance);
+            amcRenewalJobRepository.save(amcRenewalJob);
+
+        } else {
+            throw new IllegalArgumentException(
+                    "Both AMC Job and AMC Renewal Job are null. Cannot update balance.");
+        }
+    }
+
 
     
     private void updateInvoice(BigDecimal deducedAmount , AmcJob amcJob , AmcRenewalJob amcRenewalJob ,
@@ -121,7 +165,7 @@ public class AmcJobPaymentService {
     	}else {
     		amcInvoice.setIsCleared(0);
     	}
-    	
+    	amcInvoice.setIsPaymentEntryAdded(1);
     	invoiceRepository.save(amcInvoice);
     	
     }
@@ -232,38 +276,233 @@ public class AmcJobPaymentService {
     
     
     
-    public PaymentSummaryDto getPaymentSummary() {
-
-        // ✅ Fetch main stats list (1 row only)
-        List<Object[]> resultList = paymentRepository.getPaymentMainSummaryStatistics();
-        Object[] stats = resultList.isEmpty() ? new Object[4] : resultList.get(0);
-
-        long totalPaymentsCount = stats[0] != null ? ((Number) stats[0]).longValue() : 0L;
-        long clearedPaymentsCount = stats[1] != null ? ((Number) stats[1]).longValue() : 0L;
-        long unclearedPaymentsCount = stats[2] != null ? ((Number) stats[2]).longValue() : 0L;
-        BigDecimal totalClearedAmount = stats[3] != null ? (BigDecimal) stats[3] : BigDecimal.ZERO;
-
-        // ✅ Fetch payment type breakdown
-        List<Object[]> breakdownList = paymentRepository.getPaymentTypeBreakdown();
-
-        List<PaymentTypeCount> typeCounts = breakdownList.stream()
-                .map(row -> new PaymentTypeCount(
-                        (String) row[0],
-                        ((Number) row[1]).longValue(),
-                        row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO
-                ))
-                .collect(Collectors.toList());
-
-        // ✅ Assemble DTO
-        return PaymentSummaryDto.builder()
-                .totalPaymentsCount(totalPaymentsCount)
-                .clearedPaymentsCount(clearedPaymentsCount)
-                .unclearedPaymentsCount(unclearedPaymentsCount)
-                .totalClearedAmount(totalClearedAmount)
-                .paymentTypeCounts(typeCounts)
-                .build();
+//    public PaymentSummaryDto getPaymentSummary() {
+//
+//        // ✅ Fetch main stats list (1 row only)
+//        List<Object[]> resultList = paymentRepository.getPaymentMainSummaryStatistics();
+//        Object[] stats = resultList.isEmpty() ? new Object[4] : resultList.get(0);
+//
+//        long totalPaymentsCount = stats[0] != null ? ((Number) stats[0]).longValue() : 0L;
+//        long clearedPaymentsCount = stats[1] != null ? ((Number) stats[1]).longValue() : 0L;
+//        long unclearedPaymentsCount = stats[2] != null ? ((Number) stats[2]).longValue() : 0L;
+//        BigDecimal totalClearedAmount = stats[3] != null ? (BigDecimal) stats[3] : BigDecimal.ZERO;
+//
+//        // ✅ Fetch payment type breakdown
+//        List<Object[]> breakdownList = paymentRepository.getPaymentTypeBreakdown();
+//
+//        List<PaymentTypeCount> typeCounts = breakdownList.stream()
+//                .map(row -> new PaymentTypeCount(
+//                        (String) row[0],
+//                        ((Number) row[1]).longValue(),
+//                        row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO
+//                ))
+//                .collect(Collectors.toList());
+//
+//        // ✅ Assemble DTO
+//        return PaymentSummaryDto.builder()
+//                .totalPaymentsCount(totalPaymentsCount)
+//                .clearedPaymentsCount(clearedPaymentsCount)
+//                .unclearedPaymentsCount(unclearedPaymentsCount)
+//                .totalClearedAmount(totalClearedAmount)
+//                .paymentTypeCounts(typeCounts)
+//                .build();
+//    }
+    
+    
+    private static class PaymentTypeAndAmount {
+        int modeCount = 0;
+        BigDecimal thisModeTotalPaymentAmount = BigDecimal.ZERO;
     }
 
+    public PaymentSummaryDto getPaymentSummary() {
+
+        PaymentSummaryDto paymentSummaryDto = new PaymentSummaryDto();
+
+        long totalPaymentsCount = 0;
+        long clearedPaymentsCount = 0;
+        long unclearedPaymentsCount = 0;
+
+        BigDecimal totalClearedAmount = BigDecimal.ZERO;
+
+        List<PaymentTypeCount> paymentTypeCounts = new ArrayList<>();
+
+        List<AmcJobPayment> amcJobPayments = paymentRepository.findAll();
+
+        Map<String, PaymentTypeAndAmount> paymentModeMap = new HashMap<>();
+
+        if (amcJobPayments != null) {
+
+            for (AmcJobPayment amcJobPayment : amcJobPayments) {
+
+                BigDecimal paymentAmount =
+                        amcJobPayment.getAmountPaid() != null
+                                ? amcJobPayment.getAmountPaid()
+                                : BigDecimal.ZERO;
+
+                String clearedStatus = amcJobPayment.getPaymentCleared();
+
+                if (PaymentClearanceStatus.YES.name().equalsIgnoreCase(clearedStatus)) {
+
+                    totalClearedAmount = totalClearedAmount.add(paymentAmount);
+                    clearedPaymentsCount++;
+
+                } else {
+                    unclearedPaymentsCount++;
+                }
+
+                String paymentMode = amcJobPayment.getPaymentType();
+                if (paymentMode == null) {
+                    paymentMode = "UNKNOWN";
+                }
+
+                PaymentTypeAndAmount typeAndAmount =
+                        paymentModeMap.computeIfAbsent(paymentMode, k -> new PaymentTypeAndAmount());
+
+                typeAndAmount.modeCount++;
+                typeAndAmount.thisModeTotalPaymentAmount =
+                        typeAndAmount.thisModeTotalPaymentAmount.add(paymentAmount);
+
+                totalPaymentsCount++;
+            }
+        }
+
+        // Prepare payment type summary
+        for (Map.Entry<String, PaymentTypeAndAmount> entry : paymentModeMap.entrySet()) {
+
+            PaymentTypeCount paymentTypeCount = new PaymentTypeCount();
+            paymentTypeCount.setPaymentType(entry.getKey());
+            paymentTypeCount.setCount(entry.getValue().modeCount);
+            paymentTypeCount.setTotalAmount(entry.getValue().thisModeTotalPaymentAmount);
+
+            paymentTypeCounts.add(paymentTypeCount);
+        }
+
+        // Set DTO values
+        paymentSummaryDto.setTotalPaymentsCount(totalPaymentsCount);
+        paymentSummaryDto.setClearedPaymentsCount(clearedPaymentsCount);
+        paymentSummaryDto.setUnclearedPaymentsCount(unclearedPaymentsCount);
+        paymentSummaryDto.setTotalClearedAmount(totalClearedAmount);
+        paymentSummaryDto.setPaymentTypeCounts(paymentTypeCounts);
+
+        return paymentSummaryDto;
+    }
+
+//    @Transactional
+//    public void updatePaymentIsClearedStatusAndPaymentMode(Integer paymentId ,  String status , String paymentMode) {
+//    	
+//    	AmcJobPayment amcJobPayment = paymentRepository.findById(paymentId).get();
+//    	AmcInvoice amcInvoice = amcJobPayment.getAmcInvoice();
+//    	
+//    	BigDecimal paidAmount = amcJobPayment.getAmountPaid();
+//    	
+//    	
+//        if(status.equalsIgnoreCase(PaymentClearanceStatus.YES.name())) {
+//        	
+//        	amcJobPayment.setPaymentCleared(status);
+//        	amcInvoice.setIsCleared(1);
+//        	amcJobPayment.setPaymentType(paymentMode);
+//        	
+//        }else {
+//        	
+//        	amcJobPayment.setPaymentCleared(status);
+//        	amcInvoice.setIsCleared(0);
+//        	
+//        }
+//      
+//        
+//        paymentRepository.save(amcJobPayment);
+//        invoiceRepository.save(amcInvoice);
+//        
+//        // here updating job amount
+//        
+//        AmcJob amcJob = amcInvoice.getAmcJob();
+//        AmcRenewalJob amcRenewalJob = amcInvoice.getAmcRenewalJob();
+//        
+//        if(amcJob!=null || amcRenewalJob!=null) {
+//        	
+//        	 if(status.equalsIgnoreCase(PaymentClearanceStatus.YES.name())) {
+//        	    updateJobAmount(paidAmount, amcJob, amcRenewalJob);
+//        	 }else {
+//        		 increaseJobAmount(paidAmount, amcJob, amcRenewalJob);
+//        	 }
+//        }
+//        
+//    }
+
+    @Transactional
+	public void updatePaymentIsClearedStatusAndPaymentMode(PaymentUpdateDTO updateDto) {
+		// TODO Auto-generated method stub
+		
+		Integer paymentId = updateDto.getPaymentId();
+		
+		AmcJobPayment amcJobPayment = paymentRepository.findById(paymentId).get();
+    	AmcInvoice amcInvoice = amcJobPayment.getAmcInvoice();
+    	
+    	BigDecimal paidAmount = amcJobPayment.getAmountPaid();
+    	
+    	LocalDate paymentDate = updateDto.getPaymentDate();
+
+    	String paymentClearedStatus = updateDto.getPaymentClearedStatus();
+    	String paymentType = updateDto.getPaymentType();
+    	String chequeNoOrTransactionNo = updateDto.getChequeNoOrTransactionNo();
+    	String bankName = updateDto.getBankName();
+    	String branchName = updateDto.getBranchName();
+
+    	
+    	 if(paymentClearedStatus.equalsIgnoreCase(PaymentClearanceStatus.YES.name())) {
+    		 
+         	amcInvoice.setIsCleared(1);
+         
+         }else {
+         	
+         	amcInvoice.setIsCleared(0);
+         	
+         }
+    	 
+    	 amcJobPayment.setPaymentDate(paymentDate);
+    	 amcJobPayment.setPaymentCleared(paymentClearedStatus);
+    	 amcJobPayment.setPaymentType(paymentType);
+    	 amcJobPayment.setBankName(bankName);
+    	 amcJobPayment.setBranchName(branchName);
+    	 amcJobPayment.setChequeNo(chequeNoOrTransactionNo);
+    	 
+    	 
+         
+         paymentRepository.save(amcJobPayment);
+         invoiceRepository.save(amcInvoice);
+         
+         // here updating job amount
+         
+         AmcJob amcJob = amcInvoice.getAmcJob();
+         AmcRenewalJob amcRenewalJob = amcInvoice.getAmcRenewalJob();
+         
+         if(amcJob!=null || amcRenewalJob!=null) {
+         	
+         	 if(paymentClearedStatus.equalsIgnoreCase(PaymentClearanceStatus.YES.name())) {
+         	    updateJobAmount(paidAmount, amcJob, amcRenewalJob);
+         	 }else {
+         		 increaseJobAmount(paidAmount, amcJob, amcRenewalJob);
+         	 }
+         }
+    	
+		
+	}
+    
+ 
+    
+    
+   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     

@@ -180,9 +180,31 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
     @Query("SELECT COALESCE(MAX(i.invoiceId), 0) FROM AmcInvoice i")
     Integer findMaxInvoiceId();
 	
-    List<AmcInvoice> findByMaterialQuotation_ModQuotIdAndIsCleared(Integer modQuotId, Integer isCleared);   
-
-    List<AmcInvoice> findByOnCallQuotation_IdAndIsCleared(Integer onCallQuotationId, Integer isCleared);
+//    List<AmcInvoice> findByMaterialQuotation_ModQuotIdAndIsCleared(Integer modQuotId, Integer isCleared);   
+//
+//    List<AmcInvoice> findByOnCallQuotation_IdAndIsCleared(Integer onCallQuotationId, Integer isCleared);
+//    
+//    List<AmcInvoice> findByModernization_IdAndIsCleared(Integer modernizationId, Integer isCleared);
     
-    List<AmcInvoice> findByModernization_IdAndIsCleared(Integer modernizationId, Integer isCleared);
+    
+    
+    List<AmcInvoice> findByMaterialQuotation_ModQuotIdAndIsPaymentEntryAdded(
+            Integer modQuotId,
+            Integer isPaymentEntryAdded
+    );
+
+    List<AmcInvoice> findByOnCallQuotation_IdAndIsPaymentEntryAdded(
+            Integer onCallQuotationId,
+            Integer isPaymentEntryAdded
+    );
+
+    List<AmcInvoice> findByModernization_IdAndIsPaymentEntryAdded(
+            Integer modernizationId,
+            Integer isPaymentEntryAdded
+    );
+
+    
+    
+    
+    
 }
