@@ -286,10 +286,8 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
       moduleName: 'Customers',
       submenu: [
         { title: 'Customer List', href: '/dashboard/customer/customer-list', featureName: 'Customer List' },
-        { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list`, featureName: 'Customers Sites Todo List' },
-        { title: 'Customer Groups', href: '/customer-groups', featureName: 'Customer Groups' },
-        { title: 'Customer History', href: '/customer-history', featureName: 'Customer History' },
-        { title: 'Feedback', href: '/feedback', featureName: 'Feedback' }
+        { title: 'Customers Sites Todo List', href: `/dashboard/customer/customer-todo-list`, featureName: 'Customers Sites Todo List' }
+       
       ]
     },
     {
