@@ -18,6 +18,9 @@ import {
   FaChevronUp,
   FaFilter,
   FaDownload,
+  FaEdit,
+  FaTimes,
+  FaSave,
 } from "react-icons/fa";
 
 // Define the structure for the summary data
@@ -50,6 +53,23 @@ export default function PaymentsList() {
   const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPayment, setEditingPayment] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    paymentId: null,
+    paymentDate: "",
+    paymentClearedStatus: "",
+    paymentType: "",
+    chequeNoOrTransactionNo: "",
+    bankName: "",
+    branchName: "",
+  });
+  const [updateLoading, setUpdateLoading] = useState(false);
+
+  // Determine if extra details fields should be shown based on payment type
+  const showInstrumentDetails = ["Cheque", "DD", "NEFT"].includes(editFormData.paymentType);
 
   useEffect(() => {
     fetchPayments();
@@ -83,7 +103,7 @@ export default function PaymentsList() {
   const fetchSummary = async () => {
     setSummaryLoading(true);
     try {
-      const res = await axiosInstance.get(`http://localhost:8080/api/payments/summary`);
+      const res = await axiosInstance.get(`/api/payments/summary`);
       setSummary(res.data);
     } catch (err) {
       console.error("Error fetching summary:", err);
@@ -127,6 +147,93 @@ export default function PaymentsList() {
     }
   };
 
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      return "";
+    }
+  };
+
+  // Handle edit button click
+  const handleEditClick = (payment) => {
+    setEditingPayment(payment);
+    setEditFormData({
+      paymentId: payment.paymentId,
+      paymentDate: formatDateForInput(payment.paymentDate),
+      paymentClearedStatus: payment.paymentCleared?.toLowerCase() === "yes" ? "yes" : "no",
+      paymentType: payment.paymentType || "",
+      chequeNoOrTransactionNo: payment.chequeNo || "",
+      bankName: payment.bankName || "",
+      branchName: payment.branchName || "",
+    });
+    setShowEditModal(true);
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => {
+      const updated = {
+        ...prev,
+        [name]: value
+      };
+      
+      // If payment type is changed to Cash, clear instrument details
+      if (name === 'paymentType' && value === 'Cash') {
+        updated.chequeNoOrTransactionNo = '';
+        updated.bankName = '';
+        updated.branchName = '';
+      }
+      
+      return updated;
+    });
+  };
+
+  // Handle form submission
+  const handleUpdatePayment = async (e) => {
+    e.preventDefault();
+    setUpdateLoading(true);
+
+    try {
+      const response = await axiosInstance.patch('/api/payments/update', editFormData);
+      
+      // Show success message (you can add a toast notification here)
+      alert('Payment updated successfully!');
+      
+      // Close modal
+      setShowEditModal(false);
+      
+      // Refresh payments list and summary
+      await fetchPayments();
+      await fetchSummary();
+      
+    } catch (err) {
+      console.error("Error updating payment:", err);
+      // Show error message
+      alert(err.response?.data || 'Failed to update payment. Please try again.');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setShowEditModal(false);
+    setEditingPayment(null);
+    setEditFormData({
+      paymentId: null,
+      paymentDate: "",
+      paymentClearedStatus: "",
+      paymentType: "",
+      chequeNoOrTransactionNo: "",
+      bankName: "",
+      branchName: "",
+    });
+  };
+
   const MetricCard = ({ title, value, icon: Icon, gradient, delay }) => (
     <div 
       className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm border border-slate-200/60 hover:shadow-xl transition-all duration-500 hover:-translate-y-1"
@@ -158,6 +265,11 @@ export default function PaymentsList() {
 
   const getPaymentTypeStyle = (type) => {
     const styles = {
+      'Cash': 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+      'Cheque': 'bg-amber-50 text-amber-700 border-amber-200/60',
+      'DD': 'bg-blue-50 text-blue-700 border-blue-200/60',
+      'NEFT': 'bg-purple-50 text-purple-700 border-purple-200/60',
+      // Keep old styles for backward compatibility with existing data
       'CASH': 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
       'BANK_TRANSFER': 'bg-blue-50 text-blue-700 border-blue-200/60',
       'CHEQUE': 'bg-amber-50 text-amber-700 border-amber-200/60',
@@ -203,6 +315,34 @@ export default function PaymentsList() {
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
           background-size: 1000px 100%;
           animation: shimmer 2s infinite;
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        .animate-slide-down {
+          animation: slideDown 0.3s ease-out;
         }
       `}</style>
 
@@ -389,7 +529,8 @@ export default function PaymentsList() {
                     { label: "Amount", key: "amountPaid", align: 'right' },
                     { label: "Status", key: "paymentCleared", align: 'center' },
                     { label: "Customer", key: "customerName", align: 'left' },
-                    { label: "Site", key: "siteName", align: 'left' }
+                    { label: "Site", key: "siteName", align: 'left' },
+                    { label: "Actions", key: "actions", align: 'center' }
                   ].map(({ label, key, align }) => (
                     <th
                       key={key}
@@ -408,7 +549,7 @@ export default function PaymentsList() {
               <tbody className="bg-white divide-y divide-slate-50">
                 {loading ? (
                   <tr>
-                    <td colSpan="9" className="p-16 text-center">
+                    <td colSpan="10" className="p-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <FaSpinner className="animate-spin w-8 h-8 text-blue-500" />
                         <span className="text-sm font-medium text-slate-600">Loading transactions...</span>
@@ -446,11 +587,11 @@ export default function PaymentsList() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border ${
-                          p.paymentCleared === "yes"
+                          p.paymentCleared?.toLowerCase() === "yes"
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
                             : 'bg-rose-50 text-rose-700 border-rose-200/60'
                         }`}>
-                          {p.paymentCleared === "yes" ? (
+                          {p.paymentCleared?.toLowerCase() === "yes" ? (
                             <>
                               <FaCheckCircle className="w-3 h-3" />
                               Cleared
@@ -469,11 +610,21 @@ export default function PaymentsList() {
                       <td className="px-6 py-4 whitespace-nowrap text-slate-600 text-sm">
                         {p.siteName || "-"}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => handleEditClick(p)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 text-xs font-semibold border border-blue-200/60 hover:shadow-md"
+                          title="Edit Payment"
+                        >
+                          <FaEdit className="w-3 h-3" />
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="9" className="p-16 text-center">
+                    <td colSpan="10" className="p-16 text-center">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
                           <span className="text-3xl">📋</span>
@@ -549,6 +700,207 @@ export default function PaymentsList() {
           </div>
         </div>
       </div>
+
+      {/* Edit Payment Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+            onClick={handleCloseModal}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-slide-down">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-blue-50 to-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FaEdit className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Edit Payment</h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Payment ID: #{editingPayment?.paymentId}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseModal}
+                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                disabled={updateLoading}
+              >
+                <FaTimes className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              <form onSubmit={handleUpdatePayment} className="space-y-5">
+                {/* Payment Date */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Payment Date <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="paymentDate"
+                    value={editFormData.paymentDate}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                  />
+                </div>
+
+                {/* Payment Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Payment Type <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    name="paymentType"
+                    value={editFormData.paymentType}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
+                  >
+                    <option value="">Select Payment Type</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="DD">DD</option>
+                    <option value="NEFT">NEFT</option>
+                  </select>
+                </div>
+
+                {/* Payment Cleared Status */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Payment Status <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentClearedStatus"
+                        value="yes"
+                        checked={editFormData.paymentClearedStatus === "yes"}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                      />
+                      <span className="text-sm font-medium text-slate-700">Cleared</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentClearedStatus"
+                        value="no"
+                        checked={editFormData.paymentClearedStatus === "no"}
+                        onChange={handleInputChange}
+                        className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500/20"
+                      />
+                      <span className="text-sm font-medium text-slate-700">Pending</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Cheque/Transaction Number - Only show for non-Cash payment types */}
+                {showInstrumentDetails && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        {editFormData.paymentType} No. / Transaction No. <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="chequeNoOrTransactionNo"
+                        value={editFormData.chequeNoOrTransactionNo}
+                        onChange={handleInputChange}
+                        placeholder={`Enter ${editFormData.paymentType} number or transaction ID`}
+                        required={showInstrumentDetails}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Bank Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Bank Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="bankName"
+                        value={editFormData.bankName}
+                        onChange={handleInputChange}
+                        placeholder="Enter bank name"
+                        required={showInstrumentDetails}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+
+                    {/* Branch Name */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        Branch Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="branchName"
+                        value={editFormData.branchName}
+                        onChange={handleInputChange}
+                        placeholder="Enter branch name"
+                        required={showInstrumentDetails}
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Info message when Cash is selected */}
+                {editFormData.paymentType === 'Cash' && (
+                  <div className="col-span-full">
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <span>Cash payment selected - no additional instrument details required</span>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                disabled={updateLoading}
+                className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition-all duration-300 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                onClick={handleUpdatePayment}
+                disabled={updateLoading}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 flex items-center gap-2 text-sm font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {updateLoading ? (
+                  <>
+                    <FaSpinner className="w-4 h-4 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <FaSave className="w-4 h-4" />
+                    Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
