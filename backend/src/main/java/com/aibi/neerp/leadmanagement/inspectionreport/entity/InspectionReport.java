@@ -28,6 +28,7 @@ public class InspectionReport {
     @JoinColumn(name = "repeat_lift_id")
     private InspectionReportRepeatLift repeatLift;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String remark;
+
 }

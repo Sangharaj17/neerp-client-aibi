@@ -343,68 +343,203 @@ export default function AddJobForm() {
 
 
 
+  // const handleSubmit = async () => {
+
+  //   let selectedEmployeesIds = null;
+  //   if (selectedRoute == null && selectionMode === "manual") {
+  //     selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
+  //   }
+
+  //   try {
+  //     const requestDto = {
+  //       // leadId: lead_id_state,
+  //       amcQuatationId: selectedJob.amcQuatationId || null,
+  //       revisedQuatationId: selectedJob.revisedQuatationId || null,
+
+  //       // serviceEngineerId: selectedEngineer,
+  //       salesExecutiveId: selectedSalesPerson,
+  //       routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
+  //       listOfEmployees: selectedEmployeesIds,
+  //       renewlStatus: 0,
+  //       contractType: "",
+  //       makeOfElevator: "",
+  //       noOfElevator: 0,
+  //       jobNo: 0,
+  //       customerGstNo: gstNumber,
+  //       jobType: "AMC",
+  //       startDate: jobDetailsData ? jobDetailsData.startDate : "",
+  //       endDate: "",
+  //       noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
+  //       jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
+  //       amountWithGst: 0,
+  //       amountWithoutGst: 0,
+  //       paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
+  //       gstPercentage: 0,
+  //       dealDate: "",
+  //       jobLiftDetail: "",
+  //       jobStatus: jobStatus,
+  //       status: 1,
+  //       renewalRemark: "",
+  //       isNew: 1,
+  //       currentServiceNumber: 0,
+  //     };
+
+  //     toast.loading("Saving job...");
+
+  //     const response = await axiosInstance.post("/api/amc-jobs/create-amc-job", requestDto);
+
+  //     toast.dismiss(); // remove loading toast
+
+  //     if (response.status === 200) {
+  //       toast.success("AMC Job saved successfully!");
+  //       // `/${tenant}/dashboard/jobs/amc_job_list`
+  //       router.push(
+  //         `/dashboard/jobs/amc_job_list/false`
+  //       );
+  //     } else {
+  //       toast.error("Something went wrong while saving!");
+  //     }
+  //   } catch (error) {
+  //     toast.dismiss();
+  //     console.error("Error saving AMC job:", error);
+  //     toast.error("Failed to save AMC job");
+  //   }
+  // };
+
   const handleSubmit = async () => {
 
-    let selectedEmployeesIds = null;
-    if (selectedRoute == null && selectionMode === "manual") {
-      selectedEmployeesIds = selectedEngineers.map((eng) => eng.employeeId);
+  // 1️⃣ Job validation
+  if (!selectedJob) {
+    toast.error("Please select a Job.");
+    return;
+  }
+
+  // 2️⃣ Sales Executive validation
+  if (!selectedSalesPerson) {
+    toast.error("Please select a Sales Executive.");
+    return;
+  }
+
+   // 3️⃣ Job Status validation
+  if (!jobStatus || jobStatus.trim() === "") {
+    toast.error("Please select Job Status.");
+    return;
+  }
+
+  // 3️⃣ Selection Mode validation
+  if (!selectionMode) {
+    toast.error("Please select assignment mode (Route / Manual).");
+    return;
+  }
+
+  // 4️⃣ Route validation
+  if (selectionMode === "route") {
+    if (!selectedRoute || !selectedRoute.routeId) {
+      toast.error("Please select a valid Route.");
+      return;
+    }
+  }
+
+  // 5️⃣ Manual Engineer validation
+  if (selectionMode === "manual") {
+    if (!selectedEngineers || selectedEngineers.length === 0) {
+      toast.error("Please select at least one Engineer.");
+      return;
+    }
+  }
+
+  // 6️⃣ Job Details validation
+  if (!jobDetailsData) {
+    toast.error("Job details are missing.");
+    return;
+  }
+
+  if (!jobDetailsData.startDate) {
+    toast.error("Start Date is required.");
+    return;
+  }
+
+  if (!jobDetailsData.noOfServices || jobDetailsData.noOfServices <= 0) {
+    toast.error("Number of services must be greater than 0.");
+    return;
+  }
+
+  if (!jobDetailsData.jobAmount || jobDetailsData.jobAmount <= 0) {
+    toast.error("Job amount must be greater than 0.");
+    return;
+  }
+
+  // 7️⃣ GST validation (optional but safe)
+  if (gstNumber && gstNumber.length < 15) {
+    toast.error("Please enter a valid GST Number.");
+    return;
+  }
+
+  let selectedEmployeesIds = null;
+  if (selectedRoute == null && selectionMode === "manual") {
+    selectedEmployeesIds = selectedEngineers.map(
+      (eng) => eng.employeeId
+    );
+  }
+
+  try {
+    const requestDto = {
+      amcQuatationId: selectedJob.amcQuatationId || null,
+      revisedQuatationId: selectedJob.revisedQuatationId || null,
+
+      salesExecutiveId: selectedSalesPerson,
+      routeId: selectedRoute ? selectedRoute.routeId : null,
+      listOfEmployees: selectedEmployeesIds,
+
+      renewlStatus: 0,
+      contractType: "",
+      makeOfElevator: "",
+      noOfElevator: 0,
+      jobNo: 0,
+      customerGstNo: gstNumber,
+      jobType: "AMC",
+
+      startDate: jobDetailsData.startDate,
+      endDate: "",
+      noOfServices: jobDetailsData.noOfServices,
+      jobAmount: jobDetailsData.jobAmount,
+      amountWithGst: 0,
+      amountWithoutGst: 0,
+      paymentTerm: jobDetailsData.paymentTerm || "",
+      gstPercentage: 0,
+
+      dealDate: "",
+      jobLiftDetail: "",
+      jobStatus: jobStatus,
+      status: 1,
+      renewalRemark: "",
+      isNew: 1,
+      currentServiceNumber: 0,
+    };
+
+    toast.loading("Saving job...");
+
+    const response = await axiosInstance.post(
+      "/api/amc-jobs/create-amc-job",
+      requestDto
+    );
+
+    toast.dismiss();
+
+    if (response.status === 200) {
+      toast.success("AMC Job saved successfully!");
+      router.push(`/dashboard/jobs/amc_job_list/false`);
+    } else {
+      toast.error("Something went wrong while saving!");
     }
 
-    try {
-      const requestDto = {
-        // leadId: lead_id_state,
-        amcQuatationId: selectedJob.amcQuatationId || null,
-        revisedQuatationId: selectedJob.revisedQuatationId || null,
+  } catch (error) {
+    toast.dismiss();
+    console.error("Error saving AMC job:", error);
+    toast.error("Failed to save AMC job");
+  }
+};
 
-        // serviceEngineerId: selectedEngineer,
-        salesExecutiveId: selectedSalesPerson,
-        routeId: selectedRoute ? selectedRoute.routeId || 0 : null,
-        listOfEmployees: selectedEmployeesIds,
-        renewlStatus: 0,
-        contractType: "",
-        makeOfElevator: "",
-        noOfElevator: 0,
-        jobNo: 0,
-        customerGstNo: gstNumber,
-        jobType: "AMC",
-        startDate: jobDetailsData ? jobDetailsData.startDate : "",
-        endDate: "",
-        noOfServices: jobDetailsData ? jobDetailsData.noOfServices : "",
-        jobAmount: jobDetailsData ? jobDetailsData.jobAmount : 0,
-        amountWithGst: 0,
-        amountWithoutGst: 0,
-        paymentTerm: jobDetailsData ? jobDetailsData.paymentTerm : "",
-        gstPercentage: 0,
-        dealDate: "",
-        jobLiftDetail: "",
-        jobStatus: jobStatus,
-        status: 1,
-        renewalRemark: "",
-        isNew: 1,
-        currentServiceNumber: 0,
-      };
-
-      toast.loading("Saving job...");
-
-      const response = await axiosInstance.post("/api/amc-jobs/create-amc-job", requestDto);
-
-      toast.dismiss(); // remove loading toast
-
-      if (response.status === 200) {
-        toast.success("AMC Job saved successfully!");
-        // `/${tenant}/dashboard/jobs/amc_job_list`
-        router.push(
-          `/dashboard/jobs/amc_job_list/false`
-        );
-      } else {
-        toast.error("Something went wrong while saving!");
-      }
-    } catch (error) {
-      toast.dismiss();
-      console.error("Error saving AMC job:", error);
-      toast.error("Failed to save AMC job");
-    }
-  };
 
   const handleSubmitRenewalJob = async () => {
 
@@ -611,11 +746,24 @@ export default function AddJobForm() {
             }}
           >
             <option value="">Select Job Type</option>
-            {jobTypes.map((type) => (
+            {/* {jobTypes.map((type) => (
               <option key={type.enquiryTypeId} value={type.enquiryTypeName}>
                 {type.enquiryTypeName}
               </option>
-            ))}
+            ))} */}
+            {jobTypes
+  .filter(type =>
+    ["AMC", "New Installation"].includes(type.enquiryTypeName)
+  )
+  .map(type => (
+    <option
+      key={type.enquiryTypeId}
+      value={type.enquiryTypeName}
+    >
+      {type.enquiryTypeName}
+    </option>
+  ))}
+
           </select>
         </div>
 
