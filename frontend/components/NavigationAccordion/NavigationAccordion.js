@@ -275,7 +275,9 @@ const NavigationAccordion = ({ isCollapsed = false, onToggleCollapse }) => {
         { title: 'Lead List', href: `/dashboard/lead-management/lead-list`, featureName: 'Lead List' },
         { title: 'To Do List', href: `/dashboard/lead-management/to-do-list`, featureName: 'To Do List' },
         { title: 'Activity List', href: `/dashboard/lead-management/activity-list`, featureName: 'Activity List' },
-        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting`, featureName: 'Lead Setting (setup)' }
+        { title: 'Lead Setting (setup)', href: `/dashboard/lead-management/lead-setting`, featureName: 'Lead Setting (setup)' },
+        { title: 'Inspection Report Setting', href: `/dashboard/lead-management/inspection-report-setting`, featureName: 'Inspection Report Setting' }
+
       ]
     },
     {
