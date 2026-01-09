@@ -549,7 +549,7 @@ const handleSelectReport = (reportId, mode) => {
         <div className="mb-6 flex justify-center gap-3">
   {enquiryTypes && enquiryTypes
     // Filter out the "Modernization" (or the misspelled "Moderization") type
-    .filter((type) => type.enquiryTypeName !== "Modernization")
+    .filter((type) => type.enquiryTypeName !== "Moderization")
     .map((type) => (
       <button
         key={type.enquiryTypeId}
@@ -731,7 +731,7 @@ const handleSelectReport = (reportId, mode) => {
                       );
                     } else if (selectedCategory == "New Installation") {
                       handleNavigateToQuotation(group.combinedId)
-                    } else if (selectedCategory == "Moderization") {
+                    } else if (selectedCategory == "Modernization") {
                       router.push(
                         `/dashboard/lead-management/enquiries/${id}/add-modernization/${group.combinedId}/${group.leadId}?customer=${encodeURIComponent(
                           searchParams.get('customer')

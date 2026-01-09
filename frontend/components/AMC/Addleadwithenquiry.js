@@ -127,14 +127,14 @@ export default function AddLeadWithEnquiry() {
 
   function getEmptyLift() {
     return {
-      leadId: createdLeadId,
+      leadId: createdLeadId || null,
       liftUsageType: '',
       liftMechanism: '',
       elevatorType: '',
       machineRoomType: '',
       cabinType: '',
       capacityType: capacityTypeOptions[0]?.value || '',
-      capacityTermId: '',
+      capacityTermId: capacityTypeOptions[0]?.id || '',
       personCapacityId: '',
       weightId: '',
       noOfFloors: '',
@@ -222,7 +222,7 @@ export default function AddLeadWithEnquiry() {
         setStopsOptions(Array.from({ length: totalFloorsCount }, (_, i) => i + 1));
         setOpeningOptions(Array.from({ length: totalFloorsCount * 2 }, (_, i) => i + 1));
 
-        // Person capacity
+        // Person capacity - FIXED: Store as ID directly
         const formattedPersons = personsRes.data.data.map((p) => ({
           id: p.id,
           displayName: p.displayName,
@@ -578,43 +578,125 @@ export default function AddLeadWithEnquiry() {
 
   const transformLift = (lift, index) => {
     const repeatSetting = repeatSettings[index] || {};
+    
+    // Find selected floor
     const selectedFloor = floorOption.find(opt => {
       const floorNumber = parseInt(lift.noOfFloors, 10);
       if (isNaN(floorNumber)) return false;
       return opt.name === `G+${floorNumber - 1}`;
     });
-    let floorId = selectedFloor ? selectedFloor.id : null;
+    const floorId = selectedFloor ? selectedFloor.id : null;
 
-    return {
-      leadId: lift.leadId,
-      enquiryId: lift.enquiryId,
-      buildTypeId: lift.liftUsageType,
+    // Helper function to safely parse integers
+    const safeParseInt = (value) => {
+      if (!value || value === '' || value === '0') return null;
+      const parsed = parseInt(value, 10);
+      return isNaN(parsed) ? null : parsed;
+    };
+
+    // Helper function to safely parse strings
+    const safeParseString = (value) => {
+      if (!value || value === '') return null;
+      return String(value).trim();
+    };
+
+    // CRITICAL FIX: Only include personCapacityId OR weightId based on capacity type
+    // Build base object first
+    const transformed = {
+      leadId: createdLeadId, // Use the created lead ID
+      enquiryId: lift.enquiryId || null,
+      buildTypeId: safeParseInt(lift.liftUsageType),
       liftName: `Lift ${index + 1}`,
-      typeOfLiftId: lift.liftMechanism,
-      liftTypeId: lift.elevatorType,
-      reqMachineRoomId: lift.machineRoomType,
-      cabinTypeId: lift.cabinType,
-      capacityTermId: lift.capacityTermId,
-      personCapacityId: lift.personCapacityId,
-      weightId: lift.weightId,
+      typeOfLiftId: safeParseInt(lift.liftMechanism),
+      liftTypeId: safeParseInt(lift.elevatorType),
+      reqMachineRoomId: safeParseInt(lift.machineRoomType),
+      cabinTypeId: safeParseInt(lift.cabinType),
+      capacityTermId: safeParseInt(lift.capacityTermId),
       noOfFloorsId: floorId,
-      floorSelections: lift.floorSelections,
-      floorsDesignation: lift.floorsDesignation,
-      noOfStops: lift.noOfStops,
-      noOfOpenings: lift.noOfOpenings,
-      shaftsWidth: lift.shaftWidth,
-      shaftsDepth: lift.shaftDepth,
-      pit: lift.pit,
-      projectStageId: lift.stageOfProject,
-      buildingTypeId: lift.buildingType,
+      floorSelections: Array.isArray(lift.floorSelections) ? lift.floorSelections : [],
+      floorsDesignation: safeParseString(lift.floorsDesignation),
+      noOfStops: safeParseInt(lift.noOfStops),
+      noOfOpenings: safeParseInt(lift.noOfOpenings),
+      shaftsWidth: safeParseString(lift.shaftWidth),
+      shaftsDepth: safeParseString(lift.shaftDepth),
+      pit: safeParseString(lift.pit),
+      projectStageId: safeParseInt(lift.stageOfProject),
+      buildingTypeId: safeParseInt(lift.buildingType),
       checked: repeatSetting.checked ?? false,
       from: repeatSetting.from ?? "",
     };
+
+    // CRITICAL: Add capacity field based on type - only include the relevant one
+    if (lift.capacityType === 'Person') {
+      transformed.personCapacityId = safeParseInt(lift.personCapacityId);
+      transformed.weightId = null; // Explicitly set the other to null
+    } else {
+      transformed.weightId = safeParseInt(lift.weightId);
+      transformed.personCapacityId = null; // Explicitly set the other to null
+    }
+
+    // Log individual lift transformation for debugging
+    console.log(`Transforming Lift ${index + 1}:`, {
+      original: {
+        capacityType: lift.capacityType,
+        personCapacityId: lift.personCapacityId,
+        weightId: lift.weightId,
+        capacityTermId: lift.capacityTermId
+      },
+      transformed: {
+        capacityTermId: transformed.capacityTermId,
+        personCapacityId: transformed.personCapacityId,
+        weightId: transformed.weightId
+      }
+    });
+
+    return transformed;
   };
 
   const handleEnquirySubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    // Validate all lifts before submission
+    const validationErrors = [];
+    enquiryForm.lifts.forEach((lift, index) => {
+      if (!lift.liftUsageType) validationErrors.push(`Lift ${index + 1}: Lift Usage Type is required`);
+      if (!lift.liftMechanism) validationErrors.push(`Lift ${index + 1}: Lift Mechanism is required`);
+      if (!lift.elevatorType) validationErrors.push(`Lift ${index + 1}: Elevator Type is required`);
+      if (!lift.machineRoomType) validationErrors.push(`Lift ${index + 1}: Machine Room Type is required`);
+      if (!lift.cabinType) validationErrors.push(`Lift ${index + 1}: Cabin Type is required`);
+      if (!lift.capacityType || !lift.capacityTermId) validationErrors.push(`Lift ${index + 1}: Capacity Type is required`);
+      
+      // Check capacity-specific fields - CRITICAL FIX
+      if (lift.capacityType === 'Person') {
+        if (!lift.personCapacityId || lift.personCapacityId === '' || lift.personCapacityId === '0') {
+          validationErrors.push(`Lift ${index + 1}: Person capacity must be selected`);
+        }
+      } else if (lift.capacityType === 'Kg' || lift.capacityType === 'Weight') {
+        if (!lift.weightId || lift.weightId === '' || lift.weightId === '0') {
+          validationErrors.push(`Lift ${index + 1}: Weight must be selected`);
+        }
+      }
+      
+      if (!lift.noOfFloors) validationErrors.push(`Lift ${index + 1}: Number of Floors is required`);
+      if (!lift.noOfStops) validationErrors.push(`Lift ${index + 1}: Number of Stops is required`);
+      if (!lift.noOfOpenings) validationErrors.push(`Lift ${index + 1}: Number of Openings is required`);
+      
+      // New Installation specific validations
+      if (enquiryTypeName === 'New Installation') {
+        if (!lift.shaftWidth) validationErrors.push(`Lift ${index + 1}: Shaft Width is required`);
+        if (!lift.shaftDepth) validationErrors.push(`Lift ${index + 1}: Shaft Depth is required`);
+        if (!lift.pit) validationErrors.push(`Lift ${index + 1}: Pit is required`);
+        if (!lift.stageOfProject) validationErrors.push(`Lift ${index + 1}: Stage of Project is required`);
+        if (!lift.buildingType) validationErrors.push(`Lift ${index + 1}: Building Type is required`);
+      }
+    });
+
+    if (validationErrors.length > 0) {
+      toast.error(`Please fix the following errors:\n${validationErrors.join('\n')}`);
+      console.error('Validation errors:', validationErrors);
+      return;
+    }
 
     const projectName = leadFormData.companyName;
     const siteName = leadFormData.siteSame === 'Yes' ? leadFormData.companyName : leadFormData.siteName;
@@ -625,14 +707,30 @@ export default function AddLeadWithEnquiry() {
 
     const transformedLifts = enquiryForm.lifts.map((lift, index) => transformLift(lift, index));
 
+    // Debug log
+    console.log('=== ENQUIRY SUBMISSION DEBUG ===');
+    console.log('API URL:', apiUrl + query);
+    console.log('Enquiry Type Name:', enquiryTypeName);
+    console.log('Raw lifts data:', JSON.stringify(enquiryForm.lifts, null, 2));
+    console.log('Transformed lifts:', JSON.stringify(transformedLifts, null, 2));
+    console.log('================================');
+
     setIsSubmitting(true);
     try {
-      await axiosInstance.post(apiUrl + query, transformedLifts);
+      const response = await axiosInstance.post(apiUrl + query, transformedLifts);
+      console.log('Success response:', response.data);
       toast.success('Enquiry added successfully!');
       router.push(`/dashboard/lead-management/lead-list`);
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to add enquiry');
+      console.error('=== ENQUIRY SUBMISSION ERROR ===');
+      console.error('Error:', err);
+      console.error('Response data:', err.response?.data);
+      console.error('Response status:', err.response?.status);
+      console.error('Response headers:', err.response?.headers);
+      console.error('================================');
+      
+      const errorMsg = err.response?.data?.message || err.response?.data?.error || 'Failed to add enquiry';
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -1031,19 +1129,51 @@ export default function AddLeadWithEnquiry() {
                           if (selectedOption) {
                             handleLiftChange(index, 'capacityType', selectedOption.label);
                             handleLiftChange(index, 'capacityTermId', selectedOption.id);
+                            // Clear the other capacity field when switching types
+                            if (selectedOption.label === 'Person') {
+                              handleLiftChange(index, 'weightId', '');
+                            } else {
+                              handleLiftChange(index, 'personCapacityId', '');
+                            }
                           }
                         }}
                       />
 
                       {lift.capacityType === 'Person' ? (
-                        <Select label="Select Persons *" value={lift.personCapacityId} onChange={(e) => handleLiftChange(index, 'personCapacityId', e.target.value)}>
+                        <Select 
+                          label="Select Persons *" 
+                          value={String(lift.personCapacityId || '')} 
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            handleLiftChange(index, 'personCapacityId', value);
+                            // Ensure weightId is cleared
+                            handleLiftChange(index, 'weightId', '');
+                          }}
+                        >
                           <option value="">Please Select</option>
-                          {personOptions.map((opt) => <option key={opt.id} value={opt.id}>{opt.displayName}</option>)}
+                          {personOptions.map((opt) => (
+                            <option key={opt.id} value={String(opt.id)}>
+                              {opt.displayName}
+                            </option>
+                          ))}
                         </Select>
                       ) : (
-                        <Select label="Enter Kg *" value={String(lift.weightId)} onChange={(e) => handleLiftChange(index, 'weightId', e.target.value)}>
+                        <Select 
+                          label="Enter Kg *" 
+                          value={String(lift.weightId || '')} 
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            handleLiftChange(index, 'weightId', value);
+                            // Ensure personCapacityId is cleared
+                            handleLiftChange(index, 'personCapacityId', '');
+                          }}
+                        >
                           <option value="">Please Select</option>
-                          {kgOptions.map((opt) => <option key={opt.id} value={String(opt.id)}>{opt.display}</option>)}
+                          {kgOptions.map((opt) => (
+                            <option key={opt.id} value={String(opt.id)}>
+                              {opt.display}
+                            </option>
+                          ))}
                         </Select>
                       )}
 

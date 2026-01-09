@@ -275,7 +275,7 @@ public class TenantDefaultDataInitializer {
 
     private void insertDefaultEnquiryTypes() {
         try {
-            String[] enquiryTypes = { "AMC", "New Installation", "Moderization", "On Call" };
+            String[] enquiryTypes = { "AMC", "New Installation", "Modernization", "On Call" };
             for (String name : enquiryTypes) {
                 if (!enquiryTypeRepository.existsByEnquiryTypeName(name)) {
                     EnquiryType enquiryType = new EnquiryType();
