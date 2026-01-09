@@ -167,7 +167,11 @@ export default function AddLeadWithEnquiry() {
 
         setExecutives(execRes.data.map((emp) => ({ value: emp.employeeId, label: emp.employeeName })));
         setLeadSources(sourceRes.data.map((src) => ({ value: src.leadSourceId, label: src.sourceName })));
-        setLeadTypes(typeRes.data.map((item) => item.enquiryTypeName));
+setLeadTypes(
+  typeRes.data
+    .filter(item => item.enquiryTypeName !== "Moderization")
+    .map(item => item.enquiryTypeName)
+);
         setEnquiryTypes(typeRes.data);
         setAreaOptions(areaRes.data.map((area) => ({ value: area.areaId, label: area.areaName })));
         setLeadStageOptions(stageRes.data.map((stage) => ({ value: stage.stageId, label: stage.stageName })));

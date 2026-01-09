@@ -105,8 +105,13 @@ export default function AddLeadPage() {
       setLeadSources(res.data.map((src) => ({ value: src.leadSourceId, label: src.sourceName })));
     });
     axiosInstance.get('/api/enquiry-types').then((res) => {
-      setLeadTypes(res.data.map((item) => item.enquiryTypeName));
-    });
+  setLeadTypes(
+    res.data
+      .filter(item => item.enquiryTypeName !== "Moderization")
+      .map(item => item.enquiryTypeName)
+  );
+});
+
     axiosInstance.get('/api/leadmanagement/areas').then((res) => {
       setAreaOptions(res.data.map((area) => ({ value: area.areaId, label: area.areaName })));
     });

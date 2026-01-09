@@ -51,17 +51,37 @@ export default function AddLead({ submitted, handleSetLeadId, handleSetCustomer1
   const [leadTypes, setLeadTypes] = useState([]);
   const [enquiryTypes, setEnquiryTypes] = useState([]);
 
+  // useEffect(() => {
+  //   axiosInstance.get('/api/enquiry-types')
+  //     .then((res) => {
+  //       const names = res.data.map((item) => item.enquiryTypeName);
+  //       setLeadTypes(names); // ['New Installation', 'AMC']
+  //       setEnquiryTypes(res.data);
+  //     })
+  //     .catch((err) => {
+  //       console.error('Failed to fetch lead types:', err);
+  //     });
+  // }, []);
+
   useEffect(() => {
-    axiosInstance.get('/api/enquiry-types')
-      .then((res) => {
-        const names = res.data.map((item) => item.enquiryTypeName);
-        setLeadTypes(names); // ['New Installation', 'AMC']
-        setEnquiryTypes(res.data);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch lead types:', err);
-      });
-  }, []);
+  axiosInstance.get('/api/enquiry-types')
+    .then((res) => {
+      const filteredData = res.data.filter(
+        (type) => type.enquiryTypeName !== "Moderization"
+      );
+
+      const names = filteredData.map(
+        (item) => item.enquiryTypeName
+      );
+
+      setLeadTypes(names);      // ['New Installation', 'AMC', ...]
+      setEnquiryTypes(filteredData);
+    })
+    .catch((err) => {
+      console.error('Failed to fetch lead types:', err);
+    });
+}, []);
+
 
   const [areaOptions, setAreaOptions] = useState([]);
 
