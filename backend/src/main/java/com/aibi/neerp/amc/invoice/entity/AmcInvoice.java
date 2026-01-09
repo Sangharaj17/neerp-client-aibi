@@ -88,4 +88,12 @@ public class AmcInvoice {
     @Column(name = "is_payment_entry_added") // nullable = false removed
     private Integer isPaymentEntryAdded = 0;
     
+    @PrePersist
+    public void prePersist() {
+        if (isPaymentEntryAdded == null) {
+            isPaymentEntryAdded = 0;
+        }
+    }
+
+    
 }

@@ -140,7 +140,9 @@ public interface AmcInvoiceRepository extends JpaRepository<AmcInvoice, Integer>
            
             AND (:dateSearch IS NULL OR :dateSearch = '' OR i.invoiceDate = CAST(:dateSearch AS date))
             
-            AND i.isCleared = 0
+          
+            
+             AND i.isPaymentEntryAdded = 0
             
           AND (
                 i.invoiceDate < CURRENT_DATE() 
