@@ -2238,7 +2238,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
     const floorNumber = Number(formData.floors);
     if (!floorNumber) return;
 
-    const targetFloor = floorNumber > 1 ? floorNumber - 1 : 1;
+    const targetFloor = floorNumber > 1 ? floorNumber : 1;
 
     const fetchPrices = async () => {
       // 1️⃣ Fetch Fastener
@@ -2360,6 +2360,73 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
 
     fetchPrices();
   }, [formData.floors, formData.floorDesignations]);
+
+  // 🔹 Recalculate individual price fields from selectedMaterials when loading saved data
+  useEffect(() => {
+    if (!formData.selectedMaterials || formData.selectedMaterials.length === 0) return;
+
+    // Only run this on initial load to restore prices from saved materials
+    if (!isInitialLoad) return;
+
+    console.log("🔄 Recalculating prices from saved materials...");
+
+    // Group materials by type
+    const materialsByType = {};
+    formData.selectedMaterials.forEach(mat => {
+      const type = mat.materialType?.toLowerCase();
+      if (!materialsByType[type]) {
+        materialsByType[type] = [];
+      }
+      materialsByType[type].push(mat);
+    });
+
+    // Map material types to price field names
+    const typeToFieldMap = {
+      'cabin subtype': 'cabinSubTypePrice',
+      'air system': 'airSystemPrice',
+      'car entrance sub type': 'carEntrancePrice',
+      'landing entrance 1': 'landingEntrancePrice1',
+      'landing entrance 2': 'landingEntrancePrice2',
+      'control panel type': 'controlPanelTypePrice',
+      'harness': 'wiringHarnessPrice',
+      'wiringharne ss': 'wiringHarnessPrice',
+      'guide rail': 'guideRailPrice',
+      'bracket type': 'bracketTypePrice',
+      'wirerope': 'wireRopePrice',
+      'ropingtype': 'ropingTypePrice',
+      'lop type': 'lopTypePrice',
+      'cop type': 'copTypePrice',
+      'machine': 'machinePrice',
+      'governor': 'governorPrice',
+      'truffing': 'truffingPrice',
+      'fastener': 'fastenerPrice',
+      'manualprice': 'manualPrice',
+      'commonprice': 'commonPrice',
+      'others': 'otherPrice',
+      'ard': 'ardAmount',
+    };
+
+    // Calculate totals for each material type
+    const priceUpdates = {};
+    Object.entries(materialsByType).forEach(([type, materials]) => {
+      const fieldName = typeToFieldMap[type];
+      if (fieldName) {
+        const total = materials.reduce((sum, mat) => sum + (Number(mat.price) || 0), 0);
+        priceUpdates[fieldName] = total;
+        console.log(`  ✓ ${type} → ${fieldName}: ${total}`);
+      }
+    });
+
+    console.log("📊 Price updates from materials:", priceUpdates);
+
+    // Update formData with recalculated prices
+    if (Object.keys(priceUpdates).length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        ...priceUpdates
+      }));
+    }
+  }, [formData.selectedMaterials, isInitialLoad]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -2536,6 +2603,14 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
             calculatedPrice = price * qty * noofStops;
 
             // console.log(calculatedPrice.toFixed(2), "---------otherMaterialName--------", itemName.toLowerCase());
+          }
+
+          if (
+            operatorTypeId === 1 &&
+            item.otherMaterialMainName?.toLowerCase() === "manualprice" &&
+            itemName.toLowerCase() === "lock material"
+          ) {
+            calculatedPrice = price * qty * noofStops;
           }
 
           // --- STEP 2: Log calculated price and new accumulator ---
@@ -6886,15 +6961,33 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
             <div className="flex items-center gap-1 flex-wrap">
               <span className="font-medium text-gray-800">Manual:</span> ₹{formData.manualPrice}
               <SmallPopover>
-                <h3 className="text-sm font-bold mb-2 text-green-700">Manual Price Breakdown</h3>
+                <h3 className="text-sm font-bold mb-2 text-green-700">Manual Price Breakdown----{formData.stops}</h3>
                 {manualDetails.length > 0 ? (
                   <ul className="list-disc list-inside space-y-1 max-h-60 overflow-y-auto">
-                    {manualDetails.map((item, i) => (
-                      <li key={i} className="text-xs">
-                        <span className="font-semibold">{item.otherMaterialName}</span> — ₹{item.price} × {item.quantity} = ₹
-                        {(parseFloat(item.quantity) || 0) * (parseFloat(item.price) || 0)}
-                      </li>
-                    ))}
+                    {manualDetails.map((item, i) => {
+                      const qty = parseFloat(item.quantity) || 0;
+                      const price = parseFloat(item.price) || 0;
+                      const isLockMaterial =
+                        item.otherMaterialMainName?.toLowerCase() === "manualprice" &&
+                        item.otherMaterialName?.toLowerCase() === "lock material";
+                      const total = isLockMaterial
+                        ? formData.stops * qty * price
+                        : qty * price;
+
+                      return (
+                        <li key={i} className="text-xs">
+                          <span className="font-semibold">{item.otherMaterialName}</span>
+                          {" — "}
+                          ₹{price} × {qty}
+                          {isLockMaterial && (
+                            <span className="text-green-700 font-semibold">
+                              {" "}× Stops({formData.stops})
+                            </span>
+                          )}
+                          {" "} = ₹{total}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-gray-500 text-xs">No materials found.</p>

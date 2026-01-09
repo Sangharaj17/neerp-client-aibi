@@ -91,7 +91,8 @@ public class NiInvoiceController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String search,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+//            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "invoice_id") String sortBy,
             @RequestParam(defaultValue = "desc") String direction
     ) {
 
