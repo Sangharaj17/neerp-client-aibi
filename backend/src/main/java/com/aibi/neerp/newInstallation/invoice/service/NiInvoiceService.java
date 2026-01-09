@@ -152,8 +152,10 @@ public class NiInvoiceService {
             BigDecimal sgstAmt = baseAmount.multiply(sgstPer)
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-            BigDecimal totalInvAmt = baseAmount.add(cgstAmt).add(sgstAmt)
-                    .setScale(0, RoundingMode.HALF_UP);
+//            BigDecimal totalInvAmt = baseAmount.add(cgstAmt).add(sgstAmt)
+//                    .setScale(0, RoundingMode.HALF_UP);
+
+            BigDecimal totalInvAmt = baseAmount.add(cgstAmt).add(sgstAmt);
 
             /* ================= INVOICE NO ================= */
 
@@ -327,7 +329,7 @@ public class NiInvoiceService {
             case "siteName" -> "site_name";
             case "invoiceDate" -> "invoice_date";
             case "totalAmount" -> "total_amt";
-            case "status" -> "status";
+            case "status" -> "is_cleared";
             default -> "created_at";
         };
     }
@@ -343,14 +345,20 @@ public class NiInvoiceService {
         // ✅ Whitelist sorting (VERY IMPORTANT)
         String sortColumn = resolveSortColumn(sortBy);
 
-        Sort sort = Sort.by(
-                Sort.Direction.fromString(direction),
-                sortColumn
-        );
+//        Sort sort = Sort.by(
+//                Sort.Direction.fromString(direction),
+//                sortColumn
+//        );
 
         //Pageable pageable = PageRequest.of(page, size, sort);
 
-        Pageable pageable = PageRequest.of(page, size);
+//        Pageable pageable = PageRequest.of(page, size);
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.fromString(direction), sortBy)
+        );
 
         Page<NiInvoice> invoicePage =
                 invoiceRepo.searchInvoices(

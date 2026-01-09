@@ -3651,7 +3651,7 @@ export const PriceBelowSelect = ({
     if (setPrice === "guideRailPrice") {
       if (opt && noOfStops > 0) {
         const unitPrice = unitOf(opt);
-        const roundedQty1 = 1 // calculateRoundedGuideRailQuantity(noOfStops); 
+        const roundedQty1 = calculateRoundedGuideRailQuantity(noOfStops);
         finalGuideRailQty = roundedQty1 * liftQuantity;
         price1 = unitPrice * finalGuideRailQty;
 

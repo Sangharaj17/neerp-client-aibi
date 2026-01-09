@@ -403,12 +403,12 @@ public class TenantDefaultDataInitializer {
             // Insert missing floors - the service should handle duplicates
             FloorRequestDTO requestDTO = new FloorRequestDTO();
             requestDTO.setPrefix("G+");
-            requestDTO.setTotalFloors(20);
+            requestDTO.setTotalFloors(33);
 
             // Directly use service method
             floorService.generateAndSaveFloors(requestDTO);
 
-            log.info("[DataInit] ✅ Default 20 floors inserted/updated successfully.");
+            log.info("[DataInit] ✅ Default 33 floors inserted/updated successfully.");
         } catch (Exception e) {
             log.error("[DataInit] ❌ Error inserting default floors: {}", e.getMessage());
             throw e;
@@ -442,12 +442,12 @@ public class TenantDefaultDataInitializer {
 
             // First 4 floors
             List<Floor> firstFourFloors = allFloors.stream()
-                    .limit(4)
+                    .limit(5)
                     .toList();
 
             // Remaining floors
             List<Floor> remainingFloors = allFloors.stream()
-                    .skip(4)
+                    .skip(5)
                     .toList();
 
             // --- Rules for first 4 floors ---
@@ -628,7 +628,7 @@ public class TenantDefaultDataInitializer {
                     { PROTECTED_NAMES.get(0), "Cable Hanger Material", 188, "1", "Set", null, "CABLE HENGER YELLOW" },
                     { PROTECTED_NAMES.get(0), "Junction Box Material", 3750, "1", "Set", null,
                             "JUNCTION BOX & CARTOP JUNCTION AND MAINTENANCE BOX" },
-                    { PROTECTED_NAMES.get(0), "Magnet SQR Material", 31, "1", "Set", null, "MAGNET SQR SET" },
+                    { PROTECTED_NAMES.get(0), "Magnet SQR Material", 31, "3", "Set", null, "MAGNET SQR SET" },
 
                     // manual prices for 1(manual)
                     { PROTECTED_NAMES.get(1), "Lock Material", 1063, "1", "Set", 1L,
