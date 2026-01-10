@@ -187,6 +187,7 @@ public class FileStorageService {
        ============================================================ */
     public Resource loadFileAsResource(String relativePath) throws IOException {
         Path filePath = Paths.get(baseUploadPath).resolve(relativePath).normalize();
+        log.info("Downloading filePath: {}", filePath.toAbsolutePath());
         Resource resource = new UrlResource(filePath.toUri());
 
         if (!filePath.startsWith(baseUploadPath)) {

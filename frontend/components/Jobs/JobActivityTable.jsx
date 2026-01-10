@@ -31,7 +31,16 @@ const JobActivityTable = ({
   };
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const fileUrl = `${API_BASE_URL}/api/job-activities/files/`;
+  const safeBaseUrl = API_BASE_URL?.endsWith("/")
+    ? API_BASE_URL.slice(0, -1)
+    : API_BASE_URL;
+  const fileUrlPrefix = `${safeBaseUrl}/api/job-activities/files/`;
+
+  const resolveFileUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    return `${fileUrlPrefix}${path}`;
+  };
 
   // Sortable columns (excluding action columns)
   const sortableColumns = [
@@ -318,7 +327,9 @@ const JobActivityTable = ({
                           <button
                             // onClick={() => setPreviewUrl(activity.signatureUrl)}
                             onClick={() =>
-                              setPreviewUrl(fileUrl + activity.signatureUrl)
+                              setPreviewUrl(
+                                resolveFileUrl(activity.signatureUrl)
+                              )
                             }
                             className="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-blue-100 transition"
                             title="View Signature"

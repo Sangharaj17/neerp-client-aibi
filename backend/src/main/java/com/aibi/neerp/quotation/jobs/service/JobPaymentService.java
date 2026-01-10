@@ -54,6 +54,8 @@ public class JobPaymentService {
                             ));
         }
 
+        Boolean manualCleared = dto.getPaymentCleared();
+
         BigDecimal totalPaidSoFar =
                 paymentRepo.getTotalPaidByInvoice(invoice.getInvoiceId());
 
@@ -75,14 +77,23 @@ public class JobPaymentService {
                 .bankName(dto.getBankName())
                 .branchName(dto.getBranchName())
                 .payFor(dto.getPayFor())
-                .paymentCleared(isFullyPaid)
+                //.paymentCleared(isFullyPaid)
+                .paymentCleared(
+                        manualCleared != null ? manualCleared : isFullyPaid
+                )
                 .createdBy(createdBy)
                 .build();
 
         paymentRepo.save(payment);
 
         // ✅ Auto-clear invoice only when fully paid
-        invoice.setIsCleared(isFullyPaid);
+        //invoice.setIsCleared(isFullyPaid);
+        if (Boolean.TRUE.equals(manualCleared)) {
+            invoice.setIsCleared(true);
+        } else {
+            invoice.setIsCleared(false);
+        }
+
         invoiceRepo.save(invoice);
 
         return new ApiResponse<>(

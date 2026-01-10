@@ -14,6 +14,8 @@ public class NiInvoiceResponseDTO {
     private String invoiceNo;
     private LocalDate invoiceDate;
 
+    private Integer jobId;
+
     private BigDecimal baseAmount;
     private BigDecimal cgstAmount;
     private BigDecimal sgstAmount;

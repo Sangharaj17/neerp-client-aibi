@@ -1261,6 +1261,8 @@ export default function useLiftForm(lift, setErrors, liftRatePriceKeys, initialO
 
   // Memoized calculations for all derived values
   const calculations = useMemo(() => {
+    if (!dataMapped) return { tabTotals: {}, grandTotal: 0 };
+
     const {
       capacityType,
       capacityValue,
