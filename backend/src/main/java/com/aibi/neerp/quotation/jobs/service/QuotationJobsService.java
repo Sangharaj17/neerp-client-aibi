@@ -77,7 +77,10 @@ public class QuotationJobsService {
 
 
     private String buildFileUrl(String filePath) {
-        return backendUrl + "/api/job-activities/files/" + filePath;
+        String safeBackendUrl = backendUrl != null && backendUrl.endsWith("/")
+                ? backendUrl.substring(0, backendUrl.length() - 1)
+                : backendUrl;
+        return safeBackendUrl + "/api/job-activities/files/" + filePath;
     }
 
     public ApiResponse<QuotationJobResponseDTO> create(QuotationJobRequestDTO dto) {
@@ -471,12 +474,18 @@ public class QuotationJobsService {
         res.setSiteName(job.getSite() != null ? job.getSite().getSiteName() : null);
         res.setSiteAddress(job.getSite() != null ? job.getSite().getSiteAddress() : null);
 
-        res.setNiQuotationId(
-                job.getNiQuotation() != null ? job.getNiQuotation().getId() : null
-        );
-        res.setQuotationNo(
-                job.getNiQuotation() != null ? job.getNiQuotation().getQuotationNo() : null
-        );
+//        res.setNiQuotationId(
+//                job.getNiQuotation() != null ? job.getNiQuotation().getId() : null
+//        );
+//        res.setQuotationNo(
+//                job.getNiQuotation() != null ? job.getNiQuotation().getQuotationNo() : null
+//        );
+
+        QuotationMain quotationMain = job.getNiQuotation();
+
+        res.setNiQuotationId(quotationMain != null ? quotationMain.getId() : null);
+        res.setQuotationNo(quotationMain != null ? quotationMain.getQuotationNo() : null);
+
         res.setServiceEngineerId(
                 job.getServiceEngineer() != null ? job.getServiceEngineer().getEmployeeId() : null
         );
@@ -511,6 +520,31 @@ public class QuotationJobsService {
         res.setCreatedById(job.getCreatedBy() != null ? job.getCreatedBy().getEmployeeId() : null);
         res.setCreatedByName(job.getCreatedBy() != null ? job.getCreatedBy().getEmployeeName() : null);
         res.setCreatedAt(job.getCreatedAt());
+
+        // ⭐ ================== PWD LOGIC (SAME AS INVOICE) ==================
+        double pwdAmount = 0;
+        boolean pwdIncluded = false;
+        int noOfLifts = 0;
+
+        if (quotationMain != null && quotationMain.getLiftDetails() != null) {
+
+            List<QuotationLiftDetail> lifts = quotationMain.getLiftDetails();
+            noOfLifts = lifts.size();
+
+            pwdIncluded = lifts.stream()
+                    .anyMatch(l -> Boolean.TRUE.equals(l.getPwdIncludeExclude()));
+
+            pwdAmount = lifts.stream()
+                    .filter(l -> Boolean.TRUE.equals(l.getPwdIncludeExclude()))
+                    .map(l -> l.getPwdAmount() != null ? l.getPwdAmount() : 0.0)
+                    .mapToDouble(Double::doubleValue)
+                    .sum();
+        }
+
+        res.setNoOfLifts(noOfLifts);
+        res.setPwdIncluded(pwdIncluded);
+        res.setPwdAmount(pwdAmount);
+        // ⭐ ===============================================================
 
         // ✅ NEW: Include job activities information
         if (job.getJobActivities() != null) {
@@ -814,6 +848,7 @@ public class QuotationJobsService {
         return dto;
     }
 
+
     @Transactional(readOnly = true)
     public ApiResponse<List<JobForPaymentResponseDTO>> getAllJobsForPayment() {
 
@@ -823,41 +858,94 @@ public class QuotationJobsService {
                         new ResourceNotFoundException("Company settings not found")
                 );
 
-        List<JobForPaymentResponseDTO> jobs =
-                repo.findAll().stream().map(job -> {
+        // ✅ Fetch ONLY jobs with pending payment
+        List<QuotationJobs> pendingJobs = repo.findPendingPaymentJobs();
 
-                    BigDecimal paidAmount = BigDecimal.ZERO; // future-proof
+        List<JobForPaymentResponseDTO> jobs = pendingJobs.stream().map(job -> {
 
-                    return JobForPaymentResponseDTO.builder()
-                            .jobId(job.getJobId())
-                            .jobNo(job.getJobNo())
-                            .jobTypeName(
-                                    job.getJobType() != null
-                                            ? job.getJobType().getEnquiryTypeName()
-                                            : null
-                            )
-                            .customerName(
-                                    job.getCustomer() != null
-                                            ? job.getCustomer().getCustomerName()
-                                            : null
-                            )
-                            .siteName(
-                                    job.getSite() != null
-                                            ? job.getSite().getSiteName()
-                                            : null
-                            )
-                            .jobAmount(job.getJobAmount())
-                            .paidAmount(paidAmount)
-                            .companyName(settings.getCompanyName())   // ✅ OK
-                            .companyMail(settings.getCompanyMail())   // ✅ OK
-                            .build();
-                }).toList();
+            // ✅ Fetch total paid amount for the job
+            BigDecimal paidAmount =
+                    Optional.ofNullable(
+                            jobPaymentRepo.getTotalPaidByJob(job.getJobId())
+                    ).orElse(BigDecimal.ZERO);
+
+            return JobForPaymentResponseDTO.builder()
+                    .jobId(job.getJobId())
+                    .jobNo(job.getJobNo())
+                    .jobTypeName(
+                            job.getJobType() != null
+                                    ? job.getJobType().getEnquiryTypeName()
+                                    : null
+                    )
+                    .customerName(
+                            job.getCustomer() != null
+                                    ? job.getCustomer().getCustomerName()
+                                    : null
+                    )
+                    .siteName(
+                            job.getSite() != null
+                                    ? job.getSite().getSiteName()
+                                    : null
+                    )
+                    .jobAmount(job.getJobAmount())
+                    .paidAmount(paidAmount)
+                    .companyName(settings.getCompanyName())
+                    .companyMail(settings.getCompanyMail())
+                    .build();
+        }).toList();
 
         return new ApiResponse<>(
                 true,
-                "Jobs Fetched Successfully",
+                "Pending Payment Jobs Fetched Successfully",
                 jobs
         );
     }
+
+
+//    @Transactional(readOnly = true)
+//    public ApiResponse<List<JobForPaymentResponseDTO>> getAllJobsForPayment() {
+//
+//        CompanySettingDTO settings = companySettingService
+//                .getCompanySettings("COMPANY_SETTINGS_1")
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Company settings not found")
+//                );
+//
+//        List<JobForPaymentResponseDTO> jobs =
+//                repo.findAll().stream().map(job -> {
+//
+//                    BigDecimal paidAmount = BigDecimal.ZERO; // future-proof
+//
+//                    return JobForPaymentResponseDTO.builder()
+//                            .jobId(job.getJobId())
+//                            .jobNo(job.getJobNo())
+//                            .jobTypeName(
+//                                    job.getJobType() != null
+//                                            ? job.getJobType().getEnquiryTypeName()
+//                                            : null
+//                            )
+//                            .customerName(
+//                                    job.getCustomer() != null
+//                                            ? job.getCustomer().getCustomerName()
+//                                            : null
+//                            )
+//                            .siteName(
+//                                    job.getSite() != null
+//                                            ? job.getSite().getSiteName()
+//                                            : null
+//                            )
+//                            .jobAmount(job.getJobAmount())
+//                            .paidAmount(paidAmount)
+//                            .companyName(settings.getCompanyName())   // ✅ OK
+//                            .companyMail(settings.getCompanyMail())   // ✅ OK
+//                            .build();
+//                }).toList();
+//
+//        return new ApiResponse<>(
+//                true,
+//                "Jobs Fetched Successfully",
+//                jobs
+//        );
+//    }
 
 }

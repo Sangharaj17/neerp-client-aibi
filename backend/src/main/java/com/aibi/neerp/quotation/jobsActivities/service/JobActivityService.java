@@ -63,27 +63,24 @@ public class JobActivityService {
 
         private static final int MAX_PHOTOS = 5;
 
-        /**
-         * Create new job activity
-         */
-        // public List<JobActivityResponseDTO> createJobActivity(JobActivityRequestDTO
-        // request) {
-        public JobActivityResponseDTO createJobActivity(JobActivityRequestDTO request) {
+    /**
+     * Create new job activity
+     */
+//    public List<JobActivityResponseDTO> createJobActivity(JobActivityRequestDTO request) {
+    public JobActivityResponseDTO createJobActivity(JobActivityRequestDTO request) {
 
                 // Validate job exists
                 QuotationJobs job = jobRepository.findById(request.getJobId())
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Job not found with ID: " + request.getJobId()));
 
-                // Validate activity type if provided
-                NiJobActivityType activityType = null;
-                if (request.getJobActivityTypeId() != null) {
-                        activityType = niJobActivityTypeRepository
-                                        .findById(Long.valueOf(request.getJobActivityTypeId()))
-                                        .orElseThrow(() -> new ResourceNotFoundException(
-                                                        "Activity type not found with ID: "
-                                                                        + request.getJobActivityTypeId()));
-                }
+        // Validate activity type if provided
+        NiJobActivityType activityType = null;
+        if (request.getJobActivityTypeId() != null) {
+            activityType = niJobActivityTypeRepository.findById(Long.valueOf(request.getJobActivityTypeId()))
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Activity type not found with ID: " + request.getJobActivityTypeId()));
+        }
 
                 // Validate employees
                 Employee activityBy = null;
@@ -119,48 +116,46 @@ public class JobActivityService {
 
                 JobActivityResponseDTO response = mapToResponseDTO(activity);
 
-                // Send email automatically after creation
-                try {
-                        sendActivityEmail(activity.getJobActivityId());
-                } catch (Exception e) {
-                        log.error("Failed to send email for activity {}, but activity was created",
-                                        activity.getJobActivityId(), e);
-                        // Don't fail the activity creation if email fails
-                }
-
-                return response;
+        // Send email automatically after creation
+        try {
+            sendActivityEmail(activity.getJobActivityId());
+        } catch (Exception e) {
+            log.error("Failed to send email for activity {}, but activity was created", 
+                    activity.getJobActivityId(), e);
+            // Don't fail the activity creation if email fails
         }
 
-        /**
-         * Send activity email manually
-         */
-        public void sendActivityEmail(Integer activityId) {
-                NiJobActivity activity = activityRepository.findByIdAndNotDeleted(activityId)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Activity not found with ID: " + activityId));
+        return response;
+    }
+    
+    /**
+     * Send activity email manually
+     */
+    public void sendActivityEmail(Integer activityId) {
+        NiJobActivity activity = activityRepository.findByIdAndNotDeleted(activityId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Activity not found with ID: " + activityId));
 
-                JobActivityResponseDTO activityDTO = mapToResponseDTO(activity);
+        JobActivityResponseDTO activityDTO = mapToResponseDTO(activity);
+        
+        // Get customer email from job
+//        String customerEmail = activity.getJob().getCustomer().getEmailId();
+//        String customerName = activity.getJob().getCustomer().getCustomerName();
+//
+//        if (customerEmail == null || customerEmail.isEmpty()) {
+//            throw new IllegalStateException("Customer email not found for job: " + activity.getJob().getJobId());
+//        }
 
-                // Get customer email from job
-                // String customerEmail = activity.getJob().getCustomer().getEmailId();
-                // String customerName = activity.getJob().getCustomer().getCustomerName();
-                //
-                // if (customerEmail == null || customerEmail.isEmpty()) {
-                // throw new IllegalStateException("Customer email not found for job: " +
-                // activity.getJob().getJobId());
-                // }
+        // Send email with PDF
+//        emailService.sendActivityEmailWithPDF(activityDTO, customerEmail, customerName);
+        emailService.sendActivityEmailWithPDF(activityDTO, activity);
 
-                // Send email with PDF
-                // emailService.sendActivityEmailWithPDF(activityDTO, customerEmail,
-                // customerName);
-                emailService.sendActivityEmailWithPDF(activityDTO, activity);
-
-                // Update mailSent flag
-                activity.setMailSent(true);
-                activityRepository.save(activity);
-
-                log.info("Email sent successfully for activity: {}", activityId);
-        }
+        // Update mailSent flag
+        activity.setMailSent(true);
+        activityRepository.save(activity);
+        
+        log.info("Email sent successfully for activity: {}", activityId);
+    }
 
         /**
          * Upload photos for activity
@@ -186,13 +181,14 @@ public class JobActivityService {
 
                 List<NiJobActivityPhoto> savedPhotos = new ArrayList<>();
 
-                for (MultipartFile photo : photos) {
-                        try {
-                                String photoPath = fileStorageService.storePhoto(
-                                                photo,
-                                                clientId,
-                                                activity.getJob().getJobId(),
-                                                activityId);
+        for (MultipartFile photo : photos) {
+            try {
+                String photoPath = fileStorageService.storePhoto(
+                        photo,
+                        clientId,
+                        activity.getJob().getJobId(),
+                        activityId
+                );
 
                                 NiJobActivityPhoto photoEntity = NiJobActivityPhoto.builder()
                                                 .jobActivity(activity)
@@ -209,8 +205,7 @@ public class JobActivityService {
                         }
                 }
 
-                log.info("Uploading {} photos for client: {} jobId: {} activity: {} ", photos.size(), clientId, jobId,
-                                activityId);
+        log.info("Uploading {} photos for client: {} jobId: {} activity: {} ", photos.size(), clientId, jobId, activityId);
 
                 return savedPhotos.stream()
                                 .map(this::mapToPhotoDTO)
@@ -238,65 +233,64 @@ public class JobActivityService {
                 log.info("Deleted photo: {}", photoId);
         }
 
-        // /**
-        // * Upload documents for job (via activity context or direct)
-        // */
-        // /**
-        // * Upload documents for job (via activity context or direct)
-        // */
-        // public List<NiJobDocuments> uploadJobDocuments(
-        // List<MultipartFile> files,
-        // Integer clientId,
-        // Integer jobId) {
-        //
-        // QuotationJobs job = jobRepository.findById(jobId)
-        // .orElseThrow(() -> new ResourceNotFoundException(
-        // "Job not found with ID: " + jobId));
-        //
-        // if (files.size() > 10) {
-        // throw new IllegalArgumentException("Maximum 10 files allowed at a time");
-        // }
-        //
-        // List<AttachedJobDocument> savedDocs = new ArrayList<>();
-        //
-        // for (MultipartFile file : files) {
-        // try {
-        // // Store file in JOB folder
-        // String docPath = fileStorageService.storeJobDocument(
-        // file,
-        // clientId,
-        // jobId
-        // );
-        //
-        // NiJobDocuments docEntity = NiJobDocuments.builder()
-        // .job(job)
-        // .documentName(file.getOriginalFilename())
-        // .filePath(docPath)
-        // .fileType(file.getContentType())
-        // .fileSize(file.getSize())
-        // // Storing employee object (Job Creator) - assuming creator exists
-        // .docAddedBy(job.getCreatedBy())
-        // .status("ACTIVE")
-        // .docAddDate(LocalDateTime.now())
-        // .build();
-        //
-        // savedDocs.add(attachedJobDocumentRepository.save(docEntity));
-        //
-        // } catch (IOException e) {
-        // log.error("Failed to upload document for job: {}", jobId, e);
-        // throw new RuntimeException("Failed to upload document", e);
-        // }
-        // }
-        //
-        // log.info("Uploaded {} documents for job: {}", files.size(), jobId);
-        // return savedDocs;
-        // }
-        //
-        // public List<AttachedJobDocument> getDocumentsByJob(Integer jobId) {
-        // return
-        // attachedJobDocumentRepository.findByJob_JobIdAndStatusIgnoreCase(jobId,
-        // "ACTIVE");
-        // }
+//    /**
+//     * Upload documents for job (via activity context or direct)
+//     */
+//    /**
+//     * Upload documents for job (via activity context or direct)
+//     */
+//    public List<NiJobDocuments> uploadJobDocuments(
+//                                                                 List<MultipartFile> files,
+//                                                                 Integer clientId,
+//                                                                 Integer jobId) {
+//
+//        QuotationJobs job = jobRepository.findById(jobId)
+//                .orElseThrow(() -> new ResourceNotFoundException(
+//                        "Job not found with ID: " + jobId));
+//
+//        if (files.size() > 10) {
+//            throw new IllegalArgumentException("Maximum 10 files allowed at a time");
+//        }
+//
+//        List<AttachedJobDocument> savedDocs = new ArrayList<>();
+//
+//        for (MultipartFile file : files) {
+//            try {
+//                // Store file in JOB folder
+//                String docPath = fileStorageService.storeJobDocument(
+//                        file,
+//                        clientId,
+//                        jobId
+//                );
+//
+//                NiJobDocuments docEntity = NiJobDocuments.builder()
+//                        .job(job)
+//                        .documentName(file.getOriginalFilename())
+//                        .filePath(docPath)
+//                        .fileType(file.getContentType())
+//                        .fileSize(file.getSize())
+//                        // Storing employee object (Job Creator) - assuming creator exists
+//                        .docAddedBy(job.getCreatedBy())
+//                        .status("ACTIVE")
+//                        .docAddDate(LocalDateTime.now())
+//                        .build();
+//
+//                savedDocs.add(attachedJobDocumentRepository.save(docEntity));
+//
+//            } catch (IOException e) {
+//                log.error("Failed to upload document for job: {}", jobId, e);
+//                throw new RuntimeException("Failed to upload document", e);
+//            }
+//        }
+//
+//        log.info("Uploaded {} documents for job: {}", files.size(), jobId);
+//        return savedDocs;
+//    }
+//
+//    public List<AttachedJobDocument> getDocumentsByJob(Integer jobId) {
+//         return attachedJobDocumentRepository.findByJob_JobIdAndStatusIgnoreCase(jobId, "ACTIVE");
+//    }
+
 
         /**
          * Upload signature for activity
@@ -309,24 +303,26 @@ public class JobActivityService {
                 NiJobActivity activity = activityRepository.findById(activityId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
-                try {
-                        String filePath = fileStorageService.storeSignature(
-                                        file,
-                                        clientId,
-                                        activity.getJob().getJobId(),
-                                        activityId,
-                                        activity.getSignaturePersonName());
+        try {
+            String filePath = fileStorageService.storeSignature(
+                    file,
+                    clientId,
+                    activity.getJob().getJobId(),
+                    activityId,
+                    activity.getSignaturePersonName()
+            );
 
                         activity.setSignatureUrl(filePath);
                         activityRepository.save(activity);
 
                         return filePath;
 
-                } catch (IOException e) {
-                        log.error("Failed to store signature for activity {}", activityId, e);
-                        throw new FileStorageException("Failed to upload signature");
-                }
+        } catch (IOException e) {
+            log.error("Failed to store signature for activity {}", activityId, e);
+            throw new FileStorageException("Failed to upload signature");
         }
+    }
+
 
         /**
          * Fetch photos for an activity
@@ -335,30 +331,35 @@ public class JobActivityService {
 
                 log.info("Fetching photos for activityId={} jobId={} clientId={}", activityId, jobId, clientId);
 
-                // 1️⃣ Validate activity
-                NiJobActivity activity = activityRepository
-                                .findByJobActivityIdAndStatusNot(
-                                                activityId,
-                                                "DELETED")
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Activity not found with ID: " + activityId));
+        // 1️⃣ Validate activity
+        NiJobActivity activity = activityRepository
+                .findByJobActivityIdAndStatusNot(
+                        activityId,
+                        "DELETED"
+                )
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Activity not found with ID: " + activityId
+                ));
 
-                // 2️⃣ Fetch photos
-                List<NiJobActivityPhoto> photos = photoRepository.findByJobActivity_JobActivityIdAndDeletedFalse(
-                                activity.getJobActivityId());
+        // 2️⃣ Fetch photos
+        List<NiJobActivityPhoto> photos =
+                photoRepository.findByJobActivity_JobActivityIdAndDeletedFalse(
+                        activity.getJobActivityId()
+                );
 
-                // 3️⃣ Convert to DTO
-                return photos.stream()
-                                .map(photo -> JobActivityPhotoDTO.builder()
-                                                .photoId(photo.getPhotoId())
-                                                .photoUrl(photo.getPhotoPath())
-                                                // .(photo.getOriginalFileName())
-                                                .createdAt(photo.getCreatedAt())
-                                                .createdById(photo.getCreatedBy().getEmployeeId())
-                                                .createdByName(photo.getCreatedBy().getEmployeeName())
-                                                .build())
-                                .toList();
-        }
+        // 3️⃣ Convert to DTO
+        return photos.stream()
+                .map(photo -> JobActivityPhotoDTO.builder()
+                        .photoId(photo.getPhotoId())
+                        .photoUrl(photo.getPhotoPath())
+                        //.(photo.getOriginalFileName())
+                        .createdAt(photo.getCreatedAt())
+                        .createdById(photo.getCreatedBy().getEmployeeId())
+                        .createdByName(photo.getCreatedBy().getEmployeeName())
+                        .build())
+                .toList();
+    }
+
 
         /**
          * Fetch signature details for an activity
@@ -367,18 +368,21 @@ public class JobActivityService {
 
                 log.info("Fetching signature for activityId={} jobId={} clientId={}", activityId, jobId, clientId);
 
-                NiJobActivity activity = activityRepository
-                                .findByJobActivityIdAndStatusNot(
-                                                activityId,
-                                                "DELETED")
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Activity not found with ID: " + activityId));
+        NiJobActivity activity = activityRepository
+                .findByJobActivityIdAndStatusNot(
+                        activityId,
+                        "DELETED"
+                )
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Activity not found with ID: " + activityId
+                ));
 
-                return JobActivitySignatureDTO.builder()
-                                .signatureUrl(activity.getSignatureUrl())
-                                .signaturePersonName(activity.getSignaturePersonName())
-                                .build();
-        }
+        return JobActivitySignatureDTO.builder()
+                .signatureUrl(activity.getSignatureUrl())
+                .signaturePersonName(activity.getSignaturePersonName())
+                .build();
+    }
+
 
         /**
          * Get activity by ID
@@ -467,8 +471,9 @@ public class JobActivityService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Activity not found with ID: " + activityId));
 
-                // 1️⃣ Delete photo files + DB records
-                List<NiJobActivityPhoto> photos = photoRepository.findByJobActivityId(activityId);
+        // 1️⃣ Delete photo files + DB records
+        List<NiJobActivityPhoto> photos =
+                photoRepository.findByJobActivityId(activityId);
 
                 for (NiJobActivityPhoto photo : photos) {
                         try {
@@ -496,15 +501,16 @@ public class JobActivityService {
                 log.info("Activity hard deleted with photos & signature. ActivityId={}", activityId);
         }
 
-        // public void hardDeleteActivity(Integer activityId) {
-        // NiJobActivity activity = activityRepository.findById(activityId)
-        // .orElseThrow(() -> new ResourceNotFoundException(
-        // "Activity not found with ID: " + activityId));
-        //
-        // activityRepository.delete(activity);
-        //
-        // log.info("Activity permanently deleted with ID: {}", activityId);
-        // }
+
+//    public void hardDeleteActivity(Integer activityId) {
+//        NiJobActivity activity = activityRepository.findById(activityId)
+//                .orElseThrow(() -> new ResourceNotFoundException(
+//                        "Activity not found with ID: " + activityId));
+//
+//        activityRepository.delete(activity);
+//
+//        log.info("Activity permanently deleted with ID: {}", activityId);
+//    }
 
         /**
          * Delete photo
@@ -530,43 +536,40 @@ public class JobActivityService {
                                 .map(this::mapToPhotoDTO)
                                 .collect(Collectors.toList());
 
-                return JobActivityResponseDTO.builder()
-                                .jobActivityId(activity.getJobActivityId())
-                                .jobId(activity.getJob().getJobId())
-                                .jobNumber(activity.getJob().getJobNo())
-                                // .jobActivityTypeId(activity.getJobActivityType() != null ?
-                                // activity.getJobActivityType().getActivityTypeId() : null)
-                                // .jobActivityTypeName(activity.getJobActivityType() != null ?
-                                // activity.getJobActivityType().getActivityTypeName() : null)
-                                .activityDate(activity.getActivityDate())
-                                .activityTitle(activity.getActivityTitle())
-                                .activityDescription(activity.getActivityDescription())
-                                .jobActivityBy(activity.getJobActivityBy() != null
-                                                ? activity.getJobActivityBy().getEmployeeId()
-                                                : null)
-                                .jobActivityByName(activity.getJobActivityBy() != null
-                                                ? activity.getJobActivityBy().getEmployeeName()
-                                                : null)
-                                .jobActivityTypeId(
-                                                activity.getJobActivityType() != null
-                                                                ? activity.getJobActivityType().getId()
-                                                                : null)
-                                .jobActivityTypeName(activity.getJobActivityType() != null
-                                                ? activity.getJobActivityType().getTypeName()
-                                                : null)
-                                .remark(activity.getRemark())
-                                .mailSent(activity.getMailSent())
-                                .createdBy(activity.getCreatedBy().getEmployeeId())
-                                .createdByName(activity.getCreatedBy().getEmployeeName())
-                                .signaturePersonName(activity.getSignaturePersonName())
-                                .signatureUrl(activity.getSignatureUrl() != null
-                                                ? buildFileUrl(activity.getSignatureUrl())
-                                                : null)
-                                .status(activity.getStatus())
-                                .createdAt(activity.getCreatedAt())
-                                .photos(photos)
-                                .build();
-        }
+        return JobActivityResponseDTO.builder()
+                .jobActivityId(activity.getJobActivityId())
+                .jobId(activity.getJob().getJobId())
+                .jobNumber(activity.getJob().getJobNo())
+//                .jobActivityTypeId(activity.getJobActivityType() != null ?
+//                        activity.getJobActivityType().getActivityTypeId() : null)
+//                .jobActivityTypeName(activity.getJobActivityType() != null ?
+//                        activity.getJobActivityType().getActivityTypeName() : null)
+                .activityDate(activity.getActivityDate())
+                .activityTitle(activity.getActivityTitle())
+                .activityDescription(activity.getActivityDescription())
+                .jobActivityBy(activity.getJobActivityBy() != null ?
+                        activity.getJobActivityBy().getEmployeeId() : null)
+                .jobActivityByName(activity.getJobActivityBy() != null ?
+                        activity.getJobActivityBy().getEmployeeName() : null)
+                .jobActivityTypeId(
+                        activity.getJobActivityType() != null
+                                ? activity.getJobActivityType().getId()
+                                : null
+                )
+                .jobActivityTypeName(activity.getJobActivityType() != null ?
+                        activity.getJobActivityType().getTypeName() : null)
+                .remark(activity.getRemark())
+                .mailSent(activity.getMailSent())
+                .createdBy(activity.getCreatedBy().getEmployeeId())
+                .createdByName(activity.getCreatedBy().getEmployeeName())
+                .signaturePersonName(activity.getSignaturePersonName())
+                .signatureUrl(activity.getSignatureUrl() != null ?
+                        buildFileUrl(activity.getSignatureUrl()) : null)
+                .status(activity.getStatus())
+                .createdAt(activity.getCreatedAt())
+                .photos(photos)
+                .build();
+    }
 
         private JobActivityPhotoDTO mapToPhotoDTO(NiJobActivityPhoto photo) {
                 return JobActivityPhotoDTO.builder()
@@ -576,11 +579,11 @@ public class JobActivityService {
                                 .build();
         }
 
-        private String buildFileUrl(String filePath) {
-                String safeBackendUrl = backendUrl != null && backendUrl.endsWith("/")
-                                ? backendUrl.substring(0, backendUrl.length() - 1)
-                                : backendUrl;
-                return String.format("%s/api/job-activities/files/%s", safeBackendUrl, filePath);
-        }
+    private String buildFileUrl(String filePath) {
+        String safeBackendUrl = backendUrl != null && backendUrl.endsWith("/")
+                ? backendUrl.substring(0, backendUrl.length() - 1)
+                : backendUrl;
+        return String.format("%s/api/job-activities/files/%s", safeBackendUrl, filePath);
+    }
 
 }

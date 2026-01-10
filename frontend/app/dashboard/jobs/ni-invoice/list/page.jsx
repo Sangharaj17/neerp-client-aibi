@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   FaPrint,
   FaSort,
@@ -71,36 +71,89 @@ const InvoiceListPage = () => {
    * ✅ CLIENT-SIDE SORTING LOGIC
    * Sorts the currently fetched page data locally.
    */
-  const sortedInvoices = [...invoices].sort((a, b) => {
-    let valA = a[sortBy];
-    let valB = b[sortBy];
+  const sortedInvoices = useMemo(() => {
+    if (!sortBy) return invoices;
 
-    // Handle null/undefined values safely
-    if (valA === null || valA === undefined) valA = "";
-    if (valB === null || valB === undefined) valB = "";
+    return [...invoices].sort((a, b) => {
+      let valA = a[sortBy];
+      let valB = b[sortBy];
 
-    // Specific handling for dates (if string is ISO format or standard date string)
-    if (sortBy === "invoiceDate" || sortBy === "createdAt") {
-      valA = new Date(valA).getTime();
-      valB = new Date(valB).getTime();
-    }
+      // Special handling for "Invoice For" column
+      if (sortBy === "payFor") {
+        valA = a.jobId;
+        valB = b.jobId;
+      } else {
+        valA = a[sortBy];
+        valB = b[sortBy];
+      }
 
-    // Numeric sorting for amounts
-    if (sortBy === "totalAmount") {
-      valA = Number(valA) || 0;
-      valB = Number(valB) || 0;
-    }
+      // 1️⃣ Handle null / undefined
+      if (valA == null && valB == null) return 0;
+      if (valA == null) return 1;
+      if (valB == null) return -1;
 
-    // String sorting (case-insensitive)
-    if (typeof valA === "string") {
-      valA = valA.toLowerCase();
-      valB = valB.toLowerCase();
-    }
+      // 2️⃣ Date sorting (ISO or yyyy-mm-dd)
+      if (sortBy.toLowerCase().includes("date")) {
+        valA = new Date(valA).getTime();
+        valB = new Date(valB).getTime();
+      }
 
-    if (valA < valB) return direction === "asc" ? -1 : 1;
-    if (valA > valB) return direction === "asc" ? 1 : -1;
-    return 0;
-  });
+      // 3️⃣ Numeric sorting (amounts, ids)
+      else if (typeof valA === "number" && typeof valB === "number") {
+        // already numbers
+      } else if (!isNaN(valA) && !isNaN(valB)) {
+        valA = Number(valA);
+        valB = Number(valB);
+      }
+
+      // 4️⃣ Boolean sorting
+      else if (typeof valA === "boolean" && typeof valB === "boolean") {
+        valA = valA ? 1 : 0;
+        valB = valB ? 1 : 0;
+      }
+
+      // 5️⃣ String sorting (case-insensitive)
+      else {
+        valA = String(valA).toLowerCase();
+        valB = String(valB).toLowerCase();
+      }
+
+      if (valA < valB) return direction === "asc" ? -1 : 1;
+      if (valA > valB) return direction === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [invoices, sortBy, direction]);
+
+  // const sortedInvoices = [...invoices].sort((a, b) => {
+  //   let valA = a[sortBy];
+  //   let valB = b[sortBy];
+
+  //   // Handle null/undefined values safely
+  //   if (valA === null || valA === undefined) valA = "";
+  //   if (valB === null || valB === undefined) valB = "";
+
+  //   // Specific handling for dates (if string is ISO format or standard date string)
+  //   if (sortBy === "invoiceDate" || sortBy === "createdAt") {
+  //     valA = new Date(valA).getTime();
+  //     valB = new Date(valB).getTime();
+  //   }
+
+  //   // Numeric sorting for amounts
+  //   if (sortBy === "totalAmount") {
+  //     valA = Number(valA) || 0;
+  //     valB = Number(valB) || 0;
+  //   }
+
+  //   // String sorting (case-insensitive)
+  //   if (typeof valA === "string") {
+  //     valA = valA.toLowerCase();
+  //     valB = valB.toLowerCase();
+  //   }
+
+  //   if (valA < valB) return direction === "asc" ? -1 : 1;
+  //   if (valA > valB) return direction === "asc" ? 1 : -1;
+  //   return 0;
+  // });
 
   const fetchInvoices = async () => {
     try {
@@ -346,26 +399,39 @@ const InvoiceListPage = () => {
                         align: "center",
                       },
                     ].map((col) => (
+                      // <th
+                      //   key={col.key}
+                      //   onClick={() => col.sortable && handleSort(col.key)}
+                      //   className={`px-6 py-2 text-${
+                      //     col.align
+                      //   } text-xs font-medium text-gray-800 uppercase tracking-wider ${
+                      //     col.sortable
+                      //       ? "cursor-pointer hover:bg-gray-100 transition duration-150"
+                      //       : ""
+                      //   }`}
+                      // >
+                      //   <div
+                      //     className={`flex items-center ${
+                      //       col.align === "center"
+                      //         ? "justify-center"
+                      //         : col.align === "right"
+                      //         ? "justify-end"
+                      //         : ""
+                      //     }`}
+                      //   >
+                      //     {col.label}
+                      //     {col.sortable &&
+                      //       getSortIcon(col.key, sortBy, direction)}
+                      //   </div>
+                      // </th>
                       <th
                         key={col.key}
                         onClick={() => col.sortable && handleSort(col.key)}
-                        className={`px-6 py-2 text-${
-                          col.align
-                        } text-xs font-medium text-gray-800 uppercase tracking-wider ${
-                          col.sortable
-                            ? "cursor-pointer hover:bg-gray-100 transition duration-150"
-                            : ""
+                        className={`px-6 py-2 ${
+                          col.sortable ? "cursor-pointer hover:bg-gray-100" : ""
                         }`}
                       >
-                        <div
-                          className={`flex items-center ${
-                            col.align === "center"
-                              ? "justify-center"
-                              : col.align === "right"
-                              ? "justify-end"
-                              : ""
-                          }`}
-                        >
+                        <div className="flex items-center">
                           {col.label}
                           {col.sortable &&
                             getSortIcon(col.key, sortBy, direction)}
@@ -412,7 +478,10 @@ const InvoiceListPage = () => {
                         </td>
 
                         <td className="px-6 py-2 whitespace-nowrap text-sm text-gray-900 font-mono text-right">
-                          <span className="font-bold">{inv.payFor}</span>
+                          <span className="font-bold">
+                            {/* {inv.payFor}[Job:{inv.jobId}] */}
+                            Job:{inv.jobId}
+                          </span>
                         </td>
 
                         <td className="px-6 py-2 whitespace-nowrap text-center">

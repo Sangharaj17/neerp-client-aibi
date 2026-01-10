@@ -78,7 +78,17 @@ const JobDetailPage = () => {
   const [imageLoading, setImageLoading] = useState({});
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const fileUrl = `${API_BASE_URL}/api/job-activities/files/`;
+  // Strip trailing slash from API_BASE_URL if present
+  const safeBaseUrl = API_BASE_URL?.endsWith("/")
+    ? API_BASE_URL.slice(0, -1)
+    : API_BASE_URL;
+  const fileUrlPrefix = `${safeBaseUrl}/api/job-activities/files/`;
+
+  const resolveFileUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    return `${fileUrlPrefix}${path}`;
+  };
 
   useEffect(() => {
     if (galleryOpen) {
@@ -640,7 +650,7 @@ const JobDetailPage = () => {
         y += 8;
 
         const images = await Promise.all(
-          activity.photos.map((p) => loadImageSafe(fileUrl + p.photoUrl))
+          activity.photos.map((p) => loadImageSafe(resolveFileUrl(p.photoUrl)))
         );
 
         let x = 14;
@@ -698,7 +708,7 @@ const JobDetailPage = () => {
           }
         }
 
-        const sign = await loadImageSafe(fileUrl + activity.signatureUrl);
+        const sign = await loadImageSafe(resolveFileUrl(activity.signatureUrl));
         if (sign) {
           doc.setFontSize(12);
           doc.text("Signature", 14, y);
@@ -1389,7 +1399,9 @@ const JobDetailPage = () => {
                   key={idx}
                   className="relative group cursor-pointer overflow-hidden rounded-lg border"
                   // onClick={() => setPreviewImage(photo.photoUrl)}
-                  onClick={() => setPreviewImage(fileUrl + photo.photoUrl)}
+                  onClick={() =>
+                    setPreviewImage(resolveFileUrl(photo.photoUrl))
+                  }
                 >
                   {/* Loader overlay */}
                   {imageLoading[idx] !== false && (
@@ -1399,7 +1411,7 @@ const JobDetailPage = () => {
                   )}
 
                   <img
-                    src={fileUrl + photo.photoUrl}
+                    src={resolveFileUrl(photo.photoUrl)}
                     alt="Activity"
                     onLoad={() =>
                       setImageLoading((prev) => ({ ...prev, [idx]: false }))

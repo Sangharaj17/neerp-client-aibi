@@ -476,6 +476,13 @@ public class NiInvoiceService {
                 .invoiceId(i.getInvoiceId())
                 .invoiceNo(i.getInvoiceNo())
                 .invoiceDate(i.getInvoiceDate())
+
+                .jobId(
+                        i.getJob() != null
+                                ? i.getJob().getJobId()
+                                : null
+                )
+
                 .baseAmount(i.getBaseAmount())
                 .cgstAmount(i.getCgstAmount())
                 .sgstAmount(i.getSgstAmount())

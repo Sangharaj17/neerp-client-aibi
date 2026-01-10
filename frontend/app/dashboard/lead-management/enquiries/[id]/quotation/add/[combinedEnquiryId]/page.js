@@ -1544,7 +1544,7 @@ export default function QuotationAddPage() {
                               ? "🔄 Revise"
                               : action === "editRevision" && origin === "MISSING_FROM_PARENT"
                                 ? "🔄 Revise Original"
-                                : action === "editRevision" && origin === "CURRENT_INCLUDED" && edition == 0
+                                : action === "edit" && origin === "CURRENT_INCLUDED" && edition == 0
                                   ? "✏️ Edit Original"
                                   : "✏️ Edit Revised"
                         }

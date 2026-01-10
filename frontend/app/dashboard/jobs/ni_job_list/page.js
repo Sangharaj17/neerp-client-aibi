@@ -96,6 +96,17 @@ export default function NiJobList() {
     fetchJobs();
   }, [fetchJobs]);
 
+  const isFullyPaid = (job) => {
+    if (!job.pwdIncluded) return false;
+
+    const paid = Number(job.paidAmount || 0);
+    const pwd = Number(job.pwdAmount || 0);
+    const total = paid + pwd;
+
+    return total >= Number(job.jobAmount || 0);
+  };
+
+
   // Client-Side Sorting of the Fetched Page
   const sortedJobs = useMemo(() => {
     if (!sortBy) return jobs;
@@ -398,7 +409,7 @@ export default function NiJobList() {
                         <span className="text-[10px] text-gray-600">View</span>
                       </button>
 
-                      <button title="Invoice" className="flex flex-col items-center"
+                      {/* <button title="Invoice" className="flex flex-col items-center"
                         onClick={() => {
                           setLoadingBtn(`invoice-${job.jobId}`);
                           // router.push(`/dashboard/jobs/ni_job_list/invoice/${job.jobId}`);
@@ -410,7 +421,32 @@ export default function NiJobList() {
                           <FileText className="w-4 h-4 text-green-500" />
                         )}
                         <span className="text-[10px] text-gray-600">Invoice</span>
-                      </button>
+                      </button> */}
+                      {isFullyPaid(job) ? (
+                        <div className="flex flex-col items-center">
+                          <FileText className="w-4 h-4 text-gray-400" />
+                          <span className="text-[10px] text-red-500 font-semibold">
+                            Fully Paid
+                          </span>
+                        </div>
+                      ) : (
+                        <button
+                          title="Invoice"
+                          className="flex flex-col items-center"
+                          onClick={() => {
+                            setLoadingBtn(`invoice-${job.jobId}`);
+                            router.push(`/dashboard/jobs/ni-invoice/${job.jobId}`);
+                          }}
+                        >
+                          {loadingBtn === `invoice-${job.jobId}` ? (
+                            <Loader2 className="w-4 h-4 text-green-500 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4 text-green-500" />
+                          )}
+                          <span className="text-[10px] text-gray-600">Invoice</span>
+                        </button>
+                      )}
+
 
                       <button title="Hand Over" className="flex flex-col items-center"
                         onClick={() => {

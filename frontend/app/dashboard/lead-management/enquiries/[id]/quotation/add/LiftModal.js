@@ -34,6 +34,9 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
 
   const [selectedMaterials, setSelectedMaterials] = useState([]);
 
+  const [isLiftRateCalculating, setIsLiftRateCalculating] = useState(true);
+  const [isLiftRateReady, setIsLiftRateReady] = useState(false);
+
 
   const hasErrors = Object.values(errors).some(
     (msg) => typeof msg === "string" && msg.trim() !== ""
@@ -290,6 +293,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
     // errors,
     // setErrors,
     markFormTouched,
+    dataMapped,
   } = useLiftForm(lift, setErrors, liftRatePriceKeys, initialOptions, handleLoadComplete);
 
 
@@ -330,14 +334,18 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
   // }, priceKeys.map((key) => formData[key])); // auto dependency array
 
   useEffect(() => {
-    // console.log("---change--------------");
+    console.log("---change--------------");
+
+    if (!dataMapped) return;
+
+    setIsLiftRateCalculating(true);
 
     const liftRateTotal = liftRatePriceKeys.reduce(
       (sum, key) => sum + Number(formData[key] || 0),
       0
     );
 
-    // console.log("---liftRatePriceKeys--------------", liftRatePriceKeys);
+    console.log("---liftRatePriceKeys--------------", liftRatePriceKeys);
     // console.log("---****************------------");
     // console.log(liftRateTotal, "---priceKeys--------------", priceKeys);
 
@@ -347,7 +355,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
 
     setAdjustedPriceKeys(adjustedPriceKeys1);
 
-    // console.log("Keys included in 'total':", adjustedPriceKeys1);
+    console.log("Keys included in 'total':", adjustedPriceKeys1);
 
     // Check if carEntrancePrice is in the filtered list
     // console.log("Is carEntrancePrice in 'total' keys?", adjustedPriceKeys1.includes("carEntrancePrice"));
@@ -436,27 +444,31 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
 
     // console.log("Total (with decimals):", total.toFixed(2));
     // console.log("Total incl. GST:", totalIncludingTax.toFixed(2));
-  }, [...priceKeys.map((key) => formData[key]),
-  formData.liftQuantity,
-  formData.tax,
-  formData.loadPerAmt,
-  formData.liftRate,
-  formData.fabricatedStructure,
-  formData.ardAmount,
-  formData.overloadDevice,
-  formData.pwdAmount,
-  formData.transportCharges,
-  formData.otherCharges,
-  formData.powerBackup,
-  formData.bambooScaffolding,
-  formData.electricalWork,
-  formData.ibeamChannel,
-  formData.duplexSystem,
-  formData.telephonicIntercom,
-  formData.gsmIntercom,
-  formData.numberLockSystem,
-  formData.thumbLockSystem,
-  formData.installationAmount, formData.carEntranceSubType,]);
+    setIsLiftRateCalculating(false);
+    setIsLiftRateReady(true);
+  }, [
+    dataMapped, // ✅ VERY IMPORTANT
+    ...priceKeys.map((key) => formData[key]),
+    formData.liftQuantity,
+    formData.tax,
+    formData.loadPerAmt,
+    formData.liftRate,
+    formData.fabricatedStructure,
+    formData.ardAmount,
+    formData.overloadDevice,
+    formData.pwdAmount,
+    formData.transportCharges,
+    formData.otherCharges,
+    formData.powerBackup,
+    formData.bambooScaffolding,
+    formData.electricalWork,
+    formData.ibeamChannel,
+    formData.duplexSystem,
+    formData.telephonicIntercom,
+    formData.gsmIntercom,
+    formData.numberLockSystem,
+    formData.thumbLockSystem,
+    formData.installationAmount, formData.carEntranceSubType,]);
 
 
 
@@ -6961,7 +6973,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
             <div className="flex items-center gap-1 flex-wrap">
               <span className="font-medium text-gray-800">Manual:</span> ₹{formData.manualPrice}
               <SmallPopover>
-                <h3 className="text-sm font-bold mb-2 text-green-700">Manual Price Breakdown----{formData.stops}</h3>
+                <h3 className="text-sm font-bold mb-2 text-green-700">Manual Price Breakdown</h3>
                 {manualDetails.length > 0 ? (
                   <ul className="list-disc list-inside space-y-1 max-h-60 overflow-y-auto">
                     {manualDetails.map((item, i) => {
@@ -7355,7 +7367,7 @@ export default function LiftModal({ lift, action, onClose, onSave }) {
       )} */}
 
       <>
-        {isInitialLoad && <FullScreenLoader />}
+        {isInitialLoad && <FullScreenLoader message="Calculating Lift Rate…" />}
 
         {/* The rest of your Modal JSX here */}
         <div className="lift-modal-container">

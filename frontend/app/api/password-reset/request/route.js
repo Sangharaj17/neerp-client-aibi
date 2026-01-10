@@ -35,7 +35,10 @@ export async function POST(request) {
     }
 
     // Validate email exists in backend first (optional - don't block if backend endpoints don't exist)
-    const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    let backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    if (backendUrl.endsWith('/')) {
+      backendUrl = backendUrl.slice(0, -1);
+    }
 
     try {
       // Check if email exists in backend (validate user exists)
